@@ -64,7 +64,7 @@ macros["back"] = macros["return"] =
 			, ltext = ""
 			, el;
 
-		if (params[0])
+		if (params.length > 0)
 		{
 			if (params.length > 1 && params[1] === "steps")
 			{
@@ -175,124 +175,10 @@ macros["back"] = macros["return"] =
 };
 
 /**
- * <<choice>> (only for compatibility with Jonah)
+ * <<bind>>
  */
-version.extensions["choiceMacro"] = { major: 1, minor: 0, revision: 0 };
-macros["choice"] =
-{
-	handler: function (place, macroName, params)
-	{
-		if (params.length === 0)
-		{
-			throwError(place, "<<" + macroName + ">>: no passage specified");
-			return;
-		}
-
-		Wikifier.createInternalLink(place, params[0]);
-	}
-};
-
-/**
- * <<class>>
- */
-version.extensions["classMacro"] = { major: 2, minor: 0, revision: 0 };
-macros["class"] =
-{
-	handler: function (place, macroName, params, parser)
-	{
-		var   openTag   = macroName
-			, closeTag  = "/" + macroName
-			, closeAlt  = "end" + macroName
-			, start     = parser.source.indexOf(">>", parser.matchStart) + 2
-			, end       = -1
-			, tagBegin  = start
-			, tagEnd    = start
-			, opened    = 1;
-		var   elName    = params[1] || "span"
-			, classes   = params[0] || "";
-
-		// matryoshka handling
-		while ((tagBegin = parser.source.indexOf("<<", tagEnd)) !== -1
-			&& (tagEnd = parser.source.indexOf(">>", tagBegin)) !== -1)
-		{
-			var   tagName  = parser.source.slice(tagBegin + 2, tagEnd)
-				, tagDelim = tagName.search(/[\s\u00a0\u2028\u2029]/);	// Unicode space-character escapes required for IE
-			if (tagDelim !== -1)
-			{
-				tagName = tagName.slice(0, tagDelim);
-			}
-
-			tagEnd += 2;
-			switch (tagName)
-			{
-			case closeAlt:
-				// fallthrough
-			case closeTag:
-				opened--;
-				break;
-
-			case openTag:
-				opened++;
-				break;
-			}
-			if (opened === 0)
-			{
-				end = tagBegin;
-				break;
-			}
-		}
-
-		if (end !== -1)
-		{
-			parser.nextMatch = tagEnd;
-
-			var el = insertElement(place, elName, null, classes);
-			new Wikifier(el, parser.source.slice(start, end));
-		}
-		else
-		{
-			throwError(place, "<<" + macroName + ">>: cannot find a matching close tag");
-		}
-	}
-};
-macros["/class"] = macros["endclass"] = { excludeParams: true, handler: function () {} };
-
-/**
- * <<display>>
- */
-version.extensions["displayMacro"] = { major: 2, minor: 1, revision: 0 };
-macros["display"] =
-{
-	handler: function (place, macroName, params, parser)
-	{
-		if (!params[0])
-		{
-			throwError(place, "<<" + macroName + ">>: no passage specified");
-			return;
-		}
-		if (!tale.has(params[0]))
-		{
-			throwError(place, "<<" + macroName + '>>: passage "' + params[0] + '" does not exist');
-			return;
-		}
-
-		var passage = tale.get(params[0]);
-		if (params[1])
-		{
-			new Wikifier(insertElement(place, params[1], null, passage.domId), passage.text);
-		}
-		else
-		{
-			new Wikifier(place, passage.text);
-		}
-	}
-};
-
-/**
- * <<execute>>
- */
-version.extensions["executeMacro"] = { major: 1, minor: 0, revision: 0 };
-macros["execute"] =
+version.extensions["bindMacro"] = { major: 1, minor: 0, revision: 0 };
+macros["bind"] =
 {
 	handler: function (place, macroName, params, parser)
 	{
@@ -356,7 +242,7 @@ macros["execute"] =
 				var executeBody = parser.source.slice(start, end);
 				return function ()
 				{
-					// execute the contents
+					// execute the contents and discard the output
 					new Wikifier(document.createElement("div"), executeBody);
 
 					// go to the specified passage (if any)
@@ -375,12 +261,136 @@ macros["execute"] =
 		}
 	}
 };
-macros["/execute"] = macros["endexecute"] = { excludeParams: true, handler: function () {} };
+macros["/bind"] = macros["endbind"] = { excludeParams: true, handler: function () {} };
+
+/**
+ * <<choice>> (only for compatibility with Jonah)
+ */
+version.extensions["choiceMacro"] = { major: 1, minor: 0, revision: 0 };
+macros["choice"] =
+{
+	handler: function (place, macroName, params)
+	{
+		if (params.length === 0)
+		{
+			throwError(place, "<<" + macroName + ">>: no passage specified");
+			return;
+		}
+
+		Wikifier.createInternalLink(place, params[0]);
+	}
+};
+
+/**
+ * <<class>> & <<id>>
+ */
+version.extensions["classMacro"] = version.extensions["idMacro"] = { major: 2, minor: 0, revision: 0 };
+macros["class"] = macros["id"] =
+{
+	handler: function (place, macroName, params, parser)
+	{
+		var   openTag   = macroName
+			, closeTag  = "/" + macroName
+			, closeAlt  = "end" + macroName
+			, start     = parser.source.indexOf(">>", parser.matchStart) + 2
+			, end       = -1
+			, tagBegin  = start
+			, tagEnd    = start
+			, opened    = 1;
+
+		// matryoshka handling
+		while ((tagBegin = parser.source.indexOf("<<", tagEnd)) !== -1
+			&& (tagEnd = parser.source.indexOf(">>", tagBegin)) !== -1)
+		{
+			var   tagName  = parser.source.slice(tagBegin + 2, tagEnd)
+				, tagDelim = tagName.search(/[\s\u00a0\u2028\u2029]/);	// Unicode space-character escapes required for IE
+			if (tagDelim !== -1)
+			{
+				tagName = tagName.slice(0, tagDelim);
+			}
+
+			tagEnd += 2;
+			switch (tagName)
+			{
+			case closeAlt:
+				// fallthrough
+			case closeTag:
+				opened--;
+				break;
+
+			case openTag:
+				opened++;
+				break;
+			}
+			if (opened === 0)
+			{
+				end = tagBegin;
+				break;
+			}
+		}
+
+		if (end !== -1)
+		{
+			parser.nextMatch = tagEnd;
+
+			var   elName     = params[1] || "span"
+				, elSelector = params[0] || ""
+				, el;
+
+			if (macroName === "id")
+			{
+				el = insertElement(place, elName, elSelector);
+			}
+			else	// macroName === "class"
+			{
+				el = insertElement(place, elName, null, elSelector);
+			}
+
+			new Wikifier(el, parser.source.slice(start, end));
+		}
+		else
+		{
+			throwError(place, "<<" + macroName + ">>: cannot find a matching close tag");
+		}
+	}
+};
+macros["/class"] = macros["endclass"] = macros["/id"] = macros["endid"] = { excludeParams: true, handler: function () {} };
+
+/**
+ * <<display>>
+ */
+version.extensions["displayMacro"] = { major: 2, minor: 1, revision: 0 };
+macros["display"] =
+{
+	handler: function (place, macroName, params, parser)
+	{
+		if (params.length === 0)
+		{
+			throwError(place, "<<" + macroName + ">>: no passage specified");
+			return;
+		}
+		if (!tale.has(params[0]))
+		{
+			throwError(place, "<<" + macroName + '>>: passage "' + params[0] + '" does not exist');
+			return;
+		}
+
+		var passage = tale.get(params[0]);
+		if (params[1])
+		{
+			new Wikifier(insertElement(place, params[1], null, passage.domId), passage.text);
+		}
+		else
+		{
+			new Wikifier(place, passage.text);
+		}
+	}
+};
 
 /**
  * <<if>>
  */
-version.extensions["ifMacros"] = { major: 2, minor: 0, revision: 0 };
+version.extensions["ifMacro"] = { major: 2, minor: 0, revision: 0 };
 macros["if"] =
 {
 	excludeParams: true,
@@ -546,10 +556,10 @@ macros["remember"] =
 };
 
 /**
- * <<set>> & <<do>>
+ * <<set>>
  */
 version.extensions["setMacro"] = { major: 2, minor: 0, revision: 0 };
-macros["set"] = macros["do"] =
+macros["set"] =
 {
 	excludeParams: true,
 	handler: function (place, macroName, params, parser)
@@ -624,6 +634,7 @@ macros["silently"] =
 		{
 			parser.nextMatch = tagEnd;
 
+			// execute the contents and discard the output
 			new Wikifier(document.createElement("div"), parser.source.slice(start, end));
 		}
 		else
@@ -635,6 +646,102 @@ macros["silently"] =
 macros["/silently"] = macros["endsilently"] = { excludeParams: true, handler: function () {} };
 
 /**
+ * <<update>>
+ */
+version.extensions["updateMacro"] = { major: 1, minor: 0, revision: 0 };
+macros["update"] =
+{
+	handler: function (place, macroName, params, parser)
+	{
+		if (params.length === 0)
+		{
+			throwError(place, "<<" + macroName + ">>: no element ID specified");
+			return;
+		}
+
+		var   openTag   = macroName
+			, closeTag  = "/" + macroName
+			, closeAlt  = "end" + macroName
+			, start     = parser.source.indexOf(">>", parser.matchStart) + 2
+			, end       = -1
+			, tagBegin  = start
+			, tagEnd    = start
+			, opened    = 1;
+
+		// matryoshka handling
+		while ((tagBegin = parser.source.indexOf("<<", tagEnd)) !== -1
+			&& (tagEnd = parser.source.indexOf(">>", tagBegin)) !== -1)
+		{
+			var   tagName  = parser.source.slice(tagBegin + 2, tagEnd)
+				, tagDelim = tagName.search(/[\s\u00a0\u2028\u2029]/);	// Unicode space-character escapes required for IE
+			if (tagDelim !== -1)
+			{
+				tagName = tagName.slice(0, tagDelim);
+			}
+
+			tagEnd += 2;
+			switch (tagName)
+			{
+			case closeAlt:
+				// fallthrough
+			case closeTag:
+				opened--;
+				break;
+
+			case openTag:
+				opened++;
+				break;
+			}
+			if (opened === 0)
+			{
+				end = tagBegin;
+				break;
+			}
+		}
+
+		if (end !== -1)
+		{
+			parser.nextMatch = tagEnd;
+
+			var   parentEl = document.getElementById(params[0])
+				, targetEl
+				, updType  = params[1];
+
+			if (!parentEl)
+			{
+				throwError(place, "<<" + macroName + '>>: element with ID "' + params[0] + '" does not exist');
+				return;
+			}
+			switch (updType)
+			{
+			case "prepend":
+				// create a wrapper for the new content, required for prepends
+				var wrapper = document.createElement("span");
+				parentEl.insertBefore(wrapper, parentEl.firstChild);
+				targetEl = wrapper;
+				break;
+			case "append":
+				targetEl = parentEl;
+				break;
+			default:
+				targetEl = parentEl;
+				// remove the old contents
+				removeChildren(targetEl);
+				break;
+			}
+
+			// add the new content
+			new Wikifier(targetEl, parser.source.slice(start, end));
+		}
+		else
+		{
+			throwError(place, "<<" + macroName + ">>: cannot find a matching close tag");
+		}
+	}
+};
+macros["/update"] = macros["endupdate"] = { excludeParams: true, handler: function () {} };
+
+/**
  * <<widget>>
  */
 version.extensions["widgetMacro"] = { major: 1, minor: 0, revision: 0 };
@@ -642,7 +749,7 @@ macros["widget"] =
 {
 	handler: function (place, macroName, params, parser)
 	{
-		if (!params[0])
+		if (params.length === 0)
 		{
 			throwError(place, "<<" + macroName + ">>: no widget name specified");
 			return;
@@ -755,47 +862,6 @@ macros["widget"] =
 	}
 };
 macros["/widget"] = macros["endwidget"] = { excludeParams: true, handler: function () {} };
-
-///**
-// * <<textinput>>
-// */
-//version.extensions["textinputMacro"] = { major: 1, minor: 0, revision: 0 };
-//macros["textinput"] =
-//{
-//	handler: function (place, macroName, params, parser)
-//	{
-//		var varname = params[0].replace("$", "");
-//		var input = document.createElement("input");
-//		input.type = "text";
-//		var elid = varname + "TextInput";
-//		input.id = elid;
-//		input.addEventListener("keyup", (function ()
-//		{
-//			return function ()
-//			{
-//				state.active.variables[varname] = document.getElementById(elid).value;
-//			}
-//		}()));
-//		place.appendChild(input);
-//	}
-//};
-
-///**
-// * <<params>>
-// */
-//version.extensions["paramsMacro"] = { major: 1, minor: 0, revision: 0 };
-//macros["params"] =
-//{
-//	handler: function (place, macroName, params, parser)
-//	{
-//		console.log("[macros.params.handler()]");
-//		console.log("    > parser.fullArgs(): \u00ab" + parser.fullArgs() + "\u00bb");
-//		for (var i = 0; i < params.length; i++)
-//		{
-//			console.log("    > params[" + i + "]: \u00ab" + params[i] + "\u00bb");
-//		}
-//	}
-//};
 
 
 /***********************************************************************************************************************
