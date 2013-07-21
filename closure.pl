@@ -3,7 +3,7 @@
 #
 # SCRIPT: closure.pl
 #
-#     Wrapper for the Google Closure Compiler, a Java-based JavaScript minifier.
+#     Wrapper for the Google Closure Compiler (a Java-based JavaScript minifier).
 #
 #     Author   :  Thomas Michael Edwards <tmedwards@motoslave.net>
 #     Copyright:  Copyright © 2011–2013 Thomas Michael Edwards. All rights reserved.

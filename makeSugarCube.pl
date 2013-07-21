@@ -3,7 +3,7 @@
 #
 # SCRIPT: makeSugarCube.pl
 #
-#     Build SugarCube, an interactive header (web app) for Twine/Twee.
+#     Build SugarCube (a header for Twine/Twee).
 #
 #     Author   :  Thomas Michael Edwards <tmedwards@motoslave.net>
 #     Copyright:  Copyright © 2013 Thomas Michael Edwards. All rights reserved.
@@ -169,7 +169,7 @@ print $infh $build;
 close($infh);
 
 # process the header template
-$template =~ s/\[\(\$BUILD\)\]/$build/g;
+$template =~ s/\[\(\$VERSION\)\]/$build/g;
 $template =~ s/\[\(\$SCRIPTS\)\]/$scripts/g;
 $template =~ s/\[\(\$STYLES\)\]/$styles/g;
 
