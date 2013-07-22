@@ -348,7 +348,7 @@ Wikifier.formatterHelpers =
 		var lookaheadRegExp = new RegExp(this.lookahead, "gm");
 		lookaheadRegExp.lastIndex = w.matchStart;
 		var lookaheadMatch = lookaheadRegExp.exec(w.source);
-		if (lookaheadMatch && lookaheadMatch.index == w.matchStart)
+		if (lookaheadMatch && lookaheadMatch.index === w.matchStart)
 		{
 			var text = lookaheadMatch[1];
 			if (config.browser.isIE && config.browser.ieVersion < 10)
@@ -692,7 +692,7 @@ Wikifier.formatters =
 		lookaheadRegExp.lastIndex = w.matchStart;
 		var lookaheadMatch = lookaheadRegExp.exec(w.source);
 		var el;
-		if (lookaheadMatch && lookaheadMatch.index == w.matchStart)
+		if (lookaheadMatch && lookaheadMatch.index === w.matchStart)
 		{
 			if (lookaheadMatch[2])
 			{
@@ -736,7 +736,7 @@ Wikifier.formatters =
 		var lookaheadRegExp = new RegExp(this.lookahead, "gm");
 		lookaheadRegExp.lastIndex = w.matchStart;
 		var lookaheadMatch = lookaheadRegExp.exec(w.source);
-		if (lookaheadMatch && lookaheadMatch.index == w.matchStart)
+		if (lookaheadMatch && lookaheadMatch.index === w.matchStart)
 		{
 			var el = w.output;
 			if (lookaheadMatch[5])
@@ -778,7 +778,7 @@ Wikifier.formatters =
 		var lookaheadRegExp = new RegExp(this.lookahead, "gm");
 		lookaheadRegExp.lastIndex = w.matchStart;
 		var lookaheadMatch = lookaheadRegExp.exec(w.source);
-		if (lookaheadMatch && lookaheadMatch.index == w.matchStart && lookaheadMatch[1])
+		if (lookaheadMatch && lookaheadMatch.index === w.matchStart && lookaheadMatch[1])
 		{
 			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 			try
@@ -816,7 +816,7 @@ Wikifier.formatters =
 		var lookaheadRegExp = new RegExp(this.lookahead, "gm");
 		lookaheadRegExp.lastIndex = w.matchStart;
 		var lookaheadMatch = lookaheadRegExp.exec(w.source);
-		if (lookaheadMatch && lookaheadMatch.index == w.matchStart)
+		if (lookaheadMatch && lookaheadMatch.index === w.matchStart)
 		{
 			var el = insertElement(w.output, "span");
 			el.innerHTML = lookaheadMatch[1];
@@ -834,7 +834,7 @@ Wikifier.formatters =
 		var lookaheadRegExp = new RegExp(this.lookahead, "gm");
 		lookaheadRegExp.lastIndex = w.matchStart;
 		var lookaheadMatch = lookaheadRegExp.exec(w.source);
-		if (lookaheadMatch && lookaheadMatch.index == w.matchStart)
+		if (lookaheadMatch && lookaheadMatch.index === w.matchStart)
 		{
 			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 		}
@@ -898,7 +898,7 @@ Wikifier.formatters =
 		var lookaheadRegExp = new RegExp(this.lookahead, "gm");
 		lookaheadRegExp.lastIndex = w.matchStart;
 		var lookaheadMatch = lookaheadRegExp.exec(w.source);
-		if (lookaheadMatch && lookaheadMatch.index == w.matchStart)
+		if (lookaheadMatch && lookaheadMatch.index === w.matchStart)
 		{
 			insertElement(w.output, "code", null, null, lookaheadMatch[1]);
 			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
@@ -954,6 +954,31 @@ Wikifier.formatters =
 	handler: function (w)
 	{
 		insertElement(w.output, "br");
+	}
+},
+
+{
+	name: "rawText",
+	match: "\"{3}|<nowiki>",
+	lookaheadRegExp: /(?:\"{3}|<nowiki>)((?:.|\n)*?)(?:\"{3}|<\/nowiki>)/mg,
+	handler: function(w)
+	{
+		this.lookaheadRegExp.lastIndex = w.matchStart;
+		var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
+		if(lookaheadMatch && lookaheadMatch.index === w.matchStart)
+		{
+			insertElement(w.output, "span", null, null, lookaheadMatch[1]);
+			w.nextMatch = this.lookaheadRegExp.lastIndex;
+		}
+	}
+},
+
+{
+	name: "htmlEntitiesEncoding",
+	match: "(?:(?:&#?[a-zA-Z0-9]{2,8};|.)(?:&#?(?:x0*(?:3[0-6][0-9a-fA-F]|1D[c-fC-F][0-9a-fA-F]|20[d-fD-F][0-9a-fA-F]|FE2[0-9a-fA-F])|0*(?:76[89]|7[7-9][0-9]|8[0-7][0-9]|761[6-9]|76[2-7][0-9]|84[0-3][0-9]|844[0-7]|6505[6-9]|6506[0-9]|6507[0-1]));)+|&#?[a-zA-Z0-9]{2,8};)",
+	handler: function(w)
+	{
+		insertElement(w.output, "span").innerHTML = w.matchText;
 	}
 }
 
