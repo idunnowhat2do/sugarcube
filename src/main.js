@@ -148,17 +148,32 @@ function main()
 		}
 	}
 
-	// instantiate a history object for our state, initialize our macros, lastly
-	// initialize our state; the ordering here is important
-	state = new History();	// this could take a while, so do it late
-	for (var macro in macros)
+	/**
+	 * The ordering of the following code is important!
+	 */
+	// 1. instantiate a history object for our state
+	state = new History();
+
+	// 2. call macros' "early" init functions
+	for (var macroName in macros)
 	{
-		if (typeof macros[macro].init == "function")
+		if (typeof macros[macroName].init === "function")
 		{
-			macros[macro].init();
+			macros[macroName].init(macroName);
 		}
 	}
-	state.init();
+
+	// 3. initialize our state
+	state.init();	// this could take a while, so do it late
+
+	// 4. call macros' "late" init functions
+	for (var macroName in macros)
+	{
+		if (typeof macros[macroName].lateInit === "function")
+		{
+			macros[macroName].lateInit(macroName);
+		}
+	}
 }
 
 

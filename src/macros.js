@@ -239,11 +239,11 @@ macros["bind"] =
 			el.className = "internalLink " + macroName + "Link";
 			el.onclick = (function ()
 			{
-				var executeBody = parser.source.slice(start, end);
+				var bindBody = parser.source.slice(start, end);
 				return function ()
 				{
 					// execute the contents and discard the output
-					new Wikifier(document.createElement("div"), executeBody);
+					new Wikifier(document.createElement("div"), bindBody);
 
 					// go to the specified passage (if any)
 					if (passage !== undefined)
