@@ -254,6 +254,7 @@ Wikifier.parse = function (expression)
 		, tMap   =
 			{
 				  "$"   : "state.active.variables."
+				, "def" : '"undefined" !== typeof'
 				, "eq"  : "=="
 				, "neq" : "!="
 				, "gt"  : ">"
