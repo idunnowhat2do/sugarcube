@@ -232,18 +232,25 @@ Wikifier.prototype.outputText = function (place, startPos, endPos)
 };
 
 /**
- * Meant to be called by macros, this returns the text passed to the currently executing macro.
- * Unlike TiddlyWiki's default mechanism, this does not attempt to split up the arguments into an
- * array, thought it does do some magic with certain Twee operators (like gt, eq, and $variable).
- * It returns a parsed string of arguments.
+ * Meant to be called by macros, this returns the raw, unprocessed, text passed to the currently executing macro.
+ * Unlike TiddlyWiki's default mechanism, this does not attempt to split up the arguments into an array.
  */
-Wikifier.prototype.fullArgs = function ()
+Wikifier.prototype.rawArgs = function ()
 {
 	var   endPos   = this.source.indexOf(">>", this.matchStart)
 		// the value 3 below comes from: +2 to skip "<<", which must be mirrored in the slice, and +1 to eat the first whitespace character
 		, startPos = this.matchStart + 3 + this.source.slice(this.matchStart + 2, endPos).search(/[\s\u00a0\u2028\u2029]/);	// Unicode space-character escapes required for IE
 
-	return Wikifier.parse(this.source.slice(startPos, endPos));
+	return this.source.slice(startPos, endPos);
+};
+
+/**
+ * Meant to be called by macros, this returns the text passed to the currently executing macro after doing some
+ * magic with certain Twine/Twee operators (like: eq, gt, and $variable).
+ */
+Wikifier.prototype.fullArgs = function ()
+{
+	return Wikifier.parse(this.rawArgs());
 };
 
 Wikifier.parse = function (expression)
@@ -253,18 +260,19 @@ Wikifier.parse = function (expression)
 		, tMatch
 		, tMap   =
 			{
-				  "$"   : "state.active.variables."
-				, "def" : '"undefined" !== typeof'
-				, "eq"  : "=="
-				, "neq" : "!="
-				, "gt"  : ">"
-				, "gte" : ">="
-				, "lt"  : "<"
-				, "lte" : "<="
-				, "and" : "&&"
-				, "or"  : "||"
-				, "not" : "!"
-				, "to"  : "="
+				  "$"    : "state.active.variables."
+				, "def"  : '"undefined" !== typeof'
+				, "ndef" : '"undefined" === typeof'
+				, "eq"   : "=="
+				, "neq"  : "!="
+				, "gt"   : ">"
+				, "gte"  : ">="
+				, "lt"   : "<"
+				, "lte"  : "<="
+				, "and"  : "&&"
+				, "or"   : "||"
+				, "not"  : "!"
+				, "to"   : "="
 			};
 
 	while ((tMatch = tRe.exec(expression)) !== null)
