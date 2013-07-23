@@ -110,7 +110,7 @@ function main()
 		}
 	}
 
-	// setup for story stylesheets & scripts (stylesheets first!)
+	// setup for story stylesheets & scripts (order: stylesheets, scripts, widgets)
 	var styles = tale.lookup("tags", "stylesheet");
 	for (var i = 0; i < styles.length; i++)
 	{
@@ -133,13 +133,13 @@ function main()
 	{
 		try
 		{
-			var el = document.createElement("div");
-			new Wikifier(el, widgets[i].text);
-			while (el.hasChildNodes())
+			var errTrap = document.createElement("div");
+			new Wikifier(errTrap, widgets[i].text);
+			while (errTrap.hasChildNodes())
 			{
-				var fc = el.firstChild;
-				if (fc.classList.contains("error")) { throw new Error(fc.textContent); }
-				el.removeChild(fc);
+				var fc = errTrap.firstChild;
+				if (fc.classList && fc.classList.contains("error")) { throw new Error(fc.textContent); }
+				errTrap.removeChild(fc);
 			}
 		}
 		catch (e)
@@ -163,15 +163,55 @@ function main()
 		}
 	}
 
-	// 3. initialize our state
+	// 3. execute the StoryInit passage
+	if (tale.has("StoryInit"))
+	{
+		try
+		{
+			var errTrap = document.createElement("div");
+			new Wikifier(errTrap, tale.get("StoryInit").text);
+			while (errTrap.hasChildNodes())
+			{
+				var fc = errTrap.firstChild;
+				if (fc.classList && fc.classList.contains("error")) { throw new Error(fc.textContent); }
+				errTrap.removeChild(fc);
+			}
+		}
+		catch (e)
+		{
+			alert("There is a technical problem with this story (StoryInit: " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
+		}
+	}
+
+	// 4. initialize our state
 	state.init();	// this could take a while, so do it late
 
-	// 4. call macros' "late" init functions
+	// 5. call macros' "late" init functions
 	for (var macroName in macros)
 	{
 		if (typeof macros[macroName].lateInit === "function")
 		{
 			macros[macroName].lateInit(macroName);
+		}
+	}
+
+	// 6. execute the StoryReady passage
+	if (tale.has("StoryReady"))
+	{
+		try
+		{
+			var errTrap = document.createElement("div");
+			new Wikifier(errTrap, tale.get("StoryReady").text);
+			while (errTrap.hasChildNodes())
+			{
+				var fc = errTrap.firstChild;
+				if (fc.classList && fc.classList.contains("error")) { throw new Error(fc.textContent); }
+				errTrap.removeChild(fc);
+			}
+		}
+		catch (e)
+		{
+			alert("There is a technical problem with this story (StoryReady: " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
 		}
 	}
 }
@@ -949,8 +989,9 @@ History.hashChangeHandler = function (e)
 		{
 			var el = $("passages");
 
-			// reset the history stack, keeping a copy of the initial variables (for <<remember>> and whatnot)
-			state.active = { init: true, variables: (state.isEmpty ? {} : deepCopy(state.history[0].variables)) };
+			// reset the history stack, making a copy of the <<remember>> variables
+			var remember = storage.getItem("remember");
+			state.active = { init: true, variables: (remember === null ? {} : deepCopy(remember)) };
 			state.history = [];
 
 			el.style.visibility = "hidden";
