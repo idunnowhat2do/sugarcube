@@ -396,25 +396,25 @@ Wikifier.formatters =
 		{
 			lookaheadRegExp.lastIndex = w.nextMatch;
 			var   lookaheadMatch = lookaheadRegExp.exec(w.source)
-				, matched        = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
+				, matched        = lookaheadMatch && lookaheadMatch.index === w.nextMatch;
 			if (matched)
 			{
 				nextRowType = lookaheadMatch[2];
-				if (nextRowType == "k")
+				if (nextRowType === "k")
 				{
 					table.className = lookaheadMatch[1];
 					w.nextMatch += lookaheadMatch[0].length + 1;
 				}
 				else
 				{
-					if (nextRowType != curRowType)
+					if (nextRowType !== curRowType)
 					{
-						rowContainer = insertElement(table,this.rowTypes[nextRowType]);
+						rowContainer = insertElement(table, this.rowTypes[nextRowType]);
 					}
 					curRowType = nextRowType;
-					if (curRowType == "c")
+					if (curRowType === "c")
 					{
-						if (rowCount == 0)
+						if (rowCount === 0)
 						{
 							rowContainer.setAttribute("align", "top");
 						}
@@ -423,12 +423,12 @@ Wikifier.formatters =
 							rowContainer.setAttribute("align", "bottom");
 						}
 						w.nextMatch = w.nextMatch + 1;
-						w.subWikify(rowContainer,this.rowTerminator);
+						w.subWikify(rowContainer, this.rowTerminator);
 					}
 					else
 					{
 						rowElement = insertElement(rowContainer, "tr");
-						this.rowHandler(w,rowElement,prevColumns);
+						this.rowHandler(w, rowElement, prevColumns);
 					}
 					rowCount++;
 				}
@@ -444,10 +444,10 @@ Wikifier.formatters =
 		{
 			cellRegExp.lastIndex = w.nextMatch;
 			var   cellMatch = cellRegExp.exec(w.source)
-				, matched   = cellMatch && cellMatch.index == w.nextMatch;
+				, matched   = cellMatch && cellMatch.index === w.nextMatch;
 			if (matched)
 			{
-				if (cellMatch[1] == "~")
+				if (cellMatch[1] === "~")
 				{
 					var last = prevColumns[col];
 					if (last)
@@ -459,7 +459,7 @@ Wikifier.formatters =
 					}
 					w.nextMatch = cellMatch.index + cellMatch[0].length-1;
 				}
-				else if (cellMatch[1] == ">")
+				else if (cellMatch[1] === ">")
 				{
 					curColCount++;
 					w.nextMatch = cellMatch.index + cellMatch[0].length-1;
@@ -476,19 +476,19 @@ Wikifier.formatters =
 						, cell;
 					w.nextMatch++;
 					var styles = Wikifier.formatterHelpers.inlineCssHelper(w);
-					while (w.source.substr(w.nextMatch,1) == " ")
+					while (w.source.substr(w.nextMatch, 1) === " ")
 					{
 						spaceLeft = true;
 						w.nextMatch++;
 					}
-					if (w.source.substr(w.nextMatch,1) == "!")
+					if (w.source.substr(w.nextMatch, 1) === "!")
 					{
-						cell = insertElement(e,"th");
+						cell = insertElement(e, "th");
 						w.nextMatch++;
 					}
 					else
 					{
-						cell = insertElement(e,"td");
+						cell = insertElement(e, "td");
 					}
 					prevColumns[col] = { rowCount: 1, element: cell };
 					var   lastColCount   = 1
@@ -504,7 +504,7 @@ Wikifier.formatters =
 						cell.style[styles[i].style] = styles[i].value;
 					}
 					w.subWikify(cell, this.cellTerminator);
-					if (w.matchText.substr(w.matchText.length - 2, 1) == " ")
+					if (w.matchText.substr(w.matchText.length - 2, 1) === " ")
 					{
 						spaceRight = true;
 					}
