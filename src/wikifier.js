@@ -1009,19 +1009,19 @@ Wikifier.formatters =
 
 ];	// End formatters
 
-Wikifier.createInternalLink = function (place, title)
+Wikifier.createInternalLink = function (place, passage, text)
 {
-	var el = insertPassageLink(place, title, null);
+	var el = insertPassageLink(place, passage, text);
 	el.onclick = function ()
 	{
-		state.display(title, el);
+		state.display(passage, el);
 	};
 	return el;
 };
 
-Wikifier.createExternalLink = function (place, url)
+Wikifier.createExternalLink = function (place, url, text)
 {
-	var el = insertElement(place, "a", null, "externalLink");
+	var el = insertElement(place, "a", null, "externalLink", text);
 	el.href = url;
 	el.target = "_blank";
 	return el;
