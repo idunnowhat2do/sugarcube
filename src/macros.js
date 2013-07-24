@@ -357,6 +357,57 @@ macros["class"] = macros["id"] =
 macros["/class"] = macros["endclass"] = macros["/id"] = macros["endid"] = { excludeParams: true, handler: function () {} };
 
 /**
+ * <<classupdate>>
+ */
+version.extensions["classupdateMacro"] = { major: 1, minor: 0, revision: 0 };
+macros["classupdate"] =
+{
+	handler: function (place, macroName, params, parser)
+	{
+		if (params.length < 3)
+		{
+			var errors = [];
+			if (params.length < 1) { errors.push("element ID"); }
+			if (params.length < 2) { errors.push("action"); }
+			if (params.length < 3) { errors.push("class names"); }
+			throwError(place, "<<" + macroName + ">>: no " + errors.join(" or ") + " specified");
+			return;
+		}
+
+		var   targetEl = document.getElementById(params[0])
+			, updType  = params[1]
+			, classes  = params[2].trim().split(/\s+/);
+
+		if (!targetEl)
+		{
+			throwError(place, "<<" + macroName + '>>: element with ID "' + params[0] + '" does not exist');
+			return;
+		}
+		if (updType !== "add" && updType !== "remove" && updType !== "toggle")
+		{
+			throwError(place, "<<" + macroName + '>>: "' + updType + '" is not a valid action (add|remove|toggle)');
+			return;
+		}
+
+		for (var i = 0; i < classes.length ; i++)
+		{
+			switch (updType)
+			{
+			case "add":
+				targetEl.classList.add(classes[i]);
+				break;
+			case "remove":
+				targetEl.classList.remove(classes[i]);
+				break;
+			case "toggle":
+				targetEl.classList.toggle(classes[i]);
+				break;
+			}
+		}
+	}
+};
+
+/**
  * <<display>>
  */
 version.extensions["displayMacro"] = { major: 2, minor: 1, revision: 0 };
@@ -746,57 +797,6 @@ macros["update"] =
 	}
 };
 macros["/update"] = macros["endupdate"] = { excludeParams: true, handler: function () {} };
-
-/**
- * <<updateclass>>
- */
-version.extensions["updateclassMacro"] = { major: 1, minor: 0, revision: 0 };
-macros["updateclass"] =
-{
-	handler: function (place, macroName, params, parser)
-	{
-		if (params.length < 3)
-		{
-			var errors = [];
-			if (params.length < 1) { errors.push("element ID"); }
-			if (params.length < 2) { errors.push("action"); }
-			if (params.length < 3) { errors.push("class names"); }
-			throwError(place, "<<" + macroName + ">>: no " + errors.join(" or ") + " specified");
-			return;
-		}
-
-		var   targetEl = document.getElementById(params[0])
-			, updType  = params[1]
-			, classes  = params[2].trim().split(/\s+/);
-
-		if (!targetEl)
-		{
-			throwError(place, "<<" + macroName + '>>: element with ID "' + params[0] + '" does not exist');
-			return;
-		}
-		if (updType !== "add" && updType !== "remove" && updType !== "toggle")
-		{
-			throwError(place, "<<" + macroName + '>>: "' + updType + '" is not a valid action (add|remove|toggle)');
-			return;
-		}
-
-		for (var i = 0; i < classes.length ; i++)
-		{
-			switch (updType)
-			{
-			case "add":
-				targetEl.classList.add(classes[i]);
-				break;
-			case "remove":
-				targetEl.classList.remove(classes[i]);
-				break;
-			case "toggle":
-				targetEl.classList.toggle(classes[i]);
-				break;
-			}
-		}
-	}
-};
 
 /**
  * <<widget>>
