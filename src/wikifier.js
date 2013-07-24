@@ -151,7 +151,7 @@ function Wikifier(place, source)
 	this.source    = source;
 	this.output    = place;
 	this.nextMatch = 0;
-	this.formatter = formatter;
+	this.formatter = formatter;	// formatter comes from the top-level scope
 
 	this.subWikify(this.output);
 }
