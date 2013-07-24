@@ -236,14 +236,19 @@ macros["bind"] =
 				, passage  = params.length > 1 ? params[1] : undefined
 				, el       = document.createElement("a");
 
-			el.className = "internalLink " + macroName + "Link";
+			el.classList.add(macroName + "Link");
+			el.classList.add(passage ? (tale.has(passage) ? "internalLink" : "brokenLink") : "internalLink");
+			el.innerHTML = linkText;
 			el.onclick = (function ()
 			{
 				var bindBody = parser.source.slice(start, end);
 				return function ()
 				{
-					// execute the contents and discard the output
-					new Wikifier(document.createElement("div"), bindBody);
+					// execute the contents and discard the output (if any)
+					if (bindBody !== "")
+					{
+						new Wikifier(document.createElement("div"), bindBody);
+					}
 
 					// go to the specified passage (if any)
 					if (passage !== undefined)
@@ -252,7 +257,6 @@ macros["bind"] =
 					}
 				};
 			}());
-			el.innerHTML = linkText;
 			place.appendChild(el);
 		}
 		else
@@ -277,7 +281,7 @@ macros["choice"] =
 			return;
 		}
 
-		Wikifier.createInternalLink(place, params[0]);
+		Wikifier.createInternalLink(place, params[0], params[0]);
 	}
 };
 
@@ -539,6 +543,41 @@ macros["if"] =
 	}
 };
 macros["elseif"] = macros["else"] = macros["/if"] = macros["endif"] = { excludeParams: true, handler: function () {} };
+
+/**
+ * <<link>>
+ */
+version.extensions["linkMacro"] = { major: 1, minor: 0, revision: 0 };
+macros["link"] =
+{
+	handler: function (place, macroName, params)
+	{
+		if (params.length === 0)
+		{
+			throwError(place, "<<" + macroName + ">>: no link location specified");
+			return;
+		}
+
+		var   linkText = params[0]
+			, linkLoc  = params.length === 2 ? params[1] : params[0];
+
+		if (params.length === 1)
+		{
+			Wikifier.createInternalLink(place, linkLoc, linkText);
+		}
+		else	// params.length === 2
+		{
+			if (tale.has(linkLoc))
+			{
+				Wikifier.createInternalLink(place, linkLoc, linkText);
+			}
+			else
+			{
+				Wikifier.createExternalLink(place, linkLoc, linkText);
+			}
+		}
+	}
+};
 
 /**
  * <<print>>
