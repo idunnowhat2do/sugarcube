@@ -253,11 +253,11 @@ Wikifier.prototype.outputText = function (place, startPos, endPos)
  */
 Wikifier.prototype.rawArgs = function ()
 {
-	var   endPos   = this.source.indexOf(">>", this.matchStart)
-		// the value 3 below comes from: +2 to skip "<<", which must be mirrored in the slice, and +1 to eat the first whitespace character
-		, startPos = this.matchStart + 3 + this.source.slice(this.matchStart + 2, endPos).search(/[\s\u00a0\u2028\u2029]/);	// Unicode space-character escapes required for IE
+	var   endPos  = this.source.indexOf(">>", this.matchStart)
+		, wsDelim = this.source.slice(this.matchStart + 2, endPos).search(/[\s\u00a0\u2028\u2029]/);	// Unicode space-character escapes required for IE
 
-	return this.source.slice(startPos, endPos);
+	// +3 from: +2 to skip "<<" and +1 to eat the first whitespace character
+	return (wsDelim === -1) ? "" : this.source.slice(this.matchStart + wsDelim + 3, endPos);
 };
 
 /**
@@ -806,26 +806,31 @@ Wikifier.formatters =
 		if (lookaheadMatch && lookaheadMatch.index === w.matchStart && lookaheadMatch[1])
 		{
 			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+			var macroName = lookaheadMatch[1];
 			try
 			{
-				var macro = macros[lookaheadMatch[1]];
-				if (macro && macro.handler)
+				var macro = macros[macroName];
+				if (macro && typeof macro.handler === "function")
 				{
 					var params = [];
 					if (!macro["excludeParams"])
 					{
 						params = lookaheadMatch[2].readMacroParams(macro["replaceVarParams"] !== undefined ? macro["replaceVarParams"] : true);
 					}
-					macro.handler(w.output, lookaheadMatch[1], params, w);
+					macro.handler(w.output, macroName, params, w);
+				}
+				else if (macros._children_.hasOwnProperty(macroName))
+				{
+					throwError(w.output, "macro <<" + macroName + ">> was found outside of a call to its parent <<" + macros._children_[macroName] + ">>");
 				}
 				else
 				{
-					throwError(w.output, "macro <<" + lookaheadMatch[1] + ">> does not exist");
+					throwError(w.output, "macro <<" + macroName + ">> does not exist");
 				}
 			}
 			catch (e)
 			{
-				throwError(w.output, "cannot execute " + ((macro && macro.isWidget) ? "widget" : "macro") + " <<" + lookaheadMatch[1] + ">>: " + e.message);
+				throwError(w.output, "cannot execute " + ((macro && macro.isWidget) ? "widget" : "macro") + " <<" + macroName + ">>: " + e.message);
 				return;
 			}
 		}
