@@ -1,6 +1,109 @@
 /***********************************************************************************************************************
 ** [Begin macros.js]
 ***********************************************************************************************************************/
+
+/***********************************************************************************************************************
+** [Macro Initialization]
+***********************************************************************************************************************/
+macros["_children_"] = {};
+
+
+/***********************************************************************************************************************
+** [Macro Utility Functions]
+***********************************************************************************************************************/
+function registerMacroTags(parent, tagNames)
+{
+	if (!parent) { throw new Error("no parent specified"); }
+
+	if (!tagNames) { tagNames = []; }
+	tagNames.push("/" + parent, "end" + parent);	// automatically add the standard closing tags
+
+	for (var i = 0; i < tagNames.length; i++)
+	{
+		if (macros.hasOwnProperty(tagNames[i]))
+		{
+			throw new Error("cannot register tag for existing macro");
+		}
+		if (!macros._children_.hasOwnProperty(tagNames[i]))
+		{
+			macros._children_[tagNames[i]] = parent;
+		}
+	}
+	return tagNames;
+}
+
+function getContainerMacroData(parser, macroName, childTags)
+{
+	var   openTag      = macroName
+		, closeTag     = "/" + macroName
+		, closeAlt     = "end" + macroName
+		, start        = parser.source.indexOf(">>", parser.matchStart) + 2
+		, end          = -1
+		, tagBegin     = start
+		, tagEnd       = start
+		, opened       = 1
+		, curTag       = macroName
+		, curArgument  = parser.rawArgs()
+		, contentStart = start
+		, macroData    = [];
+
+	// matryoshka handling
+	while ((tagBegin = parser.source.indexOf("<<", tagEnd)) !== -1
+		&& (tagEnd = parser.source.indexOf(">>", tagBegin)) !== -1)
+	{
+		var   tagData  = parser.source.slice(tagBegin + 2, tagEnd)
+			, tagDelim = tagData.search(/[\s\u00a0\u2028\u2029]/)	// Unicode space-character escapes required for IE
+			, tagName  = (tagDelim === -1) ? tagData : tagData.slice(0, tagDelim);
+
+		tagEnd += 2;
+		switch (tagName)
+		{
+		case openTag:
+			opened++;
+			break;
+
+		case closeAlt:
+			// fallthrough
+		case closeTag:
+			opened--;
+			break;
+
+		default:
+			if (opened === 1 && childTags)
+			{
+				for (var i = 0, len = childTags.length; i < len; i++)
+				{
+					if (tagName === childTags[i])
+					{
+						macroData.push({ name: curTag, arguments: curArgument, contents: parser.source.slice(contentStart, tagBegin) });
+						curTag       = tagName;
+						curArgument  = (tagDelim === -1) ? "" : tagData.slice(tagDelim + 1);
+						contentStart = tagEnd;
+					}
+				}
+			}
+			break;
+		}
+		if (opened === 0)
+		{
+			macroData.push({ name: curTag, arguments: curArgument, contents: parser.source.slice(contentStart, tagBegin) });
+			end = tagBegin;
+			break;
+		}
+	}
+
+	if (end !== -1)
+	{
+		parser.nextMatch = tagEnd;
+		return macroData;
+	}
+	return null;
+}
+
+
+/***********************************************************************************************************************
+** [Macro Definitions]
+***********************************************************************************************************************/
 /**
  * <<actions>>
  */
@@ -177,9 +280,10 @@ macros["back"] = macros["return"] =
 /**
  * <<bind>>
  */
-version.extensions["bindMacro"] = { major: 1, minor: 0, revision: 0 };
+version.extensions["bindMacro"] = { major: 1, minor: 1, revision: 0 };
 macros["bind"] =
 {
+	children: registerMacroTags("bind"),
 	handler: function (place, macroName, params, parser)
 	{
 		if (params.length === 0)
@@ -188,50 +292,10 @@ macros["bind"] =
 			return;
 		}
 
-		var   openTag   = macroName
-			, closeTag  = "/" + macroName
-			, closeAlt  = "end" + macroName
-			, start     = parser.source.indexOf(">>", parser.matchStart) + 2
-			, end       = -1
-			, tagBegin  = start
-			, tagEnd    = start
-			, opened    = 1;
+		var macroData = getContainerMacroData(parser, macroName);
 
-		// matryoshka handling
-		while ((tagBegin = parser.source.indexOf("<<", tagEnd)) !== -1
-			&& (tagEnd = parser.source.indexOf(">>", tagBegin)) !== -1)
+		if (macroData)
 		{
-			var   tagName  = parser.source.slice(tagBegin + 2, tagEnd)
-				, tagDelim = tagName.search(/[\s\u00a0\u2028\u2029]/);	// Unicode space-character escapes required for IE
-			if (tagDelim !== -1)
-			{
-				tagName = tagName.slice(0, tagDelim);
-			}
-
-			tagEnd += 2;
-			switch (tagName)
-			{
-			case closeAlt:
-				// fallthrough
-			case closeTag:
-				opened--;
-				break;
-
-			case openTag:
-				opened++;
-				break;
-			}
-			if (opened === 0)
-			{
-				end = tagBegin;
-				break;
-			}
-		}
-
-		if (end !== -1)
-		{
-			parser.nextMatch = tagEnd;
-
 			var   linkText = params[0]
 				, passage  = params.length > 1 ? params[1] : undefined
 				, el       = document.createElement("a");
@@ -239,9 +303,8 @@ macros["bind"] =
 			el.classList.add(macroName + "Link");
 			el.classList.add(passage ? (tale.has(passage) ? "internalLink" : "brokenLink") : "internalLink");
 			el.innerHTML = linkText;
-			el.onclick = (function ()
+			el.onclick = (function (bindBody)
 			{
-				var bindBody = parser.source.slice(start, end);
 				return function ()
 				{
 					// execute the contents and discard the output (if any)
@@ -256,7 +319,7 @@ macros["bind"] =
 						state.display(passage, el);
 					}
 				};
-			}());
+			}(macroData[0].contents));
 			place.appendChild(el);
 		}
 		else
@@ -265,12 +328,11 @@ macros["bind"] =
 		}
 	}
 };
-macros["/bind"] = macros["endbind"] = { excludeParams: true, handler: function () {} };
 
 /**
  * <<choice>> (only for compatibility with Jonah)
  */
-version.extensions["choiceMacro"] = { major: 1, minor: 0, revision: 0 };
+version.extensions["choiceMacro"] = { major: 1, minor: 0, revision: 1 };
 macros["choice"] =
 {
 	handler: function (place, macroName, params)
@@ -286,71 +348,23 @@ macros["choice"] =
 };
 
 /**
- * <<class>> & <<id>>
+ * <<class>>
  */
-version.extensions["classMacro"] = version.extensions["idMacro"] = { major: 2, minor: 0, revision: 0 };
-macros["class"] = macros["id"] =
+version.extensions["classMacro"] = { major: 2, minor: 1, revision: 0 };
+macros["class"] =
 {
+	children: registerMacroTags("class"),
 	handler: function (place, macroName, params, parser)
 	{
-		var   openTag   = macroName
-			, closeTag  = "/" + macroName
-			, closeAlt  = "end" + macroName
-			, start     = parser.source.indexOf(">>", parser.matchStart) + 2
-			, end       = -1
-			, tagBegin  = start
-			, tagEnd    = start
-			, opened    = 1;
+		var macroData = getContainerMacroData(parser, macroName);
 
-		// matryoshka handling
-		while ((tagBegin = parser.source.indexOf("<<", tagEnd)) !== -1
-			&& (tagEnd = parser.source.indexOf(">>", tagBegin)) !== -1)
+		if (macroData)
 		{
-			var   tagName  = parser.source.slice(tagBegin + 2, tagEnd)
-				, tagDelim = tagName.search(/[\s\u00a0\u2028\u2029]/);	// Unicode space-character escapes required for IE
-			if (tagDelim !== -1)
-			{
-				tagName = tagName.slice(0, tagDelim);
-			}
+			var   elName    = params[1] || "span"
+				, elClasses = params[0] || ""
+				, el        = insertElement(place, elName, null, elClasses);
 
-			tagEnd += 2;
-			switch (tagName)
-			{
-			case closeAlt:
-				// fallthrough
-			case closeTag:
-				opened--;
-				break;
-
-			case openTag:
-				opened++;
-				break;
-			}
-			if (opened === 0)
-			{
-				end = tagBegin;
-				break;
-			}
-		}
-
-		if (end !== -1)
-		{
-			parser.nextMatch = tagEnd;
-
-			var   elName     = params[1] || "span"
-				, elSelector = params[0] || ""
-				, el;
-
-			if (macroName === "id")
-			{
-				el = insertElement(place, elName, elSelector);
-			}
-			else	// macroName === "class"
-			{
-				el = insertElement(place, elName, null, elSelector);
-			}
-
-			new Wikifier(el, parser.source.slice(start, end));
+			new Wikifier(el, macroData[0].contents);
 		}
 		else
 		{
@@ -358,7 +372,6 @@ macros["class"] = macros["id"] =
 		}
 	}
 };
-macros["/class"] = macros["endclass"] = macros["/id"] = macros["endid"] = { excludeParams: true, handler: function () {} };
 
 /**
  * <<classupdate>>
@@ -443,90 +456,53 @@ macros["display"] =
 };
 
 /**
+ * <<id>>
+ */
+version.extensions["idMacro"] = { major: 2, minor: 1, revision: 0 };
+macros["id"] =
+{
+	children: registerMacroTags("id"),
+	handler: function (place, macroName, params, parser)
+	{
+		var macroData = getContainerMacroData(parser, macroName);
+
+		if (macroData)
+		{
+			var   elName = params[1] || "span"
+				, elId   = params[0] || ""
+				, el     = insertElement(place, elName, elId);
+
+			new Wikifier(el, macroData[0].contents);
+		}
+		else
+		{
+			throwError(place, "<<" + macroName + ">>: cannot find a matching close tag");
+		}
+	}
+};
+
+/**
  * <<if>>
  */
-version.extensions["ifMacro"] = { major: 2, minor: 0, revision: 0 };
+version.extensions["ifMacro"] = { major: 2, minor: 1, revision: 0 };
 macros["if"] =
 {
 	excludeParams: true,
+	children: registerMacroTags("if", [ "elseif", "else" ]),
 	handler: function (place, macroName, params, parser)
 	{
-		var   openTag   = macroName
-			, elseTag   = "else"
-			, elseIfTag = "else" + macroName
-			, closeTag  = "/" + macroName
-			, closeAlt  = "end" + macroName
-			, start     = parser.source.indexOf(">>", parser.matchStart) + 2
-			, end       = -1
-			, tagBegin  = start
-			, tagEnd    = start
-			, opened    = 1;
-		var   antecedents     = []
-			, consequents     = []
-			, curAntecedent   = parser.fullArgs()
-			, consequentStart = start;
+		var   elseTag   = "else"
+			, macroData = getContainerMacroData(parser, macroName, [ elseTag + macroName, elseTag ]);
 
-		// matryoshka handling
-		while ((tagBegin = parser.source.indexOf("<<", tagEnd)) !== -1
-			&& (tagEnd = parser.source.indexOf(">>", tagBegin)) !== -1)
+		if (macroData)
 		{
-			var   tagData  = parser.source.slice(tagBegin + 2, tagEnd)
-				, tagDelim = tagData.search(/[\s\u00a0\u2028\u2029]/)	// Unicode space-character escapes required for IE
-				, tagName  = (tagDelim === -1) ? tagData : tagData.slice(0, tagDelim);
-
-			tagEnd += 2;
-			switch (tagName)
-			{
-			case closeAlt:
-				// fallthrough
-			case closeTag:
-				opened--;
-				break;
-
-			case elseIfTag:
-				if (opened === 1)
-				{
-					antecedents.push(curAntecedent);
-					consequents.push(parser.source.slice(consequentStart, tagBegin));
-					curAntecedent   = Wikifier.parse(tagData.slice(tagDelim + 1, tagEnd - 2));
-					consequentStart = tagEnd;
-				}
-				break;
-
-			case elseTag:
-				if (opened === 1)
-				{
-					antecedents.push(curAntecedent);
-					consequents.push(parser.source.slice(consequentStart, tagBegin));
-					curAntecedent   = true;
-					consequentStart = tagEnd;
-				}
-				break;
-
-			case openTag:
-				opened++;
-				break;
-			}
-			if (opened === 0)
-			{
-				antecedents.push(curAntecedent);
-				consequents.push(parser.source.slice(consequentStart, tagBegin));
-				end = tagBegin;
-				break;
-			}
-		}
-
-		if (end !== -1)
-		{
-			parser.nextMatch = tagEnd;
-
 			try
 			{
-				for (var i = 0; i < antecedents.length; i++)
+				for (var i = 0, len = macroData.length; i < len; i++)
 				{
-					if (eval(antecedents[i]))
+					if (macroData[i].name === elseTag || eval(Wikifier.parse(macroData[i].arguments)))
 					{
-						new Wikifier(place, consequents[i]);
+						new Wikifier(place, macroData[i].contents);
 						break;
 					}
 				}
@@ -542,7 +518,6 @@ macros["if"] =
 		}
 	}
 };
-macros["elseif"] = macros["else"] = macros["/if"] = macros["endif"] = { excludeParams: true, handler: function () {} };
 
 /**
  * <<link>>
@@ -674,58 +649,19 @@ macros["set"] =
 /**
  * <<silently>>
  */
-version.extensions["silentlyMacro"] = { major: 2, minor: 0, revision: 0 };
+version.extensions["silentlyMacro"] = { major: 2, minor: 1, revision: 0 };
 macros["silently"] =
 {
 	excludeParams: true,
+	children: registerMacroTags("silently"),
 	handler: function (place, macroName, params, parser)
 	{
-		var   openTag   = macroName
-			, closeTag  = "/" + macroName
-			, closeAlt  = "end" + macroName
-			, start     = parser.source.indexOf(">>", parser.matchStart) + 2
-			, end       = -1
-			, tagBegin  = start
-			, tagEnd    = start
-			, opened    = 1;
+		var macroData = getContainerMacroData(parser, macroName);
 
-		// matryoshka handling
-		while ((tagBegin = parser.source.indexOf("<<", tagEnd)) !== -1
-			&& (tagEnd = parser.source.indexOf(">>", tagBegin)) !== -1)
+		if (macroData)
 		{
-			var   tagName  = parser.source.slice(tagBegin + 2, tagEnd)
-				, tagDelim = tagName.search(/[\s\u00a0\u2028\u2029]/);	// Unicode space-character escapes required for IE
-			if (tagDelim !== -1)
-			{
-				tagName = tagName.slice(0, tagDelim);
-			}
-
-			tagEnd += 2;
-			switch (tagName)
-			{
-			case closeAlt:
-				// fallthrough
-			case closeTag:
-				opened--;
-				break;
-
-			case openTag:
-				opened++;
-				break;
-			}
-			if (opened === 0)
-			{
-				end = tagBegin;
-				break;
-			}
-		}
-
-		if (end !== -1)
-		{
-			parser.nextMatch = tagEnd;
-
 			// execute the contents and discard the output
-			new Wikifier(document.createElement("div"), parser.source.slice(start, end));
+			new Wikifier(document.createElement("div"), macroData[0].contents);
 		}
 		else
 		{
@@ -733,14 +669,14 @@ macros["silently"] =
 		}
 	}
 };
-macros["/silently"] = macros["endsilently"] = { excludeParams: true, handler: function () {} };
 
 /**
  * <<update>>
  */
-version.extensions["updateMacro"] = { major: 1, minor: 0, revision: 0 };
+version.extensions["updateMacro"] = { major: 1, minor: 1, revision: 0 };
 macros["update"] =
 {
+	children: registerMacroTags("update"),
 	handler: function (place, macroName, params, parser)
 	{
 		if (params.length === 0)
@@ -749,50 +685,10 @@ macros["update"] =
 			return;
 		}
 
-		var   openTag   = macroName
-			, closeTag  = "/" + macroName
-			, closeAlt  = "end" + macroName
-			, start     = parser.source.indexOf(">>", parser.matchStart) + 2
-			, end       = -1
-			, tagBegin  = start
-			, tagEnd    = start
-			, opened    = 1;
+		var macroData = getContainerMacroData(parser, macroName);
 
-		// matryoshka handling
-		while ((tagBegin = parser.source.indexOf("<<", tagEnd)) !== -1
-			&& (tagEnd = parser.source.indexOf(">>", tagBegin)) !== -1)
+		if (macroData)
 		{
-			var   tagName  = parser.source.slice(tagBegin + 2, tagEnd)
-				, tagDelim = tagName.search(/[\s\u00a0\u2028\u2029]/);	// Unicode space-character escapes required for IE
-			if (tagDelim !== -1)
-			{
-				tagName = tagName.slice(0, tagDelim);
-			}
-
-			tagEnd += 2;
-			switch (tagName)
-			{
-			case closeAlt:
-				// fallthrough
-			case closeTag:
-				opened--;
-				break;
-
-			case openTag:
-				opened++;
-				break;
-			}
-			if (opened === 0)
-			{
-				end = tagBegin;
-				break;
-			}
-		}
-
-		if (end !== -1)
-		{
-			parser.nextMatch = tagEnd;
-
 			var   parentEl = document.getElementById(params[0])
 				, targetEl
 				, updType  = params[1];
@@ -827,7 +723,7 @@ macros["update"] =
 			}
 
 			// add the new content
-			new Wikifier(targetEl, parser.source.slice(start, end));
+			new Wikifier(targetEl, macroData[0].contents);
 		}
 		else
 		{
@@ -835,14 +731,14 @@ macros["update"] =
 		}
 	}
 };
-macros["/update"] = macros["endupdate"] = { excludeParams: true, handler: function () {} };
 
 /**
  * <<widget>>
  */
-version.extensions["widgetMacro"] = { major: 1, minor: 0, revision: 0 };
+version.extensions["widgetMacro"] = { major: 1, minor: 1, revision: 0 };
 macros["widget"] =
 {
+	children: registerMacroTags("widget"),
 	handler: function (place, macroName, params, parser)
 	{
 		if (params.length === 0)
@@ -852,6 +748,7 @@ macros["widget"] =
 		}
 
 		var widgetName = params[0];
+
 		if (macros[widgetName])
 		{
 			if (!macros[widgetName].isWidget)
@@ -865,58 +762,17 @@ macros["widget"] =
 			delete version.extensions[widgetName + "WidgetMacro"];
 		}
 
-		var   openTag   = macroName
-			, closeTag  = "/" + macroName
-			, closeAlt  = "end" + macroName
-			, start     = parser.source.indexOf(">>", parser.matchStart) + 2
-			, end       = -1
-			, tagBegin  = start
-			, tagEnd    = start
-			, opened    = 1;
+		var macroData = getContainerMacroData(parser, macroName);
 
-		// matryoshka handling
-		while ((tagBegin = parser.source.indexOf("<<", tagEnd)) !== -1
-			&& (tagEnd = parser.source.indexOf(">>", tagBegin)) !== -1)
+		if (macroData)
 		{
-			var   tagName  = parser.source.slice(tagBegin + 2, tagEnd)
-				, tagDelim = tagName.search(/[\s\u00a0\u2028\u2029]/);	// Unicode space-character escapes required for IE
-			if (tagDelim !== -1)
-			{
-				tagName = tagName.slice(0, tagDelim);
-			}
-
-			tagEnd += 2;
-			switch (tagName)
-			{
-			case closeAlt:
-				// fallthrough
-			case closeTag:
-				opened--;
-				break;
-
-			case openTag:
-				opened++;
-				break;
-			}
-			if (opened === 0)
-			{
-				end = tagBegin;
-				break;
-			}
-		}
-
-		if (end !== -1)
-		{
-			parser.nextMatch = tagEnd;
-
 			try
 			{
 				macros[widgetName] = 
 				{
 					isWidget: true,
-					handler: (function ()
+					handler: (function (widgetBody)
 					{
-						var widgetBody = parser.source.slice(start, end);
 						return function (place, macroName, params, parser)
 						{
 							// setup the widget arguments array
@@ -942,7 +798,7 @@ macros["widget"] =
 								delete state.active.variables.args;
 							}
 						};
-					}())
+					}(macroData[0].contents))
 				};
 				version.extensions[widgetName + "WidgetMacro"] = { major: 1, minor: 0, revision: 0 };
 			}
@@ -957,7 +813,6 @@ macros["widget"] =
 		}
 	}
 };
-macros["/widget"] = macros["endwidget"] = { excludeParams: true, handler: function () {} };
 
 
 /***********************************************************************************************************************
