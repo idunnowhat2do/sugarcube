@@ -27,7 +27,7 @@ function getRandomArbitrary(min, max)
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-var version = { title: "SugarCane", major: 1, minor: 0, revision: 0, date: new Date("July 20, 2013"), extensions: {} };
+var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("July 25, 2013"), extensions: {} };
 
 var config =		// SugarCube config
 {
