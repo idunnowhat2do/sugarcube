@@ -5,7 +5,7 @@
 /***********************************************************************************************************************
 ** [Macro Initialization]
 ***********************************************************************************************************************/
-macros["_children_"] = {};
+macros["_children"] = {};
 
 
 /***********************************************************************************************************************
@@ -24,9 +24,9 @@ function registerMacroTags(parent, tagNames)
 		{
 			throw new Error("cannot register tag for existing macro");
 		}
-		if (!macros._children_.hasOwnProperty(tagNames[i]))
+		if (!macros._children.hasOwnProperty(tagNames[i]))
 		{
-			macros._children_[tagNames[i]] = parent;
+			macros._children[tagNames[i]] = parent;
 		}
 	}
 	return tagNames;
@@ -100,6 +100,20 @@ function getContainerMacroData(parser, macroName, childTags)
 	return null;
 }
 
+function evalMacroExpression(expression, place, macroName)
+{
+	try
+	{
+		eval(expression);
+		return true;
+	}
+	catch (e)
+	{
+		throwError(place, "<<" + macroName + ">>: bad expression: " + e.message);
+		return false;
+	}
+}
+
 
 /***********************************************************************************************************************
 ** [Macro Definitions]
@@ -157,7 +171,7 @@ macros["actions"] =
 /**
  * <<back>> & <<return>>
  */
-version.extensions["backMacros"] = { major: 2, minor: 0, revision: 0 };
+version.extensions["backMacro"] = version.extensions["returnMacro"] = { major: 2, minor: 0, revision: 0 };
 macros["back"] = macros["return"] =
 {
 	handler: function (place, macroName, params)
@@ -581,14 +595,14 @@ macros["print"] =
 /**
  * <<remember>>
  */
-version.extensions["rememberMacro"] = { major: 2, minor: 0, revision: 0 };
+version.extensions["rememberMacro"] = { major: 2, minor: 1, revision: 0 };
 macros["remember"] =
 {
 	excludeParams: true,
 	handler: function (place, macroName, params, parser)
 	{
 		var statement = parser.fullArgs();
-		if (macros["set"].run(statement, place, macroName))
+		if (evalMacroExpression(statement, place, macroName))
 		{
 			var   remember = storage.getItem("remember") || {}
 				, varRe    = new RegExp("state\\.active\\.variables\\.(\\w+)", "g")
@@ -621,28 +635,19 @@ macros["remember"] =
 };
 
 /**
- * <<set>>
+ * <<run>>, <<runjs>>, & <<set>>
  */
-version.extensions["setMacro"] = { major: 2, minor: 0, revision: 0 };
-macros["set"] =
+version.extensions["runMacro"] = version.extensions["runjsMacro"] = version.extensions["setMacro"] = { major: 2, minor: 1, revision: 0 };
+macros["run"] = macros["runjs"] = macros["set"] =
 {
 	excludeParams: true,
 	handler: function (place, macroName, params, parser)
 	{
-		macros[macroName].run(parser.fullArgs(), place, macroName);
+		evalMacroExpression(macroName === "runjs" ? parser.rawArgs() : parser.fullArgs(), place, macroName);
 	},
 	run: function (expression, place, macroName)
-	{
-		try
-		{
-			eval(expression);
-			return true;
-		}
-		catch (e)
-		{
-			throwError(place, "<<" + macroName + ">>: bad expression: " + e.message);
-			return false;
-		}
+	{	// for "macros.set.run()" legacy compatibility only
+		return evalMacroExpression(expression, place, macroName);
 	}
 };
 
