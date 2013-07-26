@@ -266,7 +266,7 @@ function setPageElement(id, title, defaultText)
 		{
 			new Wikifier(place, tale.get(title).text);
 		}
-		else
+		else if (defaultText != null && defaultText !== "")	// use != to catch both null & undefined
 		{
 			new Wikifier(place, defaultText);
 		}
