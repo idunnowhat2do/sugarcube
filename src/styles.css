@@ -21,9 +21,11 @@ noscript { color: red; font-size: 210%; font-weight: bold; }
 #sidebar li a { text-decoration: none; }
 
 #storyTitle { margin: 0; font-size: 210%; }
+#storySubtitle { font-size: 111%; }
 #storyAuthor { font-size: 111%; }
+#storyCaption { display: none; margin-top: 3em; text-align: right; }
 #storyMenu, #shareMenu, #share { display: none; }
-#storyMenu { line-height: 1; }
+#storyMenu { line-height: 1.2; }
 
 #credits, #version { margin-top: 1em; color: #999; font-weight: normal; font-size: 71%; }
 
