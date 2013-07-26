@@ -79,16 +79,20 @@ function main()
 	// set the document title
 	document.title = tale.title;
 
-	// setup for StoryTitle, StoryAuthor, StoryMenu, & ShareMenu passages
-	setPageElement("storyTitle", "StoryTitle", "Untitled Story");
-	if (tale.has("StoryAuthor"))
+	// setup for StoryBanner, StoryTitle, StorySubtitle, StoryAuthor, StoryCaption, StoryMenu, & ShareMenu passages
+	setPageElement("storyBanner", "StoryBanner");
+	setPageElement("storyTitle", "StoryTitle", tale.title);
+	setPageElement("storySubtitle", "StorySubtitle");
+	setPageElement("storyAuthor", "StoryAuthor");
+	if (tale.has("StoryCaption"))
 	{
-		setPageElement("storyAuthor", "StoryAuthor", "");
+		$("storyCaption").style.display = "block";
+		setPageElement("storyCaption", "StoryCaption");
 	}
 	if (tale.has("StoryMenu"))
 	{
 		$("storyMenu").style.display = "block";
-		setPageElement("storyMenu", "StoryMenu", "");
+		setPageElement("storyMenu", "StoryMenu");
 	}
 	if (tale.has("ShareMenu"))
 	{
@@ -1311,7 +1315,7 @@ function Tale()
 	}
 	else
 	{
-		this.title = "Untitled SugarCube";	//FIXME: should this be something like "Untitled Story"?
+		this.title = "Untitled Story";
 	}
 	this.domId = slugify(this.title);
 }
