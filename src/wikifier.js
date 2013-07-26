@@ -819,9 +819,9 @@ Wikifier.formatters =
 					}
 					macro.handler(w.output, macroName, params, w);
 				}
-				else if (macros._children_.hasOwnProperty(macroName))
+				else if (macros._children.hasOwnProperty(macroName))
 				{
-					throwError(w.output, "macro <<" + macroName + ">> was found outside of a call to its parent <<" + macros._children_[macroName] + ">>");
+					throwError(w.output, "macro <<" + macroName + ">> was found outside of a call to its parent <<" + macros._children[macroName] + ">>");
 				}
 				else
 				{
