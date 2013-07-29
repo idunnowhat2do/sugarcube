@@ -541,6 +541,17 @@ macros["link"] =
 {
 	handler: function (place, macroName, params)
 	{
+		function createInternalLink(place, passage, text)
+		{
+			var el = insertPassageLink(place, passage, text);
+			el.onclick = function ()
+			{
+				state.active.variables["#link"][passage] = true;
+				state.display(passage, el);
+			};
+			return el;
+		}
+
 		if (params.length === 0)
 		{
 			throwError(place, "<<" + macroName + ">>: no link location specified");
@@ -548,17 +559,61 @@ macros["link"] =
 		}
 
 		var   linkText = params[0]
-			, linkLoc  = params.length === 2 ? params[1] : params[0];
+			, linkLoc
+			, onceType;
 
 		if (params.length === 1)
 		{
-			Wikifier.createInternalLink(place, linkLoc, linkText);
+			linkLoc = params[0];
+		}
+		else if (params.length === 2)
+		{
+			if (params[1] === "once" || params[1] === "keep")
+			{
+				linkLoc  = params[0];
+				onceType = params[1];
+			}
+			else
+			{
+				linkLoc = params[1];
+			}
+		}
+		else if (params.length === 3)
+		{
+			linkLoc  = params[1];
+			onceType = params[2];
+		}
+		if (onceType && onceType !== "once" && onceType !== "keep")
+		{
+			throwError(place, "<<" + macroName + '>>: "' + onceType + '" is not a valid action (once|keep)');
+			return;
+		}
+
+		if (onceType)
+		{
+			if (!state.active.variables.hasOwnProperty("#link"))
+			{
+				state.active.variables["#link"] = {};
+			}
+			else if (state.active.variables["#link"][linkLoc])
+			{
+				if (onceType === "keep")
+				{
+					insertText(place, linkText);
+				}
+				return;
+			}
+		}
+
+		if (params.length === 1)
+		{
+			createInternalLink(place, linkLoc, linkText);
 		}
 		else	// params.length === 2
 		{
 			if (tale.has(linkLoc))
 			{
-				Wikifier.createInternalLink(place, linkLoc, linkText);
+				createInternalLink(place, linkLoc, linkText);
 			}
 			else
 			{
@@ -780,6 +835,16 @@ macros["widget"] =
 					{
 						return function (place, macroName, params, parser)
 						{
+							// store arguments arrays from in-progress calls
+							if (state.active.variables.hasOwnProperty("args"))
+							{
+								if (!state.active.variables.hasOwnProperty("#widget-args"))
+								{
+									state.active.variables["#widget-args"] = [];
+								}
+								state.active.variables["#widget-args"].push(state.active.variables.args);
+							}
+
 							// setup the widget arguments array
 							state.active.variables.args = [];
 							state.active.variables.args[0] = parser.fullArgs();
@@ -788,19 +853,28 @@ macros["widget"] =
 								state.active.variables.args[i+1] = params[i];
 							}
 
+							// attempt to execute the widget
 							try
 							{
-								// attempt to execute the widget
 								new Wikifier(place, widgetBody);
 							}
 							catch (e)
 							{
 								throwError(place, "<<" + macroName + '>>: cannot execute widget: ' + e.message);
 							}
-							finally
+
+							// teardown the widget arguments array
+							delete state.active.variables.args;
+
+							// restore arguments arrays from in-progress calls
+							if (state.active.variables.hasOwnProperty("#widget-args"))
 							{
-								// teardown the widget arguments array
-								delete state.active.variables.args;
+								state.active.variables.args = state.active.variables["#widget-args"].pop();
+								if (state.active.variables["#widget-args"].length === 0)
+								{
+									// teardown the in-progress widget arguments array stack
+									delete state.active.variables["#widget-args"];
+								}
 							}
 						};
 					}(macroData[0].contents))
