@@ -48,13 +48,15 @@ var config =		// SugarCube config
 };
 config.browser =
 {
-	  isIE:         (config.userAgent.indexOf("msie") !== -1) && (config.userAgent.indexOf("opera") === -1)
+	  isGecko:      (navigator && navigator.product === "Gecko") && (config.userAgent.indexOf("webkit") === -1)
+	, isIE:         (config.userAgent.indexOf("msie") !== -1) && (config.userAgent.indexOf("opera") === -1)
 	, ieVersion:    (function () { var ieVer = /msie (\d{1,2}\.\d)/.exec(config.userAgent); return ieVer ? +ieVer[1] : 0; }())
 	// opera <= 12: "opera/9.80 (windows nt 6.1; wow64) presto/2.12.388 version/12.16"
 	// opera >= 15: "mozilla/5.0 (windows nt 6.1; wow64) applewebkit/537.36 (khtml, like gecko) chrome/28.0.1500.52 safari/537.36 opr/15.0.1147.130"
 	, isOpera:      (config.userAgent.indexOf("opera") !== -1) || (config.userAgent.indexOf(" opr/") !== -1)
 	, operaVersion: (function () { var re = new RegExp((/applewebkit|chrome/.test(config.userAgent) ? "opr" : "version") + "\\/(\\d{1,2}\\.\\d+)"), oprVer = re.exec(config.userAgent); return oprVer ? +oprVer[1] : 0; }())
 };
+config.needsPushStateKludge = config.browser.isGecko;
 
 var   tale      = {}	// story manager
 	, state     = {}	// history manager
@@ -634,32 +636,51 @@ var Interface =
 				el.onclick = (function ()
 				{
 					var p = i;
-					return function ()
+					if (config.hasPushState)
 					{
-						if (config.hasPushState)
+						return function ()
 						{
-							var traverse;
-							if (window.history.state.sidx === state.top.sidx)
+							console.log("[snapback:onclick()]");
+
+							// necessary?
+							document.title = tale.title;
+
+							// create a new uuid for the state history
+							session.removeItem("activeHistory");
+							state.uuid = generateUuid();
+							state.save();
+
+							// push the history states in order
+							for (var i = 0, end = p; i <= end; i++)
 							{
-								traverse = -(state.history.length - (p + 1));
+								console.log("    > pushing: " + i + " (" + state.history[i].title + ")");
+
+								// load the state into the window history
+								window.history.pushState({ sidx: state.history[i].sidx, uuid: state.uuid }, document.title);
 							}
-							else if (window.history.state.sidx > p)
+
+							if (window.history.state.sidx < state.top.sidx)
 							{
-								traverse = -(window.history.state.sidx - p);
+								console.log("    > stacks out of sync; popping " + (state.top.sidx - window.history.state.sidx) + " states to equalize");
+								// stack ids are out of sync, pop our stack until
+								// we're back in sync with the window.history
+								state.pop(state.top.sidx - window.history.state.sidx);
 							}
-							else
-							{
-								traverse = p - window.history.state.sidx;
-							}
-							if (traverse !== 0)
-							{
-								window.history.go(traverse);
-							}
-						}
-						else
+
+							// activate the current top
+							state.activate(state.top);
+
+							// display the passage
+							state.display(state.active.title, null, "back");
+
+						};
+					}
+					else
+					{
+						return function ()
 						{
 							window.location.hash = state.history[p].hash;
-						}
+						};
 					}
 				}());
 				el.innerHTML = passage.excerpt();
