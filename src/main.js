@@ -27,7 +27,7 @@ function getRandomArbitrary(min, max)
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("July 26, 2013"), extensions: {} };
+var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("July 30, 2013"), extensions: {} };
 
 var config =		// SugarCube config
 {
@@ -45,6 +45,7 @@ var config =		// SugarCube config
 
 	// option properties
 	, displayPassageTitles: false
+	, maxGameSaveSlots:     8
 };
 config.browser =
 {
@@ -228,14 +229,20 @@ function main()
 ***********************************************************************************************************************/
 var GameSaves =
 {
-	maxIndex: 7,
+	maxIndex: 0,
 	init: function (slot)
 	{
-		if (!storage.hasItem("saves"))
+		var saves;
+		if (storage.hasItem("saves"))
 		{
-			var saves = new Array(GameSaves.maxIndex + 1);
+			saves = storage.getItem("saves");
+		}
+		else
+		{
+			saves = new Array(config.maxGameSaveSlots);
 			storage.setItem("saves", saves);
 		}
+		GameSaves.maxIndex = saves.length - 1;
 	},
 	createSave: function (slot)
 	{
