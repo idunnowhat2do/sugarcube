@@ -244,17 +244,7 @@ macros["back"] = macros["return"] =
 			{
 				if (macroName === "back")
 				{
-					if (config.hasPushState)
-					{
-						return function ()
-						{
-							if (state.length > 1)
-							{
-								window.history.go(-(steps));
-							}
-						};
-					}
-					else
+					if (config.historyMode === modes.hashTag)
 					{
 						return function ()
 						{
@@ -274,6 +264,16 @@ macros["back"] = macros["return"] =
 							state.activate(state.top);
 							// display the passage
 							state.display(pname, el, "back");
+						};
+					}
+					else
+					{
+						return function ()
+						{
+							if (state.length > 1)
+							{
+								window.history.go(-(steps));
+							}
 						};
 					}
 				}

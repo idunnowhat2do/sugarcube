@@ -29,7 +29,14 @@ function getRandomArbitrary(min, max)
 ***********************************************************************************************************************/
 var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("July 30, 2013"), extensions: {} };
 
-var config =		// SugarCube config
+var modes =		// SugarCube History class modes
+{
+	  hashTag:        1
+	, windowHistory:  2
+	, sessionHistory: 3
+};
+
+var config =	// SugarCube config
 {
 	// capability properties
 	  hasPushState:      ("history" in window) && ("pushState" in window.history)
@@ -45,6 +52,7 @@ var config =		// SugarCube config
 
 	// option properties
 	, displayPassageTitles: false
+	, historyMode:          modes.hashTag
 	, maxGameSaveSlots:     8
 };
 config.browser =
@@ -57,7 +65,7 @@ config.browser =
 	, isOpera:      (config.userAgent.indexOf("opera") !== -1) || (config.userAgent.indexOf(" opr/") !== -1)
 	, operaVersion: (function () { var re = new RegExp((/applewebkit|chrome/.test(config.userAgent) ? "opr" : "version") + "\\/(\\d{1,2}\\.\\d+)"), oprVer = re.exec(config.userAgent); return oprVer ? +oprVer[1] : 0; }())
 };
-config.needsPushStateKludge = config.browser.isGecko;
+config.historyMode = (config.hasPushState ? (config.browser.isGecko ? modes.sessionHistory : modes.windowHistory) : modes.hashTag);
 
 var   tale      = {}	// story manager
 	, state     = {}	// history manager
@@ -253,20 +261,20 @@ var GameSaves =
 		if (slot > saves.length) { return; }
 
 		// create the base save
-		if (config.hasPushState)
-		{
-			saves[slot] =
-			{
-				  title  : tale.get(state.active.title).excerpt()
-				, history: deepCopy(state.history.slice(0, state.active.sidx + 1))
-			};
-		}
-		else
+		if (config.historyMode === modes.hashTag)
 		{
 			saves[slot] =
 			{
 				  title: tale.get(state.active.title).excerpt()
 				, hash : state.active.hash
+			};
+		}
+		else	// (config.historyMode === modes.windowHistory || config.historyMode === modes.sessionHistory)
+		{
+			saves[slot] =
+			{
+				  title  : tale.get(state.active.title).excerpt()
+				, history: deepCopy(state.history.slice(0, state.active.sidx + 1))
 			};
 		}
 
@@ -305,13 +313,13 @@ var GameSaves =
 		var   saveName = tale.domId + ".json"
 			, saveData;
 
-		if (config.hasPushState)
-		{
-			saveData = { history: deepCopy(state.history.slice(0, state.active.sidx + 1)) };
-		}
-		else
+		if (config.historyMode === modes.hashTag)
 		{
 			saveData = { hash: state.active.hash };
+		}
+		else	// (config.historyMode === modes.windowHistory || config.historyMode === modes.sessionHistory)
+		{
+			saveData = { history: deepCopy(state.history.slice(0, state.active.sidx + 1)) };
 		}
 		saveData = JSON.stringify(saveData);
 
@@ -359,7 +367,17 @@ var GameSaves =
 			return;
 		}
 
-		if (config.hasPushState)
+		if (config.historyMode === modes.hashTag)
+		{
+			if (!saveObj.hash)
+			{
+				alert("Save is missing the required game hash.  Either you've loaded a save made while using the new window history system, or the save has become corrupted.\n\nAborting load.");
+				return;
+			}
+
+			window.location.hash = saveObj.hash;
+		}
+		else	// (config.historyMode === modes.windowHistory || config.historyMode === modes.sessionHistory)
 		{
 			if (!saveObj.history)
 			{
@@ -371,7 +389,10 @@ var GameSaves =
 			document.title = tale.title;
 
 			// start a new state history (do not call init()!)
-			session.removeItem("activeHistory");
+			if (config.historyMode === modes.sessionHistory)
+			{
+				session.removeItem("activeHistory");
+			}
 			state = new History();
 
 			// restore the history states in order
@@ -384,7 +405,7 @@ var GameSaves =
 				console.log("    > loading: " + i + " (" + state.history[i].title + ")");
 
 				// load the state into the window history
-				window.history.pushState({ sidx: state.history[i].sidx, uuid: state.uuid }, document.title);
+				window.history.pushState({ sidx: state.history[i].sidx, suid: state.suid }, document.title);
 			}
 
 			// activate the current top
@@ -392,16 +413,6 @@ var GameSaves =
 
 			// display the passage
 			state.display(state.active.title, null, "back");
-		}
-		else
-		{
-			if (!saveObj.hash)
-			{
-				alert("Save is missing the required game hash.  Either you've loaded a save made while using the new window history system, or the save has become corrupted.\n\nAborting load.");
-				return;
-			}
-
-			window.location.hash = saveObj.hash;
 		}
 	}
 };
@@ -526,7 +537,7 @@ var Interface =
 				tdSlot.appendChild(document.createTextNode(i+1));
 
 				var tdLoadBtn, tdDescTxt, tdDeleBtn;
-				if (saves[i] && (config.hasPushState ? saves[i].history : saves[i].hash))
+				if (saves[i] && (config.historyMode === modes.hashTag ? saves[i].hash : saves[i].history))
 				{
 					tdLoadBtn = createButton("load", "Load", i, GameSaves.loadSave);
 					tdLoad.appendChild(tdLoadBtn);
@@ -628,14 +639,8 @@ var Interface =
 		var hasItems = false;
 		removeChildren(menu);
 
-		for (var i = 0, end = state.history.length - (config.hasPushState ? 0 : 1); i < end; i++)
+		for (var i = 0, len = state.history.length - 1; i < len; i++)
 		{
-			// skip the currently displayed passage
-			if (config.hasPushState && i === window.history.state.sidx)
-			{
-				continue;
-			}
-
 			var passage = tale.get(state.history[i].title);
 			if (passage && passage.tags.indexOf("bookmark") !== -1)
 			{
@@ -643,18 +648,48 @@ var Interface =
 				el.onclick = (function ()
 				{
 					var p = i;
-					if (config.hasPushState)
+					if (config.historyMode === modes.windowHistory)
 					{
 						return function ()
 						{
-							console.log("[snapback:onclick()]");
+							console.log("[snapback:onclick() @windowHistory]");
+//FIXME: Fix this?
 
 							// necessary?
 							document.title = tale.title;
 
-							// create a new uuid for the state history
+							// push the history states in order
+							for (var i = 0, end = p; i <= end; i++)
+							{
+								console.log("    > pushing: " + i + " (" + state.history[i].title + ")");
+
+								// load the state into the window history
+								window.history.pushState(state.history.slice(0, i + 1), document.title);
+							}
+
+							// stack ids are out of sync, pop our stack until
+							// we're back in sync with the window.history
+							state.pop(state.history.length - (p + 1));
+
+							// activate the current top
+							state.activate(state.top);
+
+							// display the passage
+							state.display(state.active.title, null, "back");
+						};
+					}
+					else if (config.historyMode === modes.sessionHistory)
+					{
+						return function ()
+						{
+							console.log("[snapback:onclick() @sessionHistory]");
+
+							// necessary?
+							document.title = tale.title;
+
+							// create a new suid for the state history
 							session.removeItem("activeHistory");
-							state.uuid = generateUuid();
+							state.suid = generateUuid();
 							state.save();
 
 							// push the history states in order
@@ -663,7 +698,7 @@ var Interface =
 								console.log("    > pushing: " + i + " (" + state.history[i].title + ")");
 
 								// load the state into the window history
-								window.history.pushState({ sidx: state.history[i].sidx, uuid: state.uuid }, document.title);
+								window.history.pushState({ sidx: state.history[i].sidx, suid: state.suid }, document.title);
 							}
 
 							if (window.history.state.sidx < state.top.sidx)
@@ -679,7 +714,6 @@ var Interface =
 
 							// display the passage
 							state.display(state.active.title, null, "back");
-
 						};
 					}
 					else
@@ -724,23 +758,47 @@ window.onload = Interface.init;	// starts the magic
 function History()
 {
 	console.log("[History()]");
+	console.log("    > mode: " + (config.historyMode === modes.hashTag ? "hashTag" : (config.historyMode === modes.windowHistory ? "windowHistory" : "sessionHistory")));
+	if (window.history.state)
+	{
+		if (config.historyMode === modes.windowHistory)
+		{
+			console.log("    > window.history.state: " + window.history.state.length.toString());
+		}
+		else if (config.historyMode === modes.sessionHistory)
+		{
+			console.log("    > window.history.state: " + window.history.state.sidx + "/" + window.history.state.suid);
+		}
+	}
+	else
+	{ console.log("    > window.history.state: null (" + window.history.state + ")"); }
 
 	// currently active/displayed state
 	this.active = { init: true, variables: {} };	// allows macro initialization to set variables at startup
 
 	// history state stack
-	this.history = [];	// [{ title: null, variables: {}, sidx: null }];
+	//     hashTag        [{ title: null, variables: {} }]
+	//     windowHistory  [{ title: null, variables: {} }]
+	//     sessionHistory [{ title: null, variables: {}, sidx: null }]
+	this.history = [];
 
-	// history instance UUID, so that histories from previous reloads/restarts can be found
-	if (config.hasPushState)
+	if (config.historyMode === modes.windowHistory)
 	{
+		if (window.history.state != null)	// != to catch undefined as well
+		{
+			this.history = window.history.state;
+		}
+	}
+	else if (config.historyMode === modes.sessionHistory)
+	{
+		// history instance UUID, so that histories from previous reloads/restarts can be found
 		if (window.history.state !== null && session.hasItem("activeHistory"))
 		{
-			this.uuid = session.getItem("activeHistory");
+			this.suid = session.getItem("activeHistory");
 		}
 		else
 		{
-			this.uuid = generateUuid();
+			this.suid = generateUuid();
 		}
 	}
 }
@@ -761,7 +819,7 @@ History.prototype.clone = function (at)
 	if (at > this.history.length) { return null; }
 
 	var dup = deepCopy(this.history[this.history.length - at]);
-	if (config.hasPushState)
+	if (config.historyMode === modes.sessionHistory)
 	{
 		delete dup.sidx;
 	}
@@ -793,7 +851,7 @@ History.prototype.push = function (/* variadic */)
 	for (var i = 0; i < arguments.length; i++)
 	{
 		var state = arguments[i];
-		if (config.hasPushState)
+		if (config.historyMode === modes.sessionHistory)
 		{
 			state.sidx = this.history.length;
 		}
@@ -837,9 +895,13 @@ History.prototype.init = function ()
 	}
 
 	// setup the history change handlers
-	if (config.hasPushState)
+	if (config.historyMode === modes.windowHistory)
 	{
-		window.onpopstate = History.popStateHandler;
+		window.onpopstate = History.popStateHandler_windowHistory;
+	}
+	else if (config.historyMode === modes.sessionHistory)
+	{
+		window.onpopstate = History.popStateHandler_sessionHistory;
 	}
 	else
 	{
@@ -857,13 +919,27 @@ History.prototype.display = function (title, link, render)
 	// ensure that this.active is set if we have history
 	if (this.active.init && !this.isEmpty)
 	{
-		this.activate(window.history.state !== null ? window.history.state.sidx : this.top);
+		if (config.historyMode === modes.sessionHistory)
+		{
+			console.log("    [SH]> state.active.init && !state.isEmpty; activating: " + (window.history.state !== null ? "window.history.state.sidx" : "state.top"));
+			this.activate(window.history.state !== null ? window.history.state.sidx : this.top);
+		}
+		else if (config.historyMode === modes.windowHistory)
+		{
+			console.log("    [WH]> state.active.init && !state.isEmpty; activating: state.top");
+			this.activate(this.top);
+		}
+		else
+		{
+			console.log("    [HT]> state.active.init && !state.isEmpty; activating: state.top");
+			this.activate(this.top);
+		}
 	}
 
 	// create a fresh entry in the history
 	if (render !== "back")
 	{
-		if (config.hasPushState && !this.isEmpty && window.history.state.sidx < this.top.sidx)
+		if (config.historyMode === modes.sessionHistory && !this.isEmpty && window.history.state.sidx < this.top.sidx)
 		{
 			console.log("    > stacks out of sync; popping " + (this.top.sidx - window.history.state.sidx) + " states to equalize");
 			// stack ids are out of sync, pop our stack until we're back
@@ -874,25 +950,39 @@ History.prototype.display = function (title, link, render)
 		this.push({ title: passage.title, variables: deepCopy(this.active.variables) });
 		this.activate(this.top);
 
-		if (config.hasPushState)
+		if (config.historyMode === modes.windowHistory)
 		{
-			if (window.history.state === null)
+			if (window.history.state === null && this.history.length !== 1) { console.log("    > !DANGER! (window.history.state === null) && (this.history.length !== 1) !DANGER!"); }
+
+			//FIXME: this or that? if (window.history.state === null)
+			if (this.history.length === 1 && window.history.state === null)
 			{
-				window.history.replaceState({ sidx: this.active.sidx, uuid: this.uuid }, document.title);
+				window.history.replaceState(this.history, document.title);
 			}
 			else
 			{
-				window.history.pushState({ sidx: this.active.sidx, uuid: this.uuid }, document.title);
+				window.history.pushState(this.history, document.title);
+			}
+		}
+		else if (config.historyMode === modes.sessionHistory)
+		{
+			if (window.history.state === null)
+			{
+				window.history.replaceState({ sidx: this.active.sidx, suid: this.suid }, document.title);
+			}
+			else
+			{
+				window.history.pushState({ sidx: this.active.sidx, suid: this.suid }, document.title);
 			}
 		}
 	}
-	if (config.hasPushState)
-	{
-		this.save();
-	}
-	else
+	if (config.historyMode === modes.hashTag)
 	{
 		this.active.hash = this.top.hash = this.save();
+	}
+	else if (config.historyMode === modes.sessionHistory)
+	{
+		this.save();
 	}
 
 	// add it to the page
@@ -910,7 +1000,7 @@ History.prototype.display = function (title, link, render)
 		{
 			document.title = tale.title + ": " + passage.title;
 		}
-		if (!config.hasPushState)
+		if (config.historyMode === modes.hashTag)
 		{
 			window.location.hash = this.hash = this.top.hash;
 		}
@@ -922,7 +1012,12 @@ History.prototype.display = function (title, link, render)
 History.prototype.restart = function ()
 {
 	console.log("[<History>.restart()]");
-	if (config.hasPushState)
+	if (config.historyMode === modes.windowHistory)
+	{
+		window.history.pushState(null);
+		window.location.reload();
+	}
+	else if (config.historyMode === modes.sessionHistory)
 	{
 		session.removeItem("activeHistory");
 		window.location.reload();
@@ -936,14 +1031,14 @@ History.prototype.restart = function ()
 History.prototype.save = function ()
 {
 	console.log("[<History>.save()]");
-	if (config.hasPushState)
+	if (config.historyMode === modes.sessionHistory)
 	{
-		if (session.setItem("history." + this.uuid, this.history))
+		if (session.setItem("history." + this.suid, this.history))
 		{
-			session.setItem("activeHistory", this.uuid);
+			session.setItem("activeHistory", this.suid);
 		}
 	}
-	else
+	else if (config.historyMode === modes.hashTag)
 	{
 		var order = "";
 
@@ -962,18 +1057,26 @@ History.prototype.save = function ()
 	}
 };
 
-History.prototype.restore = function (uuid)
+History.prototype.restore = function (suid)
 {
 	console.log("[<History>.restore()]");
-	if (config.hasPushState)
+	if (config.historyMode === modes.windowHistory)
 	{
-		if (uuid)
+		if (!this.isEmpty && tale.has(this.top.title))
 		{
-			this.uuid = uuid;
+			this.display(this.top.title, null, "back");
+			return true;
 		}
-		if (this.uuid && session.hasItem("history." + this.uuid))
+	}
+	else if (config.historyMode === modes.sessionHistory)
+	{
+		if (suid)
 		{
-			this.history = session.getItem("history." + this.uuid);
+			this.suid = suid;
+		}
+		if (this.suid && session.hasItem("history." + this.suid))
+		{
+			this.history = session.getItem("history." + this.suid);
 			console.log("    > window.history.state.sidx: " + window.history.state.sidx);
 			if (tale.has(this.history[window.history.state.sidx].title))
 			{
@@ -982,30 +1085,33 @@ History.prototype.restore = function (uuid)
 			}
 		}
 	}
-	else if ((window.location.hash !== "") && (window.location.hash !== "#"))
+	else if (config.historyMode === modes.hashTag)
 	{
-		try
+		if (window.location.hash !== "" && window.location.hash !== "#")
 		{
-			var order = window.location.hash.replace("#", "").split(".");
-
-			// render the passages in the order the reader clicked them
-			// we only show the very last one
-			for (var i = 0, last = order.length - 1; i <= last; i++)
+			try
 			{
-				var id = parseInt(order[i], 36);
+				var order = window.location.hash.replace("#", "").split(".");
 
-				if (!tale.has(id)) { return false; }
+				// render the passages in the order the reader clicked them
+				// we only show the very last one
+				for (var i = 0, end = order.length - 1; i <= end; i++)
+				{
+					var id = parseInt(order[i], 36);
 
-				console.log("    > id: " + id + " (" + order[i] + ")");
+					if (!tale.has(id)) { return false; }
 
-				this.display(id, null, (i === last) ? null : "offscreen");
+					console.log("    > id: " + id + " (" + order[i] + ")");
+
+					this.display(id, null, (i === end) ? null : "offscreen");
+				}
+
+				return true;
 			}
-
-			return true;
-		}
-		catch(e)
-		{
-			console.log("restore failed", e);
+			catch(e)
+			{
+				console.log("restore failed", e);
+			}
 		}
 	}
 	return false;
@@ -1017,7 +1123,7 @@ History.hashChangeHandler = function (e)
 
 	if (window.location.hash !== state.hash)
 	{
-		if ((window.location.hash !== "") && (window.location.hash !== "#"))
+		if (window.location.hash !== "" && window.location.hash !== "#")
 		{
 			var el = $("passages");
 
@@ -1042,20 +1148,35 @@ History.hashChangeHandler = function (e)
 	}
 };
 
-History.popStateHandler = function (e)
+History.popStateHandler_windowHistory = function (e)
 {
-	console.log("[History.popStateHandler()]");
+	console.log("[History.popStateHandler_windowHistory()]");
+	if (e.state === null) { console.log("    > e.state: null; no-op"); }
+
+	// no-op if state is null
+	if (e.state === null) { return; }
+
+	// throw error if state is empty
+	if (e.state.length === 0) { throw new Error("Guru meditation error!"); }
+
+	state.history = e.state;
+	state.display(state.activate(state.top).title, null, "back");
+};
+
+History.popStateHandler_sessionHistory = function (e)
+{
+	console.log("[History.popStateHandler_sessionHistory()]");
 	if (e.state === null) { console.log("    > e.state: null; no-op"); }
 
 	// no-op if state is null
 	if (e.state === null) { return; }
 
 	// update the history stack if necessary
-	if (e.state.uuid !== state.uuid)
+	if (e.state.suid !== state.suid)
 	{
 		console.log("    > state from previous history detected, swapping in history");
 		state.save();
-		state.restore(e.state.uuid);
+		state.restore(e.state.suid);
 	}
 
 	state.display(state.activate(e.state.sidx).title, null, "back");
