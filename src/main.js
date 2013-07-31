@@ -27,7 +27,7 @@ function getRandomArbitrary(min, max)
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("July 30, 2013"), extensions: {} };
+var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("July 31, 2013"), extensions: {} };
 
 var modes =		// SugarCube History class modes
 {
@@ -140,7 +140,7 @@ function main()
 		}
 		catch (e)
 		{
-			alert("There is a technical problem with this story (" + scripts[i].title + ": " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
+			window.alert("There is a technical problem with this story (" + scripts[i].title + ": " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
 		}
 	}
 	var widgets = tale.lookup("tags", "widget");
@@ -159,7 +159,7 @@ function main()
 		}
 		catch (e)
 		{
-			alert("There is a technical problem with this story (" + widgets[i].title + ": " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
+			window.alert("There is a technical problem with this story (" + widgets[i].title + ": " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
 		}
 	}
 
@@ -194,7 +194,7 @@ function main()
 		}
 		catch (e)
 		{
-			alert("There is a technical problem with this story (StoryInit: " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
+			window.alert("There is a technical problem with this story (StoryInit: " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
 		}
 	}
 
@@ -211,6 +211,11 @@ function main()
 	}
 
 	// 6. execute the StoryReady passage
+	//storyReadyInit();
+}
+
+function storyReadyInit()
+{
 	if (tale.has("StoryReady"))
 	{
 		try
@@ -226,7 +231,7 @@ function main()
 		}
 		catch (e)
 		{
-			alert("There is a technical problem with this story (StoryReady: " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
+			window.alert("There is a technical problem with this story (StoryReady: " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
 		}
 	}
 }
@@ -261,20 +266,28 @@ var GameSaves =
 		if (slot > saves.length) { return; }
 
 		// create the base save
-		if (config.historyMode === modes.hashTag)
+		if (config.historyMode === modes.windowHistory)
 		{
 			saves[slot] =
 			{
-				  title: tale.get(state.active.title).excerpt()
-				, hash : state.active.hash
+				  title:         tale.get(state.active.title).excerpt()
+				, windowHistory: deepCopy(state.history)
 			};
 		}
-		else	// (config.historyMode === modes.windowHistory || config.historyMode === modes.sessionHistory)
+		else if (config.historyMode === modes.sessionHistory)
 		{
 			saves[slot] =
 			{
-				  title  : tale.get(state.active.title).excerpt()
-				, history: deepCopy(state.history.slice(0, state.active.sidx + 1))
+				  title:          tale.get(state.active.title).excerpt()
+				, sessionHistory: deepCopy(state.history.slice(0, state.active.sidx + 1))
+			};
+		}
+		else	// (config.historyMode === modes.hashTag)
+		{
+			saves[slot] =
+			{
+				  title:   tale.get(state.active.title).excerpt()
+				, hashTag: state.active.hash
 			};
 		}
 
@@ -313,13 +326,17 @@ var GameSaves =
 		var   saveName = tale.domId + ".json"
 			, saveData;
 
-		if (config.historyMode === modes.hashTag)
+		if (config.historyMode === modes.windowHistory)
 		{
-			saveData = { hash: state.active.hash };
+			saveData = { windowHistory: deepCopy(state.history) };
 		}
-		else	// (config.historyMode === modes.windowHistory || config.historyMode === modes.sessionHistory)
+		else if (config.historyMode === modes.sessionHistory)
 		{
-			saveData = { history: deepCopy(state.history.slice(0, state.active.sidx + 1)) };
+			saveData = { sessionHistory: deepCopy(state.history.slice(0, state.active.sidx + 1)) };
+		}
+		else	// (config.historyMode === modes.hashTag)
+		{
+			saveData = { hashTag: state.active.hash };
 		}
 		saveData = JSON.stringify(saveData);
 
@@ -363,25 +380,15 @@ var GameSaves =
 
 		if (!saveObj)
 		{
-			alert("Save is missing the required game data.  Either you've loaded a file which isn't a save, or the save has become corrupted.\n\nAborting load.");
+			window.alert("Save is missing the required game data.  Either you've loaded a file which isn't a save, or the save has become corrupted.\n\nAborting load.");
 			return;
 		}
 
-		if (config.historyMode === modes.hashTag)
+		if (config.historyMode === modes.windowHistory)
 		{
-			if (!saveObj.hash)
+			if (!saveObj.windowHistory)
 			{
-				alert("Save is missing the required game hash.  Either you've loaded a save made while using the new window history system, or the save has become corrupted.\n\nAborting load.");
-				return;
-			}
-
-			window.location.hash = saveObj.hash;
-		}
-		else	// (config.historyMode === modes.windowHistory || config.historyMode === modes.sessionHistory)
-		{
-			if (!saveObj.history)
-			{
-				alert("Save is missing the required game data.  Either you've loaded a save made while using the old hash tag system, or the save has become corrupted.\n\nAborting load.");
+				window.alert("Save is missing the required game data.  Either you've loaded a save made while using one of the other history modes, or the save has become corrupted.\n\nAborting load.");
 				return;
 			}
 
@@ -389,18 +396,46 @@ var GameSaves =
 			document.title = tale.title;
 
 			// start a new state history (do not call init()!)
-			if (config.historyMode === modes.sessionHistory)
-			{
-				session.removeItem("activeHistory");
-			}
 			state = new History();
 
 			// restore the history states in order
-			for (var i = 0, len = saveObj.history.length; i < len; i++)
+			for (var i = 0, len = saveObj.windowHistory.length; i < len; i++)
 			{
 				// load the state from the save
-				state.history.push(deepCopy(saveObj.history[i]));
-				//state.history[i] = deepCopy(saveObj.history[i]);
+				state.history.push(deepCopy(saveObj.windowHistory[i]));
+
+				console.log("    > loading: " + i + " (" + state.history[i].title + ")");
+
+				// load the state into the window history
+				window.history.pushState(state.history, document.title);
+			}
+
+			// activate the current top
+			state.activate(state.top);
+
+			// display the passage
+			state.display(state.active.title, null, "back");
+		}
+		else if (config.historyMode === modes.sessionHistory)
+		{
+			if (!saveObj.sessionHistory)
+			{
+				window.alert("Save is missing the required game data.  Either you've loaded a save made while using one of the other history modes, or the save has become corrupted.\n\nAborting load.");
+				return;
+			}
+
+			// necessary?
+			document.title = tale.title;
+
+			// start a new state history (do not call init()!)
+			state = new History();
+			state.regenerateSuid();
+
+			// restore the history states in order
+			for (var i = 0, len = saveObj.sessionHistory.length; i < len; i++)
+			{
+				// load the state from the save
+				state.history.push(deepCopy(saveObj.sessionHistory[i]));
 
 				console.log("    > loading: " + i + " (" + state.history[i].title + ")");
 
@@ -414,6 +449,19 @@ var GameSaves =
 			// display the passage
 			state.display(state.active.title, null, "back");
 		}
+		else	// (config.historyMode === modes.hashTag)
+		{
+			if (!saveObj.hashTag)
+			{
+				window.alert("Save is missing the required game data.  Either you've loaded a save made while using one of the other history modes, or the save has become corrupted.\n\nAborting load.");
+				return;
+			}
+
+			window.location.hash = saveObj.hashTag;
+		}
+
+		// execute the StoryReady passage
+		//storyReadyInit();
 	}
 };
 
@@ -443,6 +491,7 @@ var Interface =
 		}
 
 		main();
+
 		addClickHandler($("saves"),    Interface.showSaves);
 		addClickHandler($("snapback"), Interface.showSnapback);
 		addClickHandler($("restart"),  Interface.restart);
@@ -491,8 +540,10 @@ var Interface =
 	{
 		var menu = $("savesMenu");
 		Interface.hideAllMenus();
-		Interface.buildSaves(menu);
-		Interface.showMenu(event, menu);
+		if (Interface.buildSaves(menu))
+		{
+			Interface.showMenu(event, menu);
+		}
 	},
 	buildSaves: function (menu)
 	{
@@ -537,7 +588,9 @@ var Interface =
 				tdSlot.appendChild(document.createTextNode(i+1));
 
 				var tdLoadBtn, tdDescTxt, tdDeleBtn;
-				if (saves[i] && (config.historyMode === modes.hashTag ? saves[i].hash : saves[i].history))
+				if (saves[i]
+					&& (config.historyMode === modes.hashTag ? saves[i].hashTag
+						: (config.historyMode === modes.windowHistory ? saves[i].windowHistory : saves[i].sessionHistory)))
 				{
 					tdLoadBtn = createButton("load", "Load", i, GameSaves.loadSave);
 					tdLoad.appendChild(tdLoadBtn);
@@ -572,33 +625,49 @@ var Interface =
 			table.appendChild(tbody);
 			return table;
 		}
-		var list;
-
-		// initialize the saves
-		GameSaves.init();
+		var   list
+			, savesOK = storage.store !== null;
 
 		// remove old contents
 		removeChildren(menu);
 
-		// add saves list
-		list = createSaveList();
-		if (!list || list.length === 0)
+		if (savesOK)
 		{
-			list = document.createElement("div");
-			list.id = "savesMenu_list"
-			list.innerHTML = "<i>No saves found</i>";
+			// initialize the saves
+			GameSaves.init();
+
+			// add saves list
+			list = createSaveList();
+			if (!list || list.length === 0)
+			{
+				list = document.createElement("div");
+				list.id = "savesMenu_list"
+				list.innerHTML = "<i>No save slots found</i>";
+			}
+			menu.appendChild(list);
 		}
-		menu.appendChild(list);
 
 		// add action list (export, import, and purge)
-		list = document.createElement("ul");
-		if (config.hasFileAPI && (!config.browser.isOpera || config.browser.operaVersion >= 15))
+		if (savesOK || (config.hasFileAPI && (!config.browser.isOpera || config.browser.operaVersion >= 15)))
 		{
-			list.appendChild(createActionItem("export", "Save to Disk\u2026", GameSaves.exportSave));
-			list.appendChild(createActionItem("import", "Load from Disk\u2026", Interface.showSavesImport));
+			list = document.createElement("ul");
+			if (config.hasFileAPI && (!config.browser.isOpera || config.browser.operaVersion >= 15))
+			{
+				list.appendChild(createActionItem("export", "Save to Disk\u2026", GameSaves.exportSave));
+				list.appendChild(createActionItem("import", "Load from Disk\u2026", Interface.showSavesImport));
+			}
+			if (savesOK)
+			{
+				list.appendChild(createActionItem("purge",  "Purge Save Slots",   GameSaves.purgeSaves));
+			}
+			menu.appendChild(list);
+			return true;
 		}
-		list.appendChild(createActionItem("purge",  "Purge Save Slots",   GameSaves.purgeSaves));
-		menu.appendChild(list);
+		else
+		{
+			window.alert("Apologies!  Your browser either has none of the features required to support saves or has disabled them.\n\nThe former may be solved by updating it to a more recent version or by switching to a more modern browser.\n\nThe latter may be solved by loosening its security restrictions or, perhaps, by viewing the story via the HTTP protocol.");
+			return false;
+		}
 	},
 	showSavesImport: function (event)
 	{
@@ -653,7 +722,6 @@ var Interface =
 						return function ()
 						{
 							console.log("[snapback:onclick() @windowHistory]");
-//FIXME: Fix this?
 
 							// necessary?
 							document.title = tale.title;
@@ -676,6 +744,9 @@ var Interface =
 
 							// display the passage
 							state.display(state.active.title, null, "back");
+
+							// execute the StoryReady passage
+							//storyReadyInit();
 						};
 					}
 					else if (config.historyMode === modes.sessionHistory)
@@ -687,10 +758,8 @@ var Interface =
 							// necessary?
 							document.title = tale.title;
 
-							// create a new suid for the state history
-							session.removeItem("activeHistory");
-							state.suid = generateUuid();
-							state.save();
+							// regenerate the state history suid
+							state.regenerateSuid();
 
 							// push the history states in order
 							for (var i = 0, end = p; i <= end; i++)
@@ -714,6 +783,9 @@ var Interface =
 
 							// display the passage
 							state.display(state.active.title, null, "back");
+
+							// execute the StoryReady passage
+							//storyReadyInit();
 						};
 					}
 					else
@@ -721,6 +793,9 @@ var Interface =
 						return function ()
 						{
 							window.location.hash = state.history[p].hash;
+
+							// execute the StoryReady passage
+							//storyReadyInit();
 						};
 					}
 				}());
@@ -759,19 +834,7 @@ function History()
 {
 	console.log("[History()]");
 	console.log("    > mode: " + (config.historyMode === modes.hashTag ? "hashTag" : (config.historyMode === modes.windowHistory ? "windowHistory" : "sessionHistory")));
-	if (window.history.state)
-	{
-		if (config.historyMode === modes.windowHistory)
-		{
-			console.log("    > window.history.state: " + window.history.state.length.toString());
-		}
-		else if (config.historyMode === modes.sessionHistory)
-		{
-			console.log("    > window.history.state: " + window.history.state.sidx + "/" + window.history.state.suid);
-		}
-	}
-	else
-	{ console.log("    > window.history.state: null (" + window.history.state + ")"); }
+	if (window.history.state) { if (config.historyMode === modes.windowHistory) { console.log("    > window.history.state: " + window.history.state.length.toString()); } else if (config.historyMode === modes.sessionHistory) { console.log("    > window.history.state: " + window.history.state.sidx + "/" + window.history.state.suid); } } else { console.log("    > window.history.state: null (" + window.history.state + ")"); }
 
 	// currently active/displayed state
 	this.active = { init: true, variables: {} };	// allows macro initialization to set variables at startup
@@ -781,26 +844,6 @@ function History()
 	//     windowHistory  [{ title: null, variables: {} }]
 	//     sessionHistory [{ title: null, variables: {}, sidx: null }]
 	this.history = [];
-
-	if (config.historyMode === modes.windowHistory)
-	{
-		if (window.history.state != null)	// != to catch undefined as well
-		{
-			this.history = window.history.state;
-		}
-	}
-	else if (config.historyMode === modes.sessionHistory)
-	{
-		// history instance UUID, so that histories from previous reloads/restarts can be found
-		if (window.history.state !== null && session.hasItem("activeHistory"))
-		{
-			this.suid = session.getItem("activeHistory");
-		}
-		else
-		{
-			this.suid = generateUuid();
-		}
-	}
 }
 
 // setup accessors and mutators
@@ -952,7 +995,11 @@ History.prototype.display = function (title, link, render)
 
 		if (config.historyMode === modes.windowHistory)
 		{
-			if (window.history.state === null && this.history.length !== 1) { console.log("    > !DANGER! (window.history.state === null) && (this.history.length !== 1) !DANGER!"); }
+			if (window.history.state === null && this.history.length !== 1)
+			{
+				console.log("    > !DANGER! (window.history.state === null) && (this.history.length !== 1) !DANGER!");
+				window.alert("!DANGER! (window.history.state === null) && (this.history.length !== 1) !DANGER!");
+			}
 
 			//FIXME: this or that? if (window.history.state === null)
 			if (this.history.length === 1 && window.history.state === null)
@@ -985,6 +1032,17 @@ History.prototype.display = function (title, link, render)
 		this.save();
 	}
 
+	// clear <body> classes and execute the StoryReady passage
+	if (render !== "offscreen")
+	{
+		var body = (document.body || document.getElementsByTagName('body')[0]);
+		if (body.className)
+		{
+			body.className = "";
+		}
+		storyReadyInit();
+	}
+
 	// add it to the page
 	var el = passage.render();
 	el.style.visibility = "visible";
@@ -1009,12 +1067,19 @@ History.prototype.display = function (title, link, render)
 	return el;
 };
 
+History.prototype.regenerateSuid = function ()
+{
+	session.removeItem("activeHistory");
+	this.suid = generateUuid();
+	this.save();
+};
+
 History.prototype.restart = function ()
 {
 	console.log("[<History>.restart()]");
 	if (config.historyMode === modes.windowHistory)
 	{
-		window.history.pushState(null);
+		window.history.pushState(null, document.title);	// yes, null
 		window.location.reload();
 	}
 	else if (config.historyMode === modes.sessionHistory)
@@ -1062,6 +1127,10 @@ History.prototype.restore = function (suid)
 	console.log("[<History>.restore()]");
 	if (config.historyMode === modes.windowHistory)
 	{
+		if (window.history.state !== null)
+		{
+			this.history = window.history.state;
+		}
 		if (!this.isEmpty && tale.has(this.top.title))
 		{
 			this.display(this.top.title, null, "back");
@@ -1073,6 +1142,17 @@ History.prototype.restore = function (suid)
 		if (suid)
 		{
 			this.suid = suid;
+		}
+		else
+		{
+			if (window.history.state !== null && session.hasItem("activeHistory"))
+			{
+				this.suid = session.getItem("activeHistory");
+			}
+			else
+			{
+				this.suid = generateUuid();
+			}
 		}
 		if (this.suid && session.hasItem("history." + this.suid))
 		{
@@ -1136,7 +1216,7 @@ History.hashChangeHandler = function (e)
 			removeChildren(el);
 			if (!state.restore())
 			{
-				alert("The passage you had previously visited could not be found.");
+				window.alert("The passage you had previously visited could not be found.");
 			}
 			el.style.visibility = "visible";
 		}
@@ -1262,14 +1342,19 @@ Passage.prototype.render = function ()
 	passage.style.visibility = "hidden";
 
 	// add classes (generated from tags) to the passage and <body>
-	if (this.classes.length > 0)
+//	if (this.classes.length > 0)
+//	{
+//		passage.className = Passage.mergeClassNames(passage.className, this.classes);
+//		body.className = this.className;
+//	}
+//	else
+//	{
+//		body.className = "";
+//	}
+	for (var i = 0, len = this.classes.length; i < len; i++)
 	{
-		passage.className = Passage.mergeClassNames(passage.className, this.classes);
-		body.className = this.className;
-	}
-	else
-	{
-		body.className = "";
+		body.classList.add(this.classes[i]);
+		passage.classList.add(this.classes[i]);
 	}
 
 	// add passage header element
