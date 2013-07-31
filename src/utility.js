@@ -484,24 +484,23 @@ function generateUuid()
 function KeyValueStore(storeName, storePrefix)
 {
 	this.store = null;
-	this.name  = "cookie";
 	switch (storeName)
 	{
 	case "cookie":
-		// no-op; cookie is the default
+		this.name  = "cookie";
 		break;
 	case "localStorage":
+		this.name  = storeName;
 		if (config.hasLocalStorage)
 		{
 			this.store = window.localStorage;
-			this.name  = storeName;
 		}
 		break;
 	case "sessionStorage":
+		this.name  = storeName;
 		if (config.hasSessionStorage)
 		{
 			this.store = window.sessionStorage;
-			this.name  = storeName;
 		}
 		break;
 	default:
@@ -514,6 +513,8 @@ function KeyValueStore(storeName, storePrefix)
 KeyValueStore.prototype.setItem = function (sKey, sValue)
 {
 	if (!sKey) { return false; }
+
+	var oKey = sKey;
 
 	sKey = this.prefix + sKey;
 	sValue = JSON.stringify(sValue);
@@ -535,23 +536,30 @@ KeyValueStore.prototype.setItem = function (sKey, sValue)
 	}
 	else
 	{
-		var expiry = "";	// no expiry means a session cookie
+		var cookie = [ escape(sKey) + "=" + escape(sValue) ];
+		// no expiry means a session cookie
 		switch (this.name)
 		{
 		case "cookie":
 			// fallthrough
 		case "localStorage":
-			expiry = "; expires=Tue, 19 Jan 2038 03:14:07 GMT";
+			cookie.push("expires=Tue, 19 Jan 2038 03:14:07 GMT");
 			break;
 		}
-		var cookie = escape(sKey) + "=" + escape(sValue) + expiry + "; path=/";
-		if (cookie.length <= 4093)	// 4093 is a rough limit
+		cookie.push("path=/");
+		try
 		{
-			document.cookie = cookie;
+			console.log("    > setItem:cookie: " + cookie.join("; "));
+			document.cookie = cookie.join("; ");
 		}
-		else
+		catch (e)
 		{
-			window.alert("Unable to store key; cookie size exceeded");
+			window.alert("Unable to store key; cookie error: " + e.message);
+			return false;
+		}
+		if (!this.hasItem(oKey))
+		{
+			window.alert("Unable to store key; unknown cookie error");
 			return false;
 		}
 	}
@@ -578,7 +586,7 @@ KeyValueStore.prototype.getItem = function (sKey)
 		for (var i = 0; i < cookies.length; i++)
 		{
 			var bits = cookies[i].split("=");
-			if (bits[0].trim() == sKey)
+			if (bits[0].trim() === sKey)
 			{
 				return JSON.parse(unescape(bits[1]));
 			}
