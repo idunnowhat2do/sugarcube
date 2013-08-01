@@ -806,18 +806,32 @@ Wikifier.formatters =
 		if (lookaheadMatch && lookaheadMatch.index === w.matchStart && lookaheadMatch[1])
 		{
 			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
-			var macroName = lookaheadMatch[1];
+			var   macroName = lookaheadMatch[1]
+				, funcName  = "handler"
+				, funcSigil = macroName.indexOf("::");
+			if (funcSigil !== -1)
+			{
+				funcName  = macroName.slice(funcSigil + 2);
+				macroName = macroName.slice(0, funcSigil);
+			}
 			try
 			{
 				var macro = macros[macroName];
-				if (macro && typeof macro.handler === "function")
+				if (macro)
 				{
-					var params = [];
-					if (!macro["excludeParams"])
+					if (typeof macro[funcName] === "function")
 					{
-						params = lookaheadMatch[2].readMacroParams(macro["replaceVarParams"] !== undefined ? macro["replaceVarParams"] : true);
+						var params = [];
+						if (!macro["excludeParams"])
+						{
+							params = lookaheadMatch[2].readMacroParams(macro["replaceVarParams"] !== undefined ? macro["replaceVarParams"] : true);
+						}
+						macro[funcName](w.output, macroName, params, w);
 					}
-					macro.handler(w.output, macroName, params, w);
+					else
+					{
+						throwError(w.output, "macro <<" + macroName + '>> property "' + funcName + '" ' + (macro.hasOwnProperty(funcName) ? "is not a function" : "does not exist"));
+					}
 				}
 				else if (macros._children.hasOwnProperty(macroName))
 				{
