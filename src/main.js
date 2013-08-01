@@ -27,7 +27,7 @@ function getRandomArbitrary(min, max)
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("July 31, 2013"), extensions: {} };
+var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("August 01, 2013"), extensions: {} };
 
 var modes =		// SugarCube History class modes
 {
@@ -50,10 +50,18 @@ var config =	// SugarCube config
 	, userAgent: navigator.userAgent.toLowerCase()
 	, browser: {}
 
-	// option properties
+	// general option properties
 	, displayPassageTitles: false
 	, historyMode:          modes.hashTag
-	, maxGameSaveSlots:     8
+
+	// saves option properties
+	, saves:
+		{
+			  id:      "untitled_story"
+			, loader:  undefined
+			, slots:   8
+			, version: undefined
+		}
 };
 config.browser =
 {
@@ -89,6 +97,9 @@ function main()
 
 	// set the document title
 	document.title = tale.title;
+
+	// set the default saves ID
+	config.saves.id = tale.domId;
 
 	// setup for StoryBanner, StoryTitle, StorySubtitle, StoryAuthor, StoryCaption, StoryMenu, & ShareMenu passages
 	setPageElement("storyBanner", "StoryBanner");
@@ -252,12 +263,12 @@ var GameSaves =
 		}
 		else
 		{
-			saves = new Array(config.maxGameSaveSlots);
+			saves = new Array(config.saves.slots);
 			storage.setItem("saves", saves);
 		}
 		GameSaves.maxIndex = saves.length - 1;
 	},
-	createSave: function (slot)
+	save: function (slot)
 	{
 		if (slot < 0 || slot > GameSaves.maxIndex) { return false; }
 		if (!storage.hasItem("saves")) { return; }
@@ -265,35 +276,12 @@ var GameSaves =
 		var saves = storage.getItem("saves");
 		if (slot > saves.length) { return; }
 
-		// create the base save
-		if (config.historyMode === modes.windowHistory)
-		{
-			saves[slot] =
-			{
-				  title:         tale.get(state.active.title).excerpt()
-				, windowHistory: deepCopy(state.history)
-			};
-		}
-		else if (config.historyMode === modes.sessionHistory)
-		{
-			saves[slot] =
-			{
-				  title:          tale.get(state.active.title).excerpt()
-				, sessionHistory: deepCopy(state.history.slice(0, state.active.sidx + 1))
-			};
-		}
-		else	// (config.historyMode === modes.hashTag)
-		{
-			saves[slot] =
-			{
-				  title:   tale.get(state.active.title).excerpt()
-				, hashTag: state.active.hash
-			};
-		}
+		saves[slot] = GameSaves.marshal();
+		saves[slot].title = tale.get(state.active.title).excerpt();
 
 		return storage.setItem("saves", saves);
 	},
-	loadSave: function (slot)
+	load: function (slot)
 	{
 		if (slot < 0 || slot > GameSaves.maxIndex) { return; }
 		if (!storage.hasItem("saves")) { return; }
@@ -303,9 +291,9 @@ var GameSaves =
 
 		if (saves[slot] === null) { return; }
 
-		GameSaves.restoreSave(saves[slot]);
+		GameSaves.unmarshal(saves[slot]);
 	},
-	deleteSave: function (slot)
+	delete: function (slot)
 	{
 		if (slot < 0 || slot > GameSaves.maxIndex) { return; }
 		if (!storage.hasItem("saves")) { return; }
@@ -315,7 +303,7 @@ var GameSaves =
 		saves[slot] = null;
 		return storage.setItem("saves", saves);
 	},
-	purgeSaves: function ()
+	purge: function ()
 	{
 		return storage.removeItem("saves");
 	},
@@ -324,23 +312,9 @@ var GameSaves =
 		console.log("[GameSaves.exportSave()]");
 
 		var   saveName = tale.domId + ".json"
-			, saveData;
+			, saveObj  = JSON.stringify(GameSaves.marshal());
 
-		if (config.historyMode === modes.windowHistory)
-		{
-			saveData = { windowHistory: deepCopy(state.history) };
-		}
-		else if (config.historyMode === modes.sessionHistory)
-		{
-			saveData = { sessionHistory: deepCopy(state.history.slice(0, state.active.sidx + 1)) };
-		}
-		else	// (config.historyMode === modes.hashTag)
-		{
-			saveData = { hashTag: state.active.hash };
-		}
-		saveData = JSON.stringify(saveData);
-
-		saveAs(new Blob([saveData], { type: "application/json;charset=UTF-8" }), saveName);
+		saveAs(new Blob([saveObj], { type: "application/json;charset=UTF-8" }), saveName);
 	},
 	importSave: function (event)
 	{
@@ -358,110 +332,125 @@ var GameSaves =
 
 				if (!e.target.result) { return; }
 
-				var saveData;
+				var saveObj;
 				try
 				{
-					saveData = JSON.parse(e.target.result);
+					saveObj = JSON.parse(e.target.result);
 				}
 				catch (e)
 				{
-					// noop, the restoreSave() function will handle the error
+					// noop, the unmarshal() function will handle the error
 				}
-				GameSaves.restoreSave(saveData);
+				GameSaves.unmarshal(saveObj);
 			};
 		})(file);
 
 		// initiate the file load
 		reader.readAsText(file);
 	},
-	restoreSave: function (saveObj)
+	marshal: function ()
 	{
-		console.log("[GameSaves.restoreSave()]");
+		console.log("[GameSaves.marshal()]");
 
-		if (!saveObj)
+		var saveObj =
+		{
+			  mode: config.historyMode
+			, id:   config.saves.id
+		};
+
+		if (config.saves.version)
+		{
+			saveObj.version = config.saves.version;
+		}
+		switch (config.historyMode)
+		{
+		case modes.windowHistory:
+			saveObj.data = deepCopy(state.history);
+			break;
+		case modes.sessionHistory:
+			saveObj.data = deepCopy(state.history.slice(0, state.active.sidx + 1));
+			break;
+		case modes.hashTag:
+			saveObj.data = state.active.hash;
+			break;
+		}
+
+		if (typeof config.saves.exporter === "function")
+		{
+			config.saves.exporter(saveObj);
+		}
+
+		return saveObj;
+	},
+	unmarshal: function (saveObj)
+	{
+		console.log("[GameSaves.unmarshal()]");
+
+		if (!saveObj || !saveObj.hasOwnProperty("mode") || !saveObj.hasOwnProperty("id") || !saveObj.hasOwnProperty("data"))
 		{
 			window.alert("Save is missing the required game data.  Either you've loaded a file which isn't a save, or the save has become corrupted.\n\nAborting load.");
 			return;
 		}
-
-		if (config.historyMode === modes.windowHistory)
+		if (saveObj.mode !== config.historyMode)
 		{
-			if (!saveObj.windowHistory)
-			{
-				window.alert("Save is missing the required game data.  Either you've loaded a save made while using one of the other history modes, or the save has become corrupted.\n\nAborting load.");
-				return;
-			}
+			window.alert("Save is from the wrong history mode.\n\nAborting load.");
+			return;
+		}
 
+		if (typeof config.saves.importer === "function")
+		{
+			config.saves.importer(saveObj);
+		}
+
+		if (saveObj.id !== config.saves.id)
+		{
+			window.alert("Save is from the wrong story.\n\nAborting load.");
+			return;
+		}
+
+		switch (config.historyMode)
+		{
+		case modes.windowHistory:
+			// fallthrough
+		case modes.sessionHistory:
 			// necessary?
 			document.title = tale.title;
 
 			// start a new state history (do not call init()!)
 			state = new History();
+			if (config.historyMode === modes.sessionHistory)
+			{
+				state.regenerateSuid();
+			}
 
 			// restore the history states in order
-			for (var i = 0, len = saveObj.windowHistory.length; i < len; i++)
+			for (var i = 0, len = saveObj.data.length; i < len; i++)
 			{
 				// load the state from the save
-				state.history.push(deepCopy(saveObj.windowHistory[i]));
+				state.history.push(deepCopy(saveObj.data[i]));
 
 				console.log("    > loading: " + i + " (" + state.history[i].title + ")");
 
 				// load the state into the window history
-				window.history.pushState(state.history, document.title);
+				if (config.historyMode === modes.windowHistory)
+				{
+					window.history.pushState(state.history, document.title);
+				}
+				else
+				{
+					window.history.pushState({ sidx: state.history[i].sidx, suid: state.suid }, document.title);
+				}
 			}
 
-			// activate the current top
+			// activate the current top and display the passage
 			state.activate(state.top);
-
-			// display the passage
 			state.display(state.active.title, null, "back");
+			break;
+
+		case modes.hashTag:
+			window.location.hash = saveObj.data;
+			break;
 		}
-		else if (config.historyMode === modes.sessionHistory)
-		{
-			if (!saveObj.sessionHistory)
-			{
-				window.alert("Save is missing the required game data.  Either you've loaded a save made while using one of the other history modes, or the save has become corrupted.\n\nAborting load.");
-				return;
-			}
-
-			// necessary?
-			document.title = tale.title;
-
-			// start a new state history (do not call init()!)
-			state = new History();
-			state.regenerateSuid();
-
-			// restore the history states in order
-			for (var i = 0, len = saveObj.sessionHistory.length; i < len; i++)
-			{
-				// load the state from the save
-				state.history.push(deepCopy(saveObj.sessionHistory[i]));
-
-				console.log("    > loading: " + i + " (" + state.history[i].title + ")");
-
-				// load the state into the window history
-				window.history.pushState({ sidx: state.history[i].sidx, suid: state.suid }, document.title);
-			}
-
-			// activate the current top
-			state.activate(state.top);
-
-			// display the passage
-			state.display(state.active.title, null, "back");
-		}
-		else	// (config.historyMode === modes.hashTag)
-		{
-			if (!saveObj.hashTag)
-			{
-				window.alert("Save is missing the required game data.  Either you've loaded a save made while using one of the other history modes, or the save has become corrupted.\n\nAborting load.");
-				return;
-			}
-
-			window.location.hash = saveObj.hashTag;
-		}
-
-		// execute the StoryReady passage
-		//storyReadyInit();
 	}
 };
 
@@ -588,30 +577,26 @@ var Interface =
 				tdSlot.appendChild(document.createTextNode(i+1));
 
 				var tdLoadBtn, tdDescTxt, tdDeleBtn;
-				if (saves[i]
-					&& (config.historyMode === modes.hashTag ? saves[i].hashTag
-						: (config.historyMode === modes.windowHistory ? saves[i].windowHistory : saves[i].sessionHistory)))
+				if (saves[i] && saves[i].mode === config.historyMode)
 				{
-					tdLoadBtn = createButton("load", "Load", i, GameSaves.loadSave);
+					tdLoadBtn = createButton("load", "Load", i, GameSaves.load);
 					tdLoad.appendChild(tdLoadBtn);
 
 					tdDescTxt = document.createTextNode(saves[i].title);
 					tdDesc.appendChild(tdDescTxt);
 
-					tdDeleBtn = createButton("delete", "Delete", i, GameSaves.deleteSave);
+					tdDeleBtn = createButton("delete", "Delete", i, GameSaves.delete);
 					tdDele.appendChild(tdDeleBtn);
 				}
 				else
 				{
-					tdLoadBtn = createButton("save", "Save", i, GameSaves.createSave);
+					tdLoadBtn = createButton("save", "Save", i, GameSaves.save);
 					tdLoad.appendChild(tdLoadBtn);
 
 					tdDescTxt = document.createElement("i");
 					tdDescTxt.innerHTML = "(save slot empty)";
 					tdDesc.appendChild(tdDescTxt);
 					tdDesc.classList.add("emptySave");
-
-					//tdDele.innerHTML = "\u00a0";
 				}
 
 				tr.appendChild(tdSlot);
@@ -658,7 +643,7 @@ var Interface =
 			}
 			if (savesOK)
 			{
-				list.appendChild(createActionItem("purge",  "Purge Save Slots",   GameSaves.purgeSaves));
+				list.appendChild(createActionItem("purge",  "Purge Save Slots",   GameSaves.purge));
 			}
 			menu.appendChild(list);
 			return true;
@@ -744,9 +729,6 @@ var Interface =
 
 							// display the passage
 							state.display(state.active.title, null, "back");
-
-							// execute the StoryReady passage
-							//storyReadyInit();
 						};
 					}
 					else if (config.historyMode === modes.sessionHistory)
@@ -783,9 +765,6 @@ var Interface =
 
 							// display the passage
 							state.display(state.active.title, null, "back");
-
-							// execute the StoryReady passage
-							//storyReadyInit();
 						};
 					}
 					else
@@ -793,9 +772,6 @@ var Interface =
 						return function ()
 						{
 							window.location.hash = state.history[p].hash;
-
-							// execute the StoryReady passage
-							//storyReadyInit();
 						};
 					}
 				}());
