@@ -171,7 +171,7 @@ macros["actions"] =
 /**
  * <<back>> & <<return>>
  */
-version.extensions["backMacro"] = version.extensions["returnMacro"] = { major: 2, minor: 0, revision: 0 };
+version.extensions["backMacro"] = version.extensions["returnMacro"] = { major: 2, minor: 1, revision: 0 };
 macros["back"] = macros["return"] =
 {
 	handler: function (place, macroName, params)
@@ -185,17 +185,14 @@ macros["back"] = macros["return"] =
 		{
 			if (params.length > 1 && params[1] === "steps")
 			{
-				if (isNaN(params[0]))
+				if (isNaN(params[0]) || params[0] < 1)
 				{
-					throwError(place, "<<" + macroName + '>>: the parameter before "steps" must be a number');
+					throwError(place, "<<" + macroName + '>>: the parameter before "steps" must be a whole number greater than zero');
 					return;
 				}
-				else if (params[0] < state.length)
-				{
-					pname = state.peek(params[0]).title;
-					steps = params[0];
-					ltext = " (" + steps + " steps)";
-				}
+				steps = (params[0] < state.length) ? params[0] : state.length - 1;
+				pname = state.peek(steps).title;
+				ltext = " (" + steps + " steps)";
 			}
 			else
 			{
@@ -208,8 +205,8 @@ macros["back"] = macros["return"] =
 				{
 					if (state.history[i].title === params[0])
 					{
-						pname = params[0];
 						steps = (state.history.length - 1) - i;
+						pname = params[0];
 						ltext = ' (to "' + pname + '")';
 						break;
 					}
@@ -286,8 +283,40 @@ macros["back"] = macros["return"] =
 				}
 			}());
 		}
-		el.innerHTML = "<b>\u00ab</b> " + macroName[0].toUpperCase() + macroName.slice(1) + ltext;
+		if (macroName === "back")
+		{
+			el.innerHTML = this.backLabel || ("<b>\u00ab</b> Back" + ltext);
+		}
+		else
+		{
+			el.innerHTML = this.returnLabel || ("<b>\u00ab</b> Return" + ltext);
+		}
 		place.appendChild(el);
+	},
+	linktext: function (place, macroName, params)
+	{
+		if (params.length === 0)
+		{
+			if (macroName === "back")
+			{
+				delete this.backLabel;
+			}
+			else
+			{
+				delete this.returnLabel;
+			}
+		}
+		else
+		{
+			if (macroName === "back")
+			{
+				this.backLabel = params[0];
+			}
+			else
+			{
+				this.returnLabel = params[0];
+			}
+		}
 	}
 };
 
@@ -333,7 +362,7 @@ macros["bind"] =
 						state.display(passage, el);
 					}
 				};
-			}(macroData[0].contents));
+			}(macroData[0].contents.trim()));
 			place.appendChild(el);
 		}
 		else
@@ -656,14 +685,14 @@ macros["remember"] =
 	excludeParams: true,
 	handler: function (place, macroName, params, parser)
 	{
-		var statement = parser.fullArgs();
-		if (evalMacroExpression(statement, place, macroName))
+		var expression = parser.fullArgs();
+		if (evalMacroExpression(expression, place, macroName))
 		{
 			var   remember = storage.getItem("remember") || {}
 				, varRe    = new RegExp("state\\.active\\.variables\\.(\\w+)", "g")
 				, varMatch;
 
-			while ((varMatch = varRe.exec(statement)) !== null)
+			while ((varMatch = varRe.exec(expression)) !== null)
 			{
 				var varName = varMatch[1];
 
@@ -672,7 +701,7 @@ macros["remember"] =
 
 			if (!storage.setItem("remember", remember))
 			{
-				throwError(place, "<<" + macroName + ">>: unknown error, cannot remember: " + statement);
+				throwError(place, "<<" + macroName + ">>: unknown error, cannot remember: " + parser.rawArgs());
 			}
 		}
 	},
@@ -721,11 +750,50 @@ macros["silently"] =
 		if (macroData)
 		{
 			// execute the contents and discard the output
-			new Wikifier(document.createElement("div"), macroData[0].contents);
+			new Wikifier(document.createElement("div"), macroData[0].contents.trim());
 		}
 		else
 		{
 			throwError(place, "<<" + macroName + ">>: cannot find a matching close tag");
+		}
+	}
+};
+
+/**
+ * <<unset>>
+ */
+version.extensions["unsetMacro"] = { major: 1, minor: 0, revision: 0 };
+macros["unset"] =
+{
+	excludeParams: true,
+	handler: function (place, macroName, params, parser)
+	{
+		var   expression = parser.fullArgs()
+			, varRe      = new RegExp("state\\.active\\.variables\\.(\\w+)", "g")
+			, varMatch
+			, remember   = storage.getItem("remember")
+			, needStore  = false;
+
+		while ((varMatch = varRe.exec(expression)) !== null)
+		{
+			var varName = varMatch[1];
+
+			// remove it from the normal variable store
+			if (state.active.variables.hasOwnProperty(varName))
+			{
+				delete state.active.variables[varName];
+			}
+			// remove it from the remember variable store
+			if (remember && remember.hasOwnProperty(varName))
+			{
+				needStore = true;
+				delete remember[varName];
+			}
+		}
+
+		if (needStore && !storage.setItem("remember", remember))
+		{
+			throwError(place, "<<" + macroName + ">>: unknown error, cannot update remember store");
 		}
 	}
 };
