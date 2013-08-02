@@ -57,10 +57,12 @@ var config =	// SugarCube config
 	// saves option properties
 	, saves:
 		{
-			  id:      "untitled_story"
-			, loader:  undefined
-			, slots:   8
-			, version: undefined
+			  id:        "untitled_story"
+			, isAllowed: undefined
+			, onLoad:    undefined
+			, onSave:    undefined
+			, slots:     8
+			, version:   undefined
 		}
 };
 config.browser =
@@ -270,11 +272,16 @@ var GameSaves =
 	},
 	save: function (slot)
 	{
+		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed())
+		{
+			window.alert("Saving is not allowed here.");
+			return false;
+		}
 		if (slot < 0 || slot > GameSaves.maxIndex) { return false; }
-		if (!storage.hasItem("saves")) { return; }
+		if (!storage.hasItem("saves")) { return false; }
 
 		var saves = storage.getItem("saves");
-		if (slot > saves.length) { return; }
+		if (slot > saves.length) { return false; }
 
 		saves[slot] = GameSaves.marshal();
 		saves[slot].title = tale.get(state.active.title).excerpt();
@@ -283,23 +290,23 @@ var GameSaves =
 	},
 	load: function (slot)
 	{
-		if (slot < 0 || slot > GameSaves.maxIndex) { return; }
-		if (!storage.hasItem("saves")) { return; }
+		if (slot < 0 || slot > GameSaves.maxIndex) { return false; }
+		if (!storage.hasItem("saves")) { return false; }
 
 		var saves = storage.getItem("saves");
-		if (slot > saves.length) { return; }
+		if (slot > saves.length) { return false; }
+		if (saves[slot] === null) { return false; }
 
-		if (saves[slot] === null) { return; }
-
-		GameSaves.unmarshal(saves[slot]);
+		return GameSaves.unmarshal(saves[slot]);
 	},
 	delete: function (slot)
 	{
-		if (slot < 0 || slot > GameSaves.maxIndex) { return; }
-		if (!storage.hasItem("saves")) { return; }
+		if (slot < 0 || slot > GameSaves.maxIndex) { return false; }
+		if (!storage.hasItem("saves")) { return false; }
 
 		var saves = storage.getItem("saves");
-		if (slot > saves.length) { return; }
+		if (slot > saves.length) { return false; }
+
 		saves[slot] = null;
 		return storage.setItem("saves", saves);
 	},
@@ -310,6 +317,12 @@ var GameSaves =
 	exportSave: function ()
 	{
 		console.log("[GameSaves.exportSave()]");
+
+		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed())
+		{
+			window.alert("Saving is not allowed here.");
+			return;
+		}
 
 		var   saveName = tale.domId + ".json"
 			, saveObj  = JSON.stringify(GameSaves.marshal());
@@ -375,9 +388,9 @@ var GameSaves =
 			break;
 		}
 
-		if (typeof config.saves.exporter === "function")
+		if (typeof config.saves.onSave === "function")
 		{
-			config.saves.exporter(saveObj);
+			config.saves.onSave(saveObj);
 		}
 
 		return saveObj;
@@ -389,23 +402,23 @@ var GameSaves =
 		if (!saveObj || !saveObj.hasOwnProperty("mode") || !saveObj.hasOwnProperty("id") || !saveObj.hasOwnProperty("data"))
 		{
 			window.alert("Save is missing the required game data.  Either you've loaded a file which isn't a save, or the save has become corrupted.\n\nAborting load.");
-			return;
+			return false;
 		}
 		if (saveObj.mode !== config.historyMode)
 		{
 			window.alert("Save is from the wrong history mode.\n\nAborting load.");
-			return;
+			return false;
 		}
 
-		if (typeof config.saves.importer === "function")
+		if (typeof config.saves.onLoad === "function")
 		{
-			config.saves.importer(saveObj);
+			config.saves.onLoad(saveObj);
 		}
 
 		if (saveObj.id !== config.saves.id)
 		{
 			window.alert("Save is from the wrong story.\n\nAborting load.");
-			return;
+			return false;
 		}
 
 		switch (config.historyMode)
@@ -451,6 +464,8 @@ var GameSaves =
 			window.location.hash = saveObj.data;
 			break;
 		}
+
+		return true;
 	}
 };
 
