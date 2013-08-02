@@ -3,7 +3,7 @@
 ***********************************************************************************************************************/
 
 /***********************************************************************************************************************
-** [Function Library, Game/Story Utilities]
+** [Function Library, Story Utilities]
 ***********************************************************************************************************************/
 
 /**
@@ -27,7 +27,7 @@ function getRandomArbitrary(min, max)
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("August 01, 2013"), extensions: {} };
+var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("August 02, 2013"), extensions: {} };
 
 var modes =		// SugarCube History class modes
 {
@@ -77,12 +77,13 @@ config.browser =
 };
 config.historyMode = (config.hasPushState ? (config.browser.isGecko ? modes.sessionHistory : modes.windowHistory) : modes.hashTag);
 
-var   tale      = {}	// story manager
+var   formatter = null	// Wikifier formatters
+	, tale      = {}	// story manager
 	, state     = {}	// history manager
 	, macros    = {}	// macro store
 	, storage   = {}	// persistant storage manager
 	, session   = {}	// session manager
-	, formatter = null;	// Wikifier formatters
+	, setup     = {};	// author setup variable store
 
 /**
  * Main function, entry point for story startup
