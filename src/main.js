@@ -223,36 +223,11 @@ function main()
 		}
 	}
 
-	// 6. execute the StoryReady passage
-	//storyReadyInit();
-
-	// 7. initialize the user interface
+	// 6. initialize the user interface
 	MenuSystem.init();
 }
 
 window.onload = main;	// starts the magic
-
-function storyReadyInit()
-{
-	if (tale.has("StoryReady"))
-	{
-		try
-		{
-			var errTrap = document.createElement("div");
-			new Wikifier(errTrap, tale.get("StoryReady").text);
-			while (errTrap.hasChildNodes())
-			{
-				var fc = errTrap.firstChild;
-				if (fc.classList && fc.classList.contains("error")) { throw new Error(fc.textContent); }
-				errTrap.removeChild(fc);
-			}
-		}
-		catch (e)
-		{
-			window.alert("There is a technical problem with this story (StoryReady: " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
-		}
-	}
-}
 
 
 /***********************************************************************************************************************
@@ -1025,7 +1000,7 @@ History.prototype.display = function (title, link, render)
 		this.save();
 	}
 
-	// clear <body> classes and execute the StoryReady passage
+	// clear <body> classes and execute the PassageReady passage
 	if (render !== "offscreen")
 	{
 		var body = (document.body || document.getElementsByTagName('body')[0]);
@@ -1033,7 +1008,24 @@ History.prototype.display = function (title, link, render)
 		{
 			body.className = "";
 		}
-		storyReadyInit();
+		if (tale.has("PassageReady"))
+		{
+			try
+			{
+				var errTrap = document.createElement("div");
+				new Wikifier(errTrap, tale.get("PassageReady").text);
+				while (errTrap.hasChildNodes())
+				{
+					var fc = errTrap.firstChild;
+					if (fc.classList && fc.classList.contains("error")) { throw new Error(fc.textContent); }
+					errTrap.removeChild(fc);
+				}
+			}
+			catch (e)
+			{
+				window.alert("There is a technical problem with this story (PassageReady: " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
+			}
+		}
 	}
 
 	// add it to the page
