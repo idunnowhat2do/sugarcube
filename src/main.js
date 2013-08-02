@@ -225,7 +225,12 @@ function main()
 
 	// 6. execute the StoryReady passage
 	//storyReadyInit();
+
+	// 7. initialize the user interface
+	MenuSystem.init();
 }
+
+window.onload = main;	// starts the magic
 
 function storyReadyInit()
 {
@@ -251,9 +256,9 @@ function storyReadyInit()
 
 
 /***********************************************************************************************************************
-** [Game Save Management]
+** [Save System]
 ***********************************************************************************************************************/
-var GameSaves =
+var SaveSystem =
 {
 	maxIndex: 0,
 	init: function (slot)
@@ -268,7 +273,7 @@ var GameSaves =
 			saves = new Array(config.saves.slots);
 			storage.setItem("saves", saves);
 		}
-		GameSaves.maxIndex = saves.length - 1;
+		SaveSystem.maxIndex = saves.length - 1;
 	},
 	save: function (slot)
 	{
@@ -277,31 +282,31 @@ var GameSaves =
 			window.alert("Saving is not allowed here.");
 			return false;
 		}
-		if (slot < 0 || slot > GameSaves.maxIndex) { return false; }
+		if (slot < 0 || slot > SaveSystem.maxIndex) { return false; }
 		if (!storage.hasItem("saves")) { return false; }
 
 		var saves = storage.getItem("saves");
 		if (slot > saves.length) { return false; }
 
-		saves[slot] = GameSaves.marshal();
+		saves[slot] = SaveSystem.marshal();
 		saves[slot].title = tale.get(state.active.title).excerpt();
 
 		return storage.setItem("saves", saves);
 	},
 	load: function (slot)
 	{
-		if (slot < 0 || slot > GameSaves.maxIndex) { return false; }
+		if (slot < 0 || slot > SaveSystem.maxIndex) { return false; }
 		if (!storage.hasItem("saves")) { return false; }
 
 		var saves = storage.getItem("saves");
 		if (slot > saves.length) { return false; }
 		if (saves[slot] === null) { return false; }
 
-		return GameSaves.unmarshal(saves[slot]);
+		return SaveSystem.unmarshal(saves[slot]);
 	},
 	delete: function (slot)
 	{
-		if (slot < 0 || slot > GameSaves.maxIndex) { return false; }
+		if (slot < 0 || slot > SaveSystem.maxIndex) { return false; }
 		if (!storage.hasItem("saves")) { return false; }
 
 		var saves = storage.getItem("saves");
@@ -316,7 +321,7 @@ var GameSaves =
 	},
 	exportSave: function ()
 	{
-		console.log("[GameSaves.exportSave()]");
+		console.log("[SaveSystem.exportSave()]");
 
 		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed())
 		{
@@ -325,13 +330,13 @@ var GameSaves =
 		}
 
 		var   saveName = tale.domId + ".json"
-			, saveObj  = JSON.stringify(GameSaves.marshal());
+			, saveObj  = JSON.stringify(SaveSystem.marshal());
 
 		saveAs(new Blob([saveObj], { type: "application/json;charset=UTF-8" }), saveName);
 	},
 	importSave: function (event)
 	{
-		console.log("[GameSaves.importSave()]");
+		console.log("[SaveSystem.importSave()]");
 
 		var   file   = event.target.files[0]
 			, reader = new FileReader();
@@ -354,7 +359,7 @@ var GameSaves =
 				{
 					// noop, the unmarshal() function will handle the error
 				}
-				GameSaves.unmarshal(saveObj);
+				SaveSystem.unmarshal(saveObj);
 			};
 		})(file);
 
@@ -363,7 +368,7 @@ var GameSaves =
 	},
 	marshal: function ()
 	{
-		console.log("[GameSaves.marshal()]");
+		console.log("[SaveSystem.marshal()]");
 
 		var saveObj =
 		{
@@ -397,7 +402,7 @@ var GameSaves =
 	},
 	unmarshal: function (saveObj)
 	{
-		console.log("[GameSaves.unmarshal()]");
+		console.log("[SaveSystem.unmarshal()]");
 
 		if (!saveObj || !saveObj.hasOwnProperty("mode") || !saveObj.hasOwnProperty("id") || !saveObj.hasOwnProperty("data"))
 		{
@@ -471,9 +476,9 @@ var GameSaves =
 
 
 /***********************************************************************************************************************
-** [Interface]
+** [Menu System]
 ***********************************************************************************************************************/
-var Interface =
+var MenuSystem =
 {
 	init: function ()
 	{
@@ -494,12 +499,10 @@ var Interface =
 			}
 		}
 
-		main();
-
-		addClickHandler($("saves"),    Interface.showSaves);
-		addClickHandler($("snapback"), Interface.showSnapback);
-		addClickHandler($("restart"),  Interface.restart);
-		addClickHandler($("share"),    Interface.showShare);
+		addClickHandler($("saves"),    MenuSystem.showSaves);
+		addClickHandler($("snapback"), MenuSystem.showSnapback);
+		addClickHandler($("restart"),  MenuSystem.restart);
+		addClickHandler($("share"),    MenuSystem.showShare);
 	},
 	hideAllMenus: function ()
 	{
@@ -532,7 +535,7 @@ var Interface =
 		el.style.top     = pos.y + "px";
 		el.style.left    = pos.x + "px";
 		el.style.display = "block";
-		document.onclick = Interface.hideAllMenus;
+		document.onclick = MenuSystem.hideAllMenus;
 
 		event.cancelBubble = true;
 		if (event.stopPropagation)
@@ -543,10 +546,10 @@ var Interface =
 	showSaves: function (event)
 	{
 		var menu = $("savesMenu");
-		Interface.hideAllMenus();
-		if (Interface.buildSaves(menu))
+		MenuSystem.hideAllMenus();
+		if (MenuSystem.buildSaves(menu))
 		{
-			Interface.showMenu(event, menu);
+			MenuSystem.showMenu(event, menu);
 		}
 	},
 	buildSaves: function (menu)
@@ -594,18 +597,18 @@ var Interface =
 				var tdLoadBtn, tdDescTxt, tdDeleBtn;
 				if (saves[i] && saves[i].mode === config.historyMode)
 				{
-					tdLoadBtn = createButton("load", "Load", i, GameSaves.load);
+					tdLoadBtn = createButton("load", "Load", i, SaveSystem.load);
 					tdLoad.appendChild(tdLoadBtn);
 
 					tdDescTxt = document.createTextNode(saves[i].title);
 					tdDesc.appendChild(tdDescTxt);
 
-					tdDeleBtn = createButton("delete", "Delete", i, GameSaves.delete);
+					tdDeleBtn = createButton("delete", "Delete", i, SaveSystem.delete);
 					tdDele.appendChild(tdDeleBtn);
 				}
 				else
 				{
-					tdLoadBtn = createButton("save", "Save", i, GameSaves.save);
+					tdLoadBtn = createButton("save", "Save", i, SaveSystem.save);
 					tdLoad.appendChild(tdLoadBtn);
 
 					tdDescTxt = document.createElement("i");
@@ -634,7 +637,7 @@ var Interface =
 		if (savesOK)
 		{
 			// initialize the saves
-			GameSaves.init();
+			SaveSystem.init();
 
 			// add saves list
 			list = createSaveList();
@@ -653,12 +656,12 @@ var Interface =
 			list = document.createElement("ul");
 			if (config.hasFileAPI && (!config.browser.isOpera || config.browser.operaVersion >= 15))
 			{
-				list.appendChild(createActionItem("export", "Save to Disk\u2026", GameSaves.exportSave));
-				list.appendChild(createActionItem("import", "Load from Disk\u2026", Interface.showSavesImport));
+				list.appendChild(createActionItem("export", "Save to Disk\u2026", SaveSystem.exportSave));
+				list.appendChild(createActionItem("import", "Load from Disk\u2026", MenuSystem.showSavesImport));
 			}
 			if (savesOK)
 			{
-				list.appendChild(createActionItem("purge",  "Purge Save Slots",   GameSaves.purge));
+				list.appendChild(createActionItem("purge",  "Purge Save Slots",   SaveSystem.purge));
 			}
 			menu.appendChild(list);
 			return true;
@@ -672,9 +675,9 @@ var Interface =
 	showSavesImport: function (event)
 	{
 		var menu = $("savesMenu");
-		Interface.hideAllMenus();
-		Interface.buildSavesImport(menu);
-		Interface.showMenu(event, menu, $("saves").getElementsByTagName("a")[0]);
+		MenuSystem.hideAllMenus();
+		MenuSystem.buildSavesImport(menu);
+		MenuSystem.showMenu(event, menu, $("saves").getElementsByTagName("a")[0]);
 	},
 	buildSavesImport: function (menu)
 	{
@@ -693,15 +696,15 @@ var Interface =
 		input.type     = "file";
 		input.id       = "savesMenu_importFile";
 		input.name     = "savesMenu_importFile";
-		input.onchange = GameSaves.importSave;
+		input.onchange = SaveSystem.importSave;
 		menu.appendChild(input);
 	},
 	showSnapback: function (event)
 	{
 		var menu = $("snapbackMenu");
-		Interface.hideAllMenus();
-		Interface.buildSnapback(menu);
-		Interface.showMenu(event, menu);
+		MenuSystem.hideAllMenus();
+		MenuSystem.buildSnapback(menu);
+		MenuSystem.showMenu(event, menu);
 	},
 	buildSnapback: function (menu)
 	{
@@ -811,11 +814,10 @@ var Interface =
 	},
 	showShare: function (event)
 	{
-		Interface.hideAllMenus();
-		Interface.showMenu(event, $("shareMenu"));
+		MenuSystem.hideAllMenus();
+		MenuSystem.showMenu(event, $("shareMenu"));
 	}
 };
-window.onload = Interface.init;	// starts the magic
 
 
 /***********************************************************************************************************************
