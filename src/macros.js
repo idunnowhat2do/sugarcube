@@ -434,7 +434,7 @@ macros["classupdate"] =
 			return;
 		}
 
-		var   targetEl = document.getElementById(params[0])
+		var   targetEl = (params[0] === "body") ? document.body : document.getElementById(params[0])
 			, updType  = params[1]
 			, classes  = params[2].trim().split(/\s+/);
 

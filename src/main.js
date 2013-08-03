@@ -27,7 +27,7 @@ function getRandomArbitrary(min, max)
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("August 02, 2013"), extensions: {} };
+var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("August 03, 2013"), extensions: {} };
 
 var modes =		// SugarCube History class modes
 {
@@ -90,6 +90,15 @@ var   formatter = null	// Wikifier formatters
  */
 function main()
 {
+	/**
+	 * Returns the DOM element corresponding to the passed ID or null on failure
+	 *     n.b. Legacy code for old scripts
+	 */
+	function $(id)
+	{
+		return (typeof id === "object") ? id : document.getElementById(id);
+	}
+
 	console.log("[main()]");
 
 	// instantiate wikifier formatters, story, storage, and session objects
@@ -111,17 +120,17 @@ function main()
 	setPageElement("storyAuthor", "StoryAuthor");
 	if (tale.has("StoryCaption"))
 	{
-		$("storyCaption").style.display = "block";
+		document.getElementById("storyCaption").style.display = "block";
 		setPageElement("storyCaption", "StoryCaption");
 	}
 	if (tale.has("StoryMenu"))
 	{
-		$("storyMenu").style.display = "block";
+		document.getElementById("storyMenu").style.display = "block";
 		setPageElement("storyMenu", "StoryMenu");
 	}
 	if (tale.has("ShareMenu"))
 	{
-		var shareMenu = $("shareMenu");
+		var shareMenu = document.getElementById("shareMenu");
 		if (shareMenu)
 		{
 			var shareMenuText = tale.get("ShareMenu").text.trim();
@@ -133,7 +142,7 @@ function main()
 				shareMenu.innerHTML = shareMenu.innerHTML.replace(/(?:<br\s*\/?>)+/g, "\n");
 
 				// enable the sidebar menu item
-				var shareItem = $("share");
+				var shareItem = document.getElementById("share");
 				if (shareItem) { shareItem.style.display = "block"; }
 			}
 		}
@@ -475,17 +484,17 @@ var MenuSystem =
 			}
 		}
 
-		addClickHandler($("saves"),    MenuSystem.showSaves);
-		addClickHandler($("snapback"), MenuSystem.showSnapback);
-		addClickHandler($("restart"),  MenuSystem.restart);
-		addClickHandler($("share"),    MenuSystem.showShare);
+		addClickHandler(document.getElementById("saves"),    MenuSystem.showSaves);
+		addClickHandler(document.getElementById("snapback"), MenuSystem.showSnapback);
+		addClickHandler(document.getElementById("restart"),  MenuSystem.restart);
+		addClickHandler(document.getElementById("share"),    MenuSystem.showShare);
 	},
 	hideAllMenus: function ()
 	{
 		var el;
-		if (el = $("savesMenu"))    { el.style.display = "none"; }
-		if (el = $("snapbackMenu")) { el.style.display = "none"; }
-		if (el = $("shareMenu"))    { el.style.display = "none"; }
+		if (el = document.getElementById("savesMenu"))    { el.style.display = "none"; }
+		if (el = document.getElementById("snapbackMenu")) { el.style.display = "none"; }
+		if (el = document.getElementById("shareMenu"))    { el.style.display = "none"; }
 	},
 	showMenu: function (event, el, target)
 	{
@@ -521,7 +530,7 @@ var MenuSystem =
 	},
 	showSaves: function (event)
 	{
-		var menu = $("savesMenu");
+		var menu = document.getElementById("savesMenu");
 		MenuSystem.hideAllMenus();
 		if (MenuSystem.buildSaves(menu))
 		{
@@ -650,10 +659,10 @@ var MenuSystem =
 	},
 	showSavesImport: function (event)
 	{
-		var menu = $("savesMenu");
+		var menu = document.getElementById("savesMenu");
 		MenuSystem.hideAllMenus();
 		MenuSystem.buildSavesImport(menu);
-		MenuSystem.showMenu(event, menu, $("saves").getElementsByTagName("a")[0]);
+		MenuSystem.showMenu(event, menu, document.getElementById("saves").getElementsByTagName("a")[0]);
 	},
 	buildSavesImport: function (menu)
 	{
@@ -677,7 +686,7 @@ var MenuSystem =
 	},
 	showSnapback: function (event)
 	{
-		var menu = $("snapbackMenu");
+		var menu = document.getElementById("snapbackMenu");
 		MenuSystem.hideAllMenus();
 		MenuSystem.buildSnapback(menu);
 		MenuSystem.showMenu(event, menu);
@@ -791,7 +800,7 @@ var MenuSystem =
 	showShare: function (event)
 	{
 		MenuSystem.hideAllMenus();
-		MenuSystem.showMenu(event, $("shareMenu"));
+		MenuSystem.showMenu(event, document.getElementById("shareMenu"));
 	}
 };
 
@@ -1004,10 +1013,9 @@ History.prototype.display = function (title, link, render)
 	// clear <body> classes and execute the PassageReady passage
 	if (render !== "offscreen")
 	{
-		var body = (document.body || document.getElementsByTagName('body')[0]);
-		if (body.className)
+		if (document.body.className)
 		{
-			body.className = "";
+			document.body.className = "";
 		}
 		if (tale.has("PassageReady"))
 		{
@@ -1034,7 +1042,7 @@ History.prototype.display = function (title, link, render)
 	el.style.visibility = "visible";
 	if (render !== "offscreen")
 	{
-		var passages = $("passages");
+		var passages = document.getElementById("passages");
 		removeChildren(passages);
 		el.classList.add("transition-in");
 		setTimeout(function () { el.classList.remove("transition-in"); }, 1);
@@ -1191,7 +1199,7 @@ History.hashChangeHandler = function (e)
 	{
 		if (window.location.hash !== "" && window.location.hash !== "#")
 		{
-			var el = $("passages");
+			var el = document.getElementById("passages");
 
 			// reset the history stack, making a copy of the <<remember>> variables
 			var remember = storage.getItem("remember");
@@ -1323,23 +1331,13 @@ function Passage(title, el, order)
 Passage.prototype.render = function ()
 {
 	console.log("[<Passage>.render()]");
-	var body = (document.body || document.getElementsByTagName('body')[0]);
 	var passage = insertElement(null, "section", this.domId, "passage");
 	passage.style.visibility = "hidden";
 
 	// add classes (generated from tags) to the passage and <body>
-//	if (this.classes.length > 0)
-//	{
-//		passage.className = Passage.mergeClassNames(passage.className, this.classes);
-//		body.className = this.className;
-//	}
-//	else
-//	{
-//		body.className = "";
-//	}
 	for (var i = 0, len = this.classes.length; i < len; i++)
 	{
-		body.classList.add(this.classes[i]);
+		document.body.classList.add(this.classes[i]);
 		passage.classList.add(this.classes[i]);
 	}
 
@@ -1365,7 +1363,7 @@ Passage.prototype.reset = function ()
 	 * This method should never be called, so this code is largely redundant
 	 *   n.b. <Tale>.reset() does call this method, but nothing calls it, so...
 	 */
-	var store = $("storeArea").childNodes;
+	var store = document.getElementById("storeArea").childNodes;
 	for (var i = 0; i < store.length; i++)
 	{
 		var el = store[i];
@@ -1519,7 +1517,7 @@ function Tale()
 	{
 		document.normalize();
 	}
-	var store = $("storeArea").childNodes;
+	var store = document.getElementById("storeArea").childNodes;
 	for (var i = 0; i < store.length; i++)
 	{
 		var el = store[i];

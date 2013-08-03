@@ -95,14 +95,6 @@ function isBoolean(obj)
 }
 
 /**
- * Returns the DOM element corresponding to the passed ID or null on failure
- */
-function $(id)
-{
-	return (typeof id == "string") ? document.getElementById(id) : null;
-}
-
-/**
  * Returns a shallow copy of the passed object
  *   n.b. Unused in SugarCube, only included for compatibility
  */
@@ -258,7 +250,7 @@ function removeChildren(el)
  */
 function setPageElement(id, title, defaultText)
 {
-	var place = $(id);
+	var place = (typeof id === "object") ? id : document.getElementById(id);
 	if (place)
 	{
 		removeChildren(place);
@@ -278,27 +270,21 @@ function setPageElement(id, title, defaultText)
  */
 function addStyle(css)
 {
-	var head = (document.head || document.getElementsByTagName('head')[0]);
-	if (document.createStyleSheet)
+	var style = document.createElement("style");
+	style.type = "text/css";
+
+	// for IE
+	if (style.styleSheet)
 	{
-		// old IE browsers
-		head.insertAdjacentHTML("beforeEnd", "\u00a0<style>" + css + "</style>");
+		style.styleSheet.cssText = css;
 	}
+	// for everyone else
 	else
 	{
-		// modern, hopefully, browsers
-		var style = document.createElement("style");
-		style.type = "text/css";
-		if (style.styleSheet)
-		{
-			style.styleSheet.cssText = css;
-		}
-		else
-		{
-			style.appendChild(document.createTextNode(css));
-		}
-		head.appendChild(style);
+		style.appendChild(document.createTextNode(css));
 	}
+
+	document.head.appendChild(style);
 }
 
 /**
@@ -388,8 +374,8 @@ function scrollWindowTo(el)
 	{
 		var   posTop    = findPosY(el)
 			, posBottom = posTop + el.offsetHeight
-			, winTop    = window.scrollY ? window.scrollY : body.scrollTop
-			, winHeight = window.innerHeight ? window.innerHeight : body.clientHeight
+			, winTop    = window.scrollY ? window.scrollY : document.body.scrollTop
+			, winHeight = window.innerHeight ? window.innerHeight : document.body.clientHeight
 			, winBottom = winTop + winHeight;
 		if (posTop < winTop)
 		{
@@ -415,8 +401,7 @@ function scrollWindowTo(el)
 		}
 	}
 
-	var   body      = (document.body || document.getElementsByTagName('body')[0])
-		, start     = window.scrollY ? window.scrollY : body.scrollTop
+	var   start     = window.scrollY ? window.scrollY : document.body.scrollTop
 		, end       = ensureVisible(el)
 		, distance  = Math.abs(start - end)
 		, progress  = 0
@@ -458,16 +443,7 @@ function base64ToUtf8(str)
  */
 function generateUuid()
 {
-	/*
-	// this version is vulnerable to bad Math.random() generators which can lead
-	// to collisions (I'm looking at you Chrome)
-	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-		var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-		return v.toString(16);
-	});
-	*/
-
-	// this version uses a combination of Math.random() and Date().getTime() to harden itself
+	// this uses a combination of Math.random() and Date().getTime() to harden itself
 	// against bad Math.random() generators and reduce the likelihood of a collision
 	var d = new Date().getTime();
 	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
