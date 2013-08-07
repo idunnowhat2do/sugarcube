@@ -234,7 +234,7 @@ macros["back"] = macros["return"] =
 		}
 
 		el = document.createElement("a");
-		el.className = macroName;
+		el.classList.add(macroName + "Link");
 		if (steps > 0)
 		{
 			el.onclick = (function ()
@@ -386,7 +386,12 @@ macros["choice"] =
 			return;
 		}
 
-		Wikifier.createInternalLink(place, params[0], params[0]);
+		//Wikifier.createInternalLink(place, params[0], params[0]);
+		var el = insertPassageLink(place, params[0], params[0], macroName + "Link");
+		el.onclick = function ()
+		{
+			state.display(params[0], el);
+		};
 	}
 };
 
@@ -572,12 +577,19 @@ macros["link"] =
 	{
 		function createInternalLink(place, passage, text)
 		{
-			var el = insertPassageLink(place, passage, text);
+			var el = insertPassageLink(place, passage, text, macroName + "Link");
 			el.onclick = function ()
 			{
 				state.active.variables["#link"][passage] = true;
 				state.display(passage, el);
 			};
+			return el;
+		}
+		function createExternalLink(place, url, text)
+		{
+			var el = insertElement(place, "a", null, "externalLink " + macroName + "Link", text);
+			el.href = url;
+			el.target = "_blank";
 			return el;
 		}
 
@@ -646,7 +658,7 @@ macros["link"] =
 			}
 			else
 			{
-				Wikifier.createExternalLink(place, linkLoc, linkText);
+				createExternalLink(place, linkLoc, linkText);
 			}
 		}
 	}
