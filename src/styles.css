@@ -71,11 +71,13 @@ noscript { color: red; font-size: 210%; font-weight: bold; }
 	-o-user-select: none;
 	user-select: none;
 }
-.menu button:hover {
+.menu button:hover
+{
 	background-color: #47b;
 	border: 1px solid #369;
 }
-.menu button:active {
+.menu button:active
+{
 	-webkit-box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.6);
 	-moz-box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.6);
 	box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.6);
