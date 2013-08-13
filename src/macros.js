@@ -580,7 +580,10 @@ macros["link"] =
 			var el = insertPassageLink(place, passage, text, macroName + "Link");
 			el.onclick = function ()
 			{
-				state.active.variables["#link"][passage] = true;
+				if (onceType)
+				{
+					state.active.variables["#link"][passage] = true;
+				}
 				state.display(passage, el);
 			};
 			return el;
