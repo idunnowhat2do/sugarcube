@@ -27,7 +27,7 @@ function getRandomArbitrary(min, max)
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("August 13, 2013"), extensions: {} };
+var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("August 18, 2013"), extensions: {} };
 
 var modes =		// SugarCube History class modes
 {
@@ -62,7 +62,6 @@ var config =	// SugarCube config
 			, onLoad:    undefined
 			, onSave:    undefined
 			, slots:     8
-			, version:   undefined
 		}
 };
 config.browser =
@@ -402,7 +401,12 @@ var SaveSystem =
 
 		if (typeof config.saves.onLoad === "function")
 		{
-			config.saves.onLoad(saveObj);
+			var errMsg = config.saves.onLoad(saveObj);
+			if (errMsg)
+			{
+				window.alert(errMsg + "\n\nAborting load.");
+				return false;
+			}
 		}
 
 		if (saveObj.id !== config.saves.id)
@@ -1284,10 +1288,12 @@ function Passage(title, el, order)
 				//     "stylesheet"   : special tag
 				//     "script"       : special tag
 				//     "widget"       : special tag
+				//     "nosave"       : special tag
+				//     "debug"        : special tag
 				//     "twine.*"      : special tag (in theory, anyway)
 				//   ? "twinequest.*" : private use tag
 				//   ? "tq.*"         : private use tag, AFAIK shorthand form of twinequest.*
-				var tagsToSkip = /^(?:passage|stylesheet|script|widget|twine\.\w*)$/i;
+				var tagsToSkip = /^(?:passage|stylesheet|script|widget|nosave|debug|twine\.\w*)$/i;
 
 				var tagClasses = [];
 				for (var i = 0; i < this.tags.length; i++)
@@ -1470,7 +1476,7 @@ Passage.unescapeLineBreaks = function (text)
 	{
 		return text
 			.replace(/\\n/gm, '\n')
-			.replace(/\\s|\\/gm, '\\')	// "\\s" is required to workaround a Twine bug
+			.replace(/\\s|\\/gm, '\\')	// "\\s" is required to workaround a Twine "feature"
 			.replace(/\r/gm, "");
 	}
 	else
