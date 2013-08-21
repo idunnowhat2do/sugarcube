@@ -1288,12 +1288,11 @@ function Passage(title, el, order)
 				//     "stylesheet"   : special tag
 				//     "script"       : special tag
 				//     "widget"       : special tag
-				//     "nosave"       : special tag
 				//     "debug"        : special tag
 				//     "twine.*"      : special tag (in theory, anyway)
 				//   ? "twinequest.*" : private use tag
 				//   ? "tq.*"         : private use tag, AFAIK shorthand form of twinequest.*
-				var tagsToSkip = /^(?:passage|stylesheet|script|widget|nosave|debug|twine\.\w*)$/i;
+				var tagsToSkip = /^(?:passage|stylesheet|script|widget|debug|twine\.\w*)$/i;
 
 				var tagClasses = [];
 				for (var i = 0; i < this.tags.length; i++)
