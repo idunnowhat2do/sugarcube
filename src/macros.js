@@ -178,58 +178,75 @@ macros["back"] = macros["return"] =
 	{
 		var   steps = 1
 			, pname
-			, ltext = ""
+			, ctext
+			, ltext = "<b>\u00ab</b> " + macroName[0].toUpperCase() + macroName.slice(1)
 			, el;
 
-		if (params.length > 0)
+		if (params.length === 1)
 		{
-			if (params.length > 1 && params[1] === "steps")
+			ctext = params[0];
+		}
+		else if (params.length !== 0)
+		{
+			if (params.length === 3)
 			{
-				if (isNaN(params[0]) || params[0] < 1)
-				{
-					throwError(place, "<<" + macroName + '>>: the parameter before "steps" must be a whole number greater than zero');
-					return;
-				}
-				steps = (params[0] < state.length) ? params[0] : state.length - 1;
-				pname = state.peek(steps).title;
-				ltext = " (" + steps + " steps)";
+				ctext = params.shift();
 			}
-			else
+
+			var histLen = (config.historyMode !== modes.sessionHistory) ? state.length : state.active.sidx + 1;
+			if (params[0] === "go")
 			{
-				if (!tale.has(params[0]))
+				if (isNaN(params[1]) || params[1] < 1)
 				{
-					throwError(place, "<<" + macroName + '>>: the "' + params[0] + '" passage does not exist');
+					throwError(place, "<<" + macroName + '>>: the argument after "go" must be a whole number greater than zero');
 					return;
 				}
-				for (var i = state.history.length - 1; i >= 0; i--)
+				steps = (params[1] < histLen) ? params[1] : histLen - 1;
+				pname = state.peek(steps).title;
+				ltext += " (go " + steps + ")";
+			}
+			else if (params[0] === "to")
+			{
+				if (!tale.has(params[1]))
 				{
-					if (state.history[i].title === params[0])
+					throwError(place, "<<" + macroName + '>>: the "' + params[1] + '" passage does not exist');
+					return;
+				}
+				for (var i = histLen - 1; i >= 0; i--)
+				{
+					if (state.history[i].title === params[1])
 					{
-						steps = (state.history.length - 1) - i;
-						pname = params[0];
-						ltext = ' (to "' + pname + '")';
+						steps = (histLen - 1) - i;
+						pname = params[1];
+						ltext += ' (to "' + pname + '")';
 						break;
 					}
 				}
-			}
-		}
-		else if (state.length > 1)
-		{
-			pname = state.peek(steps).title;
-		}
-		if (!pname)
-		{
-			if (params[0])
-			{
-				throwError(place, "<<" + macroName + '>>: cannot find passage associated with "'
-					+ params[0]
-					+ ((params.length > 1 && params[1] === "steps") ? " steps" : "")
-					+ '"');
+				if (pname === undefined)
+				{
+					throwError(place, "<<" + macroName + '>>: cannot find passage "' + params[1] + '" in the current story history');
+					return;
+				}
 			}
 			else
 			{
-				throwError(place, "<<" + macroName + ">>: cannot find passage");
+				throwError(place, "<<" + macroName + '>>: "' + params[0] + '" is not a valid action (go|to)');
+				return;
 			}
+		}
+		if (pname === undefined && state.length > 1)
+		{
+			pname = state.peek(steps).title;
+		}
+
+		if (pname === undefined)
+		{
+			throwError(place, "<<" + macroName + ">>: cannot find passage");
+			return;
+		}
+		else if (steps === 0)
+		{
+			throwError(place, "<<" + macroName + ">>: already at the first passage in the current story history");
 			return;
 		}
 
@@ -285,11 +302,11 @@ macros["back"] = macros["return"] =
 		}
 		if (macroName === "back")
 		{
-			el.innerHTML = this.backLabel || ("<b>\u00ab</b> Back" + ltext);
+			el.innerHTML = ctext || this.backText || ltext;
 		}
 		else
 		{
-			el.innerHTML = this.returnLabel || ("<b>\u00ab</b> Return" + ltext);
+			el.innerHTML = ctext || this.returnText || ltext;
 		}
 		place.appendChild(el);
 	},
@@ -299,22 +316,22 @@ macros["back"] = macros["return"] =
 		{
 			if (macroName === "back")
 			{
-				delete this.backLabel;
+				delete this.backText;
 			}
 			else
 			{
-				delete this.returnLabel;
+				delete this.returnText;
 			}
 		}
 		else
 		{
 			if (macroName === "back")
 			{
-				this.backLabel = params[0];
+				this.backText = params[0];
 			}
 			else
 			{
-				this.returnLabel = params[0];
+				this.returnText = params[0];
 			}
 		}
 	}
@@ -343,8 +360,8 @@ macros["bind"] =
 				, passage  = params.length > 1 ? params[1] : undefined
 				, el       = document.createElement("a");
 
-			el.classList.add(macroName + "Link");
 			el.classList.add(passage ? (tale.has(passage) ? "internalLink" : "brokenLink") : "internalLink");
+			el.classList.add(macroName + "Link");
 			el.innerHTML = linkText;
 			el.onclick = (function (bindBody)
 			{
