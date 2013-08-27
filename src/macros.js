@@ -121,29 +121,29 @@ function evalMacroExpression(expression, place, macroName)
 /**
  * <<actions>>
  */
-version.extensions["actionsMacro"] = { major: 1, minor: 3, revision: 0 };
+version.extensions["actionsMacro"] = { major: 1, minor: 4, revision: 0 };
 macros["actions"] =
 {
 	handler: function (place, macroName, params)
 	{
 		var list = insertElement(place, "ul");
-		list.className = "actions";
+		list.classList.add(macroName);
 		if (!state.active.variables["#actions"])
 		{
 			state.active.variables["#actions"] = {};
 		}
 		for (var i = 0; i < params.length; i++)
 		{
-			var   action
+			var   actText
 				, passage
 				, delim   = params[i].indexOf("|");
 			if (delim === -1)
 			{
-				action = passage = params[i];
+				actText = passage = params[i];
 			}
 			else
 			{
-				action  = params[i].slice(0, delim);
+				actText = params[i].slice(0, delim);
 				passage = params[i].slice(delim + 1);
 			}
 
@@ -153,7 +153,8 @@ macros["actions"] =
 			}
 
 			var   item = insertElement(list, "li")
-				, link = insertPassageLink(item, passage, action);
+				, link = insertPassageLink(item, passage, actText);
+			link.classList.add(macroName + "Link");
 			link.onclick = (function ()
 			{
 				var   p = passage
