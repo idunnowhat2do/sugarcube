@@ -165,6 +165,7 @@ Wikifier.prototype.subWikify = function (output, terminator)
 	// Prepare the terminator RegExp
 	var terminatorRegExp = terminator ? new RegExp("(" + terminator + ")", "gm") : null;
 
+	var formatterMatch, terminatorMatch;
 	do
 	{
 		// Prepare the RegExp match positions
@@ -175,8 +176,8 @@ Wikifier.prototype.subWikify = function (output, terminator)
 		}
 
 		// Get the first matches
-		var formatterMatch = this.formatter.formatterRegExp.exec(this.source);
-		var terminatorMatch = terminatorRegExp ? terminatorRegExp.exec(this.source) : null;
+		formatterMatch = this.formatter.formatterRegExp.exec(this.source);
+		terminatorMatch = terminatorRegExp ? terminatorRegExp.exec(this.source) : null;
 
 		// Check for a terminator match
 		if (terminatorMatch && (!formatterMatch || terminatorMatch.index <= formatterMatch.index))
