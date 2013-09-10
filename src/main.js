@@ -27,7 +27,7 @@ function getRandomArbitrary(min, max)
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("August 27, 2013"), extensions: {} };
+var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("September 10, 2013"), extensions: {} };
 
 var modes =		// SugarCube History class modes
 {
@@ -127,13 +127,20 @@ function main()
 		document.getElementById("storyMenu").style.display = "block";
 		setPageElement("storyMenu", "StoryMenu");
 	}
+	if (tale.has("StoryOptions"))
+	{
+		if (tale.get("StoryOptions").text.trim() !== "")
+		{
+			document.getElementById("options").style.display = "block";
+		}
+	}
 	if (tale.has("ShareMenu"))
 	{
-		var shareMenu = document.getElementById("shareMenu");
-		if (shareMenu)
+		var shareMenuText = tale.get("ShareMenu").text.trim();
+		if (shareMenuText)
 		{
-			var shareMenuText = tale.get("ShareMenu").text.trim();
-			if (shareMenuText)
+			var shareMenu = document.getElementById("shareMenu");
+			if (shareMenu)
 			{
 				// build the menu contents
 				removeChildren(shareMenu);
@@ -141,8 +148,7 @@ function main()
 				shareMenu.innerHTML = shareMenu.innerHTML.replace(/(?:<br\s*\/?>)+/g, "\n");
 
 				// enable the sidebar menu item
-				var shareItem = document.getElementById("share");
-				if (shareItem) { shareItem.style.display = "block"; }
+				document.getElementById("share").style.display = "block";
 			}
 		}
 	}
@@ -491,6 +497,7 @@ var MenuSystem =
 		addClickHandler(document.getElementById("saves"),    MenuSystem.showSaves);
 		addClickHandler(document.getElementById("snapback"), MenuSystem.showSnapback);
 		addClickHandler(document.getElementById("restart"),  MenuSystem.restart);
+		addClickHandler(document.getElementById("options"),  MenuSystem.showOptions);
 		addClickHandler(document.getElementById("share"),    MenuSystem.showShare);
 	},
 	hideAllMenus: function ()
@@ -531,6 +538,20 @@ var MenuSystem =
 		{
 			event.stopPropagation();
 		}
+	},
+	showOptions: function (event)
+	{
+		var menu = document.getElementById("optionsMenu");
+		MenuSystem.hideAllMenus();
+		if (MenuSystem.buildOptions(menu))
+		{
+			MenuSystem.showMenu(event, menu);
+		}
+	},
+	buildOptions: function (menu)
+	{
+		window.alert("Options: UNFINISHED");
+		return false;
 	},
 	showSaves: function (event)
 	{
@@ -1048,8 +1069,8 @@ History.prototype.display = function (title, link, render)
 	{
 		var passages = document.getElementById("passages");
 		removeChildren(passages);
-		el.classList.add("transition-in");
-		setTimeout(function () { el.classList.remove("transition-in"); }, 1);
+		el.classList.add("passage-transition");
+		setTimeout(function () { el.classList.remove("passage-transition"); }, 1);
 		passages.appendChild(el);
 
 		if (config.displayPassageTitles && passage.title !== "Start")

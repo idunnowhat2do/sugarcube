@@ -24,16 +24,30 @@ noscript { color: red; font-size: 210%; font-weight: bold; }
 #storySubtitle { font-size: 111%; }
 #storyAuthor { font-size: 111%; }
 #storyCaption { display: none; margin-top: 3em; text-align: right; }
-#storyMenu, #shareMenu, #share { display: none; }
+#storyMenu, #optionsMenu, #options, #shareMenu, #share { display: none; }
 #storyMenu { line-height: 1.2; }
 
 #credits, #version { margin-top: 1em; color: #999; font-weight: normal; font-size: 71%; }
 
+/* Default modal overlay styling */
+#modal-overlay
+{
+    display: none;
+    z-index:100;
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    height:100%;
+    width:100%;
+    background: #000;
+}
+
 /* Default pop menu styling */
 .menu
 {
-	position: fixed;
 	display: none;
+	z-index: 100;
+	position: fixed;
 	color: #fff;
 	background-color: #333;
 	border: 1px solid #fff;
@@ -161,15 +175,15 @@ noscript { color: red; font-size: 210%; font-weight: bold; }
 .passage { line-height: 1.75; margin-bottom: 2em; text-align: left; }
 .passage .actions { list-style: none; padding-top: 1.3em; text-align: center; }
 .passage .actions li { display: inline; margin-right: 6em; }
-.highlight, .marked { color: yellow; font-weight: bold; font-style: italic; }
-.passage ul { margin-left: 0.5em; padding-left: 1.5em; }
-.passage ol { margin-left: 0.5em; padding-left: 1.5em; }
+.passage ul, .passage ol { margin-left: 0.5em; padding-left: 1.5em; }
 .passage table { margin: 0.8em 1.0em; border-collapse: collapse; font-size: 100%; }
 .passage th, .passage td, .passage tr, .passage caption { padding: 3px; }
 .passage hr { height: 1px; border: none; background-color: #fff; }
 
+.highlight, .marked { color: yellow; font-weight: bold; font-style: italic; }
+
 #storeArea { display: none; }
 
-.transition-in { opacity: 0; }
-.passage:not(.transition-out) { transition: opacity 400ms ease-in; -webkit-transition: opacity 400ms ease-in; }
-/*.transition-out { opacity: 0; position: absolute; }*/
+/* Passage transition styling */
+.passage { transition: opacity 400ms ease-in; -webkit-transition: opacity 400ms ease-in; }
+.passage-transition { opacity: 0; }
