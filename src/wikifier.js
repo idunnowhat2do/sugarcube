@@ -863,8 +863,11 @@ Wikifier.formatters =
 		var lookaheadMatch = lookaheadRegExp.exec(w.source);
 		if (lookaheadMatch && lookaheadMatch.index === w.matchStart)
 		{
+			/* don't wrap the contents of the <html> tag
 			var el = insertElement(w.output, "span");
 			el.innerHTML = lookaheadMatch[1];
+			*/
+			w.output.innerHTML += lookaheadMatch[1];
 			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 		}
 	}
