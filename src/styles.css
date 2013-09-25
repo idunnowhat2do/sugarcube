@@ -63,6 +63,7 @@ noscript { color: red; font-size: 210%; font-weight: bold; }
 {
 	padding: 0.2em;
 }
+#ui-body hr { height: 1px; border: none; background-color: #fff; }
 
 /* Default menu button styling */
 #ui-body button
