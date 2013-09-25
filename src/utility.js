@@ -417,7 +417,7 @@ function slugify(str)
 	return str
 		.trim()
 		.replace(/[^\w\s\u2013\u2014-]+/g, '')
-		.replace(/[_\s\u2013\u2014-]+/g, '_')
+		.replace(/[_\s\u2013\u2014-]+/g, '-')
 		.toLocaleLowerCase();
 }
 
