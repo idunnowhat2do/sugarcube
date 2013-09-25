@@ -7,7 +7,7 @@
 #
 #     Author   :  Thomas Michael Edwards <tmedwards@motoslave.net>
 #     Copyright:  Copyright © 2013 Thomas Michael Edwards. All rights reserved.
-#     Version  :  r11, 2013-07-10
+#     Version  :  r11, 2013-09-25
 #
 ################################################################################
 
@@ -35,7 +35,7 @@ $| = 1;										# set autoflush
 my %CONFIG		=
 (
 	'template'	=> 'src/header.tmpl',
-	'js'		=> ['src/polyfills.js', 'src/utility.js', 'src/main.js', 'src/macros.js', 'src/wikifier.js'],
+	'js'		=> ['src/polyfills.js', 'src/utility.js', 'src/main.js', 'src/story.js', 'src/macros.js', 'src/wikifier.js'],
 	'css'		=> 'src/styles.css',
 	'build'		=> '.build'
 );
