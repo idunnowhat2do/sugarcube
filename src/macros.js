@@ -345,7 +345,7 @@ version.extensions["bindMacro"] = { major: 1, minor: 1, revision: 0 };
 macros["bind"] =
 {
 	children: registerMacroTags("bind"),
-	handler: function (place, macroName, params, parser)
+	handler: function (place, macroName, params, parser, type)
 	{
 		if (params.length === 0)
 		{
@@ -359,7 +359,7 @@ macros["bind"] =
 		{
 			var   linkText = params[0]
 				, passage  = params.length > 1 ? params[1] : undefined
-				, el       = document.createElement("a");
+				, el       = document.createElement(type || "a");
 
 			el.classList.add(passage ? (tale.has(passage) ? "internalLink" : "brokenLink") : "internalLink");
 			el.classList.add(macroName + "Link");
@@ -387,7 +387,14 @@ macros["bind"] =
 		{
 			throwError(place, "<<" + macroName + ">>: cannot find a matching close tag");
 		}
-	}
+	},
+	button: function (place, macroName, params, parser)
+	{
+		this.handler(place, macroName, params, parser, "button");
+	}/*,
+	image: function (place, macroName, params, parser, type)
+	{
+	}*/
 };
 
 /**
@@ -680,6 +687,44 @@ macros["link"] =
 			else
 			{
 				createExternalLink(place, linkLoc, linkText);
+			}
+		}
+	}
+};
+
+/**
+ * <<optionset>>
+ */
+version.extensions["optionsetMacro"] = { major: 1, minor: 0, revision: 0 };
+macros["optionset"] =
+{
+	excludeParams: true,
+	handler: function (place, macroName, params, parser)
+	{
+		var expression = parser.fullArgs().trim();
+		if (expression === "" || evalMacroExpression(expression, place, macroName))
+		{
+			var opts = storage.getItem("options") || {};
+
+			for (var varName in options)
+			{
+				opts[varName] = options[varName];
+			}
+
+			if (!storage.setItem("options", opts))
+			{
+				throwError(place, "<<" + macroName + ">>: unknown error, cannot store options: " + parser.rawArgs());
+			}
+		}
+	},
+	init: function ()
+	{
+		var opts = storage.getItem("options");
+		if (opts !== null)
+		{
+			for (var varName in opts)
+			{
+				options[varName] = opts[varName];
 			}
 		}
 	}
