@@ -27,7 +27,7 @@ function getRandomArbitrary(min, max)
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("September 10, 2013"), extensions: {} };
+var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("September 25, 2013"), extensions: {} };
 
 var modes =		// SugarCube History class modes
 {
@@ -57,7 +57,7 @@ var config =	// SugarCube config
 	// saves option properties
 	, saves:
 		{
-			  id:        "untitled_story"
+			  id:        "untitled-story"
 			, isAllowed: undefined
 			, onLoad:    undefined
 			, onSave:    undefined
@@ -82,6 +82,7 @@ var   formatter = null	// Wikifier formatters
 	, macros    = {}	// macro store
 	, storage   = {}	// persistant storage manager
 	, session   = {}	// session manager
+	, options   = {}	// options variable store
 	, setup     = {};	// author setup variable store
 
 /**
@@ -93,7 +94,7 @@ function main()
 	 * Returns the DOM element corresponding to the passed ID or null on failure
 	 *     n.b. Legacy code for old scripts
 	 */
-	function $(id)
+	var $ = function (id)
 	{
 		return (typeof id === "object") ? id : document.getElementById(id);
 	}
@@ -112,7 +113,7 @@ function main()
 	// set the default saves ID
 	config.saves.id = tale.domId;
 
-	// setup for StoryBanner, StoryTitle, StorySubtitle, StoryAuthor, StoryCaption, StoryMenu, & ShareMenu passages
+	// setup for some of the special passages
 	setPageElement("storyBanner", "StoryBanner");
 	setPageElement("storyTitle", "StoryTitle", tale.title);
 	setPageElement("storySubtitle", "StorySubtitle");
@@ -124,32 +125,21 @@ function main()
 	}
 	if (tale.has("StoryMenu"))
 	{
-		document.getElementById("storyMenu").style.display = "block";
-		setPageElement("storyMenu", "StoryMenu");
+		document.getElementById("menu-story").style.display = "block";
+		setPageElement("menu-story", "StoryMenu");
 	}
-	if (tale.has("StoryOptions"))
+	if (tale.has("MenuOptions"))
 	{
-		if (tale.get("StoryOptions").text.trim() !== "")
+		if (tale.get("MenuOptions").text.trim() !== "")
 		{
-			document.getElementById("options").style.display = "block";
+			document.getElementById("menu-options").style.display = "block";
 		}
 	}
-	if (tale.has("ShareMenu"))
+	if (tale.has("MenuShare"))
 	{
-		var shareMenuText = tale.get("ShareMenu").text.trim();
-		if (shareMenuText)
+		if (tale.get("MenuShare").text.trim() !== "")
 		{
-			var shareMenu = document.getElementById("shareMenu");
-			if (shareMenu)
-			{
-				// build the menu contents
-				removeChildren(shareMenu);
-				new Wikifier(shareMenu, shareMenuText);
-				shareMenu.innerHTML = shareMenu.innerHTML.replace(/(?:<br\s*\/?>)+/g, "\n");
-
-				// enable the sidebar menu item
-				document.getElementById("share").style.display = "block";
-			}
+			document.getElementById("menu-share").style.display = "block";
 		}
 	}
 
@@ -239,7 +229,7 @@ function main()
 	}
 
 	// 6. initialize the user interface
-	MenuSystem.init();
+	UISystem.init();
 }
 
 window.onload = main;	// starts the magic
@@ -351,7 +341,7 @@ var SaveSystem =
 				}
 				SaveSystem.unmarshal(saveObj);
 			};
-		})(file);
+		}(file));
 
 		// initiate the file load
 		reader.readAsText(file);
@@ -471,104 +461,36 @@ var SaveSystem =
 
 
 /***********************************************************************************************************************
-** [Menu System]
+** [UI System]
 ***********************************************************************************************************************/
-var MenuSystem =
+var UISystem =
 {
 	init: function ()
 	{
-		function addClickHandler(el, handler)
-		{
-			if (el && el.hasChildNodes())
-			{
-				var children = el.childNodes;
-				for (var i = 0; i < children.length; i++)
-				{
-					if (children[i].nodeName.toLowerCase() == "a")
-					{
-						children[i].onclick = handler;
-						return;
-					}
-				}
-				el.onclick = handler;	// fallback
-			}
-		}
+		// add menu containers to <body>
+		insertElement(document.body, "div", "ui-overlay");
+		insertElement(document.body, "div", "ui-body");
 
-		addClickHandler(document.getElementById("saves"),    MenuSystem.showSaves);
-		addClickHandler(document.getElementById("snapback"), MenuSystem.showSnapback);
-		addClickHandler(document.getElementById("restart"),  MenuSystem.restart);
-		addClickHandler(document.getElementById("options"),  MenuSystem.showOptions);
-		addClickHandler(document.getElementById("share"),    MenuSystem.showShare);
+		// setup click handlers
+		UISystem.addClickHandler("#menu-saves",   null, function (e) { UISystem.buildSaves(); });
+		UISystem.addClickHandler("#menu-rewind",  null, function (e) { UISystem.buildRewind(); });
+		UISystem.addClickHandler("#menu-restart", null, function (e) { UISystem.buildRestart(); });
+		UISystem.addClickHandler("#menu-options", null, function (e) { UISystem.buildOptions(); });
+		UISystem.addClickHandler("#menu-share",   null, function (e) { UISystem.buildShare(); });
 	},
-	hideAllMenus: function ()
+	buildSaves: function ()
 	{
-		var el;
-		if (el = document.getElementById("savesMenu"))    { el.style.display = "none"; }
-		if (el = document.getElementById("snapbackMenu")) { el.style.display = "none"; }
-		if (el = document.getElementById("shareMenu"))    { el.style.display = "none"; }
-	},
-	showMenu: function (event, el, target)
-	{
-		if (!event)
-		{
-			event = window.event;
-			if (!target)
-			{
-				target = event.srcElement;
-			}
-		}
-		else if (!target)
-		{
-			target = event.target;
-		}
+		console.log("[buildSaves()]");
 
-		var   pos  = { x: 0, y: 0 }
-			, rect = target.getBoundingClientRect();
-
-		pos.x = rect.right + 6;
-		pos.y = rect.top - Math.floor((rect.bottom - rect.top) / 2);
-
-		el.style.top     = pos.y + "px";
-		el.style.left    = pos.x + "px";
-		el.style.display = "block";
-		document.onclick = MenuSystem.hideAllMenus;
-
-		event.cancelBubble = true;
-		if (event.stopPropagation)
-		{
-			event.stopPropagation();
-		}
-	},
-	showOptions: function (event)
-	{
-		var menu = document.getElementById("optionsMenu");
-		MenuSystem.hideAllMenus();
-		if (MenuSystem.buildOptions(menu))
-		{
-			MenuSystem.showMenu(event, menu);
-		}
-	},
-	buildOptions: function (menu)
-	{
-		window.alert("Options: UNFINISHED");
-		return false;
-	},
-	showSaves: function (event)
-	{
-		var menu = document.getElementById("savesMenu");
-		MenuSystem.hideAllMenus();
-		if (MenuSystem.buildSaves(menu))
-		{
-			MenuSystem.showMenu(event, menu);
-		}
-	},
-	buildSaves: function (menu)
-	{
 		function createActionItem(bId, bText, bAction)
 		{
 			var li = document.createElement("li");
 			var btn = document.createElement("button");
-			btn.id = "savesMenu_" + bId;
+			btn.id = "saves-" + bId;
+			if (bId !== "import")
+			{
+				btn.classList.add("ui-close");
+			}
 			btn.innerHTML = bText;
 			btn.onclick = bAction;
 			li.appendChild(btn);
@@ -579,8 +501,9 @@ var MenuSystem =
 			function createButton(bIdClass, bText, bSlot, bAction)
 			{
 				var btn = document.createElement("button");
-				btn.id = "savesMenu_" + bIdClass + bSlot;
+				btn.id = "saves-" + bIdClass + "-" + bSlot;
 				btn.classList.add(bIdClass);
+				btn.classList.add("ui-close");
 				btn.innerHTML = bText;
 				btn.onclick = (function (i)
 				{
@@ -624,7 +547,7 @@ var MenuSystem =
 					tdDescTxt = document.createElement("i");
 					tdDescTxt.innerHTML = "(save slot empty)";
 					tdDesc.appendChild(tdDescTxt);
-					tdDesc.classList.add("emptySave");
+					tdDesc.classList.add("empty");
 				}
 
 				tr.appendChild(tdSlot);
@@ -634,15 +557,42 @@ var MenuSystem =
 				tbody.appendChild(tr);
 			}
 			var table = document.createElement("table");
-			table.id = "savesMenu_list";
+			table.id = "saves-list";
 			table.appendChild(tbody);
 			return table;
 		}
-		var   list
+		function createSavesImport()
+		{
+			var   el    = document.createElement("div")
+				, label = document.createElement("div")
+				, input = document.createElement("input");
+
+			// add label
+			label.id = "saves-import-label";
+			label.appendChild(document.createTextNode("Select a save file to load:"));
+			el.appendChild(label);
+
+			// add file input
+			input.type     = "file";
+			input.id       = "saves-import-file";
+			input.name     = "saves-import-file";
+			input.onchange = function (e) {
+				SaveSystem.importSave(e);
+				UISystem.close();
+			};
+			el.appendChild(input);
+
+			return el;
+		}
+
+		var   menu    = document.getElementById("ui-body")
+			, list
 			, savesOK = storage.store !== null;
 
 		// remove old contents
-		removeChildren(menu);
+		jQuery(menu)
+			.empty()
+			.addClass("saves");
 
 		if (savesOK)
 		{
@@ -654,20 +604,25 @@ var MenuSystem =
 			if (!list || list.length === 0)
 			{
 				list = document.createElement("div");
-				list.id = "savesMenu_list"
+				list.id = "saves-list"
 				list.innerHTML = "<i>No save slots found</i>";
 			}
 			menu.appendChild(list);
 		}
 
-		// add action list (export, import, and purge)
+		// add action list (export, import, and purge) and import input
 		if (savesOK || (config.hasFileAPI && (!config.browser.isOpera || config.browser.operaVersion >= 15)))
 		{
 			list = document.createElement("ul");
 			if (config.hasFileAPI && (!config.browser.isOpera || config.browser.operaVersion >= 15))
 			{
 				list.appendChild(createActionItem("export", "Save to Disk\u2026", SaveSystem.exportSave));
-				list.appendChild(createActionItem("import", "Load from Disk\u2026", MenuSystem.showSavesImport));
+				list.appendChild(createActionItem("import", "Load from Disk\u2026", function (e) {
+					if (!document.getElementById("saves-import-file"))
+					{
+						menu.appendChild(createSavesImport());
+					}
+				}));
 			}
 			if (savesOK)
 			{
@@ -682,44 +637,15 @@ var MenuSystem =
 			return false;
 		}
 	},
-	showSavesImport: function (event)
+	buildRewind: function ()
 	{
-		var menu = document.getElementById("savesMenu");
-		MenuSystem.hideAllMenus();
-		MenuSystem.buildSavesImport(menu);
-		MenuSystem.showMenu(event, menu, document.getElementById("saves").getElementsByTagName("a")[0]);
-	},
-	buildSavesImport: function (menu)
-	{
-		var   label = document.createElement("div")
-			, input = document.createElement("input");
+		var   menu     = document.getElementById("ui-body")
+			, hasItems = false;
 
 		// remove old contents
-		removeChildren(menu);
-
-		// add label
-		label.id = "savesMenu_importLabel";
-		label.appendChild(document.createTextNode("Select a save file to load:"));
-		menu.appendChild(label);
-
-		// add file input
-		input.type     = "file";
-		input.id       = "savesMenu_importFile";
-		input.name     = "savesMenu_importFile";
-		input.onchange = SaveSystem.importSave;
-		menu.appendChild(input);
-	},
-	showSnapback: function (event)
-	{
-		var menu = document.getElementById("snapbackMenu");
-		MenuSystem.hideAllMenus();
-		MenuSystem.buildSnapback(menu);
-		MenuSystem.showMenu(event, menu);
-	},
-	buildSnapback: function (menu)
-	{
-		var hasItems = false;
-		removeChildren(menu);
+		jQuery(menu)
+			.empty()
+			.addClass("rewind");
 
 		for (var i = 0, len = state.history.length - 1; i < len; i++)
 		{
@@ -727,6 +653,7 @@ var MenuSystem =
 			if (passage && passage.tags.indexOf("bookmark") !== -1)
 			{
 				var el = document.createElement("div");
+				el.classList.add("ui-close");
 				el.onclick = (function ()
 				{
 					var p = i;
@@ -734,7 +661,7 @@ var MenuSystem =
 					{
 						return function ()
 						{
-							console.log("[snapback:onclick() @windowHistory]");
+							console.log("[rewind:onclick() @windowHistory]");
 
 							// necessary?
 							document.title = tale.title;
@@ -763,7 +690,7 @@ var MenuSystem =
 					{
 						return function ()
 						{
-							console.log("[snapback:onclick() @sessionHistory]");
+							console.log("[rewind:onclick() @sessionHistory]");
 
 							// necessary?
 							document.title = tale.title;
@@ -815,823 +742,113 @@ var MenuSystem =
 			menu.appendChild(el);
 		}
 	},
-	restart: function ()
+	buildRestart: function ()
 	{
-		if (confirm("Are you sure you want to restart this story?"))
-		{
+		var menu = document.getElementById("ui-body");
+
+		jQuery(menu)
+			.empty()
+			.addClass("restart")
+			.append('<p>Are you sure that you want to restart?  Unsaved progress will be lost.</p><ul><li><button id="restart-ok" class="ui-close">OK</button></li><li><button id="restart-cancel" class="ui-close">Cancel</button></li></ul></div>');
+
+		// add additional click handler for the OK button
+		jQuery("#restart-ok").click(function () {
 			state.restart();
-		}
+		});
+
+		return true;
 	},
-	showShare: function (event)
+	buildOptions: function ()
 	{
-		MenuSystem.hideAllMenus();
-		MenuSystem.showMenu(event, document.getElementById("shareMenu"));
-	}
-};
+		var menu = document.getElementById("ui-body");
 
+		jQuery(menu)
+			.empty()
+			.addClass("options");
+		new Wikifier(menu, tale.get("MenuOptions").text.trim());
 
-/***********************************************************************************************************************
-** [History]
-***********************************************************************************************************************/
-function History()
-{
-	console.log("[History()]");
-	console.log("    > mode: " + (config.historyMode === modes.hashTag ? "hashTag" : (config.historyMode === modes.windowHistory ? "windowHistory" : "sessionHistory")));
-	if (window.history.state) { if (config.historyMode === modes.windowHistory) { console.log("    > window.history.state: " + window.history.state.length.toString()); } else if (config.historyMode === modes.sessionHistory) { console.log("    > window.history.state: " + window.history.state.sidx + "/" + window.history.state.suid); } } else { console.log("    > window.history.state: null (" + window.history.state + ")"); }
-
-	// currently active/displayed state
-	this.active = { init: true, variables: {} };	// allows macro initialization to set variables at startup
-
-	// history state stack
-	//     hashTag        [{ title: null, variables: {} }]
-	//     windowHistory  [{ title: null, variables: {} }]
-	//     sessionHistory [{ title: null, variables: {}, sidx: null }]
-	this.history = [];
-}
-
-// setup accessors and mutators
-History.prototype =
-{
-	get isEmpty () { return this.history.length === 0; },
-	get length ()  { return this.history.length; },
-	get top ()     { return (this.history.length !== 0) ? this.history[this.history.length - 1] : null; }
-};
-
-/*
-History.prototype.clone = function (at)
-{
-	if (this.history.length == 0) { return null; }
-	at = 1 + (at ? Math.abs(at) : 0);
-	if (at > this.history.length) { return null; }
-
-	var dup = deepCopy(this.history[this.history.length - at]);
-	if (config.historyMode === modes.sessionHistory)
+		return true;
+	},
+	buildShare: function ()
 	{
-		delete dup.sidx;
-	}
-	return dup;
-};
-*/
+		var menu = document.getElementById("ui-body");
 
-History.prototype.index = function (idx)
-{
-	if (this.history.length === 0) { return null; }
-	if (idx < 0 || idx >= this.history.length) { return null; }
+		jQuery(menu)
+			.empty()
+			.addClass("share");
+		new Wikifier(menu, tale.get("MenuShare").text.trim());
+		menu.innerHTML = menu.innerHTML.replace(/(?:<br\s*\/?>)+/g, "\n");
 
-	return this.history[idx];
-};
-
-History.prototype.peek = function (at)
-{
-	if (this.history.length === 0) { return null; }
-	at = 1 + (at ? Math.abs(at) : 0);
-	if (at > this.history.length) { return null; }
-
-	return this.history[this.history.length - at];
-};
-
-History.prototype.push = function (/* variadic */)
-{
-	if (arguments.length === 0) { return; }	// maybe throw?
-
-	for (var i = 0; i < arguments.length; i++)
+		return true;
+	},
+	close: function ()
 	{
-		var state = arguments[i];
-		if (config.historyMode === modes.sessionHistory)
-		{
-			state.sidx = this.history.length;
-		}
-		this.history.push(state);
-	}
-};
-
-History.prototype.pop = function (num)
-{
-	if (this.history.length === 0) { return []; }
-	num = num ? Math.abs(num) : 1;
-	//if (num > this.history.length) { return []; }
-
-	return (num == 1) ? this.history.pop() : this.history.splice(this.history.length - num, num);
-};
-
-History.prototype.activate = function (state)
-{
-	if (typeof state === "object")
+		jQuery("#ui-overlay").fadeOut(200);
+		jQuery("#ui-body")
+			.css({ "display": "none" })
+			.removeClass()
+			.empty();	// .empty() here will break static menus
+	},
+	addClickHandler: function (targetSel, options, startFunc, doneFunc)
 	{
-		if (state === null) { return null; }
-		this.active = deepCopy(state);
-	}
-	else
-	{
-		if (this.history.length === 0) { return null; }
-		if (state < 0 || state >= this.history.length) { return null; }
-		this.active = deepCopy(this.history[state]);
-	}
-	return this.active;
-};
+		options = jQuery.extend({
+			  top        : 50
+			, opacity    : 0.66
+		}, options);
 
-History.prototype.init = function ()
-{
-	console.log("[<History>.init()]");
+		jQuery(targetSel).click(function (e) {
+			e.preventDefault();
 
-	// display the initial passage
-	if (!this.restore())
-	{
-		this.display("Start");
-	}
-
-	// setup the history change handlers
-	if (config.historyMode === modes.windowHistory)
-	{
-		window.onpopstate = History.popStateHandler_windowHistory;
-	}
-	else if (config.historyMode === modes.sessionHistory)
-	{
-		window.onpopstate = History.popStateHandler_sessionHistory;
-	}
-	else
-	{
-		window.onhashchange = History.hashChangeHandler;
-	}
-};
-
-History.prototype.display = function (title, link, render)
-{
-	console.log("[<History>.display()]");
-	// n.b. the title parameter can either be a passage title (string) or passage ID (number), so
-	//      after loading the passage, always refer to passage.title and never the title parameter
-	var passage = tale.get(title);
-
-	// ensure that this.active is set if we have history
-	if (this.active.init && !this.isEmpty)
-	{
-		if (config.historyMode === modes.sessionHistory)
-		{
-			console.log("    [SH]> state.active.init && !state.isEmpty; activating: " + (window.history.state !== null ? "window.history.state.sidx" : "state.top"));
-			this.activate(window.history.state !== null ? window.history.state.sidx : this.top);
-		}
-		else if (config.historyMode === modes.windowHistory)
-		{
-			console.log("    [WH]> state.active.init && !state.isEmpty; activating: state.top");
-			this.activate(this.top);
-		}
-		else
-		{
-			console.log("    [HT]> state.active.init && !state.isEmpty; activating: state.top");
-			this.activate(this.top);
-		}
-	}
-
-	// create a fresh entry in the history
-	if (render !== "back")
-	{
-		if (config.historyMode === modes.sessionHistory && !this.isEmpty && window.history.state.sidx < this.top.sidx)
-		{
-			console.log("    > stacks out of sync; popping " + (this.top.sidx - window.history.state.sidx) + " states to equalize");
-			// stack ids are out of sync, pop our stack until we're back
-			// in sync with the window.history
-			this.pop(this.top.sidx - window.history.state.sidx);
-		}
-
-		this.push({ title: passage.title, variables: deepCopy(this.active.variables) });
-		this.activate(this.top);
-
-		if (config.historyMode === modes.windowHistory)
-		{
-			if (window.history.state === null && this.history.length !== 1)
+			// call the start function
+			if (typeof startFunc === "function")
 			{
-				console.log("    > !DANGER! (window.history.state === null) && (this.history.length !== 1) !DANGER!");
-				window.alert("!DANGER! (window.history.state === null) && (this.history.length !== 1) !DANGER!");
+				startFunc(e);
 			}
 
-			//FIXME: this or that? if (window.history.state === null)
-			if (this.history.length === 1 && window.history.state === null)
+			var   overlay = jQuery("#ui-overlay")
+				, menu    = jQuery("#ui-body");
+
+			// setup close function handlers
+			overlay
+				.add(".ui-close")
+				.click(function () {
+					UISystem.close();
+				});
+
+			// display the overlay
+			overlay
+				.css({
+					  "display":  "block"
+					, "z-index":  1000
+					, "opacity":  0
+					, "position": "fixed"
+				})
+				.fadeTo(200, options.opacity);
+
+			// display the menu
+			//   n.b. we have to do this in two separate stages to force the browser to finalize
+			//        the outer width of the container before we can use it to center the container
+			menu.css({
+				  "display":  "block"
+				, "z-index":  1100
+				, "opacity":  0
+				, "position": "absolute"
+				, "top":      options.top + "px"
+				, "left":     "0"
+			});
+			menu
+				.css({
+					  "left"       : "50%"
+					, "margin-left": -(menu.outerWidth() / 2) + "px"
+				})
+				.fadeTo(200, 1);
+
+			// call the done function
+			if (typeof doneFunc === "function")
 			{
-				window.history.replaceState(this.history, document.title);
+				doneFunc(e);
 			}
-			else
-			{
-				window.history.pushState(this.history, document.title);
-			}
-		}
-		else if (config.historyMode === modes.sessionHistory)
-		{
-			if (window.history.state === null)
-			{
-				window.history.replaceState({ sidx: this.active.sidx, suid: this.suid }, document.title);
-			}
-			else
-			{
-				window.history.pushState({ sidx: this.active.sidx, suid: this.suid }, document.title);
-			}
-		}
-	}
-	if (config.historyMode === modes.hashTag)
-	{
-		this.active.hash = this.top.hash = this.save();
-	}
-	else if (config.historyMode === modes.sessionHistory)
-	{
-		this.save();
-	}
-
-	// clear <body> classes and execute the PassageReady passage
-	if (render !== "offscreen")
-	{
-		if (document.body.className)
-		{
-			document.body.className = "";
-		}
-		if (tale.has("PassageReady"))
-		{
-			try
-			{
-				var errTrap = document.createElement("div");
-				new Wikifier(errTrap, tale.get("PassageReady").text);
-				while (errTrap.hasChildNodes())
-				{
-					var fc = errTrap.firstChild;
-					if (fc.classList && fc.classList.contains("error")) { throw new Error(fc.textContent); }
-					errTrap.removeChild(fc);
-				}
-			}
-			catch (e)
-			{
-				window.alert("There is a technical problem with this story (PassageReady: " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
-			}
-		}
-	}
-
-	// add it to the page
-	var el = passage.render();
-	el.style.visibility = "visible";
-	if (render !== "offscreen")
-	{
-		var passages = document.getElementById("passages");
-		removeChildren(passages);
-		el.classList.add("passage-transition");
-		setTimeout(function () { el.classList.remove("passage-transition"); }, 1);
-		passages.appendChild(el);
-
-		if (config.displayPassageTitles && passage.title !== "Start")
-		{
-			document.title = tale.title + ": " + passage.title;
-		}
-		if (config.historyMode === modes.hashTag)
-		{
-			window.location.hash = this.hash = this.top.hash;
-		}
-		window.scroll(0, 0);
-	}
-	return el;
-};
-
-History.prototype.regenerateSuid = function ()
-{
-	session.removeItem("activeHistory");
-	this.suid = generateUuid();
-	this.save();
-};
-
-History.prototype.restart = function ()
-{
-	console.log("[<History>.restart()]");
-	if (config.historyMode === modes.windowHistory)
-	{
-		window.history.pushState(null, document.title);	// yes, null
-		window.location.reload();
-	}
-	else if (config.historyMode === modes.sessionHistory)
-	{
-		session.removeItem("activeHistory");
-		window.location.reload();
-	}
-	else
-	{
-		window.location.hash = "";
-	}
-};
-
-History.prototype.save = function ()
-{
-	console.log("[<History>.save()]");
-	if (config.historyMode === modes.sessionHistory)
-	{
-		if (session.setItem("history." + this.suid, this.history))
-		{
-			session.setItem("activeHistory", this.suid);
-		}
-	}
-	else if (config.historyMode === modes.hashTag)
-	{
-		var order = "";
-
-		// encode our history
-		for (var i = 0; i < this.history.length; i++)
-		{
-			var passage = tale.get(this.history[i].title);
-			if (passage && typeof passage.id !== "undefined")	// 0 is a valid value for passage.id, so typeof it is
-			{
-				order += passage.id.toString(36) + ".";
-			}
-		}
-
-		// strip the trailing period
-		return "#" + order.substr(0, order.length - 1);
-	}
-};
-
-History.prototype.restore = function (suid)
-{
-	console.log("[<History>.restore()]");
-	if (config.historyMode === modes.windowHistory)
-	{
-		if (window.history.state !== null)
-		{
-			this.history = window.history.state;
-		}
-		if (!this.isEmpty && tale.has(this.top.title))
-		{
-			this.display(this.top.title, null, "back");
-			return true;
-		}
-	}
-	else if (config.historyMode === modes.sessionHistory)
-	{
-		if (suid)
-		{
-			this.suid = suid;
-		}
-		else
-		{
-			if (window.history.state !== null && session.hasItem("activeHistory"))
-			{
-				this.suid = session.getItem("activeHistory");
-			}
-			else
-			{
-				this.suid = generateUuid();
-			}
-		}
-		if (this.suid && session.hasItem("history." + this.suid))
-		{
-			this.history = session.getItem("history." + this.suid);
-			console.log("    > window.history.state.sidx: " + window.history.state.sidx);
-			if (tale.has(this.history[window.history.state.sidx].title))
-			{
-				this.display(this.history[window.history.state.sidx].title, null, "back");
-				return true;
-			}
-		}
-	}
-	else if (config.historyMode === modes.hashTag)
-	{
-		if (window.location.hash !== "" && window.location.hash !== "#")
-		{
-			try
-			{
-				var order = window.location.hash.replace("#", "").split(".");
-
-				// render the passages in the order the reader clicked them
-				// we only show the very last one
-				for (var i = 0, end = order.length - 1; i <= end; i++)
-				{
-					var id = parseInt(order[i], 36);
-
-					if (!tale.has(id)) { return false; }
-
-					console.log("    > id: " + id + " (" + order[i] + ")");
-
-					this.display(id, null, (i === end) ? null : "offscreen");
-				}
-
-				return true;
-			}
-			catch(e)
-			{
-				console.log("restore failed", e);
-			}
-		}
-	}
-	return false;
-};
-
-History.hashChangeHandler = function (e)
-{
-	console.log("[History.hashChangeHandler()]");
-
-	if (window.location.hash !== state.hash)
-	{
-		if (window.location.hash !== "" && window.location.hash !== "#")
-		{
-			var el = document.getElementById("passages");
-
-			// reset the history stack, making a copy of the <<remember>> variables
-			var remember = storage.getItem("remember");
-			state.active = { init: true, variables: (remember === null ? {} : deepCopy(remember)) };
-			state.history = [];
-
-			el.style.visibility = "hidden";
-			removeChildren(el);
-			if (!state.restore())
-			{
-				window.alert("The passage you had previously visited could not be found.");
-			}
-			el.style.visibility = "visible";
-		}
-		else
-		{
-			window.location.reload();
-		}
-		state.hash = window.location.hash;
-	}
-};
-
-History.popStateHandler_windowHistory = function (e)
-{
-	console.log("[History.popStateHandler_windowHistory()]");
-	if (e.state === null) { console.log("    > e.state: null; no-op"); }
-
-	// no-op if state is null
-	if (e.state === null) { return; }
-
-	// throw error if state is empty
-	if (e.state.length === 0) { throw new Error("Guru meditation error!"); }
-
-	state.history = e.state;
-	state.display(state.activate(state.top).title, null, "back");
-};
-
-History.popStateHandler_sessionHistory = function (e)
-{
-	console.log("[History.popStateHandler_sessionHistory()]");
-	if (e.state === null) { console.log("    > e.state: null; no-op"); }
-
-	// no-op if state is null
-	if (e.state === null) { return; }
-
-	// update the history stack if necessary
-	if (e.state.suid !== state.suid)
-	{
-		console.log("    > state from previous history detected, swapping in history");
-		state.save();
-		state.restore(e.state.suid);
-	}
-
-	state.display(state.activate(e.state.sidx).title, null, "back");
-};
-
-
-/***********************************************************************************************************************
-** [Passage]
-***********************************************************************************************************************/
-function Passage(title, el, order)
-{
-	this.title = title;
-	if (el)
-	{
-		this.id          = order;
-		this.domId       = "passage_" + slugify(this.title);
-		this.text        = Passage.unescapeLineBreaks(el.firstChild ? el.firstChild.nodeValue : "");
-		this.textExcerpt = Passage.getExcerptFromText(this.text);
-		this.tags        = el.hasAttribute("tags") ? el.getAttribute("tags").trim() : "";
-		if (this.tags)
-		{
-			this.tags = this.tags.split(/\s+/);	//readBracketedList();
-			this.classes = [];
-			this.className = "";
-
-			// add tags as classes
-			if (this.tags.length > 0)
-			{
-				// tags to skip transforming into classes
-				//     "passage"      : the default class
-				//     "stylesheet"   : special tag
-				//     "script"       : special tag
-				//     "widget"       : special tag
-				//     "debug"        : special tag
-				//     "twine.*"      : special tag (in theory, anyway)
-				//   ? "twinequest.*" : private use tag
-				//   ? "tq.*"         : private use tag, AFAIK shorthand form of twinequest.*
-				var tagsToSkip = /^(?:passage|stylesheet|script|widget|debug|twine\.\w*)$/i;
-
-				var tagClasses = [];
-				for (var i = 0; i < this.tags.length; i++)
-				{
-					var tag = this.tags[i].toLowerCase();
-					if (!tagsToSkip.test(tag))
-					{
-						tagClasses.push(slugify(tag));
-					}
-				}
-				if (tagClasses.length > 0)
-				{
-					if (el.className)
-					{
-						tagClasses = tagClasses.concat(el.className.split(/\s+/));
-					}
-					// sort and filter out non-uniques
-					tagClasses.sort().filter(function (val, i, aref) { return (i == 0 || aref[i-1] != val) ? true : false });
-
-					this.classes = tagClasses;
-					this.className = tagClasses.join(' ');
-				}
-			}
-		}
-		else
-		{
-			this.tags = [];
-			this.classes = [];
-			this.className = "";
-		}
-	}
-	else
-	{
-		this.text = "<html><span class=\"error\">Error: this passage does not exist</span></html>";
-		this.tags = [];
-		this.classes = [];
-		this.className = "";
-	}
-}
-
-Passage.prototype.render = function ()
-{
-	console.log("[<Passage>.render()]");
-	var passage = insertElement(null, "section", this.domId, "passage");
-	passage.style.visibility = "hidden";
-
-	// add classes (generated from tags) to the passage and <body>
-	for (var i = 0, len = this.classes.length; i < len; i++)
-	{
-		document.body.classList.add(this.classes[i]);
-		passage.classList.add(this.classes[i]);
-	}
-
-	// add passage header element
-	insertElement(passage, "header", "", "header");
-
-	// add passage content element
-	var content = insertElement(passage, "div", "", "content");
-	new Wikifier(content, this.text);
-
-	// add passage footer element
-	insertElement(passage, "footer", "", "footer");
-
-	// update the excerpt cache to reflect the rendered text
-	this.textExcerpt = Passage.getExcerptFromNode(content);
-
-	return passage;
-};
-
-Passage.prototype.reset = function ()
-{
-	/**
-	 * This method should never be called, so this code is largely redundant
-	 *   n.b. <Tale>.reset() does call this method, but nothing calls it, so...
-	 */
-	var store = document.getElementById("storeArea").childNodes;
-	for (var i = 0; i < store.length; i++)
-	{
-		var el = store[i];
-		var tiddlerTitle;
-		if (el.getAttribute && (tiddlerTitle = el.getAttribute("tiddler")))
-		{
-			if (this.title == tiddlerTitle)
-			{
-				this.text = Passage.unescapeLineBreaks(el.firstChild ? el.firstChild.nodeValue : "");
-				return;
-			}
-		}
-	}
-	this.text = "<html><span class=\"error\">Error: this passage does not exist</span></html>";
-};
-
-Passage.prototype.excerpt = function ()
-{
-	return this.textExcerpt;
-};
-
-Passage.getExcerptFromText = function (text, count)
-{
-	var pattern = new RegExp("(\\S+(?:\\s+\\S+){0," + (typeof count != 'undefined' ? count - 1 : 7) + "})");
-	var result = text
-		// strip macro tags (replace with a space)
-		.replace(/<<.*?>>/g, " ")
-		// strip html tags (replace with a space)
-		.replace(/<.*?>/g, " ")
-		// the above might have left problematic whitespace, so trim
-		.trim()
-		// strip wiki tables
-		.replace(/^\s*\|.*\|.*?$/gm, "")
-		// strip wiki images
-		.replace(/\[[<>]?img\[[^\]]*\]\]/g, "")
-		// clean wiki links, i.e. remove all but the pretty link text
-		.replace(/\[\[([^|\]]*)(?:|[^\]]*)?\]\]/g, "$1")
-		// clean wiki !headings
-		.replace(/^\s*!+(.*?)$/gm, "$1")
-		// clean wiki bold/italic/underline/highlight formatting
-		.replace(/\'{2}|\/{2}|_{2}|@{2}/g, "")
-		// compact remaining whitespace
-		.replace(/\s+/g, " ")
-		// a final trim
-		.trim()
-		// lastly, match the excerpt
-		.match(pattern);
-	return (result ? result[1] + "\u2026" : "\u2026");
-};
-
-Passage.getExcerptFromNode = function (node, count)
-{
-	if (!node.hasChildNodes()) { return ""; }
-
-	function getTextFromNode(node)
-	{
-		if (!node.hasChildNodes()) { return ""; }
-
-		var   nodes  = node.childNodes
-			, output = "";
-
-		for (var i = 0, len = nodes.length; i < len; i++)
-		{
-			switch (nodes[i].nodeType)
-			{
-			case 1:	// element nodes
-				if (nodes[i].style.display !== "none")
-				{
-					output += " ";	// out here to handle void nodes, in addition to child bearing nodes
-					if (nodes[i].hasChildNodes())
-					{
-						output += getTextFromNode(nodes[i]);
-					}
-				}
-				break;
-			case 3:	// text nodes
-				output += nodes[i].textContent;
-				break;
-			default:
-				console.log(" ~> nodes[" + i + "].nodeType: " + nodes[i].nodeType);
-				break;
-			}
-		}
-		return output;
-	}
-
-	var   excerptRe = new RegExp("(\\S+(?:\\s+\\S+){0," + (typeof count != 'undefined' ? count - 1 : 7) + "})")
-		, excerpt   = getTextFromNode(node).trim();
-
-	if (excerpt)
-	{
-		excerpt = excerpt
-			// compact whitespace
-			.replace(/\s+/g, " ")
-			// attempt to match the excerpt regexp
-			.match(excerptRe);
-	}
-	return (excerpt ? excerpt[1] + "\u2026" : "\u2026");
-};
-
-Passage.unescapeLineBreaks = function (text)
-{
-	if (text && text != "")
-	{
-		return text
-			.replace(/\\n/gm, '\n')
-			.replace(/\\s|\\/gm, '\\')	// "\\s" is required to workaround a Twine "feature"
-			.replace(/\r/gm, "");
-	}
-	else
-	{
-		return "";
-	}
-};
-
-Passage.mergeClassNames = function (/* variadic */)
-{
-	if (arguments.length == 0) { return ""; }
-
-	var classes = [];
-	for (var i = 0; i < arguments.length; i++)
-	{
-		if (typeof arguments[i] === "object" && Array.isArray(arguments[i]))
-		{
-			classes = classes.concat(arguments[i]);
-		}
-		else if (typeof arguments[i] === "string")
-		{
-			classes = classes.concat(arguments[i].split(/\s+/));
-		}
-	}
-	if (classes.length > 0)
-	{
-		// return a string of sorted, and unique, class names
-		return classes
-			.sort()
-			.filter(function (val, i, aref) { return (i == 0 || aref[i-1] != val) ? true : false })
-			.join(' ');
-	}
-	return "";
-};
-
-
-/***********************************************************************************************************************
-** [Tale]
-***********************************************************************************************************************/
-function Tale()
-{
-	this.passages = {};
-	if (document.normalize)
-	{
-		document.normalize();
-	}
-	var store = document.getElementById("storeArea").childNodes;
-	for (var i = 0; i < store.length; i++)
-	{
-		var el = store[i];
-		var tiddlerTitle;
-		if (el.getAttribute && (tiddlerTitle = el.getAttribute("tiddler")))
-		{
-			this.passages[tiddlerTitle] = new Passage(tiddlerTitle, el, i);
-		}
-	}
-	if (this.passages.StoryTitle)
-	{
-		this.title = this.passages.StoryTitle.text;
-	}
-	else
-	{
-		this.title = "Untitled Story";
-	}
-	this.domId = slugify(this.title);
-}
-
-Tale.prototype.has = function (key)
-{
-	if (typeof key === "string")
-	{
-		return this.passages[key] !== undefined && this.passages[key] !== null;
-	}
-	else if (typeof key === "number")
-	{
-		for (var pname in this.passages)
-		{
-			if (this.passages[pname].id === key)
-			{
-				return true;
-			}
-		}
-	}
-	return false;
-};
-
-Tale.prototype.get = function (key)
-{
-	if (typeof key === "string")
-	{
-		return this.passages[key] || new Passage(key);
-	}
-	else if (typeof key === "number")
-	{
-		for (var pname in this.passages)
-		{
-			if (this.passages[pname].id === key)
-			{
-				return this.passages[pname];
-			}
-		}
-	}
-	return;	//FIXME: should this return null instead of undefined?
-};
-
-Tale.prototype.lookup = function (key, value, sortKey) {
-	var results = [];
-	if (!sortKey) { sortKey = "title"; }
-
-	for (var pname in this.passages)
-	{
-		var passage = this.passages[pname];
-
-		for (var i = 0; i < passage[key].length; i++)
-		{
-			if (passage[key][i] == value)
-			{
-				results.push(passage);
-			}
-		}
-	}
-
-	results.sort(function (a, b) { return (a[sortKey] == b[sortKey]) ? 0 : ((a[sortKey] < b[sortKey]) ? -1 : +1); });
-
-	return results;
-};
-
-Tale.prototype.reset = function ()
-{
-	/**
-	 * This method should never be called, so this code is largely redundant
-	 */
-	for (var i in this.passages)
-	{
-		this.passages[i].reset();
+		});
 	}
 };
 
