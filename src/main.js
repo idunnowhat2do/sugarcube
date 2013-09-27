@@ -27,7 +27,7 @@ function getRandomArbitrary(min, max)
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("September 25, 2013"), extensions: {} };
+var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("September 27, 2013"), extensions: {} };
 
 var modes =		// SugarCube History class modes
 {
@@ -114,14 +114,14 @@ function main()
 	config.saves.id = tale.domId;
 
 	// setup for some of the special passages
-	setPageElement("storyBanner", "StoryBanner");
-	setPageElement("storyTitle", "StoryTitle", tale.title);
-	setPageElement("storySubtitle", "StorySubtitle");
-	setPageElement("storyAuthor", "StoryAuthor");
+	setPageElement("story-banner", "StoryBanner");
+	setPageElement("story-title", "StoryTitle", tale.title);
+	setPageElement("story-subtitle", "StorySubtitle");
+	setPageElement("story-author", "StoryAuthor");
 	if (tale.has("StoryCaption"))
 	{
-		document.getElementById("storyCaption").style.display = "block";
-		setPageElement("storyCaption", "StoryCaption");
+		document.getElementById("story-caption").style.display = "block";
+		setPageElement("story-caption", "StoryCaption");
 	}
 	if (tale.has("StoryMenu"))
 	{
