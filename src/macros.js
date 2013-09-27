@@ -692,29 +692,182 @@ macros["link"] =
 };
 
 /**
- * <<optionset>>
+ * <<option>>
  */
-version.extensions["optionsetMacro"] = { major: 1, minor: 0, revision: 0 };
-macros["optionset"] =
+version.extensions["optionMacro"] = { major: 1, minor: 0, revision: 0 };
+macros["option"] =
 {
-	excludeParams: true,
+	children: registerMacroTags("option"),
 	handler: function (place, macroName, params, parser)
+	{
+		if (params.length < 2)
+		{
+			var errors = [];
+			if (params.length < 1) { errors.push("property"); }
+			if (params.length < 2) { errors.push("type"); }
+			throwError(place, "<<" + macroName + ">>: no " + errors.join(" or ") + " specified");
+			return;
+		}
+
+		var   propertyName = params[0]
+			, controlType  = params[1];
+
+		if (controlType !== "toggle" && controlType !== "list")
+		{
+			throwError(place, "<<" + macroName + '>>: "' + controlType + '" is not a valid type (switch|list)');
+			return;
+		}
+		if (controlType === "list" && params.length < 3)
+		{
+			throwError(place, "<<" + macroName + ">>: no list specified");
+			return;
+		}
+
+		var macroData = getContainerMacroData(parser, macroName);
+
+		if (macroData)
+		{
+			var   propertyId = slugify(propertyName)
+				, elOption   = document.createElement("div")
+				, elLabel    = document.createElement("div")
+				, elControl  = document.createElement("div");
+
+			elOption.appendChild(elLabel);
+			elOption.appendChild(elControl);
+			elOption.id  = "option-body-" + propertyId;
+			elLabel.id   = "option-label-" + propertyId;
+			elControl.id = "option-control-" + propertyId;
+
+			// setup the label
+			new Wikifier(elLabel, macroData[0].contents.trim());
+
+			// setup the control
+			if (!options.hasOwnProperty(propertyName))
+			{
+				options[propertyName] = undefined;
+			}
+			switch (controlType)
+			{
+			case "toggle":
+				var   linkText = params.length > 2 ? params[2] : undefined
+					, elInput  = document.createElement("a");
+				if (options[propertyName] === undefined)
+				{
+					options[propertyName] = false;
+				}
+				if (options[propertyName])
+				{
+					insertText(elInput, linkText || "On");
+					elInput.classList.add("enabled");
+				}
+				else
+				{
+					insertText(elInput, linkText || "Off");
+				}
+				elInput.addEventListener("click", (function ()
+				{
+					return function (e)
+					{
+						removeChildren(elInput);
+						if (options[propertyName])
+						{
+							insertText(elInput, linkText || "Off");
+							elInput.classList.remove("enabled");
+							options[propertyName] = false;
+						}
+						else
+						{
+							insertText(elInput, linkText || "On");
+							elInput.classList.add("enabled");
+							options[propertyName] = true;
+						}
+						macros.option.store();
+					}
+				}()));
+				break;
+			case "list":
+				var   items    = params[2]
+					, elInput  = document.createElement("select");
+				if (options.hasOwnProperty(items))
+				{
+					items = options[items];
+				}
+				else
+				{
+					items = items.trim().split(/\s*,\s*/);
+				}
+				if (options[propertyName] === undefined)
+				{
+					options[propertyName] = items[0];
+				}
+				for (var i = 0; i < items.length; i++)
+				{
+					var elItem = document.createElement("option");
+					insertText(elItem, items[i]);
+					elInput.appendChild(elItem);
+				}
+				elInput.value = options[propertyName];
+				elInput.addEventListener("change", (function ()
+				{
+					return function (e)
+					{
+						options[propertyName] = e.target.value;
+						macros.option.store();
+					}
+				}()));
+				break;
+			}
+			elInput.id = "option-input-" + propertyId;
+			elControl.appendChild(elInput);
+
+			place.appendChild(elOption);
+		}
+		else
+		{
+			throwError(place, "<<" + macroName + ">>: cannot find a matching close tag");
+		}
+	},
+	controlbar: function (place, macroName, params, parser)
+	{
+		var   elSet   = document.createElement("div")
+			, elClose = document.createElement("button")
+			, elReset = document.createElement("button");
+
+		elSet.appendChild(elClose);
+		elSet.appendChild(elReset);
+
+		elSet.classList.add("controls");
+		elClose.classList.add("ui-close");
+		elReset.classList.add("ui-close");
+
+		insertText(elClose, "Close");
+		insertText(elReset, "Reset to Defaults");
+
+		elReset.addEventListener("click", (function ()
+		{
+			return function (e)
+			{
+				options = {};
+				macros.option.store();
+			}
+		}()));
+
+		place.appendChild(elSet);
+	},
+	set: function (place, macroName, params, parser)
 	{
 		var expression = parser.fullArgs().trim();
 		if (expression === "" || evalMacroExpression(expression, place, macroName))
 		{
-			var opts = storage.getItem("options") || {};
-
-			for (var varName in options)
-			{
-				opts[varName] = options[varName];
-			}
-
-			if (!storage.setItem("options", opts))
+			if (!this.store())
 			{
 				throwError(place, "<<" + macroName + ">>: unknown error, cannot store options: " + parser.rawArgs());
 			}
 		}
+	},
+	store: function ()
+	{
+		return storage.setItem("options", options);
 	},
 	init: function ()
 	{
