@@ -206,7 +206,7 @@ function insertPassageLink(place, passage, text, classNames)
 {
 	var el = document.createElement("a");
 
-	el.className = tale.has(passage) ? "internalLink" : "brokenLink";
+	el.className = tale.has(passage) ? "link-internal" : "link-broken";
 	if (classNames)
 	{
 		el.className += " " + classNames;

@@ -154,7 +154,7 @@ macros["actions"] =
 
 			var   item = insertElement(list, "li")
 				, link = insertPassageLink(item, passage, actText);
-			link.classList.add(macroName + "Link");
+			link.classList.add("link-" + macroName);
 			link.onclick = (function ()
 			{
 				var   p = passage
@@ -252,7 +252,7 @@ macros["back"] = macros["return"] =
 		}
 
 		el = document.createElement("a");
-		el.classList.add(macroName + "Link");
+		el.classList.add("link-" + macroName);
 		if (steps > 0)
 		{
 			el.onclick = (function ()
@@ -361,8 +361,8 @@ macros["bind"] =
 				, passage  = params.length > 1 ? params[1] : undefined
 				, el       = document.createElement(type || "a");
 
-			el.classList.add(passage ? (tale.has(passage) ? "internalLink" : "brokenLink") : "internalLink");
-			el.classList.add(macroName + "Link");
+			el.classList.add("link-" + (passage ? (tale.has(passage) ? "internal" : "broken") : "internal"));
+			el.classList.add("link-" + macroName);
 			el.innerHTML = linkText;
 			el.onclick = (function (bindBody)
 			{
@@ -411,8 +411,7 @@ macros["choice"] =
 			return;
 		}
 
-		//Wikifier.createInternalLink(place, params[0], params[0]);
-		var el = insertPassageLink(place, params[0], params[0], macroName + "Link");
+		var el = insertPassageLink(place, params[0], params[0], "link-" + macroName);
 		el.onclick = function ()
 		{
 			state.display(params[0], el);
@@ -602,7 +601,7 @@ macros["link"] =
 	{
 		function createInternalLink(place, passage, text)
 		{
-			var el = insertPassageLink(place, passage, text, macroName + "Link");
+			var el = insertPassageLink(place, passage, text, "link-" + macroName);
 			el.onclick = function ()
 			{
 				if (onceType)
@@ -615,7 +614,7 @@ macros["link"] =
 		}
 		function createExternalLink(place, url, text)
 		{
-			var el = insertElement(place, "a", null, "externalLink " + macroName + "Link", text);
+			var el = insertElement(place, "a", null, "link-external link-" + macroName, text);
 			el.href = url;
 			el.target = "_blank";
 			return el;

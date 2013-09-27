@@ -1044,7 +1044,7 @@ Wikifier.createInternalLink = function (place, passage, text)
 
 Wikifier.createExternalLink = function (place, url, text)
 {
-	var el = insertElement(place, "a", null, "externalLink", text);
+	var el = insertElement(place, "a", null, "link-external", text);
 	el.href = url;
 	el.target = "_blank";
 	return el;

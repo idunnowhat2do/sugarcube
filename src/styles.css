@@ -3,9 +3,9 @@ body { margin: 3.5em 15% 5% 3.5em; color: #fff; background-color: #111; font-fam
 a { cursor: pointer; color: #46d; }
 a:hover { color: #8af; }
 a:active { color: #f70; }
-a.internalLink, a.externalLink, a.backLink, a.returnLink { font-weight: bold; text-decoration: none; }
-a.internalLink:hover, a.externalLink:hover, a.backLink:hover, a.returnLink:hover { text-decoration: underline; }
-a.brokenLink { padding: 3px; color: #000; background-color: red; font-weight: bold; text-decoration: none; }
+a.link-internal, a.link-external, a.link-back, a.link-return { font-weight: bold; text-decoration: none; }
+a.link-internal:hover, a.link-external:hover, a.link-back:hover, a.link-return:hover { text-decoration: underline; }
+a.link-broken { padding: 3px; color: #000; background-color: red; font-weight: bold; text-decoration: none; }
 input, textarea { min-width: 16em; color: #fff; background-color: #444; border: 1px solid #fff; }
 input:focus, textarea:focus { border: 1px solid #292; }
 input:hover, textarea:hover { border: 1px solid #f70; }
