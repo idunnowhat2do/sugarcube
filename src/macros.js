@@ -155,7 +155,7 @@ macros["actions"] =
 			var   item = insertElement(list, "li")
 				, link = insertPassageLink(item, passage, actText);
 			link.classList.add("link-" + macroName);
-			link.onclick = (function ()
+			link.addEventListener("click", (function ()
 			{
 				var   p = passage
 					, l = link;
@@ -164,7 +164,7 @@ macros["actions"] =
 					state.active.variables["#actions"][p] = true;
 					state.display(p, l);
 				};
-			}());
+			}()));
 		}
 	}
 };
@@ -180,7 +180,7 @@ macros["back"] = macros["return"] =
 		var   steps = 1
 			, pname
 			, ctext
-			, ltext = "<b>\u00ab</b> " + macroName[0].toUpperCase() + macroName.slice(1)
+			, ltext = macroName[0].toUpperCase() + macroName.slice(1)
 			, el;
 
 		if (params.length === 1)
@@ -255,7 +255,7 @@ macros["back"] = macros["return"] =
 		el.classList.add("link-" + macroName);
 		if (steps > 0)
 		{
-			el.onclick = (function ()
+			el.addEventListener("click", (function ()
 			{
 				if (macroName === "back")
 				{
@@ -299,7 +299,7 @@ macros["back"] = macros["return"] =
 						state.display(pname, el);
 					};
 				}
-			}());
+			}()));
 		}
 		if (macroName === "back")
 		{
@@ -364,7 +364,7 @@ macros["bind"] =
 			el.classList.add("link-" + (passage ? (tale.has(passage) ? "internal" : "broken") : "internal"));
 			el.classList.add("link-" + macroName);
 			el.innerHTML = linkText;
-			el.onclick = (function (bindBody)
+			el.addEventListener("click", (function (bindBody)
 			{
 				return function ()
 				{
@@ -380,7 +380,7 @@ macros["bind"] =
 						state.display(passage, el);
 					}
 				};
-			}(macroData[0].contents.trim()));
+			}(macroData[0].contents.trim())));
 			place.appendChild(el);
 		}
 		else
@@ -412,10 +412,10 @@ macros["choice"] =
 		}
 
 		var el = insertPassageLink(place, params[0], params[0], "link-" + macroName);
-		el.onclick = function ()
+		el.addEventListener("click", function ()
 		{
 			state.display(params[0], el);
-		};
+		});
 	}
 };
 
@@ -602,14 +602,14 @@ macros["link"] =
 		function createInternalLink(place, passage, text)
 		{
 			var el = insertPassageLink(place, passage, text, "link-" + macroName);
-			el.onclick = function ()
+			el.addEventListener("click", function ()
 			{
 				if (onceType)
 				{
 					state.active.variables["#link"][passage] = true;
 				}
 				state.display(passage, el);
-			};
+			});
 			return el;
 		}
 		function createExternalLink(place, url, text)

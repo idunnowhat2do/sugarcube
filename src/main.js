@@ -492,7 +492,7 @@ var UISystem =
 				btn.classList.add("ui-close");
 			}
 			btn.innerHTML = bText;
-			btn.onclick = bAction;
+			btn.addEventListener("click", bAction);
 			li.appendChild(btn);
 			return li;
 		}
@@ -505,13 +505,13 @@ var UISystem =
 				btn.classList.add(bIdClass);
 				btn.classList.add("ui-close");
 				btn.innerHTML = bText;
-				btn.onclick = (function (i)
+				btn.addEventListener("click", (function (i)
 				{
 					return function ()
 					{
 						bAction(i);
 					};
-				}(bSlot));
+				}(bSlot)));
 				return btn;
 			}
 
@@ -654,14 +654,14 @@ var UISystem =
 			{
 				var el = document.createElement("div");
 				el.classList.add("ui-close");
-				el.onclick = (function ()
+				el.addEventListener("click", (function ()
 				{
 					var p = i;
 					if (config.historyMode === modes.windowHistory)
 					{
 						return function ()
 						{
-							console.log("[rewind:onclick() @windowHistory]");
+							console.log("[rewind:click() @windowHistory]");
 
 							// necessary?
 							document.title = tale.title;
@@ -690,7 +690,7 @@ var UISystem =
 					{
 						return function ()
 						{
-							console.log("[rewind:onclick() @sessionHistory]");
+							console.log("[rewind:click() @sessionHistory]");
 
 							// necessary?
 							document.title = tale.title;
@@ -729,7 +729,7 @@ var UISystem =
 							window.location.hash = state.history[p].hash;
 						};
 					}
-				}());
+				}()));
 				el.innerHTML = passage.excerpt();
 				menu.appendChild(el);
 				hasItems = true;

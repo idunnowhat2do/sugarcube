@@ -1035,10 +1035,10 @@ Wikifier.formatters =
 Wikifier.createInternalLink = function (place, passage, text)
 {
 	var el = insertPassageLink(place, passage, text);
-	el.onclick = function ()
+	el.addEventListener("click", function ()
 	{
 		state.display(passage, el);
-	};
+	});
 	return el;
 };
 
