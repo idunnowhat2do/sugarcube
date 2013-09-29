@@ -1038,7 +1038,7 @@ Wikifier.createInternalLink = function (place, passage, text)
 	el.addEventListener("click", function ()
 	{
 		state.display(passage, el);
-	});
+	}, false);
 	return el;
 };
 

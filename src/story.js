@@ -115,15 +115,15 @@ History.prototype.init = function ()
 	// setup the history change handlers
 	if (config.historyMode === modes.windowHistory)
 	{
-		window.onpopstate = History.popStateHandler_windowHistory;
+		window.addEventListener("popstate", History.popStateHandler_windowHistory, false);
 	}
 	else if (config.historyMode === modes.sessionHistory)
 	{
-		window.onpopstate = History.popStateHandler_sessionHistory;
+		window.addEventListener("popstate", History.popStateHandler_sessionHistory, false);
 	}
 	else
 	{
-		window.onhashchange = History.hashChangeHandler;
+		window.addEventListener("hashchange", History.hashChangeHandler, false);
 	}
 };
 
