@@ -850,26 +850,15 @@ macros["option"] =
 		insertText(elClose, "Close");
 		insertText(elReset, "Reset to Defaults");
 
-		elReset.addEventListener("click", function (e) { macros.option.remove(); }, false);
+		elReset.addEventListener("click", function (e) { macros.option.purge(); }, false);
 
 		place.appendChild(elSet);
-	},
-	set: function (place, macroName, params, parser)
-	{
-		var expression = parser.fullArgs().trim();
-		if (expression === "" || evalMacroExpression(expression, place, macroName))
-		{
-			if (!this.store())
-			{
-				throwError(place, "<<" + macroName + ">>: unknown error, cannot store options: " + parser.rawArgs());
-			}
-		}
 	},
 	store: function ()
 	{
 		return storage.setItem("options", options);
 	},
-	remove: function ()
+	purge: function ()
 	{
 		options = {};
 		return storage.removeItem("options");
