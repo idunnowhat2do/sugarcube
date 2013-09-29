@@ -164,7 +164,7 @@ macros["actions"] =
 					state.active.variables["#actions"][p] = true;
 					state.display(p, l);
 				};
-			}()));
+			}()), false);
 		}
 	}
 };
@@ -299,7 +299,7 @@ macros["back"] = macros["return"] =
 						state.display(pname, el);
 					};
 				}
-			}()));
+			}()), false);
 		}
 		if (macroName === "back")
 		{
@@ -345,7 +345,7 @@ version.extensions["bindMacro"] = { major: 1, minor: 1, revision: 0 };
 macros["bind"] =
 {
 	children: registerMacroTags("bind"),
-	handler: function (place, macroName, params, parser, type)
+	handler: function (place, macroName, params, parser)
 	{
 		if (params.length === 0)
 		{
@@ -359,7 +359,7 @@ macros["bind"] =
 		{
 			var   linkText = params[0]
 				, passage  = params.length > 1 ? params[1] : undefined
-				, el       = document.createElement(type || "a");
+				, el       = document.createElement("a");
 
 			el.classList.add("link-" + (passage ? (tale.has(passage) ? "internal" : "broken") : "internal"));
 			el.classList.add("link-" + macroName);
@@ -380,21 +380,14 @@ macros["bind"] =
 						state.display(passage, el);
 					}
 				};
-			}(macroData[0].contents.trim())));
+			}(macroData[0].contents.trim())), false);
 			place.appendChild(el);
 		}
 		else
 		{
 			throwError(place, "<<" + macroName + ">>: cannot find a matching close tag");
 		}
-	},
-	button: function (place, macroName, params, parser)
-	{
-		this.handler(place, macroName, params, parser, "button");
-	}/*,
-	image: function (place, macroName, params, parser, type)
-	{
-	}*/
+	}
 };
 
 /**
@@ -415,7 +408,7 @@ macros["choice"] =
 		el.addEventListener("click", function ()
 		{
 			state.display(params[0], el);
-		});
+		}, false);
 	}
 };
 
@@ -609,7 +602,7 @@ macros["link"] =
 					state.active.variables["#link"][passage] = true;
 				}
 				state.display(passage, el);
-			});
+			}, false);
 			return el;
 		}
 		function createExternalLink(place, url, text)
@@ -697,7 +690,7 @@ macros["link"] =
 version.extensions["optionMacro"] = { major: 1, minor: 0, revision: 0 };
 macros["option"] =
 {
-	children: registerMacroTags("option"),
+	children: registerMacroTags("option", [ "onchange" ]),
 	handler: function (place, macroName, params, parser)
 	{
 		if (params.length < 2)
@@ -723,7 +716,8 @@ macros["option"] =
 			return;
 		}
 
-		var macroData = getContainerMacroData(parser, macroName);
+		var   onChangeTag = "onchange"
+			, macroData   = getContainerMacroData(parser, macroName, [ onChangeTag ]);
 
 		if (macroData)
 		{
@@ -742,6 +736,7 @@ macros["option"] =
 			new Wikifier(elLabel, macroData[0].contents.trim());
 
 			// setup the control
+			var onChangeBody = (macroData.length === 2 && macroData[1].name === onChangeTag) ? macroData[1].contents.trim() : "";
 			if (!options.hasOwnProperty(propertyName))
 			{
 				options[propertyName] = undefined;
@@ -782,8 +777,14 @@ macros["option"] =
 							options[propertyName] = true;
 						}
 						macros.option.store();
+
+						// if <<onchange>> exists, execute the contents and discard the output (if any)
+						if (onChangeBody !== "")
+						{
+							new Wikifier(document.createElement("div"), onChangeBody);
+						}
 					}
-				}()));
+				}()), false);
 				break;
 			case "list":
 				var   items    = params[2]
@@ -813,8 +814,14 @@ macros["option"] =
 					{
 						options[propertyName] = e.target.value;
 						macros.option.store();
+
+						// if <<onchange>> exists, execute the contents and discard the output (if any)
+						if (onChangeBody !== "")
+						{
+							new Wikifier(document.createElement("div"), onChangeBody);
+						}
 					}
-				}()));
+				}()), false);
 				break;
 			}
 			elInput.id = "option-input-" + propertyId;
@@ -843,14 +850,7 @@ macros["option"] =
 		insertText(elClose, "Close");
 		insertText(elReset, "Reset to Defaults");
 
-		elReset.addEventListener("click", (function ()
-		{
-			return function (e)
-			{
-				options = {};
-				macros.option.store();
-			}
-		}()));
+		elReset.addEventListener("click", function (e) { macros.option.remove(); }, false);
 
 		place.appendChild(elSet);
 	},
@@ -868,6 +868,11 @@ macros["option"] =
 	store: function ()
 	{
 		return storage.setItem("options", options);
+	},
+	remove: function ()
+	{
+		options = {};
+		return storage.removeItem("options");
 	},
 	init: function ()
 	{
