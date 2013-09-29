@@ -27,7 +27,7 @@ function getRandomArbitrary(min, max)
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("September 27, 2013"), extensions: {} };
+var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("September 28, 2013"), extensions: {} };
 
 var modes =		// SugarCube History class modes
 {
@@ -48,7 +48,7 @@ var config =	// SugarCube config
 
 	// basic browser detection
 	, userAgent: navigator.userAgent.toLowerCase()
-	, browser: {}
+	, browser:   {}
 
 	// general option properties
 	, displayPassageTitles: false
@@ -91,7 +91,8 @@ var   formatter = null	// Wikifier formatters
 function main()
 {
 	/**
-	 * Returns the DOM element corresponding to the passed ID or null on failure
+	 * Returns the passed DOM element, the DOM element corresponding to the
+	 * passed ID, or null on failure
 	 *     n.b. Legacy code for old scripts
 	 */
 	var $ = function (id)
@@ -232,7 +233,7 @@ function main()
 	UISystem.init();
 }
 
-window.onload = main;	// starts the magic
+window.addEventListener("load", main, false);	// starts the magic
 
 
 /***********************************************************************************************************************
@@ -322,7 +323,7 @@ var SaveSystem =
 			, reader = new FileReader();
 
 		// capture the file information once the load is finished
-		reader.onload = (function(file)
+		reader.addEventListener("load", (function(file)
 		{
 			return function(e)
 			{
@@ -341,7 +342,7 @@ var SaveSystem =
 				}
 				SaveSystem.unmarshal(saveObj);
 			};
-		}(file));
+		}(file)), false);
 
 		// initiate the file load
 		reader.readAsText(file);
@@ -492,7 +493,7 @@ var UISystem =
 				btn.classList.add("ui-close");
 			}
 			btn.innerHTML = bText;
-			btn.addEventListener("click", bAction);
+			btn.addEventListener("click", bAction, false);
 			li.appendChild(btn);
 			return li;
 		}
@@ -511,7 +512,7 @@ var UISystem =
 					{
 						bAction(i);
 					};
-				}(bSlot)));
+				}(bSlot)), false);
 				return btn;
 			}
 
@@ -576,10 +577,11 @@ var UISystem =
 			input.type     = "file";
 			input.id       = "saves-import-file";
 			input.name     = "saves-import-file";
-			input.onchange = function (e) {
+			input.addEventListener("change", function (e)
+			{
 				SaveSystem.importSave(e);
 				UISystem.close();
-			};
+			}, false);
 			el.appendChild(input);
 
 			return el;
@@ -729,7 +731,7 @@ var UISystem =
 							window.location.hash = state.history[p].hash;
 						};
 					}
-				}()));
+				}()), false);
 				el.innerHTML = passage.excerpt();
 				menu.appendChild(el);
 				hasItems = true;
@@ -789,14 +791,14 @@ var UISystem =
 			.removeClass()
 			.empty();	// .empty() here will break static menus
 	},
-	addClickHandler: function (targetSel, options, startFunc, doneFunc)
+	addClickHandler: function (target, options, startFunc, doneFunc, callbackFunc)
 	{
 		options = jQuery.extend({
 			  top        : 50
 			, opacity    : 0.66
 		}, options);
 
-		jQuery(targetSel).click(function (e) {
+		jQuery(target).click(function (e) {
 			e.preventDefault();
 
 			// call the start function
@@ -811,8 +813,12 @@ var UISystem =
 			// setup close function handlers
 			overlay
 				.add(".ui-close")
-				.click(function () {
+				.click(function (e) {
 					UISystem.close();
+					if (typeof callbackFunc === "function")
+					{
+						callbackFunc(e);
+					}
 				});
 
 			// display the overlay
