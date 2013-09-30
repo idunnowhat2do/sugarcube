@@ -19,7 +19,7 @@ input:focus, textarea:focus { border: 1px solid #292; }
 input:hover, textarea:hover { border: 1px solid #f70; }
 noscript { color: red; font-size: 210%; font-weight: bold; }
 .error { margin: 0 12px 0 3px; padding: 3px 5px; color: #000; background-color: red; font-weight: bold; }
-.transition-start { opacity: 0; }
+.transition-in { opacity: 0; }
 
 #ui-bar { position: fixed; top: 3.5em; left: 3.5em; width: 14.5em; margin: 0; padding: 0 1.5em 0 0; border-right: 1px solid #fff; }
 #ui-bar header, #ui-bar nav, #ui-bar footer { text-align: right; }
@@ -238,18 +238,16 @@ a.link-external:after { content: "\00a0\e010"; }
 */
 #ui-body.options ul, #ui-body.restart ul { display: block; margin: 0; padding: 0; list-style: none; }
 #ui-body.options li, #ui-body.restart li { display: inline-block; margin: 0; padding: 0.4em 0.4em 0.5em; }
-#ui-body.options [id|="option-body"] { position: relative; padding: 0; }
+#ui-body.options [id|="option-body"] { display: table; width: 100%; }
 #ui-body.options div[id|="option-body"] + div[id|="option-body"],
 #ui-body.options div[id|="option-body"] + br + div[id|="option-body"]
 {
 	margin-top: 0.5em;
 }
-#ui-body.options [id|="option-label"] { position: relative; top: 0; left: 0; width: 80%; }
-#ui-body.options [id|="option-control"] { position: absolute; top: 0; right: 0; width: 18%; }
+#ui-body.options [id|="option-label"] { display: table-cell; width: 80%; padding: 0.33em 2em 0.4em 0.33em; }
+#ui-body.options [id|="option-control"] { display: table-cell; padding: 0.33em 0.33em 0.4em; white-space: nowrap; }
 #ui-body.options select[id|="option-input"]
 {
-	position: relative;
-	top: -3px;
 	cursor: pointer;
 	padding: 3px 6px;
 	font-weight: normal;
@@ -264,6 +262,7 @@ a.link-external:after { content: "\00a0\e010"; }
 	-webkit-transition-duration: 200ms;
 	-moz-transition-duration: 200ms;
 	transition-duration: 200ms;
+	white-space: nowrap;
 }
 #ui-body.options a[id|="option-input"]
 {
@@ -287,6 +286,7 @@ a.link-external:after { content: "\00a0\e010"; }
 	-ms-user-select: none;
 	-o-user-select: none;
 	user-select: none;
+	white-space: nowrap;
 }
 #ui-body.options a[id|="option-input"]:hover
 {

@@ -293,7 +293,7 @@ function addStyle(css)
 function throwError(place, message)
 {
 	insertElement(place, "span", null, "error", "Error: " + message);
- }
+}
 
 /**
  * Fades a DOM element in or out

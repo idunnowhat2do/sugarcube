@@ -850,7 +850,11 @@ macros["option"] =
 		insertText(elClose, "Close");
 		insertText(elReset, "Reset to Defaults");
 
-		elReset.addEventListener("click", function (e) { macros.option.purge(); }, false);
+		elReset.addEventListener("click", function (e)
+		{
+			macros.option.purge();
+			window.location.reload();
+		}, false);
 
 		place.appendChild(elSet);
 	},
@@ -962,7 +966,7 @@ macros["run"] = macros["runjs"] = macros["set"] =
 /**
  * <<silently>>
  */
-version.extensions["silentlyMacro"] = { major: 2, minor: 1, revision: 0 };
+version.extensions["silentlyMacro"] = { major: 3, minor: 0, revision: 0 };
 macros["silently"] =
 {
 	excludeParams: true,
@@ -973,8 +977,20 @@ macros["silently"] =
 
 		if (macroData)
 		{
-			// execute the contents and discard the output
-			new Wikifier(document.createElement("div"), macroData[0].contents.trim());
+			// execute the contents and discard the output, except for errors (which are displayed)
+			var   errTrap = document.createElement("div")
+				, errList = [];
+			new Wikifier(errTrap, macroData[0].contents.trim());
+			while (errTrap.hasChildNodes())
+			{
+				var fc = errTrap.firstChild;
+				if (fc.classList && fc.classList.contains("error")) { errList.push(fc.textContent); }
+				errTrap.removeChild(fc);
+			}
+			if (errList.length > 0)
+			{
+				throwError(place, "<<" + macroName + ">>: error within contents: " + errList.join('; '));
+			}
 		}
 		else
 		{

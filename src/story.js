@@ -241,9 +241,9 @@ History.prototype.display = function (title, link, render)
 	{
 		var passages = document.getElementById("passages");
 		removeChildren(passages);
-		el.classList.add("transition-start");
+		el.classList.add("transition-in");
 		passages.appendChild(el);
-		setTimeout(function () { el.classList.remove("transition-start"); }, 1);
+		setTimeout(function () { el.classList.remove("transition-in"); }, 1);
 
 		if (config.displayPassageTitles && passage.title !== "Start")
 		{
