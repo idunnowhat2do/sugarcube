@@ -15,6 +15,14 @@ Downloads and documentation can be found at [SugarCube's website](http://www.mot
    - **Session History mode:** A special version of the Window History mode for Firefox.
    - **Hash Tag mode:** The traditional Twine/Twee header mode, which is included largely for compatibility, but authors can choose to force its use over the Window/Session History modes if they desire.
 - The ability to easily save your progress, at any point, and revisit it at any time.
-- A completely author configurable Share menu, via the ShareMenu passage.
+- A completely author configurable Share menu, via the MenuShare passage.
+- Persistent end-user options, via the `options` variable, the MenuOptions passage, and the `<<option>>` macro.
 - Twine/Twee tags as classes, on the active passage's container element and the page's `<body>` element.
 - Widget macros.  Widgets allow you to create macros by using the standard macros and wiki text that you use normally within your story, so all Twine/Twee users can now create simple macros.
+- Supports the backslash as a line continuation character.  This is mostly useful for controlling whitespace when you want to wrap lines for readability, but not generate extra whitespace upon display, and the `<<silently>>` macro isn't an option because you need to generate output.  (similar to: [escape line breaks with backslashes](http://www.glorioustrainwrecks.com/node/5400 "http://www.glorioustrainwrecks.com/node/5400"), but embedded)
+- Embeds the jQuery library (2.x series).
+
+## Requirements ##
+SugarCube's sole requirement is a modern web browser, and by *modern* I mean one released within the last several years (you do not need the absolute latest and greatest shiny).
+
+**Caveat for Internet Explorer:** SugarCube only supports  IE9+.  So, users of Windows XP (who are limited to IE8) will not be able to play/view stories built with SugarCube with their version of IE.  They would either have to use a different browser or upgrade to a less obsolescent version of Windows (Microsoft will end support of Windows XP on April 8, 2014).
