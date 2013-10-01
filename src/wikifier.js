@@ -867,7 +867,18 @@ Wikifier.formatters =
 			var el = insertElement(w.output, "span");
 			el.innerHTML = lookaheadMatch[1];
 			*/
-			w.output.innerHTML += lookaheadMatch[1];
+			/*
+			jQuery(w.output).append(lookaheadMatch[1]);
+			*/
+			var   frag = document.createDocumentFragment()
+				, temp = document.createElement("div");
+			temp.innerHTML = lookaheadMatch[1];
+			while (temp.firstChild)
+			{
+				frag.appendChild(temp.firstChild);
+			}
+			w.output.appendChild(frag);
+
 			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 		}
 	}
