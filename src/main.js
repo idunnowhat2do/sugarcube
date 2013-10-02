@@ -589,6 +589,7 @@ var UISystem =
 
 		var   menu    = document.getElementById("ui-body")
 			, list
+			, btnBar
 			, savesOK = storage.store !== null;
 
 		// remove old contents
@@ -615,6 +616,7 @@ var UISystem =
 		// add action list (export, import, and purge) and import input
 		if (savesOK || (config.hasFileAPI && (!config.browser.isOpera || config.browser.operaVersion >= 15)))
 		{
+			btnBar = document.createElement("div");
 			list = document.createElement("ul");
 			if (config.hasFileAPI && (!config.browser.isOpera || config.browser.operaVersion >= 15))
 			{
@@ -630,7 +632,8 @@ var UISystem =
 			{
 				list.appendChild(createActionItem("purge",  "Purge Save Slots",   SaveSystem.purge));
 			}
-			menu.appendChild(list);
+			btnBar.appendChild(list);
+			menu.appendChild(btnBar);
 			return true;
 		}
 		else
@@ -785,17 +788,33 @@ var UISystem =
 	},
 	close: function ()
 	{
-		jQuery("#ui-overlay").fadeOut(200);
+		/*
+		jQuery("#ui-overlay")
+			.css({
+				  "display": "none"
+				, "opacity": 0
+			})
+			.fadeOut(200);
+		*/
+		jQuery("#ui-overlay")
+			.fadeOut(200);
 		jQuery("#ui-body")
-			.css({ "display": "none" })
+			.css({
+				  "display": "none"
+				, "opacity": 0
+				, "top":     ""
+				, "left":    ""
+			})
 			.removeClass()
 			.empty();	// .empty() here will break static menus
+		jQuery(document.body)
+			.removeClass("ui-open");
 	},
 	addClickHandler: function (target, options, startFunc, doneFunc, callbackFunc)
 	{
 		options = jQuery.extend({
-			  top        : 50
-			, opacity    : 0.66
+			  top:     50
+			, opacity: 0.8
 		}, options);
 
 		jQuery(target).click(function (e) {
@@ -808,7 +827,8 @@ var UISystem =
 			}
 
 			var   overlay = jQuery("#ui-overlay")
-				, menu    = jQuery("#ui-body");
+				, menu    = jQuery("#ui-body")
+				, parent  = jQuery(window);
 
 			// setup close function handlers
 			overlay
@@ -821,31 +841,28 @@ var UISystem =
 					}
 				});
 
+			// stop the body from scrolling
+			jQuery(document.body)
+				.addClass("ui-open");
+
 			// display the overlay
 			overlay
 				.css({
-					  "display":  "block"
-					, "z-index":  1000
-					, "opacity":  0
-					, "position": "fixed"
+					  "display": "block"
+					, "opacity": 0
 				})
 				.fadeTo(200, options.opacity);
 
 			// display the menu
-			//   n.b. we have to do this in two separate stages to force the browser to finalize
-			//        the outer width of the container before we can use it to center the container
-			menu.css({
-				  "display":  "block"
-				, "z-index":  1100
-				, "opacity":  0
-				, "position": "absolute"
-				, "top":      options.top + "px"
-				, "left":     "0"
-			});
+			var   topPos  = ((parent.height() - menu.outerHeight()) / 2) + parent.scrollTop()
+				, leftPos = ((parent.width() - menu.outerWidth()) / 2) + parent.scrollLeft();
+			if (topPos > options.top) { topPos = options.top; }
 			menu
 				.css({
-					  "left"       : "50%"
-					, "margin-left": -(menu.outerWidth() / 2) + "px"
+					  "display": "block"
+					, "opacity": 0
+					, "top":     topPos + "px"
+					, "left":    leftPos + "px"
 				})
 				.fadeTo(200, 1);
 

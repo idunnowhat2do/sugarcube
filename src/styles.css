@@ -97,11 +97,15 @@ a.link-external:after { content: "\00a0\e010"; }
 #credits, #version { margin-top: 1em; color: #999; font-weight: normal; font-size: 71%; }
 
 /* Default menu styling */
+body.ui-open
+{
+	overflow: hidden;
+}
 #ui-overlay
 {
 	display: none;
 	z-index: 1000;
-	opacity: 0.66;
+	opacity: 0.8;
 	position: fixed;
 	top: 0px;
 	left: 0px;
@@ -113,12 +117,12 @@ a.link-external:after { content: "\00a0\e010"; }
 {
 	display: none;
 	z-index: 1100;
-	opacity: 0;
-	position: absolute;
-	top: 50px;
-	left: 50%;
+	opacity: 1;
+	position: fixed;
+	overflow: auto;
 	min-width: 140px;
-	max-width: 1024px;
+	max-width: 90%;
+	max-height: 90%;
 	color: #fff;
 	background-color: #333;
 	border: 1px solid #fff;
@@ -173,7 +177,6 @@ a.link-external:after { content: "\00a0\e010"; }
 #ui-body.saves table
 {
 	border-spacing: 0;
-	border-bottom: 1px solid #fff;
 	min-width: 320px;
 	width: 100%;
 }
@@ -194,9 +197,9 @@ a.link-external:after { content: "\00a0\e010"; }
 {
 	color: #999;
 }
-#ui-body.saves ul { display: block; margin: 0; padding: 0; list-style: none; }
+#ui-body.saves ul { display: block; margin: 0; padding: 0; list-style: none; white-space: nowrap; }
 #ui-body.saves li { display: inline-block; margin: 0; padding: 0.33em 0.33em 0.4em; }
-#ui-body.saves > div { border-top: 1px solid #fff; }
+#ui-body.saves > div:not(:first-child) { border-top: 1px solid #fff; }
 #saves-import-label { margin: 0 6px; font-weight: bold; }
 #saves-import-file { margin: 0 6px 6px; }
 
