@@ -1,7 +1,7 @@
 
 # SugarCube #
 
-A header for [Twine/Twee](http://gimcrackd.com/etc/src/ "http://gimcrackd.com/etc/src/"), based on [TiddlyWiki](http://tiddlywiki.com/ "http://tiddlywiki.com/").
+A free (gratis and libre) header for [Twine/Twee](http://gimcrackd.com/etc/src/ "http://gimcrackd.com/etc/src/"), based on [TiddlyWiki](http://tiddlywiki.com/ "http://tiddlywiki.com/").
 
 Downloads and documentation can be found at [SugarCube's website](http://www.motoslave.net/sugarcube/ "http://www.motoslave.net/sugarcube/").
 
