@@ -585,7 +585,7 @@ Passage.prototype.excerpt = function ()
 
 Passage.getExcerptFromText = function (text, count)
 {
-	var pattern = new RegExp("(\\S+(?:\\s+\\S+){0," + (typeof count != 'undefined' ? count - 1 : 7) + "})");
+	var pattern = new RegExp("(\\S+(?:\\s+\\S+){0," + (typeof count !== 'undefined' ? count - 1 : 7) + "})");
 	var result = text
 		// strip macro tags (replace with a space)
 		.replace(/<<.*?>>/g, " ")
