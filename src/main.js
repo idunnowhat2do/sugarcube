@@ -5,7 +5,7 @@
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("October 17, 2013"), extensions: {} };
+var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("October 21, 2013"), extensions: {} };
 
 var modes =		// SugarCube History class modes
 {
@@ -80,9 +80,10 @@ function main()
 
 	console.log("[main()]");
 
-	// instantiate wikifier formatters, story, storage, and session objects
+	// instantiate wikifier formatters, story, state, storage, and session objects
 	formatter = new WikiFormatter(Wikifier.formatters);
 	tale      = new Tale();
+	state     = new History();
 	storage   = new KeyValueStore("localStorage", tale.domId);
 	session   = new KeyValueStore("sessionStorage", tale.domId);
 
@@ -163,10 +164,7 @@ function main()
 	/**
 	 * The ordering of the following code is important!
 	 */
-	// 1. instantiate a history object for our state
-	state = new History();
-
-	// 2. call macros' "early" init functions
+	// 1. call macros' "early" init functions
 	for (var macroName in macros)
 	{
 		if (typeof macros[macroName].init === "function")
@@ -175,7 +173,7 @@ function main()
 		}
 	}
 
-	// 3. execute the StoryInit passage
+	// 2. execute the StoryInit passage
 	if (tale.has("StoryInit"))
 	{
 		try
@@ -195,10 +193,10 @@ function main()
 		}
 	}
 
-	// 4. initialize our state
+	// 3. initialize our state
 	state.init();	// this could take a while, so do it late
 
-	// 5. call macros' "late" init functions
+	// 4. call macros' "late" init functions
 	for (var macroName in macros)
 	{
 		if (typeof macros[macroName].lateInit === "function")
@@ -207,7 +205,7 @@ function main()
 		}
 	}
 
-	// 6. initialize the user interface
+	// 5. initialize the user interface
 	UISystem.init();
 }
 
