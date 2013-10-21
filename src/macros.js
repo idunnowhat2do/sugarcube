@@ -341,7 +341,7 @@ macros["back"] = macros["return"] =
 /**
  * <<bind>>
  */
-version.extensions["bindMacro"] = { major: 1, minor: 1, revision: 0 };
+version.extensions["bindMacro"] = { major: 2, minor: 0, revision: 0 };
 macros["bind"] =
 {
 	children: registerMacroTags("bind"),
@@ -357,21 +357,55 @@ macros["bind"] =
 
 		if (macroData)
 		{
-			var   linkText = params[0]
-				, passage  = params.length > 1 ? params[1] : undefined
-				, el       = document.createElement("a");
+			var   linkText   = params[0]
+				, passage    = params.length > 1 ? params[1] : undefined
+				, widgetArgs = (macros.hasOwnProperty("_widgetCall") && state.active.variables.hasOwnProperty("args")) ? state.active.variables.args : undefined
+				, el         = document.createElement("a");
 
 			el.classList.add("link-" + (passage ? (tale.has(passage) ? "internal" : "broken") : "internal"));
 			el.classList.add("link-" + macroName);
 			el.innerHTML = linkText;
-			el.addEventListener("click", (function (bindBody)
+			el.addEventListener("click", (function (bindBody, widgetArgs)
 			{
 				return function ()
 				{
-					// execute the contents and discard the output (if any)
 					if (bindBody !== "")
 					{
+						if (widgetArgs !== undefined)
+						{
+							// store existing $args variables
+							if (state.active.variables.hasOwnProperty("args"))
+							{
+								if (!macros.bind.hasOwnProperty("_argsStack"))
+								{
+									macros.bind._argsStack = [];
+								}
+								macros.bind._argsStack.push(state.active.variables.args);
+							}
+
+							// setup the $args variable
+							state.active.variables.args = widgetArgs;
+						}
+
+						// attempt to execute the contents and discard the output (if any)
 						new Wikifier(document.createElement("div"), bindBody);
+
+						if (widgetArgs !== undefined)
+						{
+							// teardown the $args variable
+							delete state.active.variables.args;
+
+							// restore existing $args variables
+							if (macros.bind.hasOwnProperty("_argsStack"))
+							{
+								state.active.variables.args = macros.bind._argsStack.pop();
+								if (macros.bind._argsStack.length === 0)
+								{
+									// teardown the stack
+									delete macros.bind._argsStack;
+								}
+							}
+						}
 					}
 
 					// go to the specified passage (if any)
@@ -380,7 +414,7 @@ macros["bind"] =
 						state.display(passage, el);
 					}
 				};
-			}(macroData[0].contents.trim())), false);
+			}(macroData[0].contents.trim(), widgetArgs)), false);
 			place.appendChild(el);
 		}
 		else
@@ -1103,7 +1137,7 @@ macros["update"] =
 /**
  * <<widget>>
  */
-version.extensions["widgetMacro"] = { major: 1, minor: 1, revision: 0 };
+version.extensions["widgetMacro"] = { major: 1, minor: 2, revision: 0 };
 macros["widget"] =
 {
 	children: registerMacroTags("widget"),
@@ -1143,14 +1177,14 @@ macros["widget"] =
 					{
 						return function (place, macroName, params, parser)
 						{
-							// store arguments arrays from in-progress calls
+							// store existing $args variables
 							if (state.active.variables.hasOwnProperty("args"))
 							{
-								if (!state.active.variables.hasOwnProperty("#widget-args"))
+								if (!macros.widget.hasOwnProperty("_argsStack"))
 								{
-									state.active.variables["#widget-args"] = [];
+									macros.widget._argsStack = [];
 								}
-								state.active.variables["#widget-args"].push(state.active.variables.args);
+								macros.widget._argsStack.push(state.active.variables.args);
 							}
 
 							// setup the widget arguments array
@@ -1164,7 +1198,21 @@ macros["widget"] =
 							// attempt to execute the widget
 							try
 							{
+								// increase the widget call count
+								if (!macros.hasOwnProperty("_widgetCall"))
+								{
+									macros._widgetCall = 0;
+								}
+								macros._widgetCall++;
+
 								new Wikifier(place, widgetBody);
+
+								// reduce the widget call count
+								macros._widgetCall--;
+								if (macros._widgetCall === 0)
+								{
+									delete macros._widgetCall;
+								}
 							}
 							catch (e)
 							{
@@ -1174,14 +1222,14 @@ macros["widget"] =
 							// teardown the widget arguments array
 							delete state.active.variables.args;
 
-							// restore arguments arrays from in-progress calls
-							if (state.active.variables.hasOwnProperty("#widget-args"))
+							// restore existing $args variables
+							if (macros.widget.hasOwnProperty("_argsStack"))
 							{
-								state.active.variables.args = state.active.variables["#widget-args"].pop();
-								if (state.active.variables["#widget-args"].length === 0)
+								state.active.variables.args = macros.widget._argsStack.pop();
+								if (macros.widget._argsStack.length === 0)
 								{
-									// teardown the in-progress widget arguments array stack
-									delete state.active.variables["#widget-args"];
+									// teardown the widget arguments stack
+									delete macros.widget._argsStack;
 								}
 							}
 						};
