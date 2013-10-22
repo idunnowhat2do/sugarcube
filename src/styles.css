@@ -90,7 +90,7 @@ a.link-back:before, a.link-return:after, a.link-external:after,
 
 a.link-back:before { content: "\e00a\00a0\00a0"; }
 a.link-return:after { content: "\00a0\00a0\e00b"; }
-a.link-external:after { content: "\00a0\e010"; }
+#passages a.link-external:after { content: "\00a0\e010"; }
 #menu-saves:before { content: "\e011\00a0\00a0"; }
 #menu-rewind:before { content: "\e012\00a0\00a0"; }
 #menu-restart:before { content: "\e013\00a0\00a0"; }
