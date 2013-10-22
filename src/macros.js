@@ -42,7 +42,7 @@ function getContainerMacroData(parser, macroName, childTags)
 		, tagBegin     = start
 		, tagEnd       = start
 		, opened       = 1
-		, curTag       = macroName
+		, curTag       = openTag
 		, curArgument  = parser.rawArgs()
 		, contentStart = start
 		, macroData    = [];
