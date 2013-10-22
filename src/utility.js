@@ -475,6 +475,21 @@ function getRandomArbitrary(min, max)
 	return Math.random() * (max - min) + min;
 }
 
+/**
+ * Returns an integer count of how many times the passage exists within the story history
+ */
+function visited(title)
+{
+	if (!title) { title = state.top.title; }
+	var count = 0;
+
+	for (var i = 0; i < state.history.length; i++)
+	{
+		if (state.history[i].title === title) { count++; }
+	}
+	return count;
+}
+
 
 /***********************************************************************************************************************
 ** [Storage Management]
