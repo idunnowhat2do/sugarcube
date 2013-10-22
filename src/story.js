@@ -530,6 +530,7 @@ Passage.prototype.render = function ()
 {
 	console.log("[<Passage>.render()]");
 	var passage = insertElement(null, "section", this.domId, "passage");
+	passage.setAttribute("data-passage", this.title);
 	passage.style.visibility = "hidden";
 
 	// add classes (generated from tags) to the passage and <body>
