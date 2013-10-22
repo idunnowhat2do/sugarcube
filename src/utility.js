@@ -113,13 +113,13 @@ function clone(original)
  */
 function deepCopy(orig)
 {
-	if (orig === null || typeof orig != 'object')
+	if (orig === null || typeof orig !== "object")
 	{
 		return orig;
 	}
 
 	// Honor native/custom clone methods
-	if (typeof orig.clone == 'function')
+	if (typeof orig.clone === "function")
 	{
 		return orig.clone(true);
 	}
@@ -136,7 +136,7 @@ function deepCopy(orig)
 		return new RegExp(orig);
 	}
 	// DOM Elements
-	if (orig.nodeType && typeof orig.cloneNode == 'function')
+	if (orig.nodeType && typeof orig.cloneNode === "function")
 	{
 		return orig.cloneNode(true);
 	}
@@ -176,7 +176,7 @@ function deepCopy(orig)
 /**
  * Returns the new DOM element, optionally appending it to the passed DOM element (if any)
  */
-function insertElement(place, type, id, className, text)
+function insertElement(place, type, id, classNames, text)
 {
 	var el = document.createElement(type);
 
@@ -184,9 +184,9 @@ function insertElement(place, type, id, className, text)
 	{
 		el.id = id;
 	}
-	if (className)
+	if (classNames)
 	{
-		el.className = className;
+		el.className = classNames;
 	}
 	if (text)
 	{
