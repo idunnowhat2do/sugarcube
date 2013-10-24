@@ -11,8 +11,8 @@
  */
 String.prototype.readMacroParams = function (replaceVars)
 {
-	// RegExp groups: Double quoted | Single quoted | Double-square-bracket quoted | Unquoted | Empty quotes
-	var   re     = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\\')|[^'])+)')|(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^\"'\\s]\\S*)|((?:\"\")|(?:'')))", "gm")
+	// RegExp groups: Double quoted | Single quoted | Empty quotes | Double-square-bracketed | Barewords
+	var   re     = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\\')|[^'])+)')|((?:\"\")|(?:''))|(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^\"'\\s]\\S*))", "gm")
 		, params = [];
 
 	do
@@ -34,21 +34,27 @@ String.prototype.readMacroParams = function (replaceVars)
 				n = match[2];
 			}
 
-			// Double-square-bracket quoted
+			// Empty quotes
 			else if (match[3])
 			{
-				n = match[3];
+				n = "";
 			}
 
-			// Unquoted
+			// Double-square-bracketed
 			else if (match[4])
 			{
 				n = match[4];
+			}
+
+			// Barewords
+			else if (match[5])
+			{
+				n = match[5];
 
 				// Variable, so perform substitution
-				if (replaceVars && /\$/.test(n))
+				if (replaceVars && /^\$\w+/.test(n))
 				{
-					var   varRe    = new RegExp("\\$(\\w+)((?:\\.\\w+|\\[[^\\]]+\\])*)", "g")
+					var   varRe    = new RegExp("\\$(\\w+)((?:\\.\\w|\\[).*)", "g")
 						, varText  = n
 						, varMatch;
 					while ((varMatch = varRe.exec(varText)) !== null)
@@ -61,7 +67,7 @@ String.prototype.readMacroParams = function (replaceVars)
 							{
 								try
 								{
-									var objPropVal = eval(varText.replace(/\$/g, "state.active.variables."));
+									var objPropVal = eval(Wikifier.parse(varText, { "$": "state.active.variables." }));
 									n = n.replace(varText, objPropVal);
 								}
 								catch (e)
@@ -93,15 +99,9 @@ String.prototype.readMacroParams = function (replaceVars)
 					n = (n === "true") ? true : false;
 				}
 
-				// Object literals are too complex to automatically coerce and so are left as-is.  Authors really shouldn't
-				// be passing object literals as arguments anyway.  If they want to pass an object, store it in a variable
-				// and pass that instead.
-			}
-
-			// Empty quotes
-			else if (match[5])
-			{
-				n = "";
+				// Object/Array literals are too complex to automatically coerce and so are left as-is.  Authors really
+				// shouldn't be passing object/array literals as arguments anyway.  If they want to pass a complex type,
+				// store it in a variable and pass that instead.
 			}
 
 			params.push(n);
@@ -254,11 +254,15 @@ Wikifier.prototype.outputText = function (place, startPos, endPos)
  */
 Wikifier.prototype.rawArgs = function ()
 {
+	/*
 	var   endPos  = this.source.indexOf(">>", this.matchStart)
 		, wsDelim = this.source.slice(this.matchStart + 2, endPos).search(/[\s\u00a0\u2028\u2029]/);	// Unicode space-character escapes required for IE
 
 	// +3 from: +2 to skip "<<" and +1 to eat the first whitespace character
 	return (wsDelim === -1) ? "" : this.source.slice(this.matchStart + wsDelim + 3, endPos);
+	*/
+
+	return this._macroRawArgs;
 };
 
 /**
@@ -270,16 +274,15 @@ Wikifier.prototype.fullArgs = function ()
 	return Wikifier.parse(this.rawArgs());
 };
 
-Wikifier.parse = function (expression)
+Wikifier.parse = function (expression, mappings)
 {
-	// Double quoted | Single quoted | Empty quote | Operator delimiters | Barewords & Sigil
+	// Double quoted | Single quoted | Empty quotes | Operator delimiters | Barewords & Sigil
 	var   tRe    = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\\')|[^'])+)')|((?:\"\")|(?:''))|([=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}]+)|([^\"'=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}\\s]+))", "g")
 		, tMatch
-		, tMap   =
+		, tMap   = mappings ||
 			{
+				// standard Twine/Twee operators
 				  "$"    : "state.active.variables."
-				, "def"  : '"undefined" !== typeof'
-				, "ndef" : '"undefined" === typeof'
 				, "eq"   : "=="
 				, "neq"  : "!="
 				, "gt"   : ">"
@@ -289,7 +292,12 @@ Wikifier.parse = function (expression)
 				, "and"  : "&&"
 				, "or"   : "||"
 				, "not"  : "!"
+				// Twine2-compatible operators
+				, "is"   : "=="
 				, "to"   : "="
+				// SugarCube operators
+				, "def"  : '"undefined" !== typeof'
+				, "ndef" : '"undefined" === typeof'
 			};
 
 	while ((tMatch = tRe.exec(expression)) !== null)
@@ -798,36 +806,41 @@ Wikifier.formatters =
 {
 	name: "macro",
 	match: "<<",
-	lookahead: "<<([^>\\s]+)(?:\\s*)((?:[^>]|(?:>(?!>)))*)>>",
+	//lookahead: "<<([^>\\s]+)(?:\\s*)((?:(?:\"(?:\\\\.|[^\"\\\\])*\")|(?:'(?:\\\\.|[^'\\\\])*')|[^>]|(?:>(?!>)))*)>>",
+	lookaheadRegExp: /<<([^>\s]+)(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|[^>]|(?:>(?!>)))*)>>/gm,
+	working: { name: "", handlerName: "", arguments: "", index: 0 },
 	handler: function (w)
 	{
-		var lookaheadRegExp = new RegExp(this.lookahead, "gm");
-		lookaheadRegExp.lastIndex = w.matchStart;
-		var lookaheadMatch = lookaheadRegExp.exec(w.source);
-		if (lookaheadMatch && lookaheadMatch.index === w.matchStart && lookaheadMatch[1])
+//console.log("[formatters.macro.handler()]");
+		this.lookaheadRegExp.lastIndex = w.matchStart;
+		if (this.parseMacroTag(w))
 		{
-			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
-			var   macroName = lookaheadMatch[1]
-				, funcName  = "handler"
-				, funcSigil = macroName.indexOf("::");
-			if (funcSigil !== -1)
-			{
-				funcName  = macroName.slice(funcSigil + 2);
-				macroName = macroName.slice(0, funcSigil);
-			}
+//console.log("   +> " + this.working.name + ": tagBegin: " + this.working.index + ", tagEnd: " + w.nextMatch + ", tagData: `" + w.source.slice(this.working.index + 2, w.nextMatch - 2) + "`, tagArgs: " + this.working.arguments);
+			// the call to processChildren() below will likely change the working
+			// values, so we must cache them now
+			var   macroName = this.working.name
+				, funcName  = this.working.handlerName
+				, macroArgs = this.working.arguments;
 			try
 			{
 				var macro = macros[macroName];
 				if (macro)
 				{
+					var payload;
+					if (macro.hasOwnProperty("children"))
+					{
+						payload = this.processChildren(w, macro.children.bodyTags);
+					}
 					if (typeof macro[funcName] === "function")
 					{
 						var params = [];
 						if (!macro["excludeParams"])
 						{
-							params = lookaheadMatch[2].readMacroParams(macro["replaceVarParams"] !== undefined ? macro["replaceVarParams"] : true);
+							params = macroArgs.readMacroParams(macro["replaceVarParams"] !== undefined ? macro["replaceVarParams"] : true);
 						}
-						macro[funcName](w.output, macroName, params, w);
+						w._macroRawArgs = macroArgs;	// cache the raw arguments for use by rawArgs()/fullArgs()
+						macro[funcName](w.output, macroName, params, w, payload);
+						w._macroRawArgs = "";
 					}
 					else
 					{
@@ -848,7 +861,106 @@ Wikifier.formatters =
 				throwError(w.output, "cannot execute " + ((macro && macro.isWidget) ? "widget" : "macro") + " <<" + macroName + ">>: " + e.message);
 				return;
 			}
+			finally
+			{
+				this.working.name = "";
+				this.working.handlerName = "";
+				this.working.arguments = "";
+				this.working.index = 0;
+			}
 		}
+	},
+	parseMacroTag: function (w)
+	{
+		var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
+		if (lookaheadMatch && lookaheadMatch.index === w.matchStart && lookaheadMatch[1])
+		{
+			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+			this.lookaheadRegExp.lastIndex = w.nextMatch;
+
+			var funcSigil = lookaheadMatch[1].indexOf("::");
+			if (funcSigil !== -1)
+			{
+				this.working.name = lookaheadMatch[1].slice(0, funcSigil);
+				this.working.handlerName = lookaheadMatch[1].slice(funcSigil + 2);
+			}
+			else
+			{
+				this.working.name = lookaheadMatch[1];
+				this.working.handlerName = "handler";
+			}
+			this.working.arguments = lookaheadMatch[2];
+			this.working.index = lookaheadMatch.index;
+
+			return true;
+		}
+		return false;
+	},
+	processChildren: function (w, bodyTags)
+	{
+////console.log("[processChildren(" + this.working.name + ")]");
+		var   openTag      = this.working.name
+			, closeTag     = "/" + openTag
+			, closeAlt     = "end" + openTag
+			, end          = -1
+			, opened       = 1
+			, curTag       = this.working.name
+			, curArgument  = this.working.arguments
+			, contentStart = w.nextMatch
+			, payload      = [];
+
+		while ((w.matchStart = w.source.indexOf("<<", w.nextMatch)) !== -1
+			&& this.parseMacroTag(w))
+		{
+			var   tagName  = this.working.name
+				, tagArgs  = this.working.arguments
+				, tagBegin = this.working.index
+				, tagEnd   = w.nextMatch;
+//console.log("   -> " + this.working.name + ": tagBegin: " + this.working.index + ", tagEnd: " + w.nextMatch + ", tagData: `" + w.source.slice(this.working.index + 2, w.nextMatch - 2) + "`, tagArgs: " + this.working.arguments);
+
+			switch (tagName)
+			{
+			case openTag:
+				opened++;
+				break;
+
+			case closeAlt:
+				// fallthrough
+			case closeTag:
+				opened--;
+				break;
+
+			default:
+				if (opened === 1 && bodyTags)
+				{
+					for (var i = 0, len = bodyTags.length; i < len; i++)
+					{
+						if (tagName === bodyTags[i])
+						{
+							payload.push({ name: curTag, arguments: curArgument, contents: w.source.slice(contentStart, tagBegin) });
+							curTag       = tagName;
+							curArgument  = tagArgs;
+							contentStart = tagEnd;
+						}
+					}
+				}
+				break;
+			}
+			if (opened === 0)
+			{
+				payload.push({ name: curTag, arguments: curArgument, contents: w.source.slice(contentStart, tagBegin) });
+				end = tagEnd;
+				break;
+			}
+		}
+
+//console.log("< end: " + end);
+		if (end !== -1)
+		{
+			w.nextMatch = end;
+			return payload;
+		}
+		return null;
 	}
 },
 
