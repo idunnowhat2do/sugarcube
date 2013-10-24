@@ -54,7 +54,7 @@ String.prototype.readMacroParams = function (replaceVars)
 				// Variable, so perform substitution
 				if (replaceVars && /^\$\w+/.test(n))
 				{
-					var   varRe    = new RegExp("\\$(\\w+)((?:\\.\\w|\\[).*)", "g")
+					var   varRe    = new RegExp("\\$(\\w+)((?:(?:\\.\\w|\\[).*)?)", "g")
 						, varText  = n
 						, varMatch;
 					while ((varMatch = varRe.exec(varText)) !== null)
