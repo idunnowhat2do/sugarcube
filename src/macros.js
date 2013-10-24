@@ -409,7 +409,7 @@ macros["class"] =
 version.extensions["classupdateMacro"] = { major: 1, minor: 0, revision: 0 };
 macros["classupdate"] =
 {
-	handler: function (place, macroName, params, parser)
+	handler: function (place, macroName, params)
 	{
 		if (params.length < 3)
 		{
@@ -460,7 +460,7 @@ macros["classupdate"] =
 version.extensions["displayMacro"] = { major: 2, minor: 1, revision: 0 };
 macros["display"] =
 {
-	handler: function (place, macroName, params, parser)
+	handler: function (place, macroName, params)
 	{
 		if (params.length === 0)
 		{
@@ -791,7 +791,7 @@ macros["option"] =
 			throwError(place, "<<" + macroName + ">>: cannot find a matching close tag");
 		}
 	},
-	controlbar: function (place, macroName, params, parser)
+	controlbar: function (place)
 	{
 		var   elSet   = document.createElement("div")
 			, elClose = document.createElement("button")
