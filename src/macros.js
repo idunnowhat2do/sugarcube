@@ -11,93 +11,28 @@ macros["_children"] = {};
 /***********************************************************************************************************************
 ** [Macro Utility Functions]
 ***********************************************************************************************************************/
-function registerMacroTags(parent, tagNames)
+function registerMacroTags(parent, bodyTags)
 {
 	if (!parent) { throw new Error("no parent specified"); }
+	if (!bodyTags) { bodyTags = []; }
 
-	if (!tagNames) { tagNames = []; }
-	tagNames.push("/" + parent, "end" + parent);	// automatically add the standard closing tags
+	var   endTags = [ "/" + parent, "end" + parent ]	// automatically create the closing tags
+		, allTags = [];
+	
+	allTags.concat(bodyTags, endTags);
 
-	for (var i = 0; i < tagNames.length; i++)
+	for (var i = 0; i < allTags.length; i++)
 	{
-		if (macros.hasOwnProperty(tagNames[i]))
+		if (macros.hasOwnProperty(allTags[i]))
 		{
 			throw new Error("cannot register tag for existing macro");
 		}
-		if (!macros._children.hasOwnProperty(tagNames[i]))
+		if (!macros._children.hasOwnProperty(allTags[i]))
 		{
-			macros._children[tagNames[i]] = parent;
+			macros._children[allTags[i]] = parent;
 		}
 	}
-	return tagNames;
-}
-
-function getContainerMacroData(parser, macroName, childTags)
-{
-	var   openTag      = macroName
-		, closeTag     = "/" + macroName
-		, closeAlt     = "end" + macroName
-		, start        = parser.source.indexOf(">>", parser.matchStart) + 2
-		, end          = -1
-		, tagBegin     = start
-		, tagEnd       = start
-		, opened       = 1
-		, curTag       = openTag
-		, curArgument  = parser.rawArgs()
-		, contentStart = start
-		, macroData    = [];
-
-	// matryoshka handling
-	while ((tagBegin = parser.source.indexOf("<<", tagEnd)) !== -1
-		&& (tagEnd = parser.source.indexOf(">>", tagBegin)) !== -1)
-	{
-		var   tagData  = parser.source.slice(tagBegin + 2, tagEnd)
-			, tagDelim = tagData.search(/[\s\u00a0\u2028\u2029]/)	// Unicode space-character escapes required for IE
-			, tagName  = (tagDelim === -1) ? tagData : tagData.slice(0, tagDelim);
-
-		tagEnd += 2;
-		switch (tagName)
-		{
-		case openTag:
-			opened++;
-			break;
-
-		case closeAlt:
-			// fallthrough
-		case closeTag:
-			opened--;
-			break;
-
-		default:
-			if (opened === 1 && childTags)
-			{
-				for (var i = 0, len = childTags.length; i < len; i++)
-				{
-					if (tagName === childTags[i])
-					{
-						macroData.push({ name: curTag, arguments: curArgument, contents: parser.source.slice(contentStart, tagBegin) });
-						curTag       = tagName;
-						curArgument  = (tagDelim === -1) ? "" : tagData.slice(tagDelim + 1);
-						contentStart = tagEnd;
-					}
-				}
-			}
-			break;
-		}
-		if (opened === 0)
-		{
-			macroData.push({ name: curTag, arguments: curArgument, contents: parser.source.slice(contentStart, tagBegin) });
-			end = tagBegin;
-			break;
-		}
-	}
-
-	if (end !== -1)
-	{
-		parser.nextMatch = tagEnd;
-		return macroData;
-	}
-	return null;
+	return { "endTags": endTags, "bodyTags": bodyTags };
 }
 
 function evalMacroExpression(expression, place, macroName)
@@ -345,7 +280,7 @@ version.extensions["bindMacro"] = { major: 2, minor: 0, revision: 0 };
 macros["bind"] =
 {
 	children: registerMacroTags("bind"),
-	handler: function (place, macroName, params, parser)
+	handler: function (place, macroName, params, parser, payload)
 	{
 		if (params.length === 0)
 		{
@@ -353,9 +288,7 @@ macros["bind"] =
 			return;
 		}
 
-		var macroData = getContainerMacroData(parser, macroName);
-
-		if (macroData)
+		if (payload)
 		{
 			var   linkText   = params[0]
 				, passage    = params.length > 1 ? params[1] : undefined
@@ -414,7 +347,7 @@ macros["bind"] =
 						state.display(passage, el);
 					}
 				};
-			}(macroData[0].contents.trim(), widgetArgs)), false);
+			}(payload[0].contents.trim(), widgetArgs)), false);
 			place.appendChild(el);
 		}
 		else
@@ -453,17 +386,15 @@ version.extensions["classMacro"] = { major: 2, minor: 1, revision: 0 };
 macros["class"] =
 {
 	children: registerMacroTags("class"),
-	handler: function (place, macroName, params, parser)
+	handler: function (place, macroName, params, parser, payload)
 	{
-		var macroData = getContainerMacroData(parser, macroName);
-
-		if (macroData)
+		if (payload)
 		{
 			var   elName    = params[1] || "span"
 				, elClasses = params[0] || ""
 				, el        = insertElement(place, elName, null, elClasses);
 
-			new Wikifier(el, macroData[0].contents);
+			new Wikifier(el, payload[0].contents);
 		}
 		else
 		{
@@ -561,17 +492,15 @@ version.extensions["idMacro"] = { major: 2, minor: 1, revision: 0 };
 macros["id"] =
 {
 	children: registerMacroTags("id"),
-	handler: function (place, macroName, params, parser)
+	handler: function (place, macroName, params, parser, payload)
 	{
-		var macroData = getContainerMacroData(parser, macroName);
-
-		if (macroData)
+		if (payload)
 		{
 			var   elName = params[1] || "span"
 				, elId   = params[0] || ""
 				, el     = insertElement(place, elName, elId);
 
-			new Wikifier(el, macroData[0].contents);
+			new Wikifier(el, payload[0].contents);
 		}
 		else
 		{
@@ -588,20 +517,17 @@ macros["if"] =
 {
 	excludeParams: true,
 	children: registerMacroTags("if", [ "elseif", "else" ]),
-	handler: function (place, macroName, params, parser)
+	handler: function (place, macroName, params, parser, payload)
 	{
-		var   elseTag   = "else"
-			, macroData = getContainerMacroData(parser, macroName, [ elseTag + macroName, elseTag ]);
-
-		if (macroData)
+		if (payload)
 		{
 			try
 			{
-				for (var i = 0, len = macroData.length; i < len; i++)
+				for (var i = 0, len = payload.length; i < len; i++)
 				{
-					if (macroData[i].name === elseTag || eval(Wikifier.parse(macroData[i].arguments)))
+					if (payload[i].name === "else" || eval(Wikifier.parse(payload[i].arguments)))
 					{
-						new Wikifier(place, macroData[i].contents);
+						new Wikifier(place, payload[i].contents);
 						break;
 					}
 				}
@@ -725,7 +651,7 @@ version.extensions["optionMacro"] = { major: 1, minor: 0, revision: 0 };
 macros["option"] =
 {
 	children: registerMacroTags("option", [ "onchange" ]),
-	handler: function (place, macroName, params, parser)
+	handler: function (place, macroName, params, parser, payload)
 	{
 		if (params.length < 2)
 		{
@@ -750,10 +676,7 @@ macros["option"] =
 			return;
 		}
 
-		var   onChangeTag = "onchange"
-			, macroData   = getContainerMacroData(parser, macroName, [ onChangeTag ]);
-
-		if (macroData)
+		if (payload)
 		{
 			var   propertyId = slugify(propertyName)
 				, elOption   = document.createElement("div")
@@ -767,10 +690,10 @@ macros["option"] =
 			elControl.id = "option-control-" + propertyId;
 
 			// setup the label
-			new Wikifier(elLabel, macroData[0].contents.trim());
+			new Wikifier(elLabel, payload[0].contents.trim());
 
 			// setup the control
-			var onChangeBody = (macroData.length === 2 && macroData[1].name === onChangeTag) ? macroData[1].contents.trim() : "";
+			var onChangeBody = (payload.length === 2 && payload[1].name === "onchange") ? payload[1].contents.trim() : "";
 			if (!options.hasOwnProperty(propertyName))
 			{
 				options[propertyName] = undefined;
@@ -1005,16 +928,14 @@ macros["silently"] =
 {
 	excludeParams: true,
 	children: registerMacroTags("silently"),
-	handler: function (place, macroName, params, parser)
+	handler: function (place, macroName, params, parser, payload)
 	{
-		var macroData = getContainerMacroData(parser, macroName);
-
-		if (macroData)
+		if (payload)
 		{
 			// execute the contents and discard the output, except for errors (which are displayed)
 			var   errTrap = document.createElement("div")
 				, errList = [];
-			new Wikifier(errTrap, macroData[0].contents.trim());
+			new Wikifier(errTrap, payload[0].contents.trim());
 			while (errTrap.hasChildNodes())
 			{
 				var fc = errTrap.firstChild;
@@ -1079,7 +1000,7 @@ version.extensions["updateMacro"] = { major: 1, minor: 1, revision: 0 };
 macros["update"] =
 {
 	children: registerMacroTags("update"),
-	handler: function (place, macroName, params, parser)
+	handler: function (place, macroName, params, parser, payload)
 	{
 		if (params.length === 0)
 		{
@@ -1087,9 +1008,7 @@ macros["update"] =
 			return;
 		}
 
-		var macroData = getContainerMacroData(parser, macroName);
-
-		if (macroData)
+		if (payload)
 		{
 			var   parentEl = document.getElementById(params[0])
 				, targetEl
@@ -1125,7 +1044,7 @@ macros["update"] =
 			}
 
 			// add the new content
-			new Wikifier(targetEl, macroData[0].contents);
+			new Wikifier(targetEl, payload[0].contents);
 		}
 		else
 		{
@@ -1141,7 +1060,7 @@ version.extensions["widgetMacro"] = { major: 1, minor: 2, revision: 0 };
 macros["widget"] =
 {
 	children: registerMacroTags("widget"),
-	handler: function (place, macroName, params, parser)
+	handler: function (place, macroName, params, parser, payload)
 	{
 		if (params.length === 0)
 		{
@@ -1164,9 +1083,7 @@ macros["widget"] =
 			delete version.extensions[widgetName + "WidgetMacro"];
 		}
 
-		var macroData = getContainerMacroData(parser, macroName);
-
-		if (macroData)
+		if (payload)
 		{
 			try
 			{
@@ -1233,7 +1150,7 @@ macros["widget"] =
 								}
 							}
 						};
-					}(macroData[0].contents))
+					}(payload[0].contents))
 				};
 				version.extensions[widgetName + "WidgetMacro"] = { major: 1, minor: 0, revision: 0 };
 			}
