@@ -11,39 +11,60 @@
  */
 String.prototype.readMacroParams = function (replaceVars)
 {
-	function substituteVariables(argText)
+	function getVal(argText)
 	{
-		//var   varRe    = new RegExp("\\$(\\w+)((?:(?:\\.\\w|\\[).*)?)", "g")
-		//var   varRe    = new RegExp("\\$(\\w+)((?:\\.\\w+|\\[  ...?very large regexp here?...  \\])*)", "g")
-		var   varRe    = new RegExp("\\$(\\w+)((?:\\.\\w+|\\[[^\\]]+\\])*)", "g")	// BUG!  This fails to correctly handle $a[$b["c"]] or $a["[b]"] 
-			, varMatch;
-		while ((varMatch = varRe.exec(argText)) !== null)
+		function getPropNames(varText)
 		{
-			var   fullText  = varMatch[0]
-				, namePart  = varMatch[1]
-				, extraPart = varMatch[2];
+			var   re    = /^(?:\$(\w+)|\.(\w+)|\[(?:(?:\"((?:\\.|[^\"\\])+)\")|(?:\'((?:\\.|[^\'\\])+)\')|(\$\w.*)|(\d+))\])/
+				, match
+				, names = [];
 
-			if (typeof state.active.variables[namePart] !== "undefined")
+			while ((match = re.exec(varText)) !== null)
 			{
-				if (extraPart)
+				// Remove full match from varText
+				varText = varText.slice(match[0].length);
+
+			     // Base variable
+				if (match[1]) { names.push(match[1]); }
+
+				// Dot property
+				else if (match[2]) { names.push(match[2]); }
+
+				// Square-bracketed property (double quoted)
+				else if (match[3]) { names.push(match[3]); }
+
+				// Square-bracketed property (single quoted)
+				else if (match[4]) { names.push(match[4]); }
+
+				// Square-bracketed property (embedded $variable)
+				else if (match[5]) { names.push(match[5].readMacroParams(true)[0]); }
+
+				// Square-bracketed property (numeric index)
+				else if (match[6]) { names.push(Number(match[6])); }
+			}
+			return (varText === "") ? names : [];
+		}
+
+		var   names  = getPropNames(argText)
+			, retVal = undefined;
+
+		if (names.length !== 0)
+		{
+			retVal = state.active.variables;
+			for (var i = 0, len = names.length; i < len; i++)
+			{
+				if (typeof retVal[names[i]] !== "undefined")
 				{
-					try
-					{
-						var objPropVal = eval(Wikifier.parse(fullText, { "$": "state.active.variables." }));
-						argText = argText.replace(fullText, objPropVal);
-					}
-					catch (e)
-					{
-						// noop
-					}
+					retVal = retVal[names[i]];
 				}
 				else
 				{
-					argText = argText.replace(fullText, state.active.variables[namePart]);
+					retVal = undefined;
+					break;
 				}
 			}
 		}
-		return argText;
+		return retVal;
 	}
 
 	// RegExp groups: Double quoted | Single quoted | Empty quotes | Double square-bracketed | Barewords
@@ -58,47 +79,41 @@ String.prototype.readMacroParams = function (replaceVars)
 			var n;
 
 			// Double quoted
-			if (match[1])
-			{
-				n = match[1];
-			}
+			if (match[1]) { n = match[1]; }
 
 			// Single quoted
-			else if (match[2])
-			{
-				n = match[2];
-			}
+			else if (match[2]) { n = match[2]; }
 
 			// Empty quotes
-			else if (match[3])
-			{
-				n = "";
-			}
+			else if (match[3]) { n = ""; }
 
 			// Double square-bracketed
 			else if (match[4])
 			{
 				n = match[4];
 
-				// Contains variables, so perform substitution
-				if (replaceVars && /\$\w+/.test(n))
-				{
-					n = substituteVariables(n);
-				}
-
 				// Convert to an object
-				var delim = n.indexOf("|");	// BUG!  This doesn't play well with quoted strings
+				var delim = n.indexOf("|");	// FIXME?  This doesn't play well with quoted strings
 				if (delim === -1)
 				{
 					n = { "link": n, "text": n };
 				}
 				else
 				{
-					n =
+					n = { "link": n.slice(delim + 1), "text": n.slice(0, delim) };
+				}
+
+				// Check for $variables
+				if (replaceVars)
+				{
+					for (var propName in n)
 					{
-						  "link": n.slice(delim + 1)
-						, "text": n.slice(0, delim)
-					};
+						// $variable, so substitute its value
+						if (/\$\w+/.test(n[propName]))
+						{
+							n[propName] = getVal(n[propName]);
+						}
+					}
 				}
 			}
 
@@ -107,10 +122,10 @@ String.prototype.readMacroParams = function (replaceVars)
 			{
 				n = match[5];
 
-				// Contains variables, so perform substitution
+				// $variable, so substitute its value
 				if (replaceVars && /\$\w+/.test(n))
 				{
-					n = substituteVariables(n);
+					n = getVal(n);
 				}
 
 				// Numeric literal, so coerce it into a number
