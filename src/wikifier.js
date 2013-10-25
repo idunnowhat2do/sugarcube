@@ -11,7 +11,42 @@
  */
 String.prototype.readMacroParams = function (replaceVars)
 {
-	// RegExp groups: Double quoted | Single quoted | Empty quotes | Double-square-bracketed | Barewords
+	function substituteVariables(argText)
+	{
+		//var   varRe    = new RegExp("\\$(\\w+)((?:(?:\\.\\w|\\[).*)?)", "g")
+		//var   varRe    = new RegExp("\\$(\\w+)((?:\\.\\w+|\\[  ...?very large regexp here?...  \\])*)", "g")
+		var   varRe    = new RegExp("\\$(\\w+)((?:\\.\\w+|\\[[^\\]]+\\])*)", "g")	// BUG!  This fails to correctly handle $a[$b["c"]] or $a["[b]"] 
+			, varMatch;
+		while ((varMatch = varRe.exec(argText)) !== null)
+		{
+			var   fullText  = varMatch[0]
+				, namePart  = varMatch[1]
+				, extraPart = varMatch[2];
+
+			if (typeof state.active.variables[namePart] !== "undefined")
+			{
+				if (extraPart)
+				{
+					try
+					{
+						var objPropVal = eval(Wikifier.parse(fullText, { "$": "state.active.variables." }));
+						argText = argText.replace(fullText, objPropVal);
+					}
+					catch (e)
+					{
+						// noop
+					}
+				}
+				else
+				{
+					argText = argText.replace(fullText, state.active.variables[namePart]);
+				}
+			}
+		}
+		return argText;
+	}
+
+	// RegExp groups: Double quoted | Single quoted | Empty quotes | Double square-bracketed | Barewords
 	var   re     = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\\')|[^'])+)')|((?:\"\")|(?:''))|(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^\"'\\s]\\S*))", "gm")
 		, params = [];
 
@@ -40,10 +75,31 @@ String.prototype.readMacroParams = function (replaceVars)
 				n = "";
 			}
 
-			// Double-square-bracketed
+			// Double square-bracketed
 			else if (match[4])
 			{
 				n = match[4];
+
+				// Contains variables, so perform substitution
+				if (replaceVars && /\$\w+/.test(n))
+				{
+					n = substituteVariables(n);
+				}
+
+				// Convert to an object
+				var delim = n.indexOf("|");	// BUG!  This doesn't play well with quoted strings
+				if (delim === -1)
+				{
+					n = { "link": n, "text": n };
+				}
+				else
+				{
+					n =
+					{
+						  "link": n.slice(delim + 1)
+						, "text": n.slice(0, delim)
+					};
+				}
 			}
 
 			// Barewords
@@ -51,36 +107,10 @@ String.prototype.readMacroParams = function (replaceVars)
 			{
 				n = match[5];
 
-				// Variable, so perform substitution
-				if (replaceVars && /^\$\w+/.test(n))
+				// Contains variables, so perform substitution
+				if (replaceVars && /\$\w+/.test(n))
 				{
-					var   varRe    = new RegExp("\\$(\\w+)((?:(?:\\.\\w|\\[).*)?)", "g")
-						, varText  = n
-						, varMatch;
-					while ((varMatch = varRe.exec(varText)) !== null)
-					{
-						var   varText  = varMatch[0]
-							, varName  = varMatch[1];
-						if (typeof state.active.variables[varName] !== "undefined")
-						{
-							if (varMatch[2])
-							{
-								try
-								{
-									var objPropVal = eval(Wikifier.parse(varText, { "$": "state.active.variables." }));
-									n = n.replace(varText, objPropVal);
-								}
-								catch (e)
-								{
-									// noop
-								}
-							}
-							else
-							{
-								n = n.replace(varText, state.active.variables[varName]);
-							}
-						}
-					}
+					n = substituteVariables(n);
 				}
 
 				// Numeric literal, so coerce it into a number
@@ -309,7 +339,7 @@ Wikifier.parse = function (expression, mappings)
 		{
 			var token = tMatch[5];
 
-			if (token[0] === "$")
+			if (token[0] === "$")	// special case
 			{
 				token = "$";
 			}
