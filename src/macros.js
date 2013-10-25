@@ -56,7 +56,7 @@ function evalMacroExpression(expression, place, macroName)
 /**
  * <<actions>>
  */
-version.extensions["actionsMacro"] = { major: 1, minor: 4, revision: 0 };
+version.extensions["actionsMacro"] = { major: 1, minor: 5, revision: 0 };
 macros["actions"] =
 {
 	handler: function (place, macroName, params)
@@ -70,16 +70,16 @@ macros["actions"] =
 		for (var i = 0; i < params.length; i++)
 		{
 			var   actText
-				, passage
-				, delim   = params[i].indexOf("|");
-			if (delim === -1)
-			{
-				actText = passage = params[i];
+				, passage;
+
+			if (typeof params[i] === "object")
+			{	// Argument was in pretty-link syntax
+				actText = params[i].text;
+				passage = params[i].link;
 			}
 			else
-			{
-				actText = params[i].slice(0, delim);
-				passage = params[i].slice(delim + 1);
+			{	// Argument was a simple passage name
+				actText = passage = params[i];
 			}
 
 			if (state.active.variables["#actions"][passage])
