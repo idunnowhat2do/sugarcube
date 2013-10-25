@@ -276,7 +276,7 @@ macros["back"] = macros["return"] =
 /**
  * <<bind>>
  */
-version.extensions["bindMacro"] = { major: 2, minor: 0, revision: 0 };
+version.extensions["bindMacro"] = { major: 2, minor: 1, revision: 0 };
 macros["bind"] =
 {
 	children: registerMacroTags("bind"),
@@ -382,7 +382,7 @@ macros["choice"] =
 /**
  * <<class>>
  */
-version.extensions["classMacro"] = { major: 2, minor: 1, revision: 0 };
+version.extensions["classMacro"] = { major: 2, minor: 2, revision: 0 };
 macros["class"] =
 {
 	children: registerMacroTags("class"),
@@ -488,7 +488,7 @@ macros["display"] =
 /**
  * <<id>>
  */
-version.extensions["idMacro"] = { major: 2, minor: 1, revision: 0 };
+version.extensions["idMacro"] = { major: 2, minor: 2, revision: 0 };
 macros["id"] =
 {
 	children: registerMacroTags("id"),
@@ -512,7 +512,7 @@ macros["id"] =
 /**
  * <<if>>
  */
-version.extensions["ifMacro"] = { major: 2, minor: 1, revision: 0 };
+version.extensions["ifMacro"] = { major: 2, minor: 2, revision: 0 };
 macros["if"] =
 {
 	excludeParams: true,
@@ -647,7 +647,7 @@ macros["link"] =
 /**
  * <<option>>
  */
-version.extensions["optionMacro"] = { major: 1, minor: 0, revision: 0 };
+version.extensions["optionMacro"] = { major: 1, minor: 1, revision: 0 };
 macros["option"] =
 {
 	children: registerMacroTags("option", [ "onchange" ]),
@@ -923,7 +923,7 @@ macros["run"] = macros["runjs"] = macros["set"] =
 /**
  * <<silently>>
  */
-version.extensions["silentlyMacro"] = { major: 3, minor: 0, revision: 0 };
+version.extensions["silentlyMacro"] = { major: 3, minor: 1, revision: 0 };
 macros["silently"] =
 {
 	excludeParams: true,
@@ -996,7 +996,7 @@ macros["unset"] =
 /**
  * <<update>>
  */
-version.extensions["updateMacro"] = { major: 1, minor: 1, revision: 0 };
+version.extensions["updateMacro"] = { major: 1, minor: 2, revision: 0 };
 macros["update"] =
 {
 	children: registerMacroTags("update"),
@@ -1056,7 +1056,7 @@ macros["update"] =
 /**
  * <<widget>>
  */
-version.extensions["widgetMacro"] = { major: 1, minor: 2, revision: 0 };
+version.extensions["widgetMacro"] = { major: 1, minor: 3, revision: 0 };
 macros["widget"] =
 {
 	children: registerMacroTags("widget"),
