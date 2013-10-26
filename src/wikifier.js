@@ -11,62 +11,6 @@
  */
 String.prototype.readMacroParams = function (replaceVars)
 {
-	function getVal(argText)
-	{
-		function getPropNames(varText)
-		{
-			var   re    = /^(?:\$(\w+)|\.(\w+)|\[(?:(?:\"((?:\\.|[^\"\\])+)\")|(?:\'((?:\\.|[^\'\\])+)\')|(\$\w.*)|(\d+))\])/
-				, match
-				, names = [];
-
-			while ((match = re.exec(varText)) !== null)
-			{
-				// Remove full match from varText
-				varText = varText.slice(match[0].length);
-
-			     // Base variable
-				if (match[1]) { names.push(match[1]); }
-
-				// Dot property
-				else if (match[2]) { names.push(match[2]); }
-
-				// Square-bracketed property (double quoted)
-				else if (match[3]) { names.push(match[3]); }
-
-				// Square-bracketed property (single quoted)
-				else if (match[4]) { names.push(match[4]); }
-
-				// Square-bracketed property (embedded $variable)
-				else if (match[5]) { names.push(match[5].readMacroParams(true)[0]); }
-
-				// Square-bracketed property (numeric index)
-				else if (match[6]) { names.push(Number(match[6])); }
-			}
-			return (varText === "") ? names : [];
-		}
-
-		var   names  = getPropNames(argText)
-			, retVal = undefined;
-
-		if (names.length !== 0)
-		{
-			retVal = state.active.variables;
-			for (var i = 0, len = names.length; i < len; i++)
-			{
-				if (typeof retVal[names[i]] !== "undefined")
-				{
-					retVal = retVal[names[i]];
-				}
-				else
-				{
-					retVal = undefined;
-					break;
-				}
-			}
-		}
-		return retVal;
-	}
-
 	// RegExp groups: Double quoted | Single quoted | Empty quotes | Double square-bracketed | Barewords
 	var   re     = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\\')|[^'])+)')|((?:\"\")|(?:''))|(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^\"'\\s]\\S*))", "gm")
 		, params = [];
@@ -93,7 +37,7 @@ String.prototype.readMacroParams = function (replaceVars)
 				n = match[4];
 
 				// Convert to an object
-				var delim = n.indexOf("|");	// FIXME?  This doesn't play well with quoted strings
+				var delim = n.indexOf("|");
 				if (delim === -1)
 				{
 					n = { "link": n, "text": n };
@@ -111,7 +55,7 @@ String.prototype.readMacroParams = function (replaceVars)
 						// $variable, so substitute its value
 						if (/\$\w+/.test(n[propName]))
 						{
-							n[propName] = getVal(n[propName]);
+							n[propName] = Wikifier.getValue(n[propName]);
 						}
 					}
 				}
@@ -125,7 +69,7 @@ String.prototype.readMacroParams = function (replaceVars)
 				// $variable, so substitute its value
 				if (replaceVars && /\$\w+/.test(n))
 				{
-					n = getVal(n);
+					n = Wikifier.getValue(n);
 				}
 
 				// Numeric literal, so coerce it into a number
@@ -319,12 +263,15 @@ Wikifier.prototype.fullArgs = function ()
 	return Wikifier.parse(this.rawArgs());
 };
 
-Wikifier.parse = function (expression, mappings)
+/**
+ * Returns the passed string with all Twine/Twee operators converted to their JavaScript counterparts
+ */
+Wikifier.parse = function (expression)
 {
 	// Double quoted | Single quoted | Empty quotes | Operator delimiters | Barewords & Sigil
 	var   tRe    = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\\')|[^'])+)')|((?:\"\")|(?:''))|([=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}]+)|([^\"'=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}\\s]+))", "g")
 		, tMatch
-		, tMap   = mappings ||
+		, tMap   =
 			{
 				// standard Twine/Twee operators
 				  "$"    : "state.active.variables."
@@ -373,6 +320,58 @@ Wikifier.parse = function (expression, mappings)
 	}
 
 	return expression;
+};
+
+/**
+ * Returns the value of the passed story $variable, which may be of arbitrary complexity
+ */
+Wikifier.getValue = function (varText)
+{
+	var   re     = /^(?:\$(\w+)|\.(\w+)|\[(?:(?:\"((?:\\.|[^\"\\])+)\")|(?:\'((?:\\.|[^\'\\])+)\')|(\$\w.*)|(\d+))\])/
+		, match
+		, names  = []
+		, retVal = undefined;
+
+	while ((match = re.exec(varText)) !== null)
+	{
+		// Remove full match from varText
+		varText = varText.slice(match[0].length);
+
+	     // Base variable
+		if (match[1]) { names.push(match[1]); }
+
+		// Dot property
+		else if (match[2]) { names.push(match[2]); }
+
+		// Square-bracketed property (double quoted)
+		else if (match[3]) { names.push(match[3]); }
+
+		// Square-bracketed property (single quoted)
+		else if (match[4]) { names.push(match[4]); }
+
+		// Square-bracketed property (embedded $variable)
+		else if (match[5]) { names.push(Wikifier.getValue(match[5])); }
+
+		// Square-bracketed property (numeric index)
+		else if (match[6]) { names.push(Number(match[6])); }
+	}
+	if (varText === "" && names.length !== 0)
+	{
+		retVal = state.active.variables;
+		for (var i = 0, len = names.length; i < len; i++)
+		{
+			if (typeof retVal[names[i]] !== "undefined")
+			{
+				retVal = retVal[names[i]];
+			}
+			else
+			{
+				retVal = undefined;
+				break;
+			}
+		}
+	}
+	return retVal;
 };
 
 Wikifier.formatterHelpers =
@@ -536,7 +535,7 @@ Wikifier.formatters =
 				}
 				else if (cellMatch[2])
 				{
-					w.nextMatch = cellMatch.index + cellMatch[0].length;;
+					w.nextMatch = cellMatch.index + cellMatch[0].length;
 					break;
 				}
 				else
@@ -763,34 +762,32 @@ Wikifier.formatters =
 {
 	name: "prettyLink",
 	match: "\\[\\[",
-	lookahead: "\\[\\[([^\\|\\]]*?)(?:(\\]\\])|(\\|(.*?)\\]\\]))",
-	terminator: "\\|",
+	//lookaheadRegExp: /\[\[([^\|\]]*?)(?:\|(.*?))?\]\]/gm,
+	lookaheadRegExp: /\[\[(.*?)(?:\|(.*?))?\]\]/gm,
 	handler: function (w)
 	{
-		var lookaheadRegExp = new RegExp(this.lookahead, "gm");
-		lookaheadRegExp.lastIndex = w.matchStart;
-		var lookaheadMatch = lookaheadRegExp.exec(w.source);
-		var el;
+		this.lookaheadRegExp.lastIndex = w.matchStart;
+		var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
 		if (lookaheadMatch && lookaheadMatch.index === w.matchStart)
 		{
+			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+
+			var text = lookaheadMatch[1][0] === "$" ? Wikifier.getValue(lookaheadMatch[1]) : lookaheadMatch[1];
 			if (lookaheadMatch[2])
 			{
-				el = Wikifier.createInternalLink(w.output, lookaheadMatch[1]);
-				w.outputText(el, w.nextMatch, w.nextMatch + lookaheadMatch[1].length);
-				w.nextMatch += lookaheadMatch[1].length + 2;
-			}
-			else if (lookaheadMatch[3])
-			{
-				if (tale.has(lookaheadMatch[4]))
+				var link = lookaheadMatch[2][0] === "$" ? Wikifier.getValue(lookaheadMatch[2]) : lookaheadMatch[2];
+				if (tale.has(link))
 				{
-					el = Wikifier.createInternalLink(w.output, lookaheadMatch[4]);
+					Wikifier.createInternalLink(w.output, link, text);
 				}
 				else
 				{
-					el = Wikifier.createExternalLink(w.output, lookaheadMatch[4]);
+					Wikifier.createExternalLink(w.output, link, text);
 				}
-				w.outputText(el, w.nextMatch, w.nextMatch + lookaheadMatch[1].length);
-				w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+			}
+			else
+			{
+				Wikifier.createInternalLink(w.output, text, text);
 			}
 		}
 	}
@@ -808,42 +805,44 @@ Wikifier.formatters =
 
 {
 	name: "image",
-	match: "\\[(?:[<]{0,1})(?:[>]{0,1})[Ii][Mm][Gg]\\[",
-	lookahead: "\\[([<]{0,1})([>]{0,1})[Ii][Mm][Gg]\\[(?:([^\\|\\]]+)\\|)?([^\\[\\]\\|]+)\\](?:\\[([^\\]]*)\\]?)?(\\])",
+	match: "\\[[<>]?[Ii][Mm][Gg]\\[",
+	lookaheadRegExp: /\[([<]?)([>]?)[Ii][Mm][Gg]\[(?:([^\|\]]+)\|)?([^\[\]\|]+)\](?:\[([^\]]*)\])?\]/gm,
 	handler: function (w)
 	{
-		var lookaheadRegExp = new RegExp(this.lookahead, "gm");
-		lookaheadRegExp.lastIndex = w.matchStart;
-		var lookaheadMatch = lookaheadRegExp.exec(w.source);
+		this.lookaheadRegExp.lastIndex = w.matchStart;
+		var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
 		if (lookaheadMatch && lookaheadMatch.index === w.matchStart)
 		{
+			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+
 			var el = w.output;
 			if (lookaheadMatch[5])
 			{
-				if (tale.has(lookaheadMatch[5]))
+				var link = lookaheadMatch[5][0] === "$" ? Wikifier.getValue(lookaheadMatch[5]) : lookaheadMatch[5];
+				if (tale.has(link))
 				{
-					el = Wikifier.createInternalLink(w.output, lookaheadMatch[5]);
+					el = Wikifier.createInternalLink(el, link);
 				}
 				else
 				{
-					el = Wikifier.createExternalLink(w.output, lookaheadMatch[5]);
+					el = Wikifier.createExternalLink(el, link);
 				}
+				el.classList.add("link-image");
 			}
-			var img = insertElement(el, "img");
+			el = insertElement(el, "img");
+			el.src = lookaheadMatch[4][0] === "$" ? Wikifier.getValue(lookaheadMatch[4]) : lookaheadMatch[4];
+			if (lookaheadMatch[3])
+			{
+				el.title = lookaheadMatch[3][0] === "$" ? Wikifier.getValue(lookaheadMatch[3]) : lookaheadMatch[3];
+			}
 			if (lookaheadMatch[1])
 			{
-				img.align = "left";
+				el.align = "left";
 			}
 			else if (lookaheadMatch[2])
 			{
-				img.align = "right";
+				el.align = "right";
 			}
-			if (lookaheadMatch[3])
-			{
-				img.title = lookaheadMatch[3];
-			}
-			img.src = lookaheadMatch[4];
-			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 		}
 	}
 },
@@ -851,7 +850,6 @@ Wikifier.formatters =
 {
 	name: "macro",
 	match: "<<",
-	//lookahead: "<<([^>\\s]+)(?:\\s*)((?:(?:\"(?:\\\\.|[^\"\\\\])*\")|(?:'(?:\\\\.|[^'\\\\])*')|[^>]|(?:>(?!>)))*)>>",
 	lookaheadRegExp: /<<([^>\s]+)(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|[^>]|(?:>(?!>)))*)>>/gm,
 	working: { name: "", handlerName: "", arguments: "", index: 0 },
 	handler: function (w)
