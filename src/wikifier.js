@@ -13,89 +13,86 @@ String.prototype.readMacroParams = function (replaceVars)
 {
 	// RegExp groups: Double quoted | Single quoted | Empty quotes | Double square-bracketed | Barewords
 	var   re     = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\\')|[^'])+)')|((?:\"\")|(?:''))|(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^\"'\\s]\\S*))", "gm")
-		, params = [];
+		, params = []
+		, match;
 
-	do
+	while ((match = re.exec(this)) !== null)
 	{
-		var match = re.exec(this);
-		if (match)
+		var n;
+
+		// Double quoted
+		if (match[1]) { n = match[1]; }
+
+		// Single quoted
+		else if (match[2]) { n = match[2]; }
+
+		// Empty quotes
+		else if (match[3]) { n = ""; }
+
+		// Double square-bracketed
+		else if (match[4])
 		{
-			var n;
+			n = match[4];
 
-			// Double quoted
-			if (match[1]) { n = match[1]; }
-
-			// Single quoted
-			else if (match[2]) { n = match[2]; }
-
-			// Empty quotes
-			else if (match[3]) { n = ""; }
-
-			// Double square-bracketed
-			else if (match[4])
+			// Convert to an object
+			var delim = n.indexOf("|");
+			if (delim === -1)
 			{
-				n = match[4];
+				n = { "link": n, "text": n };
+			}
+			else
+			{
+				n = { "link": n.slice(delim + 1), "text": n.slice(0, delim) };
+			}
 
-				// Convert to an object
-				var delim = n.indexOf("|");
-				if (delim === -1)
+			// Check for $variables
+			if (replaceVars)
+			{
+				for (var propName in n)
 				{
-					n = { "link": n, "text": n };
-				}
-				else
-				{
-					n = { "link": n.slice(delim + 1), "text": n.slice(0, delim) };
-				}
-
-				// Check for $variables
-				if (replaceVars)
-				{
-					for (var propName in n)
+					// $variable, so substitute its value
+					if (/\$\w+/.test(n[propName]))
 					{
-						// $variable, so substitute its value
-						if (/\$\w+/.test(n[propName]))
-						{
-							n[propName] = Wikifier.getValue(n[propName]);
-						}
+						n[propName] = Wikifier.getValue(n[propName]);
 					}
 				}
 			}
+		}
 
-			// Barewords
-			else if (match[5])
+		// Barewords
+		else if (match[5])
+		{
+			n = match[5];
+
+			// $variable, so substitute its value
+			if (replaceVars && /\$\w+/.test(n))
 			{
-				n = match[5];
-
-				// $variable, so substitute its value
-				if (replaceVars && /\$\w+/.test(n))
-				{
-					n = Wikifier.getValue(n);
-				}
-
-				// Numeric literal, so coerce it into a number
-				else if (isNumeric(n))
-				{
-					// n.b. Octal literals are not handled correctly by Number() (e.g. Number("077") yields 77, not 63).
-					//      We could use eval("077") instead, which does correctly yield 63, however, it's probably far
-					//      more likely that the average Twine/Twee author would expect "077" to yield 77 rather than 63.
-					//      So, we cater to author expectation and use Number().
-					n = Number(n);
-				}
-
-				// Boolean literal, so coerce it into a boolean
-				else if (isBoolean(n))
-				{
-					n = (n === "true") ? true : false;
-				}
-
-				// Object/Array literals are too complex to automatically coerce and so are left as-is.  Authors really
-				// shouldn't be passing object/array literals as arguments anyway.  If they want to pass a complex type,
-				// store it in a variable and pass that instead.
+				n = Wikifier.getValue(n);
 			}
 
-			params.push(n);
+			// Numeric literal, so coerce it into a number
+			else if (isNumeric(n))
+			{
+				// n.b. Octal literals are not handled correctly by Number() (e.g. Number("077") yields 77, not 63).
+				//      We could use eval("077") instead, which does correctly yield 63, however, it's probably far
+				//      more likely that the average Twine/Twee author would expect "077" to yield 77 rather than 63.
+				//      So, we cater to author expectation and use Number().
+				n = Number(n);
+			}
+
+			// Boolean literal, so coerce it into a boolean
+			else if (isBoolean(n))
+			{
+				n = (n === "true") ? true : false;
+			}
+
+			// Object/Array literals are too complex to automatically coerce and so are left as-is.  Authors really
+			// shouldn't be passing object/array literals as arguments anyway.  If they want to pass a complex type,
+			// store it in a variable and pass that instead.
 		}
-	} while (match);
+
+		params.push(n);
+	}
 
 	return params;
 };
@@ -337,7 +334,7 @@ Wikifier.getValue = function (varText)
 		// Remove full match from varText
 		varText = varText.slice(match[0].length);
 
-	     // Base variable
+		// Base variable
 		if (match[1]) { names.push(match[1]); }
 
 		// Dot property
@@ -854,11 +851,9 @@ Wikifier.formatters =
 	working: { name: "", handlerName: "", arguments: "", index: 0 },
 	handler: function (w)
 	{
-//console.log("[formatters.macro.handler()]");
 		this.lookaheadRegExp.lastIndex = w.matchStart;
 		if (this.parseMacroTag(w))
 		{
-//console.log("   +> " + this.working.name + ": tagBegin: " + this.working.index + ", tagEnd: " + w.nextMatch + ", tagData: `" + w.source.slice(this.working.index + 2, w.nextMatch - 2) + "`, tagArgs: " + this.working.arguments);
 			// the call to processChildren() below will likely change the working
 			// values, so we must cache them now
 			var   macroName = this.working.name
@@ -941,7 +936,6 @@ Wikifier.formatters =
 	},
 	processChildren: function (w, bodyTags)
 	{
-////console.log("[processChildren(" + this.working.name + ")]");
 		var   openTag      = this.working.name
 			, closeTag     = "/" + openTag
 			, closeAlt     = "end" + openTag
@@ -959,7 +953,6 @@ Wikifier.formatters =
 				, tagArgs  = this.working.arguments
 				, tagBegin = this.working.index
 				, tagEnd   = w.nextMatch;
-//console.log("   -> " + this.working.name + ": tagBegin: " + this.working.index + ", tagEnd: " + w.nextMatch + ", tagData: `" + w.source.slice(this.working.index + 2, w.nextMatch - 2) + "`, tagArgs: " + this.working.arguments);
 
 			switch (tagName)
 			{
@@ -997,7 +990,6 @@ Wikifier.formatters =
 			}
 		}
 
-//console.log("< end: " + end);
 		if (end !== -1)
 		{
 			w.nextMatch = end;
@@ -1018,13 +1010,6 @@ Wikifier.formatters =
 		var lookaheadMatch = lookaheadRegExp.exec(w.source);
 		if (lookaheadMatch && lookaheadMatch.index === w.matchStart)
 		{
-			/* don't wrap the contents of the <html> tag
-			var el = insertElement(w.output, "span");
-			el.innerHTML = lookaheadMatch[1];
-			*/
-			/*
-			jQuery(w.output).append(lookaheadMatch[1]);
-			*/
 			var   frag = document.createDocumentFragment()
 				, temp = document.createElement("div");
 			temp.innerHTML = lookaheadMatch[1];
@@ -1185,15 +1170,6 @@ Wikifier.formatters =
 			w.nextMatch = this.lookaheadRegExp.lastIndex;
 		}
 	}
-//},
-//
-//{
-//	name: "htmlEntitiesEncoding",
-//	match: "(?:(?:&#?[a-zA-Z0-9]{2,8};|.)(?:&#?(?:x0*(?:3[0-6][0-9a-fA-F]|1D[c-fC-F][0-9a-fA-F]|20[d-fD-F][0-9a-fA-F]|FE2[0-9a-fA-F])|0*(?:76[89]|7[7-9][0-9]|8[0-7][0-9]|761[6-9]|76[2-7][0-9]|84[0-3][0-9]|844[0-7]|6505[6-9]|6506[0-9]|6507[0-1]));)+|&#?[a-zA-Z0-9]{2,8};)",
-//	handler: function(w)
-//	{
-//		insertElement(w.output, "span").innerHTML = w.matchText;
-//	}
 }
 
 ];	// End formatters
