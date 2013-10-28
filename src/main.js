@@ -5,7 +5,7 @@
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("October 21, 2013"), extensions: {} };
+var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("October 28, 2013"), extensions: {} };
 
 var modes =		// SugarCube History class modes
 {
@@ -301,18 +301,18 @@ var SaveSystem =
 		// capture the file information once the load is finished
 		reader.addEventListener("load", (function(file)
 		{
-			return function(e)
+			return function(evt)
 			{
-				console.log('    > loaded: ' + escape(file.name) + '; payload: ' + e.target.result);
+				console.log('    > loaded: ' + escape(file.name) + '; payload: ' + evt.target.result);
 
-				if (!e.target.result) { return; }
+				if (!evt.target.result) { return; }
 
 				var saveObj;
 				try
 				{
-					saveObj = JSON.parse(e.target.result);
+					saveObj = JSON.parse(evt.target.result);
 				}
-				catch (e)
+				catch (evt)
 				{
 					// noop, the unmarshal() function will handle the error
 				}
@@ -449,11 +449,11 @@ var UISystem =
 		insertElement(document.body, "div", "ui-body");
 
 		// setup click handlers
-		UISystem.addClickHandler("#menu-saves",   null, function (e) { UISystem.buildSaves(); });
-		UISystem.addClickHandler("#menu-rewind",  null, function (e) { UISystem.buildRewind(); });
-		UISystem.addClickHandler("#menu-restart", null, function (e) { UISystem.buildRestart(); });
-		UISystem.addClickHandler("#menu-options", null, function (e) { UISystem.buildOptions(); });
-		UISystem.addClickHandler("#menu-share",   null, function (e) { UISystem.buildShare(); });
+		UISystem.addClickHandler("#menu-saves",   null, function (evt) { UISystem.buildSaves(); });
+		UISystem.addClickHandler("#menu-rewind",  null, function (evt) { UISystem.buildRewind(); });
+		UISystem.addClickHandler("#menu-restart", null, function (evt) { UISystem.buildRestart(); });
+		UISystem.addClickHandler("#menu-options", null, function (evt) { UISystem.buildOptions(); });
+		UISystem.addClickHandler("#menu-share",   null, function (evt) { UISystem.buildShare(); });
 	},
 	buildSaves: function ()
 	{
@@ -553,9 +553,9 @@ var UISystem =
 			input.type     = "file";
 			input.id       = "saves-import-file";
 			input.name     = "saves-import-file";
-			input.addEventListener("change", function (e)
+			input.addEventListener("change", function (evt)
 			{
-				SaveSystem.importSave(e);
+				SaveSystem.importSave(evt);
 				UISystem.close();
 			}, false);
 			el.appendChild(input);
@@ -597,7 +597,7 @@ var UISystem =
 			if (config.hasFileAPI && (!config.browser.isOpera || config.browser.operaVersion >= 15))
 			{
 				list.appendChild(createActionItem("export", "Save to Disk\u2026", SaveSystem.exportSave));
-				list.appendChild(createActionItem("import", "Load from Disk\u2026", function (e) {
+				list.appendChild(createActionItem("import", "Load from Disk\u2026", function (evt) {
 					if (!document.getElementById("saves-import-file"))
 					{
 						menu.appendChild(createSavesImport());
@@ -793,13 +793,13 @@ var UISystem =
 			, opacity: 0.8
 		}, options);
 
-		jQuery(target).click(function (e) {
-			e.preventDefault();
+		jQuery(target).click(function (evt) {
+			evt.preventDefault();	// this doesn't prevent bound events, only default actions (e.g. href links)
 
 			// call the start function
 			if (typeof startFunc === "function")
 			{
-				startFunc(e);
+				startFunc(evt);
 			}
 
 			var   overlay = jQuery("#ui-overlay")
@@ -809,11 +809,11 @@ var UISystem =
 			// setup close function handlers
 			overlay
 				.add(".ui-close")
-				.click(function (e) {
+				.click(function (evt) {
 					UISystem.close();
 					if (typeof callbackFunc === "function")
 					{
-						callbackFunc(e);
+						callbackFunc(evt);
 					}
 				});
 
@@ -845,7 +845,7 @@ var UISystem =
 			// call the done function
 			if (typeof doneFunc === "function")
 			{
-				doneFunc(e);
+				doneFunc(evt);
 			}
 		});
 	}

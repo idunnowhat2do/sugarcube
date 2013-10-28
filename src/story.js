@@ -379,7 +379,7 @@ History.prototype.restore = function (suid)
 
 				return true;
 			}
-			catch(e)
+			catch (e)
 			{
 				console.log("restore failed", e);
 			}
@@ -388,7 +388,7 @@ History.prototype.restore = function (suid)
 	return false;
 };
 
-History.hashChangeHandler = function (e)
+History.hashChangeHandler = function (evt)
 {
 	console.log("[History.hashChangeHandler()]");
 
@@ -419,38 +419,38 @@ History.hashChangeHandler = function (e)
 	}
 };
 
-History.popStateHandler_windowHistory = function (e)
+History.popStateHandler_windowHistory = function (evt)
 {
 	console.log("[History.popStateHandler_windowHistory()]");
-	if (e.state === null) { console.log("    > e.state: null; no-op"); }
+	if (evt.state === null) { console.log("    > evt.state: null; no-op"); }
 
 	// no-op if state is null
-	if (e.state === null) { return; }
+	if (evt.state === null) { return; }
 
 	// throw error if state is empty
-	if (e.state.length === 0) { throw new Error("Guru meditation error!"); }
+	if (evt.state.length === 0) { throw new Error("Guru meditation error!"); }
 
-	state.history = e.state;
+	state.history = evt.state;
 	state.display(state.activate(state.top).title, null, "back");
 };
 
-History.popStateHandler_sessionHistory = function (e)
+History.popStateHandler_sessionHistory = function (evt)
 {
 	console.log("[History.popStateHandler_sessionHistory()]");
-	if (e.state === null) { console.log("    > e.state: null; no-op"); }
+	if (evt.state === null) { console.log("    > evt.state: null; no-op"); }
 
 	// no-op if state is null
-	if (e.state === null) { return; }
+	if (evt.state === null) { return; }
 
 	// update the history stack if necessary
-	if (e.state.suid !== state.suid)
+	if (evt.state.suid !== state.suid)
 	{
 		console.log("    > state from previous history detected, swapping in history");
 		state.save();
-		state.restore(e.state.suid);
+		state.restore(evt.state.suid);
 	}
 
-	state.display(state.activate(e.state.sidx).title, null, "back");
+	state.display(state.activate(evt.state.sidx).title, null, "back");
 };
 
 

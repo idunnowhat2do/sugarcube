@@ -73,7 +73,7 @@ macros["actions"] =
 				, passage;
 
 			if (typeof params[i] === "object")
-			{	// Argument was in pretty-link syntax
+			{	// Argument was in wiki link syntax
 				actText = params[i].text;
 				passage = params[i].link;
 			}
@@ -718,7 +718,7 @@ macros["option"] =
 				}
 				elInput.addEventListener("click", (function ()
 				{
-					return function (e)
+					return function (evt)
 					{
 						removeChildren(elInput);
 						if (options[propertyName])
@@ -767,9 +767,9 @@ macros["option"] =
 				elInput.value = options[propertyName];
 				elInput.addEventListener("change", (function ()
 				{
-					return function (e)
+					return function (evt)
 					{
-						options[propertyName] = e.target.value;
+						options[propertyName] = evt.target.value;
 						macros.option.store();
 
 						// if <<onchange>> exists, execute the contents and discard the output (if any)
@@ -807,7 +807,7 @@ macros["option"] =
 		insertText(elClose, "Close");
 		insertText(elReset, "Reset to Defaults");
 
-		elReset.addEventListener("click", function (e)
+		elReset.addEventListener("click", function (evt)
 		{
 			macros.option.purge();
 			window.location.reload();
@@ -1107,9 +1107,12 @@ macros["widget"] =
 							// setup the widget arguments array
 							state.active.variables.args = [];
 							state.active.variables.args[0] = parser.fullArgs();
+						//	state.active.variables.args.rawArgs = parser.rawArgs();
+						//	state.active.variables.args.fullArgs = parser.fullArgs();
 							for (var i = 0, len = params.length; i < len; i++)
 							{
 								state.active.variables.args[i+1] = params[i];
+						//		state.active.variables.args[i] = params[i];
 							}
 
 							// attempt to execute the widget
