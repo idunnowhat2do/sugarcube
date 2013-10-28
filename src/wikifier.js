@@ -12,7 +12,7 @@
 String.prototype.readMacroParams = function (replaceVars)
 {
 	// RegExp groups: Double quoted | Single quoted | Empty quotes | Double square-bracketed | Barewords
-	var   re     = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\\')|[^'])+)')|((?:\"\")|(?:''))|(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^\"'\\s]\\S*))", "gm")
+	var   re     = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\')|[^'])+)')|((?:\"\")|(?:''))|(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^\"'\\s]\\S*))", "gm")
 		, params = []
 		, match;
 
@@ -446,7 +446,7 @@ Wikifier.formatters =
 	rowTerminator: "\\|(?:[fhck]?)$\\n?",
 	cellPattern: "(?:\\|([^\\n\\|]*)\\|)|(\\|[fhck]?$\\n?)",
 	cellTerminator: "(?:\\x20*)\\|",
-	rowTypes: {"c": "caption", "h": "thead", "": "tbody", "f": "tfoot"},
+	rowTypes: { "c": "caption", "h": "thead", "": "tbody", "f": "tfoot" },
 	handler: function (w)
 	{
 		var   table           = insertElement(w.output, "table")
@@ -1002,14 +1002,15 @@ Wikifier.formatters =
 {
 	name: "html",
 	match: "<[Hh][Tt][Mm][Ll]>",
-	lookahead: "<[Hh][Tt][Mm][Ll]>((?:.|\\n)*?)</[Hh][Tt][Mm][Ll]>",
+	lookaheadRegExp: /<[Hh][Tt][Mm][Ll]>((?:.|\n)*?)<\/[Hh][Tt][Mm][Ll]>/gm,
 	handler: function (w)
 	{
-		var lookaheadRegExp = new RegExp(this.lookahead, "gm");
-		lookaheadRegExp.lastIndex = w.matchStart;
-		var lookaheadMatch = lookaheadRegExp.exec(w.source);
+		this.lookaheadRegExp.lastIndex = w.matchStart;
+		var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
 		if (lookaheadMatch && lookaheadMatch.index === w.matchStart)
 		{
+			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+
 			var   frag = document.createDocumentFragment()
 				, temp = document.createElement("div");
 			temp.innerHTML = lookaheadMatch[1];
@@ -1018,8 +1019,49 @@ Wikifier.formatters =
 				frag.appendChild(temp.firstChild);
 			}
 			w.output.appendChild(frag);
+		}
+	}
+},
 
-			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+{
+	name: "rawHtmlTags",
+	match: "<\\w+(?:\\s+[^\\u0000-\\u001F\\u007F-\\u009F\\s\"'>\\/=]+(?:\\s*=\\s*(?:\"[^\"]+\"|'[^']+'|[^\\s\"'=<>`]+))?)*\\s*\\/?>",
+	tagPattern: "<(\\w+)",
+	voidElements: [ "area", "base", "br", "col", "embed", "hr", "img", "input", "keygen", "link", "menuitem", "meta", "param", "source", "track", "wbr" ],
+	handler: function (w)
+	{
+		var   tagMatch = new RegExp(this.tagPattern).exec(w.matchText)
+			, tagName  = tagMatch && tagMatch[1];
+
+		if (tagName && tagName.toLowerCase() !== "html")
+		{
+			var   isVoid = this.voidElements.indexOf(tagName.toLowerCase()) !== -1
+				, terminator
+				, terminatorRegExp
+				, terminatorMatch;
+
+			if (!isVoid)
+			{
+				terminator = "<\\/" + tagName + "\\s*>";
+				terminatorRegExp = new RegExp(terminator, "gm");
+				terminatorRegExp.lastIndex = w.matchStart;
+				terminatorMatch = terminatorRegExp.exec(w.source);
+			}
+			if (isVoid || terminatorMatch)
+			{
+				var el = document.createElement(w.output.tagName);
+				el.innerHTML = w.matchText;
+				el = el.firstChild;
+				if (terminatorMatch)
+				{
+					w.subWikify(el, terminator);
+				}
+				w.output.appendChild(el);
+			}
+			else
+			{
+				throwError(w.output, 'HTML tag "' + tagName + '" is not closed');
+			}
 		}
 	}
 },
@@ -1159,7 +1201,7 @@ Wikifier.formatters =
 {
 	name: "rawText",
 	match: "\"{3}|<nowiki>",
-	lookaheadRegExp: /(?:\"{3}|<nowiki>)((?:.|\n)*?)(?:\"{3}|<\/nowiki>)/mg,
+	lookaheadRegExp: /(?:\"{3}|<nowiki>)((?:.|\n)*?)(?:\"{3}|<\/nowiki>)/gm,
 	handler: function(w)
 	{
 		this.lookaheadRegExp.lastIndex = w.matchStart;
