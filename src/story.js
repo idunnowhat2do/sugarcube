@@ -255,6 +255,30 @@ History.prototype.display = function (title, link, render)
 		}
 		window.scroll(0, 0);
 	}
+
+	// execute the PassageDone passage
+	if (render !== "offscreen")
+	{
+		if (tale.has("PassageDone"))
+		{
+			try
+			{
+				var errTrap = document.createElement("div");
+				new Wikifier(errTrap, tale.get("PassageDone").text);
+				while (errTrap.hasChildNodes())
+				{
+					var fc = errTrap.firstChild;
+					if (fc.classList && fc.classList.contains("error")) { throw new Error(fc.textContent); }
+					errTrap.removeChild(fc);
+				}
+			}
+			catch (e)
+			{
+				window.alert("There is a technical problem with this story (PassageDone: " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
+			}
+		}
+	}
+
 	return el;
 };
 
