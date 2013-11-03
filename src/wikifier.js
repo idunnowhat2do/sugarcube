@@ -38,11 +38,11 @@ String.prototype.readMacroParams = function (replaceVars)
 			var delim = n.indexOf("|");
 			if (delim === -1)
 			{
-				n = { "link": n, "text": n };
+				n = { "count": 1, "link": n, "text": n };
 			}
 			else
 			{
-				n = { "link": n.slice(delim + 1), "text": n.slice(0, delim) };
+				n = { "count": 2, "link": n.slice(delim + 1), "text": n.slice(0, delim) };
 			}
 
 			// Check for $variables
