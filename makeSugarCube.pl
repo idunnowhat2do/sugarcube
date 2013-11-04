@@ -7,7 +7,7 @@
 #
 #     Author   :  Thomas Michael Edwards <tmedwards@motoslave.net>
 #     Copyright:  Copyright © 2013 Thomas Michael Edwards. All rights reserved.
-#     Version  :  r12, 2013-10-25
+#     Version  :  r13, 2013-11-03
 #
 ################################################################################
 
@@ -140,11 +140,18 @@ if ($opt_minify)
 	open($infh, '-|:encoding(UTF-8)', $pipecmd)	# auto decode on read
 		or die("error: cannot open scripts pipe from closure.pl for reading\n");
 	my $pipeout = do { local $/; <$infh> };
-	$pipeout =~ tr/\r\n//d;	# required for closure
 	close($infh);
 	unlink($tmpfile)	if (-f $tmpfile);
+
+	# Closure Compiler post-processing
+	$pipeout =~ tr/\r\n//d;
+	$pipeout =~ s/function evalMacroExpression\(\w+,(\w+),\w+\){try{/$&var place=$1;/;
+	die("error: unable to patch evalMacroExpression() [Closure Compiler kludge]\n")
+		if ($pipeout !~ m/function evalMacroExpression\(\w+,(\w+),\w+\){try{var place=\1;/);
+
 	$scripts = $pipeout;
 }
+$scripts = '"use strict";' . ($opt_minify ? '' : "\n") . $scripts;
 if (!$opt_debug)
 {
 	# wrap the scripts in an anonymous function
