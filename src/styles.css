@@ -36,12 +36,7 @@ noscript { color: red; font-size: 210%; font-weight: bold; }
 #story-caption { margin-top: 3em; text-align: right; }
 #menu-story { line-height: 1.2; }
 
-[data-icon], .icon-plus, .icon-minus, .icon-close, .icon-checkmark, .icon-checkmark-2, .icon-checkbox-checked,
-.icon-checkbox-partial, .icon-checkbox-unchecked, .icon-radio-checked, .icon-radio-unchecked, .icon-undo,
-.icon-forward, .icon-arrow-left, .icon-arrow-right, .icon-arrow-up, .icon-arrow-down, .icon-new-tab, .icon-disk,
-.icon-undo-2, .icon-switch, .icon-cog, .icon-share, .icon-bug, .icon-bars, .icon-info, .icon-question,
-.icon-notification, .icon-warning, .icon-bookmark, .icon-bookmarks, .icon-spinner,
-a.link-back:before, a.link-return:after, a.link-external:after,
+[data-icon], a.link-back:before, a.link-return:after, a.link-external:after,
 #menu-saves:before, #menu-rewind:before, #menu-restart:before, #menu-options:before, #menu-share:before,
 #ui-body.options a[id|="option-input"]:before, #ui-body.options a[id|="option-input"].enabled:before
 {
@@ -55,39 +50,7 @@ a.link-back:before, a.link-return:after, a.link-external:after,
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 }
-[data-icon]:before { content: attr(data-icon); }
-.icon-plus:before { content: "\e000"; } 
-.icon-minus:before { content: "\e001"; } 
-.icon-close:before { content: "\e002"; } 
-.icon-checkmark:before { content: "\e003"; } 
-.icon-checkmark-2:before { content: "\e004"; } 
-.icon-checkbox-checked:before { content: "\e005"; } 
-.icon-checkbox-partial:before { content: "\e006"; } 
-.icon-checkbox-unchecked:before { content: "\e007"; } 
-.icon-radio-checked:before { content: "\e008"; } 
-.icon-radio-unchecked:before { content: "\e009"; } 
-.icon-undo:before { content: "\e00a"; } 
-.icon-forward:before { content: "\e00b"; } 
-.icon-arrow-left:before { content: "\e00c"; } 
-.icon-arrow-right:before { content: "\e00d"; } 
-.icon-arrow-up:before { content: "\e00e"; } 
-.icon-arrow-down:before { content: "\e00f"; } 
-.icon-new-tab:before { content: "\e010"; } 
-.icon-disk:before { content: "\e011"; } 
-.icon-undo-2:before { content: "\e012"; } 
-.icon-switch:before { content: "\e013"; } 
-.icon-cog:before { content: "\e014"; } 
-.icon-share:before { content: "\e015"; } 
-.icon-bug:before { content: "\e016"; } 
-.icon-bars:before { content: "\e017"; } 
-.icon-info:before { content: "\e018"; } 
-.icon-question:before { content: "\e019"; } 
-.icon-notification:before { content: "\e01a"; } 
-.icon-warning:before { content: "\e01b"; } 
-.icon-bookmark:before { content: "\e01c"; } 
-.icon-bookmarks:before { content: "\e01d"; } 
-.icon-spinner:before { content: "\e01e"; } 
-
+[data-icon]:before { content: attr(data-icon) "\00a0\00a0"; }
 a.link-back:before { content: "\e00a\00a0\00a0"; }
 a.link-return:after { content: "\00a0\00a0\e00b"; }
 #passages a.link-external:after { content: "\00a0\e010"; }
