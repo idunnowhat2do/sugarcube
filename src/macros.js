@@ -56,7 +56,7 @@ function evalMacroExpression(expression, place, macroName)
 /**
  * <<actions>>
  */
-version.extensions["actionsMacro"] = { major: 1, minor: 5, revision: 0 };
+version.extensions["actionsMacro"] = { major: 1, minor: 5, revision: 1 };
 macros["actions"] =
 {
 	handler: function (place, macroName, params)
@@ -69,17 +69,17 @@ macros["actions"] =
 		}
 		for (var i = 0; i < params.length; i++)
 		{
-			var   actText
+			var   linkText
 				, passage;
 
 			if (typeof params[i] === "object")
-			{	// Argument was in wiki link syntax
-				actText = params[i].text;
-				passage = params[i].link;
+			{	// argument was in wiki link syntax
+				linkText = params[i].text;
+				passage  = params[i].link;
 			}
 			else
-			{	// Argument was a simple passage name
-				actText = passage = params[i];
+			{	// argument was simply the passage name
+				linkText = passage = params[i];
 			}
 
 			if (state.active.variables["#actions"][passage])
@@ -88,7 +88,7 @@ macros["actions"] =
 			}
 
 			var   item = insertElement(list, "li")
-				, link = insertPassageLink(item, passage, actText);
+				, link = insertPassageLink(item, passage, linkText);
 			link.classList.add("link-" + macroName);
 			link.addEventListener("click", (function ()
 			{
@@ -107,7 +107,7 @@ macros["actions"] =
 /**
  * <<back>> & <<return>>
  */
-version.extensions["backMacro"] = version.extensions["returnMacro"] = { major: 2, minor: 1, revision: 0 };
+version.extensions["backMacro"] = version.extensions["returnMacro"] = { major: 3, minor: 0, revision: 0 };
 macros["back"] = macros["return"] =
 {
 	handler: function (place, macroName, params)
@@ -117,6 +117,22 @@ macros["back"] = macros["return"] =
 			, ctext
 			, ltext = macroName[0].toUpperCase() + macroName.slice(1)
 			, el;
+
+		// translate wiki link syntax into the <<back>>/<<return>> "to" syntax
+		if (params.length === 1 && typeof params[0] === "object")
+		{	// argument was in wiki link syntax
+			if (params[0].count === 1)
+			{	// passage only syntax: [[...]]
+				params.push(params[0].link);
+				params[0] = "to"
+			}
+			else
+			{	// text and passage syntax: [[...|...]]
+				params.push("to");
+				params.push(params[0].link);
+				params[0] = params[0].text;
+			}
+		}
 
 		if (params.length === 1)
 		{
@@ -143,6 +159,10 @@ macros["back"] = macros["return"] =
 			}
 			else if (params[0] === "to")
 			{
+				if (typeof params[1] === "object")
+				{	// argument was in wiki link syntax
+					params[1] = params[1].link;
+				}
 				if (!tale.has(params[1]))
 				{
 					throwError(place, "<<" + macroName + '>>: the "' + params[1] + '" passage does not exist');
@@ -276,7 +296,7 @@ macros["back"] = macros["return"] =
 /**
  * <<bind>>
  */
-version.extensions["bindMacro"] = { major: 2, minor: 1, revision: 0 };
+version.extensions["bindMacro"] = { major: 2, minor: 2, revision: 0 };
 macros["bind"] =
 {
 	children: registerMacroTags("bind"),
@@ -290,10 +310,21 @@ macros["bind"] =
 
 		if (payload)
 		{
-			var   linkText   = params[0]
-				, passage    = params.length > 1 ? params[1] : undefined
+			var   linkText
+				, passage
 				, widgetArgs = (macros.hasOwnProperty("_widgetCall") && state.active.variables.hasOwnProperty("args")) ? state.active.variables.args : undefined
 				, el         = document.createElement("a");
+
+			if (typeof params[0] === "object")
+			{	// argument was in wiki link syntax
+				linkText = params[0].text;
+				passage  = params[0].link;
+			}
+			else
+			{	// argument was simply the link text
+				linkText = params[0];
+				passage  = params.length > 1 ? params[1] : undefined;
+			}
 
 			el.classList.add("link-" + (passage ? (tale.has(passage) ? "internal" : "broken") : "internal"));
 			el.classList.add("link-" + macroName);
@@ -360,7 +391,7 @@ macros["bind"] =
 /**
  * <<choice>> (only for compatibility with Jonah)
  */
-version.extensions["choiceMacro"] = { major: 1, minor: 0, revision: 1 };
+version.extensions["choiceMacro"] = { major: 2, minor: 0, revision: 0 };
 macros["choice"] =
 {
 	handler: function (place, macroName, params)
@@ -371,10 +402,31 @@ macros["choice"] =
 			return;
 		}
 
-		var el = insertPassageLink(place, params[0], params[0], "link-" + macroName);
+		var   linkText
+			, passage;
+
+		if (params.length === 1)
+		{
+			if (typeof params[0] === "object")
+			{	// argument was in wiki link syntax
+				linkText = params[0].text;
+				passage  = params[0].link;
+			}
+			else
+			{	// argument was simply the passage name
+				linkText = passage = params[0];
+			}
+		}
+		else
+		{
+			passage  = params[0];
+			linkText = params[1];
+		}
+
+		var el = insertPassageLink(place, passage, linkText, "link-" + macroName);
 		el.addEventListener("click", function ()
 		{
-			state.display(params[0], el);
+			state.display(passage, el);
 		}, false);
 	}
 };
@@ -457,7 +509,7 @@ macros["classupdate"] =
 /**
  * <<display>>
  */
-version.extensions["displayMacro"] = { major: 2, minor: 1, revision: 0 };
+version.extensions["displayMacro"] = { major: 2, minor: 2, revision: 0 };
 macros["display"] =
 {
 	handler: function (place, macroName, params)
@@ -467,13 +519,24 @@ macros["display"] =
 			throwError(place, "<<" + macroName + ">>: no passage specified");
 			return;
 		}
-		if (!tale.has(params[0]))
+
+		var passage;
+
+		if (typeof params[0] === "object")
+		{	// argument was in wiki link syntax
+			passage = params[0].link;
+		}
+		else
+		{	// argument was simply the passage name
+			passage = params[0];
+		}
+		if (!tale.has(passage))
 		{
-			throwError(place, "<<" + macroName + '>>: passage "' + params[0] + '" does not exist');
+			throwError(place, "<<" + macroName + '>>: passage "' + passage + '" does not exist');
 			return;
 		}
 
-		var passage = tale.get(params[0]);
+		passage = tale.get(passage);
 		if (params[1])
 		{
 			new Wikifier(insertElement(place, params[1], null, passage.domId), passage.text);
@@ -547,7 +610,7 @@ macros["if"] =
 /**
  * <<link>>
  */
-version.extensions["linkMacro"] = { major: 1, minor: 0, revision: 0 };
+version.extensions["linkMacro"] = { major: 2, minor: 0, revision: 0 };
 macros["link"] =
 {
 	handler: function (place, macroName, params)
@@ -579,35 +642,44 @@ macros["link"] =
 			return;
 		}
 
-		var   linkText = params[0]
+		var   argCount
+			, linkText
 			, linkLoc
 			, onceType;
 
-		if (params.length === 1)
+		if (params.length === 3)
 		{
-			linkLoc = params[0];
+			onceType = params.pop();
 		}
-		else if (params.length === 2)
+		else if (params.length === 2 && (params[1] === "once" || params[1] === "keep"))
 		{
-			if (params[1] === "once" || params[1] === "keep")
-			{
-				linkLoc  = params[0];
-				onceType = params[1];
-			}
-			else
-			{
-				linkLoc = params[1];
-			}
-		}
-		else if (params.length === 3)
-		{
-			linkLoc  = params[1];
-			onceType = params[2];
+			onceType = params.pop();
 		}
 		if (onceType && onceType !== "once" && onceType !== "keep")
 		{
 			throwError(place, "<<" + macroName + '>>: "' + onceType + '" is not a valid action (once|keep)');
 			return;
+		}
+
+		if (params.length === 2)
+		{
+			linkText = params[0];
+			linkLoc  = params[1];
+			argCount = 2;
+		}
+		else
+		{
+			if (typeof params[0] === "object")
+			{	// argument was in wiki link syntax
+				linkText = params[0].text;
+				linkLoc  = params[0].link;
+				argCount = params[0].count;
+			}
+			else
+			{	// argument was simply the link location
+				linkText = linkLoc = params[0];
+				argCount = 1;
+			}
 		}
 
 		if (onceType)
@@ -626,11 +698,11 @@ macros["link"] =
 			}
 		}
 
-		if (params.length === 1)
+		if (argCount === 1)
 		{
 			createInternalLink(place, linkLoc, linkText);
 		}
-		else	// params.length === 2
+		else	// argCount === 2
 		{
 			if (tale.has(linkLoc))
 			{
@@ -996,7 +1068,7 @@ macros["unset"] =
 /**
  * <<update>>
  */
-version.extensions["updateMacro"] = { major: 1, minor: 2, revision: 0 };
+version.extensions["updateMacro"] = { major: 1, minor: 3, revision: 0 };
 macros["update"] =
 {
 	children: registerMacroTags("update"),
@@ -1011,7 +1083,6 @@ macros["update"] =
 		if (payload)
 		{
 			var   parentEl = document.getElementById(params[0])
-				, targetEl
 				, updType  = params[1];
 
 			if (!parentEl)
@@ -1028,23 +1099,18 @@ macros["update"] =
 			switch (updType)
 			{
 			case "prepend":
-				// create a wrapper for the new content, required for prepends
-				var wrapper = document.createElement("span");
-				parentEl.insertBefore(wrapper, parentEl.firstChild);
-				targetEl = wrapper;
+				var frag = document.createDocumentFragment();
+				new Wikifier(frag, payload[0].contents);
+				parentEl.insertBefore(frag, parentEl.firstChild);
 				break;
 			case "append":
-				targetEl = parentEl;
+				new Wikifier(parentEl, payload[0].contents);
 				break;
-			default:
-				targetEl = parentEl;
-				// remove the old contents
-				removeChildren(targetEl);
+			default:	// replace
+				removeChildren(parentEl);
+				new Wikifier(parentEl, payload[0].contents);
 				break;
 			}
-
-			// add the new content
-			new Wikifier(targetEl, payload[0].contents);
 		}
 		else
 		{
