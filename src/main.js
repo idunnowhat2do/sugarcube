@@ -57,7 +57,7 @@ config.historyMode = (config.hasPushState ? (config.browser.isGecko ? modes.sess
 var   formatter = null	// Wikifier formatters
 	, tale      = {}	// story manager
 	, state     = {}	// history manager
-	, macros    = {}	// macro store
+	, macros    = {}	// macros manager
 	, storage   = {}	// persistant storage manager
 	, session   = {}	// session manager
 	, options   = {}	// options variable store
@@ -606,7 +606,7 @@ var UISystem =
 			}
 			if (savesOK)
 			{
-				list.appendChild(createActionItem("purge",  "Purge Save Slots",   SaveSystem.purge));
+				list.appendChild(createActionItem("purge", "Purge Save Slots", SaveSystem.purge));
 			}
 			btnBar.appendChild(list);
 			menu.appendChild(btnBar);
