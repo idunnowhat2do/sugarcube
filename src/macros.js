@@ -3,13 +3,729 @@
 ***********************************************************************************************************************/
 
 /***********************************************************************************************************************
-** [Macro Initialization]
+** [New-style Macro Initialization]
 ***********************************************************************************************************************/
-macros["_children"] = {};
+macros =
+{
+	// data properties
+	children:    {},
+	definitions: {},
+
+	// method properties
+	has: function (name)
+	{
+		//return (this.definitions.hasOwnProperty(name) || this.children.hasOwnProperty(name));
+		return this.definitions.hasOwnProperty(name);
+	},
+	get: function (name)
+	{
+		var macro = null;
+
+		if (this.definitions.hasOwnProperty(name) && typeof this.definitions[name]["handler"] === "function")
+		{
+			macro = this.definitions[name];
+		}
+		else if (this.hasOwnProperty(name) && typeof this[name]["handler"] === "function")
+		{
+			macro = this[name];
+		}
+		return macro;
+	},
+	getHandler: function (name, handler)
+	{
+		var macro = this.get(name);
+
+		if (!handler) { handler = "handler"; }
+		return macro.hasOwnProperty(handler) ? macro[handler] : null;
+	},
+	add: function (name, definition)
+	{
+		if (Array.isArray(name))
+		{
+			name.forEach(function (n)
+			{
+				this.add(n, definition);
+			}, this);
+		}
+
+		if (this.has(name))
+		{
+			throw new Error("cannot clobber existing macro <<" + name + ">>");
+		}
+		else if (this.children.hasOwnProperty(name))
+		{
+			throw new Error("cannot clobber existing macro <<" + name + ">>");
+		}
+
+		try
+		{
+			// add the macro definition
+			this.definitions[name] = definition;
+			this.definitions[name]["_newStyleMacro"] = true;	// temporary kludge until old-style macros are banned
+
+			// protect the macro, if requested
+			if (this.definitions[name].hasOwnProperty("protect") && this.definitions[name]["protect"])
+			{
+				Object.defineProperty(this.definitions, name, { writable: false });
+			}
+		}
+		catch (e)
+		{
+			throw new Error("cannot clobber protected macro <<" + name + ">>");
+		}
+
+		// automatic post-processing
+		if (this.definitions[name].hasOwnProperty("children"))
+		{
+			if (Array.isArray(this.definitions[name].children) && this.definitions[name].children.length !== 0)
+			{
+				this.definitions[name].children = this.addTags(name, this.definitions[name].children);
+			}
+			else
+			{
+				this.definitions[name].children = this.addTags(name);
+			}
+		}
+	},
+	remove: function (name)
+	{
+		if (this.definitions.hasOwnProperty(name))
+		{
+			// automatic pre-processing
+			if (this.definitions[name].hasOwnProperty("children"))
+			{
+				this.removeTags(name);
+			}
+
+			try
+			{
+				// unprotect the macro, if necessary
+				if (this.definitions[name].hasOwnProperty("protect") && this.definitions[name]["protect"])
+				{
+					Object.defineProperty(this.definitions, name, { writable: true });
+				}
+
+				// remove the macro definition
+				delete this.definitions[name];
+			}
+			catch (e)
+			{
+				throw new Error("unknown error removing macro <<" + name + ">>: " + e.message);
+			}
+		}
+		else if (this.children.hasOwnProperty(name))
+		{
+			throw new Error("cannot remove child tag <<" + name + ">> of parent macro <<" + this.children[name] + ">>");
+		}
+	},
+	addTags: function (parent, bodyTags)
+	{
+		if (!parent) { throw new Error("no parent specified"); }
+		if (!bodyTags) { bodyTags = []; }
+
+		var   endTags = [ "/" + parent, "end" + parent ]	// automatically create the closing tags
+			, allTags = [];
+	
+		allTags.concat(bodyTags, endTags);
+
+		for (var i = 0; i < allTags.length; i++)
+		{
+			if (this.definitions.hasOwnProperty(allTags[i]))
+			{
+				throw new Error("cannot register tag for an existing macro");
+			}
+			if (this.children.hasOwnProperty(allTags[i]))
+			{
+				throw new Error("tag is already registered (to: <<" + this.children[allTags[i]] + ">>)");
+			}
+			else
+			{
+				this.children[allTags[i]] = parent;
+			}
+		}
+		return { "endTags": endTags, "bodyTags": bodyTags };
+	},
+	removeTags: function (parent)
+	{
+		if (!parent) { throw new Error("no parent specified"); }
+		if (!bodyTags) { bodyTags = []; }
+
+		var   endTags = [ "/" + parent, "end" + parent ]	// automatically create the closing tags
+			, allTags = [];
+	
+		allTags.concat(bodyTags, endTags);
+
+		for (var i = 0; i < allTags.length; i++)
+		{
+			if (this.children.hasOwnProperty(allTags[i]))
+			{
+				if (this.children[allTags[i]] !== parent)
+				{
+					throw new Error("cannot remove tag registered to another macro (<<" + this.children[allTags[i]] + ">>)");
+				}
+				else
+				{
+					delete this.children[allTags[i]];
+				}
+			}
+		}
+	},
+	eval: function (expression, output, name)
+	{
+		try
+		{
+			eval("(function(){" + expression + "}());");
+			return true;
+		}
+		catch (e)
+		{
+			return throwError(output, "<<" + name + ">>: bad expression: " + e.message);
+		}
+	}
+};
+
+// protect the special properties of the macros variable
+/* Object.freeze(macros); */
+Object.defineProperties(macros, {
+	// data properties
+	"children":    { enumerable: false, configurable: false },
+	"definitions": { enumerable: false, configurable: false },
+
+	// method properties
+	"has":        { writable: false, enumerable: false, configurable: false },
+	"get":        { writable: false, enumerable: false, configurable: false },
+	"getHandler": { writable: false, enumerable: false, configurable: false },
+	"add":        { writable: false, enumerable: false, configurable: false },
+	"remove":     { writable: false, enumerable: false, configurable: false },
+	"addTags":    { writable: false, enumerable: false, configurable: false },
+	"removeTags": { writable: false, enumerable: false, configurable: false },
+	"eval":       { writable: false, enumerable: false, configurable: false }
+});
 
 
 /***********************************************************************************************************************
-** [Macro Utility Functions]
+** [New-style Macro Definitions]
+***********************************************************************************************************************/
+/*******************************************************************************
+ * Link macros
+ ******************************************************************************/
+/**
+ * <<actions>>
+ */
+macros.add("actions", {
+	version: { major: 2, minor: 0, revision: 0 },
+	handler: function ()
+	{
+		var list = insertElement(this.output, "ul");
+		list.classList.add(this.name);
+		if (!state.active.variables["#actions"])
+		{
+			state.active.variables["#actions"] = {};
+		}
+		for (var i = 0; i < this.args.length; i++)
+		{
+			var   linkText
+				, passage;
+
+			if (typeof this.args[i] === "object")
+			{	// argument was in wiki link syntax
+				linkText = this.args[i].text;
+				passage  = this.args[i].link;
+			}
+			else
+			{	// argument was simply the passage name
+				linkText = passage = this.args[i];
+			}
+
+			if (state.active.variables["#actions"][passage])
+			{
+				continue;
+			}
+
+			var   item = insertElement(list, "li")
+				, link = jQuery(insertPassageLink(item, passage, linkText));
+			link.addClass("link-" + this.name);
+			link.click(function ()
+			{
+				var   p = passage
+					, l = link[0];
+				return function ()
+				{
+					state.active.variables["#actions"][p] = true;
+					state.display(p, l);
+				};
+			}());
+		}
+	}
+});
+
+// <<back>> & <<return>>
+//handler: function (place, macroName, params, parser, payload)
+//handler: function (place, macroName, params, parser, payload)
+
+/**
+ * <<choice>> (only for compatibility with Jonah)
+ */
+macros.add("choice", {
+	version: { major: 3, minor: 0, revision: 0 },
+	handler: function ()
+	{
+		if (this.args.length === 0)
+		{
+			return throwError(this.output, "<<" + this.name + ">>: no passage specified");
+		}
+
+		var   linkText
+			, passage;
+
+		if (this.args.length === 1)
+		{
+			if (typeof this.args[0] === "object")
+			{	// argument was in wiki link syntax
+				linkText = this.args[0].text;
+				passage  = this.args[0].link;
+			}
+			else
+			{	// argument was simply the passage name
+				linkText = passage = this.args[0];
+			}
+		}
+		else
+		{
+			passage  = this.args[0];
+			linkText = this.args[1];
+		}
+
+		var el = jQuery(insertPassageLink(this.output, passage, linkText, "link-" + this.name));
+		el.click(function ()
+		{
+			state.display(passage, el[0]);
+		});
+	}
+});
+
+/**
+ * <<link>>
+ */
+macros.add("link", {
+	version: { major: 3, minor: 0, revision: 0 },
+	handler: function ()
+	{
+		function createInternalLink(output, passage, text)
+		{
+			var el = jQuery(insertPassageLink(output, passage, text, "link-" + this.name));
+			el.click(function ()
+			{
+				if (onceType)
+				{
+					state.active.variables["#link"][passage] = true;
+				}
+				state.display(passage, el[0]);
+			});
+			return el;
+		}
+		function createExternalLink(output, url, text)
+		{
+			var el = insertElement(output, "a", null, "link-external link-" + this.name, text);
+			el.href = url;
+			el.target = "_blank";
+			return el;
+		}
+
+		if (this.args.length === 0)
+		{
+			return throwError(this.output, "<<" + this.name + ">>: no link location specified");
+		}
+
+		var   argCount
+			, linkText
+			, linkLoc
+			, onceType;
+
+		if (this.args.length === 3)
+		{
+			onceType = this.args.pop();
+		}
+		else if (this.args.length === 2 && (this.args[1] === "once" || this.args[1] === "keep"))
+		{
+			onceType = this.args.pop();
+		}
+		if (onceType && onceType !== "once" && onceType !== "keep")
+		{
+			return throwError(this.output, "<<" + this.name + '>>: "' + onceType + '" is not a valid action (once|keep)');
+		}
+
+		if (this.args.length === 2)
+		{
+			linkText = this.args[0];
+			linkLoc  = this.args[1];
+			argCount = 2;
+		}
+		else
+		{
+			if (typeof this.args[0] === "object")
+			{	// argument was in wiki link syntax
+				linkText = this.args[0].text;
+				linkLoc  = this.args[0].link;
+				argCount = this.args[0].count;
+			}
+			else
+			{	// argument was simply the link location
+				linkText = linkLoc = this.args[0];
+				argCount = 1;
+			}
+		}
+
+		if (onceType)
+		{
+			if (!state.active.variables.hasOwnProperty("#link"))
+			{
+				state.active.variables["#link"] = {};
+			}
+			else if (state.active.variables["#link"][linkLoc])
+			{
+				if (onceType === "keep")
+				{
+					insertText(this.output, linkText);
+				}
+				return;
+			}
+		}
+
+		if (argCount === 1)
+		{
+			createInternalLink(this.output, linkLoc, linkText);
+		}
+		else	// argCount === 2
+		{
+			if (tale.has(linkLoc))
+			{
+				createInternalLink(this.output, linkLoc, linkText);
+			}
+			else
+			{
+				createExternalLink(this.output, linkLoc, linkText);
+			}
+		}
+	}
+});
+
+
+/*******************************************************************************
+ * Variable manipulation macros
+ ******************************************************************************/
+/**
+ * <<run>>, <<runjs>>, & <<set>>
+ */
+macros.add(["run", "runjs", "set"], {
+	version: { major: 3, minor: 0, revision: 0 },
+	excludeArgs: true,
+	handler: function ()
+	{
+		macros.eval(this.name === "runjs" ? this.args.rawArgs : this.args.fullArgs, this.output, this.name);
+	},
+});
+/*
+// for "macros.set.run()" legacy compatibility only
+macros["set"] = { run: function (expression, output, name) { return macros.eval(expression, output, name); } };
+*/
+
+
+/*******************************************************************************
+ * Event macros
+ ******************************************************************************/
+/**
+ * <<click>>
+ */
+macros.add("click", {
+	version: { major: 1, minor: 0, revision: 0 },
+	children: null,
+	handler: function ()
+	{
+		if (this.args.length === 0)
+		{
+			return throwError(this.output, "<<" + this.name + ">>: no link text specified");
+		}
+
+		if (this.payload)
+		{
+			var   linkText
+				, passage
+				, widgetArgs = (macros.hasOwnProperty("_widgetCall") && state.active.variables.hasOwnProperty("args")) ? state.active.variables.args : undefined
+				, el         = jQuery(document.createElement("a"));
+
+			if (typeof this.args[0] === "object")
+			{	// argument was in wiki link syntax
+				linkText = this.args[0].text;
+				passage  = this.args[0].link;
+			}
+			else
+			{	// argument was simply the link text
+				linkText = this.args[0];
+				passage  = this.args.length > 1 ? this.args[1] : undefined;
+			}
+
+			el.addClass("link-" + (passage ? (tale.has(passage) ? "internal" : "broken") : "internal"));
+			el.addClass("link-" + this.name);
+			el.append(linkText);
+			el.click(function (clickBody, widgetArgs) {
+				return function ()
+				{
+					if (clickBody !== "")
+					{
+						if (widgetArgs !== undefined)
+						{
+							// store existing $args variables
+							if (state.active.variables.hasOwnProperty("args"))
+							{
+								if (!macros.click.hasOwnProperty("_argsStack"))
+								{
+									macros.click._argsStack = [];
+								}
+								macros.click._argsStack.push(state.active.variables.args);
+							}
+
+							// setup the $args variable
+							state.active.variables.args = widgetArgs;
+						}
+
+						// attempt to execute the contents and discard the output (if any)
+						new Wikifier(document.createElement("div"), clickBody);
+
+						if (widgetArgs !== undefined)
+						{
+							// teardown the $args variable
+							delete state.active.variables.args;
+
+							// restore existing $args variables
+							if (macros.click.hasOwnProperty("_argsStack"))
+							{
+								state.active.variables.args = macros.click._argsStack.pop();
+								if (macros.click._argsStack.length === 0)
+								{
+									// teardown the stack
+									delete macros.click._argsStack;
+								}
+							}
+						}
+					}
+
+					// go to the specified passage (if any)
+					if (passage !== undefined)
+					{
+						state.display(passage, el);
+					}
+				};
+			}(this.payload[0].contents.trim(), widgetArgs));
+			el.appendTo(this.output);
+		}
+		else
+		{
+			return throwError(this.output, "<<" + this.name + ">>: cannot find a matching close tag");
+		}
+	}
+});
+
+
+/*******************************************************************************
+ * DOM manipulation, classes
+ ******************************************************************************/
+/**
+ * <<addclass>>
+ */
+macros.add("addclass", {
+	version: { major: 1, minor: 0, revision: 0 },
+	protect: true,
+	handler: function ()
+	{
+		if (this.args.length < 2)
+		{
+			var errors = [];
+			if (this.args.length < 1) { errors.push("selector"); }
+			if (this.args.length < 2) { errors.push("class names"); }
+			return throwError(this.output, "<<" + this.name + ">>: no " + errors.join(" or ") + " specified");
+		}
+
+		var targets = jQuery(this.args[0]);
+
+		if (targets.length === 0)
+		{
+			return throwError(this.output, "<<" + this.name + '>>: no elements matched the selector "' + this.args[0] + '"');
+		}
+
+		targets.addClass(this.args[1].trim());
+	}
+});
+
+/**
+ * <<removeclass>>
+ */
+macros.add("removeclass", {
+	version: { major: 1, minor: 0, revision: 0 },
+	handler: function ()
+	{
+		if (this.args.length === 0)
+		{
+			return throwError(this.output, "<<" + this.name + ">>: no selector specified");
+		}
+
+		var targets = jQuery(this.args[0]);
+
+		if (targets.length === 0)
+		{
+			return throwError(this.output, "<<" + this.name + '>>: no elements matched the selector "' + this.args[0] + '"');
+		}
+
+		if (this.args.length > 1)
+		{
+			targets.removeClass(this.args[1].trim());
+		}
+		else
+		{
+			targets.removeClass();
+		}
+	}
+});
+
+/**
+ * <<toggleclass>>
+ */
+macros.add("toggleclass", {
+	version: { major: 1, minor: 0, revision: 0 },
+	handler: function ()
+	{
+		if (this.args.length < 2)
+		{
+			var errors = [];
+			if (this.args.length < 1) { errors.push("selector"); }
+			if (this.args.length < 2) { errors.push("class names"); }
+			return throwError(this.output, "<<" + this.name + ">>: no " + errors.join(" or ") + " specified");
+		}
+
+		var targets = jQuery(this.args[0]);
+
+		if (targets.length === 0)
+		{
+			return throwError(this.output, "<<" + this.name + '>>: no elements matched the selector "' + this.args[0] + '"');
+		}
+
+		targets.toggleClass(this.args[1].trim());
+	}
+});
+
+
+/*******************************************************************************
+ * DOM manipulation, content
+ ******************************************************************************/
+/**
+ * <<append>>
+ */
+macros.add("append", {
+	version: { major: 1, minor: 0, revision: 0 },
+	children: null,
+	handler: function ()
+	{
+		if (this.args.length === 0)
+		{
+			return throwError(this.output, "<<" + this.name + ">>: no selector specified");
+		}
+
+		if (this.payload)
+		{
+			var targets = jQuery(this.args[0]);
+
+			if (targets.length === 0)
+			{
+				return throwError(this.output, "<<" + this.name + '>>: no elements matched the selector "' + this.args[0] + '"');
+			}
+
+			var frag = document.createDocumentFragment();
+			new Wikifier(frag, this.payload[0].contents);
+			targets.append(frag);
+		}
+		else
+		{
+			return throwError(this.output, "<<" + this.name + ">>: cannot find a matching close tag");
+		}
+	}
+});
+
+/**
+ * <<prepend>>
+ */
+macros.add("prepend", {
+	version: { major: 1, minor: 0, revision: 0 },
+	children: null,
+	handler: function ()
+	{
+		if (this.args.length === 0)
+		{
+			return throwError(this.output, "<<" + this.name + ">>: no selector specified");
+		}
+
+		if (this.payload)
+		{
+			var targets = jQuery(this.args[0]);
+
+			if (targets.length === 0)
+			{
+				return throwError(this.output, "<<" + this.name + '>>: no elements matched the selector "' + this.args[0] + '"');
+			}
+
+			var frag = document.createDocumentFragment();
+			new Wikifier(frag, this.payload[0].contents);
+			targets.prepend(frag);
+		}
+		else
+		{
+			return throwError(this.output, "<<" + this.name + ">>: cannot find a matching close tag");
+		}
+	}
+});
+
+/**
+ * <<replace>>
+ */
+macros.add("replace", {
+	version: { major: 1, minor: 0, revision: 0 },
+	children: null,
+	handler: function ()
+	{
+		if (this.args.length === 0)
+		{
+			return throwError(this.output, "<<" + this.name + ">>: no selector specified");
+		}
+
+		if (this.payload)
+		{
+			var targets = jQuery(this.args[0]);
+
+			if (targets.length === 0)
+			{
+				return throwError(this.output, "<<" + this.name + '>>: no elements matched the selector "' + this.args[0] + '"');
+			}
+
+			if (this.payload[0].contents)
+			{
+				var frag = document.createDocumentFragment();
+				new Wikifier(frag, this.payload[0].contents);
+				targets.empty().append(frag);
+			}
+			else
+			{
+				targets.empty();
+			}
+		}
+		else
+		{
+			return throwError(this.output, "<<" + this.name + ">>: cannot find a matching close tag");
+		}
+	}
+});
+
+
+/***********************************************************************************************************************
+** [Old-style Macro Utility Functions]
 ***********************************************************************************************************************/
 function registerMacroTags(parent, bodyTags)
 {
@@ -23,13 +739,17 @@ function registerMacroTags(parent, bodyTags)
 
 	for (var i = 0; i < allTags.length; i++)
 	{
-		if (macros.hasOwnProperty(allTags[i]))
+		if (macros.definitions.hasOwnProperty(allTags[i]))
 		{
-			throw new Error("cannot register tag for existing macro");
+			throw new Error("cannot register tag for an existing macro");
 		}
-		if (!macros._children.hasOwnProperty(allTags[i]))
+		if (macros.children.hasOwnProperty(allTags[i]))
 		{
-			macros._children[allTags[i]] = parent;
+			throw new Error("tag is already registered (to: <<" + macros.children[allTags[i]] + ">>)");
+		}
+		else
+		{
+			macros.children[allTags[i]] = parent;
 		}
 	}
 	return { "endTags": endTags, "bodyTags": bodyTags };
@@ -39,70 +759,19 @@ function evalMacroExpression(expression, place, macroName)
 {
 	try
 	{
-		eval(expression);
+		eval("(function(){" + expression + "}());");
 		return true;
 	}
 	catch (e)
 	{
-		throwError(place, "<<" + macroName + ">>: bad expression: " + e.message);
-		return false;
+		return throwError(place, "<<" + macroName + ">>: bad expression: " + e.message);
 	}
 }
 
 
 /***********************************************************************************************************************
-** [Macro Definitions]
+** [Old-style Macro Definitions]
 ***********************************************************************************************************************/
-/**
- * <<actions>>
- */
-version.extensions["actionsMacro"] = { major: 1, minor: 5, revision: 1 };
-macros["actions"] =
-{
-	handler: function (place, macroName, params)
-	{
-		var list = insertElement(place, "ul");
-		list.classList.add(macroName);
-		if (!state.active.variables["#actions"])
-		{
-			state.active.variables["#actions"] = {};
-		}
-		for (var i = 0; i < params.length; i++)
-		{
-			var   linkText
-				, passage;
-
-			if (typeof params[i] === "object")
-			{	// argument was in wiki link syntax
-				linkText = params[i].text;
-				passage  = params[i].link;
-			}
-			else
-			{	// argument was simply the passage name
-				linkText = passage = params[i];
-			}
-
-			if (state.active.variables["#actions"][passage])
-			{
-				continue;
-			}
-
-			var   item = insertElement(list, "li")
-				, link = insertPassageLink(item, passage, linkText);
-			link.classList.add("link-" + macroName);
-			link.addEventListener("click", (function ()
-			{
-				var   p = passage
-					, l = link;
-				return function ()
-				{
-					state.active.variables["#actions"][p] = true;
-					state.display(p, l);
-				};
-			}()), false);
-		}
-	}
-};
 
 /**
  * <<back>> & <<return>>
@@ -294,7 +963,7 @@ macros["back"] = macros["return"] =
 };
 
 /**
- * <<bind>>
+ * <<bind>> (DEPRECIATED)
  */
 version.extensions["bindMacro"] = { major: 2, minor: 2, revision: 0 };
 macros["bind"] =
@@ -389,49 +1058,6 @@ macros["bind"] =
 };
 
 /**
- * <<choice>> (only for compatibility with Jonah)
- */
-version.extensions["choiceMacro"] = { major: 2, minor: 0, revision: 0 };
-macros["choice"] =
-{
-	handler: function (place, macroName, params)
-	{
-		if (params.length === 0)
-		{
-			throwError(place, "<<" + macroName + ">>: no passage specified");
-			return;
-		}
-
-		var   linkText
-			, passage;
-
-		if (params.length === 1)
-		{
-			if (typeof params[0] === "object")
-			{	// argument was in wiki link syntax
-				linkText = params[0].text;
-				passage  = params[0].link;
-			}
-			else
-			{	// argument was simply the passage name
-				linkText = passage = params[0];
-			}
-		}
-		else
-		{
-			passage  = params[0];
-			linkText = params[1];
-		}
-
-		var el = insertPassageLink(place, passage, linkText, "link-" + macroName);
-		el.addEventListener("click", function ()
-		{
-			state.display(passage, el);
-		}, false);
-	}
-};
-
-/**
  * <<class>>
  */
 version.extensions["classMacro"] = { major: 2, minor: 2, revision: 0 };
@@ -456,7 +1082,7 @@ macros["class"] =
 };
 
 /**
- * <<classupdate>>
+ * <<classupdate>> (DEPRECIATED)
  */
 version.extensions["classupdateMacro"] = { major: 1, minor: 0, revision: 0 };
 macros["classupdate"] =
@@ -578,7 +1204,7 @@ macros["id"] =
 version.extensions["ifMacro"] = { major: 2, minor: 2, revision: 0 };
 macros["if"] =
 {
-	excludeParams: true,
+	excludeArgs: true,
 	children: registerMacroTags("if", [ "elseif", "else" ]),
 	handler: function (place, macroName, params, parser, payload)
 	{
@@ -603,115 +1229,6 @@ macros["if"] =
 		else
 		{
 			throwError(place, "<<" + macroName + ">>: cannot find a matching close tag");
-		}
-	}
-};
-
-/**
- * <<link>>
- */
-version.extensions["linkMacro"] = { major: 2, minor: 0, revision: 0 };
-macros["link"] =
-{
-	handler: function (place, macroName, params)
-	{
-		function createInternalLink(place, passage, text)
-		{
-			var el = insertPassageLink(place, passage, text, "link-" + macroName);
-			el.addEventListener("click", function ()
-			{
-				if (onceType)
-				{
-					state.active.variables["#link"][passage] = true;
-				}
-				state.display(passage, el);
-			}, false);
-			return el;
-		}
-		function createExternalLink(place, url, text)
-		{
-			var el = insertElement(place, "a", null, "link-external link-" + macroName, text);
-			el.href = url;
-			el.target = "_blank";
-			return el;
-		}
-
-		if (params.length === 0)
-		{
-			throwError(place, "<<" + macroName + ">>: no link location specified");
-			return;
-		}
-
-		var   argCount
-			, linkText
-			, linkLoc
-			, onceType;
-
-		if (params.length === 3)
-		{
-			onceType = params.pop();
-		}
-		else if (params.length === 2 && (params[1] === "once" || params[1] === "keep"))
-		{
-			onceType = params.pop();
-		}
-		if (onceType && onceType !== "once" && onceType !== "keep")
-		{
-			throwError(place, "<<" + macroName + '>>: "' + onceType + '" is not a valid action (once|keep)');
-			return;
-		}
-
-		if (params.length === 2)
-		{
-			linkText = params[0];
-			linkLoc  = params[1];
-			argCount = 2;
-		}
-		else
-		{
-			if (typeof params[0] === "object")
-			{	// argument was in wiki link syntax
-				linkText = params[0].text;
-				linkLoc  = params[0].link;
-				argCount = params[0].count;
-			}
-			else
-			{	// argument was simply the link location
-				linkText = linkLoc = params[0];
-				argCount = 1;
-			}
-		}
-
-		if (onceType)
-		{
-			if (!state.active.variables.hasOwnProperty("#link"))
-			{
-				state.active.variables["#link"] = {};
-			}
-			else if (state.active.variables["#link"][linkLoc])
-			{
-				if (onceType === "keep")
-				{
-					insertText(place, linkText);
-				}
-				return;
-			}
-		}
-
-		if (argCount === 1)
-		{
-			createInternalLink(place, linkLoc, linkText);
-		}
-		else	// argCount === 2
-		{
-			if (tale.has(linkLoc))
-			{
-				createInternalLink(place, linkLoc, linkText);
-			}
-			else
-			{
-				createExternalLink(place, linkLoc, linkText);
-			}
 		}
 	}
 };
@@ -915,7 +1432,7 @@ macros["option"] =
 version.extensions["printMacro"] = { major: 1, minor: 2, revision: 0 };
 macros["print"] =
 {
-	excludeParams: true,
+	excludeArgs: true,
 	handler: function (place, macroName, params, parser)
 	{
 		try
@@ -939,7 +1456,7 @@ macros["print"] =
 version.extensions["rememberMacro"] = { major: 2, minor: 1, revision: 0 };
 macros["remember"] =
 {
-	excludeParams: true,
+	excludeArgs: true,
 	handler: function (place, macroName, params, parser)
 	{
 		var expression = parser.fullArgs();
@@ -976,29 +1493,12 @@ macros["remember"] =
 };
 
 /**
- * <<run>>, <<runjs>>, & <<set>>
- */
-version.extensions["runMacro"] = version.extensions["runjsMacro"] = version.extensions["setMacro"] = { major: 2, minor: 1, revision: 0 };
-macros["run"] = macros["runjs"] = macros["set"] =
-{
-	excludeParams: true,
-	handler: function (place, macroName, params, parser)
-	{
-		evalMacroExpression(macroName === "runjs" ? parser.rawArgs() : parser.fullArgs(), place, macroName);
-	},
-	run: function (expression, place, macroName)
-	{	// for "macros.set.run()" legacy compatibility only
-		return evalMacroExpression(expression, place, macroName);
-	}
-};
-
-/**
  * <<silently>>
  */
 version.extensions["silentlyMacro"] = { major: 3, minor: 1, revision: 0 };
 macros["silently"] =
 {
-	excludeParams: true,
+	excludeArgs: true,
 	children: registerMacroTags("silently"),
 	handler: function (place, macroName, params, parser, payload)
 	{
@@ -1032,7 +1532,7 @@ macros["silently"] =
 version.extensions["unsetMacro"] = { major: 1, minor: 0, revision: 0 };
 macros["unset"] =
 {
-	excludeParams: true,
+	excludeArgs: true,
 	handler: function (place, macroName, params, parser)
 	{
 		var   expression = parser.fullArgs()
@@ -1066,7 +1566,7 @@ macros["unset"] =
 };
 
 /**
- * <<update>>
+ * <<update>> (DEPRECIATED)
  */
 version.extensions["updateMacro"] = { major: 1, minor: 3, revision: 0 };
 macros["update"] =

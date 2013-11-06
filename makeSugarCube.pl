@@ -7,7 +7,7 @@
 #
 #     Author   :  Thomas Michael Edwards <tmedwards@motoslave.net>
 #     Copyright:  Copyright © 2013 Thomas Michael Edwards. All rights reserved.
-#     Version  :  r13, 2013-11-03
+#     Version  :  r14, 2013-11-06
 #
 ################################################################################
 
@@ -145,9 +145,12 @@ if ($opt_minify)
 
 	# Closure Compiler post-processing
 	$pipeout =~ tr/\r\n//d;
-	$pipeout =~ s/function evalMacroExpression\(\w+,(\w+),\w+\){try{/$&var place=$1;/;
+	$pipeout =~ s/function evalMacroExpression\(\w+,(\w+),\w+\){try{/$&var output=$1;/;
 	die("error: unable to patch evalMacroExpression() [Closure Compiler kludge]\n")
-		if ($pipeout !~ m/function evalMacroExpression\(\w+,(\w+),\w+\){try{var place=\1;/);
+		if ($pipeout !~ m/function evalMacroExpression\(\w+,(\w+),\w+\){try{var output=\1;/);
+	$pipeout =~ s/eval:function\(\w+,(\w+),\w+\){try{/$&var output=$1;/;
+	die("error: unable to patch macros.eval() [Closure Compiler kludge]\n")
+		if ($pipeout !~ m/eval:function\(\w+,(\w+),\w+\){try{var output=\1;/);
 
 	$scripts = $pipeout;
 }

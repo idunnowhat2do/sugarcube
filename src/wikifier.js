@@ -3,13 +3,13 @@
 ***********************************************************************************************************************/
 
 /***********************************************************************************************************************
-** [Global Object/Prototype Extensions] (ad hoc extensions to global objects and prototypes is a BAD IDEA!)
+** [Global Object/Prototype Extensions]
 ***********************************************************************************************************************/
 /**
  * Returns an array of macro parameters, parsed from the string
  *   n.b. Used by the Wikifier
  */
-String.prototype.readMacroParams = function (replaceVars)
+String.prototype.readMacroParams = function ()
 {
 	// RegExp groups: Double quoted | Single quoted | Empty quotes | Double square-bracketed | Barewords
 	var   re     = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\')|[^'])+)')|((?:\"\")|(?:''))|(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^\"'\\s]\\S*))", "gm")
@@ -46,15 +46,12 @@ String.prototype.readMacroParams = function (replaceVars)
 			}
 
 			// Check for $variables
-			if (replaceVars)
+			for (var propName in n)
 			{
-				for (var propName in n)
+				// $variable, so substitute its value
+				if (/\$\w+/.test(n[propName]))
 				{
-					// $variable, so substitute its value
-					if (/\$\w+/.test(n[propName]))
-					{
-						n[propName] = Wikifier.getValue(n[propName]);
-					}
+					n[propName] = Wikifier.getValue(n[propName]);
 				}
 			}
 		}
@@ -65,7 +62,7 @@ String.prototype.readMacroParams = function (replaceVars)
 			n = match[5];
 
 			// $variable, so substitute its value
-			if (replaceVars && /\$\w+/.test(n))
+			if (/\$\w+/.test(n))
 			{
 				n = Wikifier.getValue(n);
 			}
@@ -76,7 +73,7 @@ String.prototype.readMacroParams = function (replaceVars)
 				// n.b. Octal literals are not handled correctly by Number() (e.g. Number("077") yields 77, not 63).
 				//      We could use eval("077") instead, which does correctly yield 63, however, it's probably far
 				//      more likely that the average Twine/Twee author would expect "077" to yield 77 rather than 63.
-				//      So, we cater to author expectation and use Number().
+				//      So, we cater to author expectation and use Number().  Besides, Octals are depreciated anyway.
 				n = Number(n);
 			}
 
@@ -861,7 +858,7 @@ Wikifier.formatters =
 				, macroArgs = this.working.arguments;
 			try
 			{
-				var macro = macros[macroName];
+				var macro = macros.get(macroName);
 				if (macro)
 				{
 					var payload;
@@ -872,32 +869,50 @@ Wikifier.formatters =
 					if (typeof macro[funcName] === "function")
 					{
 						var params = [];
-						if (!macro["excludeParams"])
+						if (!macro["excludeArgs"])
 						{
-							params = macroArgs.readMacroParams(macro["replaceVarParams"] !== undefined ? macro["replaceVarParams"] : true);
+							params = macroArgs.readMacroParams();
 						}
-						w._macroRawArgs = macroArgs;	// cache the raw arguments for use by rawArgs()/fullArgs()
-						macro[funcName](w.output, macroName, params, w, payload);
-						w._macroRawArgs = "";
+						// new-style macros
+						if (macro.hasOwnProperty("_newStyleMacro"))
+						{
+							var macroData =
+								{
+									"name":    macroName,
+									"args":    params,
+									"payload": payload,
+									"output":  w.output,
+									"parser":  w
+								};
+							macroData.args["rawArgs"] = macroArgs;
+							macroData.args["fullArgs"] = Wikifier.parse(macroArgs);
+							macro[funcName].call(macroData);
+						}
+						// old-style macros
+						else
+						{
+							w._macroRawArgs = macroArgs;	// cache the raw arguments for use by rawArgs()/fullArgs()
+							macro[funcName](w.output, macroName, params, w, payload);
+							w._macroRawArgs = "";
+						}
 					}
 					else
 					{
-						throwError(w.output, "macro <<" + macroName + '>> property "' + funcName + '" ' + (macro.hasOwnProperty(funcName) ? "is not a function" : "does not exist"));
+						return throwError(w.output, "macro <<" + macroName + '>> property "' + funcName + '" ' + (macro.hasOwnProperty(funcName) ? "is not a function" : "does not exist"));
 					}
 				}
-				else if (macros._children.hasOwnProperty(macroName))
+				else if (macros.children.hasOwnProperty(macroName))
 				{
-					throwError(w.output, "macro <<" + macroName + ">> was found outside of a call to its parent <<" + macros._children[macroName] + ">>");
+					return throwError(w.output, "child tag <<" + macroName + ">> was found outside of a call to its parent macro <<" + macros.children[macroName] + ">>");
 				}
 				else
 				{
-					throwError(w.output, "macro <<" + macroName + ">> does not exist");
+					return throwError(w.output, "macro <<" + macroName + ">> does not exist");
 				}
 			}
 			catch (e)
 			{
-				throwError(w.output, "cannot execute " + ((macro && macro.isWidget) ? "widget" : "macro") + " <<" + macroName + ">>: " + e.message);
-				return;
+				return throwError(w.output, "cannot execute " + ((macro && macro.isWidget) ? "widget" : "macro") + " <<" + macroName + ">>: " + e.message);
 			}
 			finally
 			{
