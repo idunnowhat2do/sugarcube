@@ -10,8 +10,23 @@ var saveAs=saveAs||navigator.msSaveBlob&&navigator.msSaveBlob.bind(navigator)||f
 
 
 /***********************************************************************************************************************
-** [Global Object/Prototype Extensions] (ad hoc extensions to global objects and prototypes is a BAD IDEA!)
+** [Global Object/Prototype Extensions]
 ***********************************************************************************************************************/
+/**
+ * Returns a random value from the array, between the range of begin and end if they are specified
+ */
+Array.prototype.pick = function (lower, upper)
+{
+	     if (lower == null)        { lower = 0; }
+	else if (lower < 0)            { lower = 0; }
+	else if (lower >= this.length) { lower = this.length - 1; }
+	     if (upper == null)        { upper = this.length - 1; }
+	else if (upper < 0)            { upper = 0; }
+	else if (upper >= this.length) { upper = this.length - 1; }
+
+	return this[getRandom(lower, upper)];
+};
+
 /**
  * Returns a decimal number eased from 0 to 1
  */
@@ -293,6 +308,7 @@ function addStyle(css)
 function throwError(place, message)
 {
 	insertElement(place, "span", null, "error", "Error: " + message);
+	return false;
 }
 
 /**
