@@ -527,7 +527,7 @@ function Passage(title, el, order)
 						tagClasses = tagClasses.concat(el.className.split(/\s+/));
 					}
 					// sort and filter out non-uniques
-					tagClasses.sort().filter(function (val, i, aref) { return (i === 0 || aref[i-1] != val) ? true : false });
+					tagClasses = tagClasses.sort().filter(function (val, i, aref) { return (i === 0 || aref[i-1] != val) ? true : false });
 
 					this.classes = tagClasses;
 					this.className = tagClasses.join(' ');
