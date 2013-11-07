@@ -845,7 +845,7 @@ Wikifier.formatters =
 	name: "macro",
 	match: "<<",
 	lookaheadRegExp: /<<([^>\s]+)(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|[^>]|(?:>(?!>)))*)>>/gm,
-	working: { name: "", handlerName: "", arguments: "", index: 0 },
+	working: { name: "", handlerName: "", arguments: "", index: 0, context: [] },
 	handler: function (w)
 	{
 		this.lookaheadRegExp.lastIndex = w.matchStart;
@@ -868,31 +868,36 @@ Wikifier.formatters =
 					}
 					if (typeof macro[funcName] === "function")
 					{
-						var params = [];
-						if (!macro["excludeArgs"])
-						{
-							params = macroArgs.readMacroParams();
-						}
+						var args = (!macro["excludeArgs"]) ? macroArgs.readMacroParams() : [];
+
 						// new-style macros
 						if (macro.hasOwnProperty("_newStyleMacro"))
 						{
-							var macroData =
+							// setup the call instance data
+							var callData =
 								{
+									"self":    macro,
 									"name":    macroName,
-									"args":    params,
+									"args":    args,
 									"payload": payload,
 									"output":  w.output,
-									"parser":  w
+									"parser":  w,
+									"context": (this.working.context.length !== 0) ? this.working.context : null
 								};
-							macroData.args["rawArgs"] = macroArgs;
-							macroData.args["fullArgs"] = Wikifier.parse(macroArgs);
-							macro[funcName].call(macroData);
+							// monkey patch the raw and full argument strings into the args property
+							callData.args["raw"]  = macroArgs;
+							callData.args["full"] = Wikifier.parse(macroArgs);
+
+							// call the handler, modifying the call context stack appropriately
+							this.working.context.push(callData);
+							macro[funcName].call(callData);
+							this.working.context.pop();
 						}
 						// old-style macros
 						else
 						{
 							w._macroRawArgs = macroArgs;	// cache the raw arguments for use by rawArgs()/fullArgs()
-							macro[funcName](w.output, macroName, params, w, payload);
+							macro[funcName](w.output, macroName, args, w, payload);
 							w._macroRawArgs = "";
 						}
 					}
@@ -1234,10 +1239,9 @@ Wikifier.formatters =
 Wikifier.createInternalLink = function (place, passage, text)
 {
 	var el = insertPassageLink(place, passage, text);
-	el.addEventListener("click", function ()
-	{
+	$(el).click(function () {
 		state.display(passage, el);
-	}, false);
+	});
 	return el;
 };
 
