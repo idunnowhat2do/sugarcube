@@ -53,7 +53,31 @@ if(typeof document!=="undefined"&&!("classList" in document.createElement("a")))
 ** [Polyfills, Piecemeal]
 ***********************************************************************************************************************/
 /**
- * the value of the element, the index of the element, and the Array object being traversed
+ * Returns the first index at which a given element can be found in the array, or -1 if it is not present.
+ */
+if (!Array.prototype.indexOf)
+{
+	Array.prototype.indexOf = function (item, from)
+	{
+		"use strict";
+
+		if (this == null) { throw new TypeError(); }
+
+		if (!from) { from = 0; }
+
+		for (var i = from, len = this.length; i < len; i++)
+		{
+			if (this[i] === item)
+			{
+				return i;
+			}
+		}
+		return -1;
+	};
+}
+
+/**
+ * Creates a new array with all elements that pass the test implemented by the provided function.
  */
 if (!Array.prototype.filter)
 {
@@ -61,20 +85,18 @@ if (!Array.prototype.filter)
 	{
 		"use strict";
 
-		if (this == null || typeof fun != "function")
-		{
-			throw new TypeError();
-		}
+		if (this == null || typeof fun !== "function") { throw new TypeError(); }
 
-		var t = Object(this);
-		var len = t.length >>> 0;
-		var res = [];
-		var thisp = arguments[1];
+		var   t     = Object(this)
+			, len   = t.length >>> 0
+			, res   = []
+			, thisp = arguments[1];
+
 		for (var i = 0; i < len; i++)
 		{
 			if (i in t)
 			{
-				var val = t[i]; // in case fun mutates this
+				var val = t[i];	// in case fun mutates this
 				if (fun.call(thisp, val, i, t))
 				{
 					res.push(val);
@@ -87,22 +109,62 @@ if (!Array.prototype.filter)
 }
 
 /**
- * Works like String.indexOf
+ * Creates a new array with the results of calling a provided function on every element in this array.
  */
-if (!Array.prototype.indexOf)
+if (!Array.prototype.map)
 {
-	Array.prototype.indexOf = function (item, from)
+	Array.prototype.map = function (fun /*, thisp */)
 	{
-		if (!from) { from = 0; }
+		"use strict";
 
-		for (var i = from, len = this.length; i < len; i++)
+		if (this == null || typeof fun !== "function") { throw new TypeError(); }
+
+		var   t     = Object(this)
+			, len   = t.length >>> 0
+			, res   = new Array(len)
+			, thisp = arguments[1];
+
+		for (var i = 0; i < len; i++)
 		{
-			if (this[i] === item)
+			if (i in t)
 			{
-				return i;
+				var val = t[i];	// in case fun mutates this
+				res[i] = fun.call(thisp, val, i, t);
 			}
 		}
-		return -1;
+
+		return res;
+	};
+}
+
+/**
+ * Tests whether some element in the array passes the test implemented by the provided function.
+ */
+if (!Array.prototype.some)
+{
+	Array.prototype.some = function(fun /*, thisp */)
+	{
+		"use strict";
+
+		if (this == null || typeof fun !== "function") { throw new TypeError(); }
+
+		var   t     = Object(this)
+			, len   = t.length >>> 0
+			, thisp = arguments[1];
+
+		for (var i = 0; i < len; i++)
+		{
+			if (i in t)
+			{
+				var val = t[i];	// in case fun mutates this
+				if (fun.call(thisp, val, i, t))
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
 	};
 }
 
