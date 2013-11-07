@@ -66,17 +66,19 @@ var   formatter = null	// Wikifier formatters
 /**
  * Main function, entry point for story startup
  */
-function main()
+$(document).ready(function ()
 {
 	/**
 	 * Returns the passed DOM element, the DOM element corresponding to the
 	 * passed ID, or null on failure
 	 *     n.b. Legacy code for old scripts
 	 */
+	/*
 	var $ = function (id)
 	{
 		return (typeof id === "object") ? id : document.getElementById(id);
 	}
+	*/
 
 	console.log("[main()]");
 
@@ -207,9 +209,7 @@ function main()
 
 	// 5. initialize the user interface
 	UISystem.init();
-}
-
-window.addEventListener("load", main, false);	// starts the magic
+});
 
 
 /***********************************************************************************************************************
@@ -299,8 +299,7 @@ var SaveSystem =
 			, reader = new FileReader();
 
 		// capture the file information once the load is finished
-		reader.addEventListener("load", (function(file)
-		{
+		$(reader).load(function(file) {
 			return function(evt)
 			{
 				console.log('    > loaded: ' + escape(file.name) + '; payload: ' + evt.target.result);
@@ -318,7 +317,7 @@ var SaveSystem =
 				}
 				SaveSystem.unmarshal(saveObj);
 			};
-		}(file)), false);
+		}(file));
 
 		// initiate the file load
 		reader.readAsText(file);
@@ -469,7 +468,7 @@ var UISystem =
 				btn.classList.add("ui-close");
 			}
 			btn.innerHTML = bText;
-			btn.addEventListener("click", bAction, false);
+			$(btn).click(bAction);
 			li.appendChild(btn);
 			return li;
 		}
@@ -482,13 +481,12 @@ var UISystem =
 				btn.classList.add(bIdClass);
 				btn.classList.add("ui-close");
 				btn.innerHTML = bText;
-				btn.addEventListener("click", (function (i)
-				{
+				$(btn).click(function (i) {
 					return function ()
 					{
 						bAction(i);
 					};
-				}(bSlot)), false);
+				}(bSlot));
 				return btn;
 			}
 
@@ -553,11 +551,10 @@ var UISystem =
 			input.type     = "file";
 			input.id       = "saves-import-file";
 			input.name     = "saves-import-file";
-			input.addEventListener("change", function (evt)
-			{
+			$(input).change(function (evt) {
 				SaveSystem.importSave(evt);
 				UISystem.close();
-			}, false);
+			});
 			el.appendChild(input);
 
 			return el;
@@ -569,7 +566,7 @@ var UISystem =
 			, savesOK = storage.store !== null;
 
 		// remove old contents
-		jQuery(menu)
+		$(menu)
 			.empty()
 			.addClass("saves");
 
@@ -624,7 +621,7 @@ var UISystem =
 			, hasItems = false;
 
 		// remove old contents
-		jQuery(menu)
+		$(menu)
 			.empty()
 			.addClass("rewind");
 
@@ -635,7 +632,7 @@ var UISystem =
 			{
 				var el = document.createElement("div");
 				el.classList.add("ui-close");
-				el.addEventListener("click", (function ()
+				$(el).click(function ()
 				{
 					var p = i;
 					if (config.historyMode === modes.windowHistory)
@@ -710,7 +707,7 @@ var UISystem =
 							window.location.hash = state.history[p].hash;
 						};
 					}
-				}()), false);
+				}());
 				el.innerHTML = passage.excerpt();
 				menu.appendChild(el);
 				hasItems = true;
@@ -727,13 +724,13 @@ var UISystem =
 	{
 		var menu = document.getElementById("ui-body");
 
-		jQuery(menu)
+		$(menu)
 			.empty()
 			.addClass("restart")
 			.append('<p>Are you sure that you want to restart?  Unsaved progress will be lost.</p><ul><li><button id="restart-ok" class="ui-close">OK</button></li><li><button id="restart-cancel" class="ui-close">Cancel</button></li></ul></div>');
 
 		// add additional click handler for the OK button
-		jQuery("#restart-ok").click(function () {
+		$("#restart-ok").click(function () {
 			state.restart();
 		});
 
@@ -743,7 +740,7 @@ var UISystem =
 	{
 		var menu = document.getElementById("ui-body");
 
-		jQuery(menu)
+		$(menu)
 			.empty()
 			.addClass("options");
 		new Wikifier(menu, tale.get("MenuOptions").text.trim());
@@ -754,7 +751,7 @@ var UISystem =
 	{
 		var menu = document.getElementById("ui-body");
 
-		jQuery(menu)
+		$(menu)
 			.empty()
 			.addClass("share");
 		new Wikifier(menu, tale.get("MenuShare").text.trim());
@@ -765,16 +762,16 @@ var UISystem =
 	close: function ()
 	{
 		/*
-		jQuery("#ui-overlay")
+		$("#ui-overlay")
 			.css({
 				  "display": "none"
 				, "opacity": 0
 			})
 			.fadeOut(200);
 		*/
-		jQuery("#ui-overlay")
+		$("#ui-overlay")
 			.fadeOut(200);
-		jQuery("#ui-body")
+		$("#ui-body")
 			.css({
 				  "display": "none"
 				, "opacity": 0
@@ -783,17 +780,17 @@ var UISystem =
 			})
 			.removeClass()
 			.empty();	// .empty() here will break static menus
-		jQuery(document.body)
+		$(document.body)
 			.removeClass("ui-open");
 	},
 	addClickHandler: function (target, options, startFunc, doneFunc, callbackFunc)
 	{
-		options = jQuery.extend({
+		options = $.extend({
 			  top:     50
 			, opacity: 0.8
 		}, options);
 
-		jQuery(target).click(function (evt) {
+		$(target).click(function (evt) {
 			evt.preventDefault();	// this doesn't prevent bound events, only default actions (e.g. href links)
 
 			// call the start function
@@ -802,9 +799,9 @@ var UISystem =
 				startFunc(evt);
 			}
 
-			var   overlay = jQuery("#ui-overlay")
-				, menu    = jQuery("#ui-body")
-				, parent  = jQuery(window);
+			var   overlay = $("#ui-overlay")
+				, menu    = $("#ui-body")
+				, parent  = $(window);
 
 			// setup close function handlers
 			overlay
@@ -818,7 +815,7 @@ var UISystem =
 				});
 
 			// stop the body from scrolling
-			jQuery(document.body)
+			$(document.body)
 				.addClass("ui-open");
 
 			// display the overlay
