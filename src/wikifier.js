@@ -861,14 +861,26 @@ Wikifier.formatters =
 				var macro = macros.get(macroName);
 				if (macro)
 				{
+					/* legacy kludges for old-style macros */
+					if (macro.hasOwnProperty("excludeParams"))
+					{
+						macro["fillArgsArray"] = !macro["excludeParams"];
+						delete macro["excludeParams"];
+					}
+					/* /legacy kludges for old-style macros */
+
 					var payload;
 					if (macro.hasOwnProperty("children"))
 					{
 						payload = this.processChildren(w, macro.children.bodyTags);
+						if (!payload)
+						{
+							return throwError(w.output, "cannot find a closing tag for macro <<" + macroName + ">>");
+						}
 					}
 					if (typeof macro[funcName] === "function")
 					{
-						var args = (!macro["excludeArgs"]) ? macroArgs.readMacroParams() : [];
+						var args = (!macro.hasOwnProperty("fillArgsArray") || macro["fillArgsArray"]) ? macroArgs.readMacroParams() : [];
 
 						// new-style macros
 						if (macro.hasOwnProperty("_newStyleMacro"))
@@ -882,9 +894,9 @@ Wikifier.formatters =
 									"payload": payload,
 									"output":  w.output,
 									"parser":  w,
-									"context": (this.working.context.length !== 0) ? this.working.context : null
+									"context": (this.working.context.length !== 0) ? this.working.context.slice() : null
 								};
-							// monkey patch the raw and full argument strings into the args property
+							// inject the raw and full argument strings into the args array
 							callData.args["raw"]  = macroArgs;
 							callData.args["full"] = Wikifier.parse(macroArgs);
 

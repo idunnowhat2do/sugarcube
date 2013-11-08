@@ -43,7 +43,7 @@ macros =
 	{
 		if (Array.isArray(name))
 		{
-			name.forEach(function (n) { this.add(n, deepCopy(definition)); }, this);
+			name.forEach(function (n) { this.add(n, definition); }, this);
 			return;
 		}
 
@@ -59,14 +59,26 @@ macros =
 		try
 		{
 			// add the macro definition
-			this.definitions[name] = definition;
-
-			// temporary legacy kludges for old-style macros
-			this.definitions[name]["_newStyleMacro"] = true;
-			if (this.definitions[name].hasOwnProperty("excludeParams"))
+			if (typeof definition === "object")
 			{
-				this.definitions[name]["excludeArgs"] = this.definitions[name]["excludeParams"];
+				this.definitions[name] = deepCopy(definition);
 			}
+			// add the macro alias
+			else
+			{
+				if (this.has(definition))
+				{
+					this.definitions[name] = this.definitions[definition];
+				}
+				else
+				{
+					throw new Error("cannot create alias of nonexistent macro <<" + definition + ">>");
+				}
+			}
+
+			/* legacy kludges for old-style macros */
+			this.definitions[name]["_newStyleMacro"] = true;
+			/* /legacy kludges for old-style macros */
 
 			// protect the macro, if requested
 			if (this.definitions[name].hasOwnProperty("protect") && this.definitions[name]["protect"])
@@ -215,7 +227,7 @@ Object.defineProperties(macros, {
 
 
 /***********************************************************************************************************************
-** [New-style Macro Definitions]
+** [Macro Definitions]
 ***********************************************************************************************************************/
 /*******************************************************************************
  * Links
@@ -632,7 +644,7 @@ macros.add("display", {
  */
 macros.add("print", {
 	version: { major: 2, minor: 0, revision: 0 },
-	excludeArgs: true,
+	fillArgsArray: false,
 	handler: function ()
 	{
 		try
@@ -655,30 +667,25 @@ macros.add("print", {
  */
 macros.add("silently", {
 	version: { major: 4, minor: 0, revision: 0 },
-	excludeArgs: true,
+	fillArgsArray: false,
 	children: null,
 	handler: function ()
 	{
-		if (this.payload)
+		// execute the contents and discard the output, except for errors (which are displayed)
+		var   errTrap = document.createElement("div")
+			, errList = [];
+
+		new Wikifier(errTrap, this.payload[0].contents.trim());
+
+		while (errTrap.hasChildNodes())
 		{
-			// execute the contents and discard the output, except for errors (which are displayed)
-			var   errTrap = document.createElement("div")
-				, errList = [];
-			new Wikifier(errTrap, this.payload[0].contents.trim());
-			while (errTrap.hasChildNodes())
-			{
-				var fc = errTrap.firstChild;
-				if (fc.classList && fc.classList.contains("error")) { errList.push(fc.textContent); }
-				errTrap.removeChild(fc);
-			}
-			if (errList.length > 0)
-			{
-				return throwError(this.output, "<<" + this.name + ">>: error within contents: " + errList.join('; '));
-			}
+			var fc = errTrap.firstChild;
+			if (fc.classList && fc.classList.contains("error")) { errList.push(fc.textContent); }
+			errTrap.removeChild(fc);
 		}
-		else
+		if (errList.length > 0)
 		{
-			return throwError(this.output, "<<" + this.name + ">>: cannot find a matching close tag");
+			return throwError(this.output, "<<" + this.name + ">>: error within contents: " + errList.join('; '));
 		}
 	}
 });
@@ -692,31 +699,24 @@ macros.add("silently", {
  */
 macros.add("if", {
 	version: { major: 3, minor: 0, revision: 0 },
-	excludeArgs: true,
+	fillArgsArray: false,
 	children: [ "elseif", "else" ],
 	handler: function ()
 	{
-		if (this.payload)
+		try
 		{
-			try
+			for (var i = 0, len = this.payload.length; i < len; i++)
 			{
-				for (var i = 0, len = this.payload.length; i < len; i++)
+				if (this.payload[i].name === "else" || eval(Wikifier.parse(this.payload[i].arguments)))
 				{
-					if (this.payload[i].name === "else" || eval(Wikifier.parse(this.payload[i].arguments)))
-					{
-						new Wikifier(this.output, this.payload[i].contents);
-						break;
-					}
+					new Wikifier(this.output, this.payload[i].contents);
+					break;
 				}
 			}
-			catch (e)
-			{
-				return throwError(this.output, "<<" + this.name + ">>: bad conditional expression: " + e.message);
-			}
 		}
-		else
+		catch (e)
 		{
-			return throwError(this.output, "<<" + this.name + ">>: cannot find a matching close tag");
+			return throwError(this.output, "<<" + this.name + ">>: bad conditional expression: " + e.message);
 		}
 	}
 });
@@ -730,7 +730,7 @@ macros.add("if", {
  */
 macros.add("set", {
 	version: { major: 3, minor: 0, revision: 0 },
-	excludeArgs: true,
+	fillArgsArray: false,
 	handler: function ()
 	{
 		macros.eval(this.args.full, this.output, this.name);
@@ -746,7 +746,7 @@ macros["set"] = { run: function (expression, output, name) { return macros.eval(
  */
 macros.add("unset", {
 	version: { major: 2, minor: 0, revision: 0 },
-	excludeArgs: true,
+	fillArgsArray: false,
 	handler: function ()
 	{
 		var   expression = this.args.full
@@ -757,7 +757,6 @@ macros.add("unset", {
 		{
 			var name = match[1];
 
-			// remove it from the normal variable store
 			if (state.active.variables.hasOwnProperty(name))
 			{
 				delete state.active.variables[name];
@@ -771,7 +770,7 @@ macros.add("unset", {
  */
 macros.add("remember", {
 	version: { major: 3, minor: 0, revision: 0 },
-	excludeArgs: true,
+	fillArgsArray: false,
 	handler: function ()
 	{
 		var expression = this.args.full;
@@ -812,7 +811,7 @@ macros.add("remember", {
  */
 macros.add("forget", {
 	version: { major: 1, minor: 0, revision: 0 },
-	excludeArgs: true,
+	fillArgsArray: false,
 	handler: function ()
 	{
 		var   expression = this.args.full
@@ -851,7 +850,7 @@ macros.add("forget", {
  */
 macros.add("run", {
 	version: { major: 3, minor: 0, revision: 0 },
-	excludeArgs: true,
+	fillArgsArray: false,
 	handler: function ()
 	{
 		macros.eval(this.args.full, this.output, this.name);
@@ -864,17 +863,10 @@ macros.add("run", {
 macros.add("script", {
 	version: { major: 1, minor: 0, revision: 0 },
 	children: null,
-	excludeArgs: true,
+	fillArgsArray: false,
 	handler: function ()
 	{
-		if (this.payload)
-		{
-			macros.eval(this.payload[0].contents.trim(), this.output, this.name);
-		}
-		else
-		{
-			return throwError(this.output, "<<" + this.name + ">>: cannot find a matching close tag");
-		}
+		macros.eval(this.payload[0].contents.trim(), this.output, this.name);
 	},
 });
 
@@ -886,7 +878,7 @@ macros.add("script", {
  * <<click>>
  */
 macros.add("click", {
-	version: { major: 1, minor: 0, revision: 0 },
+	version: { major: 3, minor: 0, revision: 0 },
 	children: null,
 	handler: function ()
 	{
@@ -896,7 +888,7 @@ macros.add("click", {
 
 			if (state.active.variables.hasOwnProperty("args"))
 			{
-				if (Array.isArray(context) && context.some(function (v) { return v.self.isWidget }))
+				if (Array.isArray(context) && context.some(function (v) { return v.self.isWidget; }))
 				{
 					wargs = state.active.variables.args;
 				}
@@ -910,82 +902,75 @@ macros.add("click", {
 			return throwError(this.output, "<<" + this.name + ">>: no link text specified");
 		}
 
-		if (this.payload)
-		{
-			var   linkText
-				, passage
-				, widgetArgs = getWidgetArgs(this.context)
-				, el         = $(document.createElement("a"));
+		var   linkText
+			, passage
+			, widgetArgs = getWidgetArgs(this.context)
+			, el         = $(document.createElement("a"));
 
-			if (typeof this.args[0] === "object")
-			{	// argument was in wiki link syntax
-				linkText = this.args[0].text;
-				passage  = this.args[0].link;
-			}
-			else
-			{	// argument was simply the link text
-				linkText = this.args[0];
-				passage  = this.args.length > 1 ? this.args[1] : undefined;
-			}
-
-			el.addClass("link-" + (passage ? (tale.has(passage) ? "internal" : "broken") : "internal"));
-			el.addClass("link-" + this.name);
-			el.append(linkText);
-			el.click(function (self, contents, widgetArgs) {
-				return function ()
-				{
-					if (contents !== "")
-					{
-						if (widgetArgs !== undefined)
-						{
-							// store existing $args variables
-							if (state.active.variables.hasOwnProperty("args"))
-							{
-								if (!self.hasOwnProperty("_argsStack"))
-								{
-									self._argsStack = [];
-								}
-								self._argsStack.push(state.active.variables.args);
-							}
-
-							// setup the $args variable
-							state.active.variables.args = widgetArgs;
-						}
-
-						// attempt to execute the contents and discard the output (if any)
-						new Wikifier(document.createElement("div"), contents);
-
-						if (widgetArgs !== undefined)
-						{
-							// teardown the $args variable
-							delete state.active.variables.args;
-
-							// restore existing $args variables
-							if (self.hasOwnProperty("_argsStack"))
-							{
-								state.active.variables.args = self._argsStack.pop();
-								if (self._argsStack.length === 0)
-								{
-									// teardown the stack
-									delete self._argsStack;
-								}
-							}
-						}
-					}
-
-					// go to the specified passage (if any)
-					if (passage !== undefined)
-					{
-						state.display(passage, el);
-					}
-				};
-			}(this.self, this.payload[0].contents.trim(), widgetArgs));
-			el.appendTo(this.output);
+		if (typeof this.args[0] === "object")
+		{	// argument was in wiki link syntax
+			linkText = this.args[0].text;
+			passage  = this.args[0].link;
 		}
 		else
-		{
-			return throwError(this.output, "<<" + this.name + ">>: cannot find a matching close tag");
+		{	// argument was simply the link text
+			linkText = this.args[0];
+			passage  = this.args.length > 1 ? this.args[1] : undefined;
 		}
+
+		el.addClass("link-" + (passage ? (tale.has(passage) ? "internal" : "broken") : "internal"));
+		el.addClass("link-" + this.name);
+		el.append(linkText);
+		el.click(function (self, contents, widgetArgs) {
+			return function ()
+			{
+				if (contents !== "")
+				{
+					if (widgetArgs !== undefined)
+					{
+						// store existing $args variables
+						if (state.active.variables.hasOwnProperty("args"))
+						{
+							if (!self.hasOwnProperty("_argsStack"))
+							{
+								self._argsStack = [];
+							}
+							self._argsStack.push(state.active.variables.args);
+						}
+
+						// setup the $args variable
+						state.active.variables.args = widgetArgs;
+					}
+
+					// attempt to execute the contents and discard the output (if any)
+					new Wikifier(document.createElement("div"), contents);
+
+					if (widgetArgs !== undefined)
+					{
+						// teardown the $args variable
+						delete state.active.variables.args;
+
+						// restore existing $args variables
+						if (self.hasOwnProperty("_argsStack"))
+						{
+							state.active.variables.args = self._argsStack.pop();
+							if (self._argsStack.length === 0)
+							{
+								// teardown the stack
+								delete self._argsStack;
+							}
+						}
+					}
+				}
+
+				// go to the specified passage (if any)
+				if (passage !== undefined)
+				{
+					state.display(passage, el);
+				}
+			};
+		}(this.self, this.payload[0].contents.trim(), widgetArgs));
+		el.appendTo(this.output);
 	}
 });
 
@@ -1001,31 +986,24 @@ macros.add(["div", "span"], {
 	children: null,
 	handler: function ()
 	{
-		if (this.payload)
-		{
-			var   elId
-				, elClasses
-				, arg;
+		var   elId
+			, elClasses
+			, arg;
 
-			while (arg = this.args.shift())
+		while (arg = this.args.shift())
+		{
+			switch (arg)
 			{
-				switch (arg)
-				{
-				case "id":
-					elId = this.args.shift();
-					break;
-				case "class":
-					elClasses = this.args.shift();
-					break;
-				}
+			case "id":
+				elId = this.args.shift();
+				break;
+			case "class":
+				elClasses = this.args.shift();
+				break;
 			}
+		}
 
-			new Wikifier(insertElement(this.output, this.name, elId, elClasses), this.payload[0].contents);
-		}
-		else
-		{
-			return throwError(this.output, "<<" + this.name + ">>: cannot find a matching close tag");
-		}
+		new Wikifier(insertElement(this.output, this.name, elId, elClasses), this.payload[0].contents);
 	}
 });
 
@@ -1133,23 +1111,16 @@ macros.add("append", {
 			return throwError(this.output, "<<" + this.name + ">>: no selector specified");
 		}
 
-		if (this.payload)
-		{
-			var targets = $(this.args[0]);
+		var targets = $(this.args[0]);
 
-			if (targets.length === 0)
-			{
-				return throwError(this.output, "<<" + this.name + '>>: no elements matched the selector "' + this.args[0] + '"');
-			}
-
-			var frag = document.createDocumentFragment();
-			new Wikifier(frag, this.payload[0].contents);
-			targets.append(frag);
-		}
-		else
+		if (targets.length === 0)
 		{
-			return throwError(this.output, "<<" + this.name + ">>: cannot find a matching close tag");
+			return throwError(this.output, "<<" + this.name + '>>: no elements matched the selector "' + this.args[0] + '"');
 		}
+
+		var frag = document.createDocumentFragment();
+		new Wikifier(frag, this.payload[0].contents);
+		targets.append(frag);
 	}
 });
 
@@ -1166,23 +1137,16 @@ macros.add("prepend", {
 			return throwError(this.output, "<<" + this.name + ">>: no selector specified");
 		}
 
-		if (this.payload)
-		{
-			var targets = $(this.args[0]);
+		var targets = $(this.args[0]);
 
-			if (targets.length === 0)
-			{
-				return throwError(this.output, "<<" + this.name + '>>: no elements matched the selector "' + this.args[0] + '"');
-			}
-
-			var frag = document.createDocumentFragment();
-			new Wikifier(frag, this.payload[0].contents);
-			targets.prepend(frag);
-		}
-		else
+		if (targets.length === 0)
 		{
-			return throwError(this.output, "<<" + this.name + ">>: cannot find a matching close tag");
+			return throwError(this.output, "<<" + this.name + '>>: no elements matched the selector "' + this.args[0] + '"');
 		}
+
+		var frag = document.createDocumentFragment();
+		new Wikifier(frag, this.payload[0].contents);
+		targets.prepend(frag);
 	}
 });
 
@@ -1199,29 +1163,22 @@ macros.add("replace", {
 			return throwError(this.output, "<<" + this.name + ">>: no selector specified");
 		}
 
-		if (this.payload)
+		var targets = $(this.args[0]);
+
+		if (targets.length === 0)
 		{
-			var targets = $(this.args[0]);
+			return throwError(this.output, "<<" + this.name + '>>: no elements matched the selector "' + this.args[0] + '"');
+		}
 
-			if (targets.length === 0)
-			{
-				return throwError(this.output, "<<" + this.name + '>>: no elements matched the selector "' + this.args[0] + '"');
-			}
-
-			if (this.payload[0].contents)
-			{
-				var frag = document.createDocumentFragment();
-				new Wikifier(frag, this.payload[0].contents);
-				targets.empty().append(frag);
-			}
-			else
-			{
-				targets.empty();
-			}
+		if (this.payload[0].contents)
+		{
+			var frag = document.createDocumentFragment();
+			new Wikifier(frag, this.payload[0].contents);
+			targets.empty().append(frag);
 		}
 		else
 		{
-			return throwError(this.output, "<<" + this.name + ">>: cannot find a matching close tag");
+			targets.empty();
 		}
 	}
 });
@@ -1279,87 +1236,66 @@ macros.add("widget", {
 			macros.remove(widgetName);
 		}
 
-		if (this.payload)
+		try
 		{
-			try
-			{
-				macros.add(widgetName, {
-					version: { major: 1, minor: 0, revision: 0 },
-					isWidget: true,
-					handler: (function (widgetBody)
+			macros.add(widgetName, {
+				version: { major: 1, minor: 0, revision: 0 },
+				isWidget: true,
+				handler: (function (widgetBody)
+				{
+					return function ()
 					{
-						return function ()
+						try
 						{
-							try
+							// store existing $args variables
+							if (state.active.variables.hasOwnProperty("args"))
 							{
-								// store existing $args variables
-								if (state.active.variables.hasOwnProperty("args"))
+								if (!this.self.hasOwnProperty("_argsStack"))
 								{
-									if (!this.self.hasOwnProperty("_argsStack"))
-									{
-										this.self._argsStack = [];
-									}
-									this.self._argsStack.push(state.active.variables.args);
+									this.self._argsStack = [];
 								}
-
-								// setup the widget arguments array
-								state.active.variables.args = [];
-								state.active.variables.args.raw = this.args.raw;
-								state.active.variables.args.full = this.args.full;
-								for (var i = 0, len = this.args.length; i < len; i++)
-								{
-									state.active.variables.args[i] = this.args[i];
-								}
-
-//								// increase the widget call count
-//								if (!macros._tmp.hasOwnProperty("widgetCalls"))
-//								{
-//									macros._tmp.widgetCalls = 0;
-//								}
-//								macros._tmp.widgetCalls++;
-
-								// attempt to execute the widget
-								new Wikifier(this.output, widgetBody);
-
-//								// reduce the widget call count
-//								macros._tmp.widgetCalls--;
-//								if (macros._tmp.widgetCalls === 0)
-//								{
-//									delete macros._tmp.widgetCalls;
-//								}
+								this.self._argsStack.push(state.active.variables.args);
 							}
-							catch (e)
-							{
-								return throwError(this.output, "<<" + this.name + '>>: cannot execute widget: ' + e.message);
-							}
-							finally
-							{
-								// teardown the widget arguments array
-								delete state.active.variables.args;
 
-								// restore existing $args variables
-								if (this.self.hasOwnProperty("_argsStack"))
+							// setup the widget arguments array
+							state.active.variables.args = [];
+							for (var i = 0, len = this.args.length; i < len; i++)
+							{
+								state.active.variables.args[i] = this.args[i];
+							}
+							state.active.variables.args.raw = this.args.raw;
+							state.active.variables.args.full = this.args.full;
+
+							// attempt to execute the widget
+							new Wikifier(this.output, widgetBody);
+						}
+						catch (e)
+						{
+							return throwError(this.output, "<<" + this.name + '>>: cannot execute widget: ' + e.message);
+						}
+						finally
+						{
+							// teardown the widget arguments array
+							delete state.active.variables.args;
+
+							// restore existing $args variables
+							if (this.self.hasOwnProperty("_argsStack"))
+							{
+								state.active.variables.args = this.self._argsStack.pop();
+								if (this.self._argsStack.length === 0)
 								{
-									state.active.variables.args = this.self._argsStack.pop();
-									if (this.self._argsStack.length === 0)
-									{
-										// teardown the widget arguments stack
-										delete this.self._argsStack;
-									}
+									// teardown the widget arguments stack
+									delete this.self._argsStack;
 								}
 							}
-						};
-					}(this.payload[0].contents))
-				});
-			}
-			catch (e)
-			{
-				return throwError(this.output, "<<" + this.name + '>>: cannot create widget macro "' + widgetName + '": ' + e.message);
-			}
+						}
+					};
+				}(this.payload[0].contents))
+			});
 		}
-		else
+		catch (e)
 		{
-			return throwError(this.output, "<<" + this.name + ">>: cannot find a matching close tag");
+			return throwError(this.output, "<<" + this.name + '>>: cannot create widget macro "' + widgetName + '": ' + e.message);
 		}
 	}
 });
@@ -1396,120 +1332,113 @@ macros.add("option", {
 			return throwError(this.output, "<<" + this.name + ">>: no list specified");
 		}
 
-		if (this.payload)
+		var   propertyId = slugify(propertyName)
+			, elOption   = document.createElement("div")
+			, elLabel    = document.createElement("div")
+			, elControl  = document.createElement("div");
+
+		elOption.appendChild(elLabel);
+		elOption.appendChild(elControl);
+		elOption.id  = "option-body-" + propertyId;
+		elLabel.id   = "option-label-" + propertyId;
+		elControl.id = "option-control-" + propertyId;
+
+		// setup the label
+		new Wikifier(elLabel, this.payload[0].contents.trim());
+
+		// setup the control
+		var onChangeBody = (this.payload.length === 2 && this.payload[1].name === "onchange") ? this.payload[1].contents.trim() : "";
+		if (!options.hasOwnProperty(propertyName))
 		{
-			var   propertyId = slugify(propertyName)
-				, elOption   = document.createElement("div")
-				, elLabel    = document.createElement("div")
-				, elControl  = document.createElement("div");
-
-			elOption.appendChild(elLabel);
-			elOption.appendChild(elControl);
-			elOption.id  = "option-body-" + propertyId;
-			elLabel.id   = "option-label-" + propertyId;
-			elControl.id = "option-control-" + propertyId;
-
-			// setup the label
-			new Wikifier(elLabel, this.payload[0].contents.trim());
-
-			// setup the control
-			var onChangeBody = (this.payload.length === 2 && this.payload[1].name === "onchange") ? this.payload[1].contents.trim() : "";
-			if (!options.hasOwnProperty(propertyName))
-			{
-				options[propertyName] = undefined;
-			}
-			switch (controlType)
-			{
-			case "toggle":
-				var   linkText = this.args.length > 2 ? this.args[2] : undefined
-					, elInput  = document.createElement("a");
-				if (options[propertyName] === undefined)
-				{
-					options[propertyName] = false;
-				}
-				if (options[propertyName])
-				{
-					insertText(elInput, linkText || "On");
-					elInput.classList.add("enabled");
-				}
-				else
-				{
-					insertText(elInput, linkText || "Off");
-				}
-				$(elInput).click(function ()
-				{
-					return function (evt)
-					{
-						removeChildren(elInput);
-						if (options[propertyName])
-						{
-							insertText(elInput, linkText || "Off");
-							elInput.classList.remove("enabled");
-							options[propertyName] = false;
-						}
-						else
-						{
-							insertText(elInput, linkText || "On");
-							elInput.classList.add("enabled");
-							options[propertyName] = true;
-						}
-						macros.option.store();
-
-						// if <<onchange>> exists, execute the contents and discard the output (if any)
-						if (onChangeBody !== "")
-						{
-							new Wikifier(document.createElement("div"), onChangeBody);
-						}
-					}
-				}());
-				break;
-			case "list":
-				var   items    = this.args[2]
-					, elInput  = document.createElement("select");
-				if (options.hasOwnProperty(items))
-				{
-					items = options[items];
-				}
-				else
-				{
-					items = items.trim().split(/\s*,\s*/);
-				}
-				if (options[propertyName] === undefined)
-				{
-					options[propertyName] = items[0];
-				}
-				for (var i = 0; i < items.length; i++)
-				{
-					var elItem = document.createElement("option");
-					insertText(elItem, items[i]);
-					elInput.appendChild(elItem);
-				}
-				elInput.value = options[propertyName];
-				$(elInput).change(function ()
-				{
-					return function (evt)
-					{
-						options[propertyName] = evt.target.value;
-						macros.option.store();
-
-						// if <<onchange>> exists, execute the contents and discard the output (if any)
-						if (onChangeBody !== "")
-						{
-							new Wikifier(document.createElement("div"), onChangeBody);
-						}
-					}
-				}());
-				break;
-			}
-			elInput.id = "option-input-" + propertyId;
-			elControl.appendChild(elInput);
-
-			this.output.appendChild(elOption);
+			options[propertyName] = undefined;
 		}
-		else
+		switch (controlType)
 		{
-			return throwError(this.output, "<<" + this.name + ">>: cannot find a matching close tag");
+		case "toggle":
+			var   linkText = this.args.length > 2 ? this.args[2] : undefined
+				, elInput  = document.createElement("a");
+			if (options[propertyName] === undefined)
+			{
+				options[propertyName] = false;
+			}
+			if (options[propertyName])
+			{
+				insertText(elInput, linkText || "On");
+				elInput.classList.add("enabled");
+			}
+			else
+			{
+				insertText(elInput, linkText || "Off");
+			}
+			$(elInput).click(function ()
+			{
+				return function (evt)
+				{
+					removeChildren(elInput);
+					if (options[propertyName])
+					{
+						insertText(elInput, linkText || "Off");
+						elInput.classList.remove("enabled");
+						options[propertyName] = false;
+					}
+					else
+					{
+						insertText(elInput, linkText || "On");
+						elInput.classList.add("enabled");
+						options[propertyName] = true;
+					}
+					macros.option.store();
+
+					// if <<onchange>> exists, execute the contents and discard the output (if any)
+					if (onChangeBody !== "")
+					{
+						new Wikifier(document.createElement("div"), onChangeBody);
+					}
+				}
+			}());
+			break;
+		case "list":
+			var   items    = this.args[2]
+				, elInput  = document.createElement("select");
+			if (options.hasOwnProperty(items))
+			{
+				items = options[items];
+			}
+			else
+			{
+				items = items.trim().split(/\s*,\s*/);
+			}
+			if (options[propertyName] === undefined)
+			{
+				options[propertyName] = items[0];
+			}
+			for (var i = 0; i < items.length; i++)
+			{
+				var elItem = document.createElement("option");
+				insertText(elItem, items[i]);
+				elInput.appendChild(elItem);
+			}
+			elInput.value = options[propertyName];
+			$(elInput).change(function ()
+			{
+				return function (evt)
+				{
+					options[propertyName] = evt.target.value;
+					macros.option.store();
+
+					// if <<onchange>> exists, execute the contents and discard the output (if any)
+					if (onChangeBody !== "")
+					{
+						new Wikifier(document.createElement("div"), onChangeBody);
+					}
+				}
+			}());
+			break;
 		}
+		elInput.id = "option-input-" + propertyId;
+		elControl.appendChild(elInput);
+
+		this.output.appendChild(elOption);
 	},
 	controlbar: function ()
 	{
@@ -1608,132 +1537,21 @@ function evalMacroExpression(expression, place, macroName)
 /**
  * <<bind>> (DEPRECIATED)
  */
-macros.add("bind", {
-	depreciated: true,
-	version: { major: 3, minor: 0, revision: 0 },
-	children: null,
-	handler: function ()
-	{
-		function getWidgetArgs(context)
-		{
-			var wargs;
-
-			if (state.active.variables.hasOwnProperty("args"))
-			{
-				if (Array.isArray(context) && context.some(function (v) { return v.self.isWidget }))
-				{
-					wargs = state.active.variables.args;
-				}
-			}
-
-			return wargs;
-		}
-
-		if (this.args.length === 0)
-		{
-			return throwError(this.output, "<<" + this.name + ">>: no link text specified");
-		}
-
-		if (this.payload)
-		{
-			var   linkText
-				, passage
-				, widgetArgs = getWidgetArgs(this.context)
-				, el         = $(document.createElement("a"));
-
-			if (typeof this.args[0] === "object")
-			{	// argument was in wiki link syntax
-				linkText = this.args[0].text;
-				passage  = this.args[0].link;
-			}
-			else
-			{	// argument was simply the link text
-				linkText = this.args[0];
-				passage  = this.args.length > 1 ? this.args[1] : undefined;
-			}
-
-			el.addClass("link-" + (passage ? (tale.has(passage) ? "internal" : "broken") : "internal"));
-			el.addClass("link-" + this.name);
-			el.append(linkText);
-			el.click(function (self, contents, widgetArgs) {
-				return function ()
-				{
-					if (contents !== "")
-					{
-						if (widgetArgs !== undefined)
-						{
-							// store existing $args variables
-							if (state.active.variables.hasOwnProperty("args"))
-							{
-								if (!self.hasOwnProperty("_argsStack"))
-								{
-									self._argsStack = [];
-								}
-								self._argsStack.push(state.active.variables.args);
-							}
-
-							// setup the $args variable
-							state.active.variables.args = widgetArgs;
-						}
-
-						// attempt to execute the contents and discard the output (if any)
-						new Wikifier(document.createElement("div"), contents);
-
-						if (widgetArgs !== undefined)
-						{
-							// teardown the $args variable
-							delete state.active.variables.args;
-
-							// restore existing $args variables
-							if (self.hasOwnProperty("_argsStack"))
-							{
-								state.active.variables.args = self._argsStack.pop();
-								if (self._argsStack.length === 0)
-								{
-									// teardown the stack
-									delete self._argsStack;
-								}
-							}
-						}
-					}
-
-					// go to the specified passage (if any)
-					if (passage !== undefined)
-					{
-						state.display(passage, el);
-					}
-				};
-			}(this.self, this.payload[0].contents.trim(), widgetArgs));
-			el.appendTo(this.output);
-		}
-		else
-		{
-			return throwError(this.output, "<<" + this.name + ">>: cannot find a matching close tag");
-		}
-	}
-});
+macros.add("bind", "click");	// add <<bind>> as an alias of <<click>>
 
 /**
  * <<class>> (DEPRECIATED)
  */
 macros.add("class", {
-	depreciated: true,
 	version: { major: 2, minor: 2, revision: 0 },
 	children: null,
 	handler: function ()
 	{
-		if (this.payload)
-		{
-			var   elName    = this.args[1] || "span"
-				, elClasses = this.args[0] || ""
-				, el        = insertElement(this.output, elName, null, elClasses);
+		var   elName    = this.args[1] || "span"
+			, elClasses = this.args[0] || ""
+			, el        = insertElement(this.output, elName, null, elClasses);
 
-			new Wikifier(el, this.payload[0].contents);
-		}
-		else
-		{
-			return throwError(this.output, "<<" + this.name + ">>: cannot find a matching close tag");
-		}
+		new Wikifier(el, this.payload[0].contents);
 	}
 });
 
@@ -1741,7 +1559,6 @@ macros.add("class", {
  * <<classupdate>> (DEPRECIATED)
  */
 macros.add("classupdate", {
-	depreciated: true,
 	version: { major: 1, minor: 0, revision: 0 },
 	handler: function ()
 	{
@@ -1789,23 +1606,15 @@ macros.add("classupdate", {
  * <<id>> (DEPRECIATED)
  */
 macros.add("id", {
-	depreciated: true,
 	version: { major: 2, minor: 2, revision: 0 },
 	children: null,
 	handler: function ()
 	{
-		if (this.payload)
-		{
-			var   elName = this.args[1] || "span"
-				, elId   = this.args[0] || ""
-				, el     = insertElement(this.output, elName, elId);
+		var   elName = this.args[1] || "span"
+			, elId   = this.args[0] || ""
+			, el     = insertElement(this.output, elName, elId);
 
-			new Wikifier(el, this.payload[0].contents);
-		}
-		else
-		{
-			return throwError(this.output, "<<" + this.name + ">>: cannot find a matching close tag");
-		}
+		new Wikifier(el, this.payload[0].contents);
 	}
 });
 
@@ -1813,9 +1622,8 @@ macros.add("id", {
  * <<runjs>> (DEPRECIATED)
  */
 macros.add("runjs", {
-	depreciated: true,
 	version: { major: 3, minor: 0, revision: 0 },
-	excludeArgs: true,
+	fillArgsArray: false,
 	handler: function ()
 	{
 		macros.eval(this.args.raw, this.output, this.name);
@@ -1826,7 +1634,6 @@ macros.add("runjs", {
  * <<update>> (DEPRECIATED)
  */
 macros.add("update", {
-	depreciated: true,
 	version: { major: 2, minor: 0, revision: 0 },
 	children: null,
 	handler: function ()
@@ -1836,39 +1643,32 @@ macros.add("update", {
 			return throwError(this.output, "<<" + this.name + ">>: no element ID specified");
 		}
 
-		if (this.payload)
+		var   parentEl = document.getElementById(this.args[0])
+			, updType  = this.args[1];
+
+		if (!parentEl)
 		{
-			var   parentEl = document.getElementById(this.args[0])
-				, updType  = this.args[1];
-
-			if (!parentEl)
-			{
-				return throwError(this.output, "<<" + this.name + '>>: element with ID "' + this.args[0] + '" does not exist');
-			}
-			if (updType && updType !== "append" && updType !== "prepend" && updType !== "replace")
-			{
-				return throwError(this.output, "<<" + this.name + '>>: "' + updType + '" is not a valid action (append|prepend|replace)');
-			}
-
-			switch (updType)
-			{
-			case "prepend":
-				var frag = document.createDocumentFragment();
-				new Wikifier(frag, this.payload[0].contents);
-				parentEl.insertBefore(frag, parentEl.firstChild);
-				break;
-			case "append":
-				new Wikifier(parentEl, this.payload[0].contents);
-				break;
-			default:	// replace
-				removeChildren(parentEl);
-				new Wikifier(parentEl, this.payload[0].contents);
-				break;
-			}
+			return throwError(this.output, "<<" + this.name + '>>: element with ID "' + this.args[0] + '" does not exist');
 		}
-		else
+		if (updType && updType !== "append" && updType !== "prepend" && updType !== "replace")
 		{
-			return throwError(this.output, "<<" + this.name + ">>: cannot find a matching close tag");
+			return throwError(this.output, "<<" + this.name + '>>: "' + updType + '" is not a valid action (append|prepend|replace)');
+		}
+
+		switch (updType)
+		{
+		case "prepend":
+			var frag = document.createDocumentFragment();
+			new Wikifier(frag, this.payload[0].contents);
+			parentEl.insertBefore(frag, parentEl.firstChild);
+			break;
+		case "append":
+			new Wikifier(parentEl, this.payload[0].contents);
+			break;
+		default:	// replace
+			removeChildren(parentEl);
+			new Wikifier(parentEl, this.payload[0].contents);
+			break;
 		}
 	}
 });
