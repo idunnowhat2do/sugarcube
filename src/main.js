@@ -167,13 +167,7 @@ $(document).ready(function ()
 	 * The ordering of the following code is important!
 	 */
 	// 1. call macros' "early" init functions
-	for (var macroName in macros)
-	{
-		if (typeof macros[macroName].init === "function")
-		{
-			macros[macroName].init(macroName);
-		}
-	}
+	macros.init();
 
 	// 2. execute the StoryInit passage
 	if (tale.has("StoryInit"))
@@ -199,13 +193,7 @@ $(document).ready(function ()
 	state.init();	// this could take a while, so do it late
 
 	// 4. call macros' "late" init functions
-	for (var macroName in macros)
-	{
-		if (typeof macros[macroName].lateInit === "function")
-		{
-			macros[macroName].lateInit(macroName);
-		}
-	}
+	macros.lateInit();
 
 	// 5. initialize the user interface
 	UISystem.init();

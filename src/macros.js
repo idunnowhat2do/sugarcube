@@ -37,13 +37,13 @@ macros =
 		var macro = this.get(name);
 
 		if (!handler) { handler = "handler"; }
-		return macro.hasOwnProperty(handler) ? macro[handler] : null;
+		return (macro && macro.hasOwnProperty(handler) && typeof macro[handler] === "function") ? macro[handler] : null;
 	},
-	add: function (name, definition)
+	add: function (name, def, clone)
 	{
 		if (Array.isArray(name))
 		{
-			name.forEach(function (n) { this.add(n, definition); }, this);
+			name.forEach(function (n) { this.add(n, def, clone); }, this);
 			return;
 		}
 
@@ -59,20 +59,20 @@ macros =
 		try
 		{
 			// add the macro definition
-			if (typeof definition === "object")
+			if (typeof def === "object")
 			{
-				this.definitions[name] = deepCopy(definition);
+				this.definitions[name] = clone ? deepCopy(def) : def;
 			}
 			// add the macro alias
 			else
 			{
-				if (this.has(definition))
+				if (this.has(def))
 				{
-					this.definitions[name] = this.definitions[definition];
+					this.definitions[name] = clone ? deepCopy(this.definitions[def]) : this.definitions[def];
 				}
 				else
 				{
-					throw new Error("cannot create alias of nonexistent macro <<" + definition + ">>");
+					throw new Error("cannot create alias of nonexistent macro <<" + def + ">>");
 				}
 			}
 
@@ -91,7 +91,7 @@ macros =
 			throw new Error("cannot clobber protected macro <<" + name + ">>");
 		}
 
-		// automatic post-processing
+		// children post-processing
 		if (this.definitions[name].hasOwnProperty("children"))
 		{
 			if (Array.isArray(this.definitions[name].children) && this.definitions[name].children.length !== 0)
@@ -193,6 +193,36 @@ macros =
 			}
 		}
 	},
+	init: function ()
+	{
+		for (var name in this.definitions)
+		{
+			var fn = this.getHandler(name, "init");
+			if (fn) { fn(name); }
+		}
+		/* legacy kludges for old-style macros */
+		for (var name in this)
+		{
+			var fn = this.getHandler(name, "init");
+			if (fn) { fn(name); }
+		}
+		/* /legacy kludges for old-style macros */
+	},
+	lateInit: function ()
+	{
+		for (var name in this.definitions)
+		{
+			var fn = this.getHandler(name, "lateInit");
+			if (fn) { fn(name); }
+		}
+		/* legacy kludges for old-style macros */
+		for (var name in this)
+		{
+			var fn = this.getHandler(name, "lateInit");
+			if (fn) { fn(name); }
+		}
+		/* /legacy kludges for old-style macros */
+	},
 	eval: function (expression, output, name)
 	{
 		try
@@ -222,6 +252,8 @@ Object.defineProperties(macros, {
 	"remove":     { writable: false, enumerable: false, configurable: false },
 	"addTags":    { writable: false, enumerable: false, configurable: false },
 	"removeTags": { writable: false, enumerable: false, configurable: false },
+	"init":       { writable: false, enumerable: false, configurable: false },
+	"lateInit":   { writable: false, enumerable: false, configurable: false },
 	"eval":       { writable: false, enumerable: false, configurable: false }
 });
 
@@ -447,7 +479,7 @@ macros.add(["back", "return"], {
 			this.self.dtext = this.args[0];
 		}
 	}
-});
+}, true);
 
 /**
  * <<choice>> (only for compatibility with Jonah)
@@ -671,12 +703,13 @@ macros.add("silently", {
 	children: null,
 	handler: function ()
 	{
-		// execute the contents and discard the output, except for errors (which are displayed)
 		var   errTrap = document.createElement("div")
 			, errList = [];
 
+		// execute the contents
 		new Wikifier(errTrap, this.payload[0].contents.trim());
 
+		// discard the output, unless there were errors
 		while (errTrap.hasChildNodes())
 		{
 			var fc = errTrap.firstChild;
@@ -848,14 +881,7 @@ macros.add("forget", {
 /**
  * <<run>>
  */
-macros.add("run", {
-	version: { major: 3, minor: 0, revision: 0 },
-	fillArgsArray: false,
-	handler: function ()
-	{
-		macros.eval(this.args.full, this.output, this.name);
-	}
-});
+macros.add("run", "set");	// add <<run>> as an alias of <<set>>
 
 /**
  * <<script>>
@@ -1307,27 +1333,19 @@ macros.add("widget", {
 /**
  * <<option>>
  */
-macros.add("option", {
+macros.add(["optiontoggle", "optionlist"], {
 	version: { major: 2, minor: 0, revision: 0 },
 	children: [ "onchange" ],
 	handler: function ()
 	{
-		if (this.args.length < 2)
+		if (this.args.length === 0)
 		{
-			var errors = [];
-			if (this.args.length < 1) { errors.push("property"); }
-			if (this.args.length < 2) { errors.push("type"); }
-			return throwError(this.output, "<<" + this.name + ">>: no " + errors.join(" or ") + " specified");
+			return throwError(this.output, "<<" + this.name + ">>: no option property specified");
 		}
 
-		var   propertyName = this.args[0]
-			, controlType  = this.args[1];
+		var propertyName = this.args[0];
 
-		if (controlType !== "toggle" && controlType !== "list")
-		{
-			return throwError(this.output, "<<" + this.name + '>>: "' + controlType + '" is not a valid type (switch|list)');
-		}
-		if (controlType === "list" && this.args.length < 3)
+		if (this.name === "optionlist" && this.args.length < 2)
 		{
 			return throwError(this.output, "<<" + this.name + ">>: no list specified");
 		}
@@ -1347,15 +1365,16 @@ macros.add("option", {
 		new Wikifier(elLabel, this.payload[0].contents.trim());
 
 		// setup the control
-		var onChangeBody = (this.payload.length === 2 && this.payload[1].name === "onchange") ? this.payload[1].contents.trim() : "";
+		//var onChangeBody = (this.payload.length === 2 && this.payload[1].name === "onchange") ? this.payload[1].contents.trim() : "";
+		var onChangeBody = this.payload.length === 2 ? this.payload[1].contents.trim() : "";
 		if (!options.hasOwnProperty(propertyName))
 		{
 			options[propertyName] = undefined;
 		}
-		switch (controlType)
+		switch (this.name)
 		{
-		case "toggle":
-			var   linkText = this.args.length > 2 ? this.args[2] : undefined
+		case "optiontoggle":
+			var   linkText = this.args.length > 1 ? this.args[1] : undefined
 				, elInput  = document.createElement("a");
 			if (options[propertyName] === undefined)
 			{
@@ -1387,7 +1406,7 @@ macros.add("option", {
 						elInput.classList.add("enabled");
 						options[propertyName] = true;
 					}
-					macros.option.store();
+					macros.get("saveoptions").handler();
 
 					// if <<onchange>> exists, execute the contents and discard the output (if any)
 					if (onChangeBody !== "")
@@ -1397,9 +1416,9 @@ macros.add("option", {
 				}
 			}());
 			break;
-		case "list":
-			var   items    = this.args[2]
-				, elInput  = document.createElement("select");
+		case "optionlist":
+			var   items   = this.args[1]
+				, elInput = document.createElement("select");
 			if (options.hasOwnProperty(items))
 			{
 				items = options[items];
@@ -1424,7 +1443,7 @@ macros.add("option", {
 				return function (evt)
 				{
 					options[propertyName] = evt.target.value;
-					macros.option.store();
+					macros.get("saveoptions").handler();
 
 					// if <<onchange>> exists, execute the contents and discard the output (if any)
 					if (onChangeBody !== "")
@@ -1439,8 +1458,15 @@ macros.add("option", {
 		elControl.appendChild(elInput);
 
 		this.output.appendChild(elOption);
-	},
-	controlbar: function ()
+	}
+});
+
+/**
+ * <<optionbar>>
+ */
+macros.add("optionbar", {
+	version: { major: 2, minor: 0, revision: 0 },
+	handler: function ()
 	{
 		var   elSet   = document.createElement("div")
 			, elClose = document.createElement("button")
@@ -1457,20 +1483,22 @@ macros.add("option", {
 		insertText(elReset, "Reset to Defaults");
 
 		$(elReset).click(function (evt) {
-			macros.option.purge();
+			macros.get("deleteoptions").handler();
 			window.location.reload();
 		});
 
 		this.output.appendChild(elSet);
 	},
-	store: function ()
+});
+
+/**
+ * <<saveoptions>>
+ */
+macros.add("saveoptions", {
+	version: { major: 2, minor: 0, revision: 0 },
+	handler: function ()
 	{
 		return storage.setItem("options", options);
-	},
-	purge: function ()
-	{
-		options = {};
-		return storage.removeItem("options");
 	},
 	init: function ()
 	{
@@ -1482,6 +1510,18 @@ macros.add("option", {
 				options[name] = opts[name];
 			}
 		}
+	}
+});
+
+/**
+ * <<deleteoptions>>
+ */
+macros.add("deleteoptions", {
+	version: { major: 2, minor: 0, revision: 0 },
+	handler: function ()
+	{
+		options = {};
+		return storage.removeItem("options");
 	}
 });
 
