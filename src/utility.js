@@ -161,10 +161,10 @@ function deepCopy(orig)
 	{
 		var ret = [];
 
+		// Note: this does NOT preserve ES5 property attributes like 'writable', 'enumerable', etc.
+		// That could be achieved by using Object.getOwnPropertyNames and Object.defineProperty
 		for (var i = 0; i < orig.length; i++)
 		{
-			// Note: this does NOT preserve ES5 property attributes like 'writable', 'enumerable', etc.
-			// That could be achieved by using Object.getOwnPropertyNames and Object.defineProperty
 			ret.push(deepCopy(orig[i]));
 		}
 	}
@@ -178,10 +178,10 @@ function deepCopy(orig)
 		}
 		var ret = Object.create(proto);
 
+		// Note: this does NOT preserve ES5 property attributes like 'writable', 'enumerable', etc.
+		// That could be achieved by using Object.getOwnPropertyNames and Object.defineProperty
 		for (var key in orig)
 		{
-			// Note: this does NOT preserve ES5 property attributes like 'writable', 'enumerable', etc.
-			// That could be achieved by using Object.getOwnPropertyNames and Object.defineProperty
 			ret[key] = deepCopy(orig[key]);
 		}
 	}

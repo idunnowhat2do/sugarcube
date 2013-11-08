@@ -24,9 +24,9 @@ function History()
 // setup accessors and mutators
 History.prototype =
 {
-	get isEmpty () { return this.history.length === 0; },
-	get length ()  { return this.history.length; },
-	get top ()     { return (this.history.length !== 0) ? this.history[this.history.length - 1] : null; }
+	get top ()      { return (this.history.length !== 0) ? this.history[this.history.length - 1] : null; },
+	get isEmpty ()  { return this.history.length === 0; },
+	get length ()   { return this.history.length; }
 };
 
 /*
