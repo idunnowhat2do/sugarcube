@@ -14,8 +14,6 @@ macros =
 	// method properties
 	has: function (name, searchTags)
 	{
-		//return this.definitions.hasOwnProperty(name) || this.tags.hasOwnProperty(name);
-		//return this.definitions.hasOwnProperty(name);
 		return this.definitions.hasOwnProperty(name) || (searchTags && this.tags.hasOwnProperty(name));
 	},
 	get: function (name)
@@ -161,7 +159,6 @@ macros =
 			}
 			if (this.tags.hasOwnProperty(tag))
 			{
-				//throw new Error("tag is already registered (to: <<" + this.tags[tag] + ">>)");
 				if (this.tags[tag].indexOf(parent) === -1)
 				{
 					this.tags[tag].push(parent);
@@ -311,10 +308,9 @@ macros.add("actions", {
 				continue;
 			}
 
-			var   item = insertElement(list, "li")
-				, link = $(insertPassageLink(item, passage, linkText));
-			link.addClass("link-" + this.name);
-			link.click(function ()
+			var link = insertPassageLink(insertElement(list, "li"), passage, linkText);
+			link.classList.add("link-" + this.name);
+			$(link).click(function ()
 			{
 				var   p = passage
 					, l = link;
@@ -429,11 +425,11 @@ macros.add(["back", "return"], {
 			return;
 		}
 
-		el = $(document.createElement("a"));
-		el.addClass("link-" + this.name);
+		el = document.createElement("a");
+		el.classList.add("link-" + this.name);
 		if (steps > 0)
 		{
-			el.click(function ()
+			$(el).click(function ()
 			{
 				if (this.name === "back")
 				{
@@ -479,8 +475,8 @@ macros.add(["back", "return"], {
 				}
 			}.call(this));
 		}
-		el.append(ctext || this.self.dtext || ltext);
-		el.appendTo(this.output);
+		insertText(el, ctext || this.self.dtext || ltext);
+		this.output.appendChild(el);
 	},
 	linktext: function ()
 	{
@@ -523,13 +519,13 @@ macros.add("choice", {
 			}
 		}
 		else
-		{
+		{	// yes, the arguments are backwards
 			passage  = this.args[0];
 			linkText = this.args[1];
 		}
 
-		var el = $(insertPassageLink(this.output, passage, linkText, "link-" + this.name));
-		el.click(function ()
+		var el = insertPassageLink(this.output, passage, linkText, "link-" + this.name);
+		$(el).click(function ()
 		{
 			state.display(passage, el);
 		});
@@ -545,8 +541,8 @@ macros.add("link", {
 	{
 		function createInternalLink(output, passage, text)
 		{
-			var el = $(insertPassageLink(output, passage, text, "link-" + this.name));
-			el.click(function ()
+			var el = insertPassageLink(output, passage, text, "link-" + this.name);
+			$(el).click(function ()
 			{
 				if (onceType)
 				{
@@ -949,7 +945,7 @@ macros.add("click", {
 		var   linkText
 			, passage
 			, widgetArgs = getWidgetArgs(this.context)
-			, el         = $(document.createElement("a"));
+			, el         = document.createElement("a");
 
 		if (typeof this.args[0] === "object")
 		{	// argument was in wiki link syntax
@@ -962,10 +958,11 @@ macros.add("click", {
 			passage  = this.args.length > 1 ? this.args[1] : undefined;
 		}
 
-		el.addClass("link-" + (passage ? (tale.has(passage) ? "internal" : "broken") : "internal"));
-		el.addClass("link-" + this.name);
-		el.append(linkText);
-		el.click(function (self, contents, widgetArgs) {
+		el.classList.add("link-" + (passage ? (tale.has(passage) ? "internal" : "broken") : "internal"));
+		el.classList.add("link-" + this.name);
+		insertText(el, linkText);
+		$(el).click(function (self, contents, widgetArgs)
+		{
 			return function ()
 			{
 				if (contents !== "")
@@ -1014,7 +1011,7 @@ macros.add("click", {
 				}
 			};
 		}(this.self, this.payload[0].contents.trim(), widgetArgs));
-		el.appendTo(this.output);
+		this.output.appendChild(el);
 	}
 });
 
@@ -1383,7 +1380,6 @@ macros.add(["optiontoggle", "optionlist"], {
 		new Wikifier(elLabel, this.payload[0].contents.trim());
 
 		// setup the control
-		//var onChangeBody = (this.payload.length === 2 && this.payload[1].name === "onchange") ? this.payload[1].contents.trim() : "";
 		var onChangeBody = this.payload.length === 2 ? this.payload[1].contents.trim() : "";
 		if (!options.hasOwnProperty(propertyName))
 		{
