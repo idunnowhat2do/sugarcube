@@ -218,14 +218,7 @@ History.prototype.display = function (title, link, render)
 		{
 			try
 			{
-				var errTrap = document.createElement("div");
-				new Wikifier(errTrap, tale.get("PassageReady").text);
-				while (errTrap.hasChildNodes())
-				{
-					var fc = errTrap.firstChild;
-					if (fc.classList && fc.classList.contains("error")) { throw new Error(fc.textContent); }
-					errTrap.removeChild(fc);
-				}
+				Wikifier.eval(tale.get("PassageReady").text);
 			}
 			catch (e)
 			{
@@ -263,14 +256,7 @@ History.prototype.display = function (title, link, render)
 		{
 			try
 			{
-				var errTrap = document.createElement("div");
-				new Wikifier(errTrap, tale.get("PassageDone").text);
-				while (errTrap.hasChildNodes())
-				{
-					var fc = errTrap.firstChild;
-					if (fc.classList && fc.classList.contains("error")) { throw new Error(fc.textContent); }
-					errTrap.removeChild(fc);
-				}
+				Wikifier.eval(tale.get("PassageDone").text);
 			}
 			catch (e)
 			{
