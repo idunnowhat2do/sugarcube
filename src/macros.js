@@ -3,20 +3,20 @@
 ***********************************************************************************************************************/
 
 /***********************************************************************************************************************
-** [New-style Macro Initialization]
+** [Macro Initialization]
 ***********************************************************************************************************************/
 macros =
 {
 	// data properties
-	children:    {},
+	tags:        {},
 	definitions: {},
 
 	// method properties
-	has: function (name, includeChildren)
+	has: function (name, searchTags)
 	{
-		//return this.definitions.hasOwnProperty(name) || this.children.hasOwnProperty(name);
+		//return this.definitions.hasOwnProperty(name) || this.tags.hasOwnProperty(name);
 		//return this.definitions.hasOwnProperty(name);
-		return this.definitions.hasOwnProperty(name) || (includeChildren && this.children.hasOwnProperty(name));
+		return this.definitions.hasOwnProperty(name) || (searchTags && this.tags.hasOwnProperty(name));
 	},
 	get: function (name)
 	{
@@ -51,9 +51,10 @@ macros =
 		{
 			throw new Error("cannot clobber existing macro <<" + name + ">>");
 		}
-		else if (this.children.hasOwnProperty(name))
+		else if (this.tags.hasOwnProperty(name))
 		{
-			throw new Error("cannot clobber child tag <<" + name + ">> of parent macro <<" + this.children[name] + ">>");
+			throw new Error("cannot clobber child tag <<" + name + ">> of parent macro"
+				+ (this.tags[name].length === 1 ? '' : 's') + " <<" + this.tags[name].join(">>, <<") + ">>");
 		}
 
 		try
@@ -75,32 +76,38 @@ macros =
 					throw new Error("cannot create alias of nonexistent macro <<" + def + ">>");
 				}
 			}
+			Object.defineProperty(this.definitions, name, { writable: false });
 
-			/* legacy kludges for old-style macros */
-			this.definitions[name]["_newStyleMacro"] = true;
-			/* /legacy kludges for old-style macros */
-
-			// protect the macro, if requested
-			if (this.definitions[name].hasOwnProperty("protect") && this.definitions[name]["protect"])
-			{
-				Object.defineProperty(this.definitions, name, { writable: false });
-			}
+			/* legacy kludges */
+			this.definitions[name]["_macrosAPI"] = true;
+			/* /legacy kludges */
 		}
 		catch (e)
 		{
-			throw new Error("cannot clobber protected macro <<" + name + ">>");
-		}
-
-		// children post-processing
-		if (this.definitions[name].hasOwnProperty("children"))
-		{
-			if (Array.isArray(this.definitions[name].children) && this.definitions[name].children.length !== 0)
+			if (e.name === "TypeError")
 			{
-				this.definitions[name].children = this.addTags(name, this.definitions[name].children);
+				throw new Error("cannot clobber protected macro <<" + name + ">>");
 			}
 			else
 			{
-				this.definitions[name].children = this.addTags(name);
+				throw new Error("unknown error when attempting to add macro <<" + name + ">>: [" + e.name + "] " + e.message);
+			}
+		}
+
+		// tags post-processing
+		if (this.definitions[name].hasOwnProperty("tags"))
+		{
+			if (this.definitions[name].tags == null)
+			{
+				this.registerTags(name);
+			}
+			else if (Array.isArray(this.definitions[name].tags))
+			{
+				this.registerTags(name, this.definitions[name].tags);
+			}
+			else
+			{
+				throw new Error('bad value for "tags" property of macro <<' + name + ">>");
 			}
 		}
 	},
@@ -114,21 +121,16 @@ macros =
 
 		if (this.definitions.hasOwnProperty(name))
 		{
-			// automatic pre-processing
-			if (this.definitions[name].hasOwnProperty("children"))
+			// tags pre-processing
+			if (this.definitions[name].hasOwnProperty("tags"))
 			{
-				this.removeTags(name);
+				this.unregisterTags(name);
 			}
 
 			try
 			{
-				// unprotect the macro, if necessary
-				if (this.definitions[name].hasOwnProperty("protect") && this.definitions[name]["protect"])
-				{
-					Object.defineProperty(this.definitions, name, { writable: true });
-				}
-
 				// remove the macro definition
+				Object.defineProperty(this.definitions, name, { writable: true });
 				delete this.definitions[name];
 			}
 			catch (e)
@@ -136,59 +138,58 @@ macros =
 				throw new Error("unknown error removing macro <<" + name + ">>: " + e.message);
 			}
 		}
-		else if (this.children.hasOwnProperty(name))
+		else if (this.tags.hasOwnProperty(name))
 		{
-			throw new Error("cannot remove child tag <<" + name + ">> of parent macro <<" + this.children[name] + ">>");
+			throw new Error("cannot remove child tag <<" + name + ">> of parent macro <<" + this.tags[name] + ">>");
 		}
 	},
-	addTags: function (parent, bodyTags)
+	registerTags: function (parent, bodyTags)
 	{
 		if (!parent) { throw new Error("no parent specified"); }
-		if (!bodyTags) { bodyTags = []; }
+
+		if (!Array.isArray(bodyTags)) { bodyTags = []; }
 
 		var   endTags = [ "/" + parent, "end" + parent ]	// automatically create the closing tags
-			, allTags = [];
-	
-		allTags.concat(bodyTags, endTags);
+			, allTags = [].concat(endTags, bodyTags);
 
 		for (var i = 0; i < allTags.length; i++)
 		{
-			if (this.definitions.hasOwnProperty(allTags[i]))
+			var tag = allTags[i];
+			if (this.definitions.hasOwnProperty(tag))
 			{
 				throw new Error("cannot register tag for an existing macro");
 			}
-			if (this.children.hasOwnProperty(allTags[i]))
+			if (this.tags.hasOwnProperty(tag))
 			{
-				throw new Error("tag is already registered (to: <<" + this.children[allTags[i]] + ">>)");
+				//throw new Error("tag is already registered (to: <<" + this.tags[tag] + ">>)");
+				if (this.tags[tag].indexOf(parent) === -1)
+				{
+					this.tags[tag].push(parent);
+					this.tags[tag].sort();
+				}
 			}
 			else
 			{
-				this.children[allTags[i]] = parent;
+				this.tags[tag] = [ parent ];
 			}
 		}
-		return { "endTags": endTags, "bodyTags": bodyTags };
 	},
-	removeTags: function (parent)
+	unregisterTags: function (parent)
 	{
 		if (!parent) { throw new Error("no parent specified"); }
-		if (!bodyTags) { bodyTags = []; }
 
-		var   endTags = [ "/" + parent, "end" + parent ]	// automatically create the closing tags
-			, allTags = [];
-	
-		allTags.concat(bodyTags, endTags);
-
-		for (var i = 0; i < allTags.length; i++)
+		for (var tag in this.tags)
 		{
-			if (this.children.hasOwnProperty(allTags[i]))
+			var i = this.tags[tag].indexOf(parent);
+			if (i !== -1)
 			{
-				if (this.children[allTags[i]] !== parent)
+				if (this.tags[tag].length === 1)
 				{
-					throw new Error("cannot remove tag registered to another macro (<<" + this.children[allTags[i]] + ">>)");
+					delete this.tags[tag];
 				}
 				else
 				{
-					delete this.children[allTags[i]];
+					this.tags[tag].splice(i, 1);
 				}
 			}
 		}
@@ -200,13 +201,13 @@ macros =
 			var fn = this.getHandler(name, "init");
 			if (fn) { fn(name); }
 		}
-		/* legacy kludges for old-style macros */
+		/* legacy kludges */
 		for (var name in this)
 		{
 			var fn = this.getHandler(name, "init");
 			if (fn) { fn(name); }
 		}
-		/* /legacy kludges for old-style macros */
+		/* /legacy kludges */
 	},
 	lateInit: function ()
 	{
@@ -215,13 +216,13 @@ macros =
 			var fn = this.getHandler(name, "lateInit");
 			if (fn) { fn(name); }
 		}
-		/* legacy kludges for old-style macros */
+		/* legacy kludges */
 		for (var name in this)
 		{
 			var fn = this.getHandler(name, "lateInit");
 			if (fn) { fn(name); }
 		}
-		/* /legacy kludges for old-style macros */
+		/* /legacy kludges */
 	},
 	eval: function (expression, output, name)
 	{
@@ -241,21 +242,34 @@ macros =
 /* Object.freeze(macros); */
 Object.defineProperties(macros, {
 	// data properties
-	"children":    { enumerable: false, configurable: false },
-	"definitions": { enumerable: false, configurable: false },
-
+	"tags":           { writable: false, enumerable: false, configurable: false },
+	"definitions":    { writable: false, enumerable: false, configurable: false },
 	// method properties
-	"has":        { writable: false, enumerable: false, configurable: false },
-	"get":        { writable: false, enumerable: false, configurable: false },
-	"getHandler": { writable: false, enumerable: false, configurable: false },
-	"add":        { writable: false, enumerable: false, configurable: false },
-	"remove":     { writable: false, enumerable: false, configurable: false },
-	"addTags":    { writable: false, enumerable: false, configurable: false },
-	"removeTags": { writable: false, enumerable: false, configurable: false },
-	"init":       { writable: false, enumerable: false, configurable: false },
-	"lateInit":   { writable: false, enumerable: false, configurable: false },
-	"eval":       { writable: false, enumerable: false, configurable: false }
+	"has":            { writable: false, enumerable: false, configurable: false },
+	"get":            { writable: false, enumerable: false, configurable: false },
+	"getHandler":     { writable: false, enumerable: false, configurable: false },
+	"add":            { writable: false, enumerable: false, configurable: false },
+	"remove":         { writable: false, enumerable: false, configurable: false },
+	"registerTags":   { writable: false, enumerable: false, configurable: false },
+	"unregisterTags": { writable: false, enumerable: false, configurable: false },
+	"init":           { writable: false, enumerable: false, configurable: false },
+	"lateInit":       { writable: false, enumerable: false, configurable: false },
+	"eval":           { writable: false, enumerable: false, configurable: false }
 });
+
+
+/***********************************************************************************************************************
+** [DEPRECIATED Macro Utility Functions]
+***********************************************************************************************************************/
+function registerMacroTags(parent, bodyTags)
+{
+	return macros.registerTags(parent, bodyTags);
+}
+
+function evalMacroExpression(expression, place, macroName)
+{
+	return macros.eval.call(this, expression, place, macroName);
+}
 
 
 /***********************************************************************************************************************
@@ -700,7 +714,7 @@ macros.add("print", {
 macros.add("silently", {
 	version: { major: 4, minor: 0, revision: 0 },
 	fillArgsArray: false,
-	children: null,
+	tags: null,
 	handler: function ()
 	{
 		var   errTrap = document.createElement("div")
@@ -715,6 +729,10 @@ macros.add("silently", {
 			var fc = errTrap.firstChild;
 			if (fc.classList && fc.classList.contains("error")) { errList.push(fc.textContent); }
 			errTrap.removeChild(fc);
+		}
+		if (typeof errTrap["remove"] === "function")
+		{
+			errTrap.remove();		// remove the trap
 		}
 		if (errList.length > 0)
 		{
@@ -733,7 +751,7 @@ macros.add("silently", {
 macros.add("if", {
 	version: { major: 3, minor: 0, revision: 0 },
 	fillArgsArray: false,
-	children: [ "elseif", "else" ],
+	tags: [ "elseif", "else" ],
 	handler: function ()
 	{
 		try
@@ -888,12 +906,12 @@ macros.add("run", "set");	// add <<run>> as an alias of <<set>>
  */
 macros.add("script", {
 	version: { major: 1, minor: 0, revision: 0 },
-	children: null,
+	tags: null,
 	fillArgsArray: false,
 	handler: function ()
 	{
 		macros.eval(this.payload[0].contents.trim(), this.output, this.name);
-	},
+	}
 });
 
 
@@ -905,7 +923,7 @@ macros.add("script", {
  */
 macros.add("click", {
 	version: { major: 3, minor: 0, revision: 0 },
-	children: null,
+	tags: null,
 	handler: function ()
 	{
 		function getWidgetArgs(context)
@@ -1009,7 +1027,7 @@ macros.add("click", {
  */
 macros.add(["div", "span"], {
 	version: { major: 1, minor: 0, revision: 0 },
-	children: null,
+	tags: null,
 	handler: function ()
 	{
 		var   elId
@@ -1129,7 +1147,7 @@ macros.add("toggleclass", {
  */
 macros.add("append", {
 	version: { major: 1, minor: 0, revision: 0 },
-	children: null,
+	tags: null,
 	handler: function ()
 	{
 		if (this.args.length === 0)
@@ -1155,7 +1173,7 @@ macros.add("append", {
  */
 macros.add("prepend", {
 	version: { major: 1, minor: 0, revision: 0 },
-	children: null,
+	tags: null,
 	handler: function ()
 	{
 		if (this.args.length === 0)
@@ -1181,7 +1199,7 @@ macros.add("prepend", {
  */
 macros.add("replace", {
 	version: { major: 1, minor: 0, revision: 0 },
-	children: null,
+	tags: null,
 	handler: function ()
 	{
 		if (this.args.length === 0)
@@ -1241,7 +1259,7 @@ macros.add("remove", {
  */
 macros.add("widget", {
 	version: { major: 2, minor: 0, revision: 0 },
-	children: null,
+	tags: null,
 	handler: function ()
 	{
 		if (this.args.length === 0)
@@ -1335,7 +1353,7 @@ macros.add("widget", {
  */
 macros.add(["optiontoggle", "optionlist"], {
 	version: { major: 2, minor: 0, revision: 0 },
-	children: [ "onchange" ],
+	tags: [ "onchange" ],
 	handler: function ()
 	{
 		if (this.args.length === 0)
@@ -1527,51 +1545,6 @@ macros.add("deleteoptions", {
 
 
 /***********************************************************************************************************************
-** [DEPRECIATED Macro Utility Functions]
-***********************************************************************************************************************/
-function registerMacroTags(parent, bodyTags)
-{
-	if (!parent) { throw new Error("no parent specified"); }
-	if (!bodyTags) { bodyTags = []; }
-
-	var   endTags = [ "/" + parent, "end" + parent ]	// automatically create the closing tags
-		, allTags = [];
-	
-	allTags.concat(bodyTags, endTags);
-
-	for (var i = 0; i < allTags.length; i++)
-	{
-		if (macros.definitions.hasOwnProperty(allTags[i]))
-		{
-			throw new Error("cannot register tag for an existing macro");
-		}
-		if (macros.children.hasOwnProperty(allTags[i]))
-		{
-			throw new Error("tag is already registered (to: <<" + macros.children[allTags[i]] + ">>)");
-		}
-		else
-		{
-			macros.children[allTags[i]] = parent;
-		}
-	}
-	return { "endTags": endTags, "bodyTags": bodyTags };
-}
-
-function evalMacroExpression(expression, place, macroName)
-{
-	try
-	{
-		eval("(function(){" + expression + "}());");
-		return true;
-	}
-	catch (e)
-	{
-		return throwError(place, "<<" + macroName + ">>: bad expression: " + e.message);
-	}
-}
-
-
-/***********************************************************************************************************************
 ** [DEPRECIATED Macro Definitions]
 ***********************************************************************************************************************/
 /**
@@ -1584,7 +1557,7 @@ macros.add("bind", "click");	// add <<bind>> as an alias of <<click>>
  */
 macros.add("class", {
 	version: { major: 2, minor: 2, revision: 0 },
-	children: null,
+	tags: null,
 	handler: function ()
 	{
 		var   elName    = this.args[1] || "span"
@@ -1647,7 +1620,7 @@ macros.add("classupdate", {
  */
 macros.add("id", {
 	version: { major: 2, minor: 2, revision: 0 },
-	children: null,
+	tags: null,
 	handler: function ()
 	{
 		var   elName = this.args[1] || "span"
@@ -1675,7 +1648,7 @@ macros.add("runjs", {
  */
 macros.add("update", {
 	version: { major: 2, minor: 0, revision: 0 },
-	children: null,
+	tags: null,
 	handler: function ()
 	{
 		if (this.args.length === 0)

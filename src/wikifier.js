@@ -878,9 +878,9 @@ Wikifier.formatters =
 	handler: function (w)
 	{
 		this.lookaheadRegExp.lastIndex = w.matchStart;
-		if (this.parseMacroTag(w))
+		if (this.parseTag(w))
 		{
-			// the call to processChildren() below will likely change the working
+			// if parseBody() is called below, it will change the current working
 			// values, so we must cache them now
 			var   macroName = this.working.name
 				, funcName  = this.working.handlerName
@@ -899,9 +899,9 @@ Wikifier.formatters =
 					/* /legacy kludges */
 
 					var payload;
-					if (macro.hasOwnProperty("children"))
+					if (macro.hasOwnProperty("tags"))
 					{
-						payload = this.processChildren(w, macro.children.bodyTags);
+						payload = this.parseBody(w, macro.tags);
 						if (!payload)
 						{
 							return throwError(w.output, "cannot find a closing tag for macro <<" + macroName + ">>");
@@ -944,12 +944,14 @@ Wikifier.formatters =
 					}
 					else
 					{
-						return throwError(w.output, "macro <<" + macroName + '>> property "' + funcName + '" ' + (macro.hasOwnProperty(funcName) ? "is not a function" : "does not exist"));
+						return throwError(w.output, "macro <<" + macroName + '>> property "' + funcName + '" '
+							+ (macro.hasOwnProperty(funcName) ? "is not a function" : "does not exist"));
 					}
 				}
-				else if (macros.children.hasOwnProperty(macroName))
+				else if (macros.tags.hasOwnProperty(macroName))
 				{
-					return throwError(w.output, "child tag <<" + macroName + ">> was found outside of a call to its parent macro <<" + macros.children[macroName] + ">>");
+					return throwError(w.output, "child tag <<" + macroName + ">> was found outside of a call to its parent macro"
+						+ (macros.tags[macroName].length === 1 ? '' : 's') + " <<" + macros.tags[macroName].join(">>, <<") + ">>");
 				}
 				else
 				{
@@ -969,7 +971,7 @@ Wikifier.formatters =
 			}
 		}
 	},
-	parseMacroTag: function (w)
+	parseTag: function (w)
 	{
 		var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
 		if (lookaheadMatch && lookaheadMatch.index === w.matchStart && lookaheadMatch[1])
@@ -995,11 +997,12 @@ Wikifier.formatters =
 		}
 		return false;
 	},
-	processChildren: function (w, bodyTags)
+	parseBody: function (w, tags)
 	{
 		var   openTag      = this.working.name
 			, closeTag     = "/" + openTag
 			, closeAlt     = "end" + openTag
+			, bodyTags     = Array.isArray(tags) ? tags : false
 			, end          = -1
 			, opened       = 1
 			, curTag       = this.working.name
@@ -1008,7 +1011,7 @@ Wikifier.formatters =
 			, payload      = [];
 
 		while ((w.matchStart = w.source.indexOf("<<", w.nextMatch)) !== -1
-			&& this.parseMacroTag(w))
+			&& this.parseTag(w))
 		{
 			var   tagName  = this.working.name
 				, tagArgs  = this.working.arguments
