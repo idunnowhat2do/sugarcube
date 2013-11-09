@@ -180,13 +180,36 @@ if (!Array.isArray)
 }
 
 /**
- * Returns a copy of the base string with 'count' characters replaced with 'str', starting at 'at'
+ * Returns a copy of the base string with 'count' characters replaced with 'replacement', starting at 'start'
  */
 if (!String.prototype.splice)
 {
-	String.prototype.splice = function(at, count, str)
+	String.prototype.splice = function(start, count, replacement)
 	{
-		return (this.slice(0, at) + str + this.slice(at + Math.abs(count)));
+		"use strict";
+
+		if (this == null) { throw new TypeError(); }
+
+		if (this.length === 0) { return ""; }
+
+		if (typeof start === "undefined") { start = 0; }
+		else if (start >= this.length) { return this; }
+
+		if (typeof count === "undefined") { count = 0; }
+		else if (count < 0) { count = Math.abs(count); }
+
+		var res = this.slice(0, start);
+
+		if (typeof replacement !== "undefined")
+		{
+			res += replacement;
+		}
+		if (start >= 0 || (start + count) < 0)
+		{
+			res += this.slice(start + count);
+		}
+
+		return res;
 	};
 }
 
