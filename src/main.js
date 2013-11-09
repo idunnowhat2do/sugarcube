@@ -140,7 +140,19 @@ $(document).ready(function ()
 		}
 		catch (e)
 		{
-			window.alert("There is a technical problem with this story (" + scripts[i].title + ": " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
+			var errMesg = e.message;
+			if (e.name === "TypeError" && /read[\s-]only/.test(e.message))
+			{
+				var errMatch = /([\"\'])([^\1]+)\1/.exec(e.message);
+				if (errMatch)
+				{
+					if (errMatch[2] && macros.has(errMatch[2]))
+					{
+						errMesg = "cannot clobber protected macro <<" + errMatch[2] + ">>";
+					}
+				}
+			}
+			window.alert("There is a technical problem with this story (" + scripts[i].title + ": " + errMesg + "). You may be able to continue reading, but all parts of the story may not work properly.");
 		}
 	}
 	var widgets = tale.lookup("tags", "widget");
@@ -148,14 +160,7 @@ $(document).ready(function ()
 	{
 		try
 		{
-			var errTrap = document.createElement("div");
-			new Wikifier(errTrap, widgets[i].text);
-			while (errTrap.hasChildNodes())
-			{
-				var fc = errTrap.firstChild;
-				if (fc.classList && fc.classList.contains("error")) { throw new Error(fc.textContent); }
-				errTrap.removeChild(fc);
-			}
+			Wikifier.eval(widgets[i].text);
 		}
 		catch (e)
 		{
@@ -174,14 +179,7 @@ $(document).ready(function ()
 	{
 		try
 		{
-			var errTrap = document.createElement("div");
-			new Wikifier(errTrap, tale.get("StoryInit").text);
-			while (errTrap.hasChildNodes())
-			{
-				var fc = errTrap.firstChild;
-				if (fc.classList && fc.classList.contains("error")) { throw new Error(fc.textContent); }
-				errTrap.removeChild(fc);
-			}
+			Wikifier.eval(tale.get("StoryInit").text);
 		}
 		catch (e)
 		{
