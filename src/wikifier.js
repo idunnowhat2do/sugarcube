@@ -368,6 +368,35 @@ Wikifier.getValue = function (varText)
 	return retVal;
 };
 
+/**
+ * Wikify the passed text and discard the output, throwing if there were errors
+ */
+Wikifier.eval = function (text)
+{
+	var errTrap = document.createElement("div");
+	try
+	{
+		new Wikifier(errTrap, text);
+		while (errTrap.hasChildNodes())
+		{
+			var fc = errTrap.firstChild;
+			if (fc.classList && fc.classList.contains("error"))
+			{
+				throw new Error(fc.textContent.replace(/^Error:\s+/, ""));
+			}
+			errTrap.removeChild(fc);
+		}
+	}
+	finally
+	{
+		removeChildren(errTrap);	// remove any remaining children
+		if (typeof errTrap["remove"] === "function")
+		{
+			errTrap.remove();		// remove the trap itself
+		}
+	}
+}
+
 Wikifier.formatterHelpers =
 {
 	charFormatHelper: function (w)
@@ -861,13 +890,13 @@ Wikifier.formatters =
 				var macro = macros.get(macroName);
 				if (macro)
 				{
-					/* legacy kludges for old-style macros */
+					/* legacy kludges */
 					if (macro.hasOwnProperty("excludeParams"))
 					{
 						macro["fillArgsArray"] = !macro["excludeParams"];
 						delete macro["excludeParams"];
 					}
-					/* /legacy kludges for old-style macros */
+					/* /legacy kludges */
 
 					var payload;
 					if (macro.hasOwnProperty("children"))
@@ -883,7 +912,7 @@ Wikifier.formatters =
 						var args = (!macro.hasOwnProperty("fillArgsArray") || macro["fillArgsArray"]) ? macroArgs.readMacroParams() : [];
 
 						// new-style macros
-						if (macro.hasOwnProperty("_newStyleMacro"))
+						if (macro.hasOwnProperty("_macrosAPI"))
 						{
 							// setup the call instance data
 							var callData =
