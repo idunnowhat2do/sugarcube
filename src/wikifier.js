@@ -317,46 +317,21 @@ Wikifier.parse = function (expression)
 };
 
 /**
- * Returns the value of the passed story $variable, which may be of arbitrary complexity
+ * Returns the value of the passed story $variable
  */
-Wikifier.getValue = function (varText)
+Wikifier.getValue = function (storyVar)
 {
-	var   re     = /^(?:\$(\w+)|\.(\w+)|\[(?:(?:\"((?:\\.|[^\"\\])+)\")|(?:\'((?:\\.|[^\'\\])+)\')|(\$\w.*)|(\d+))\])/
-		, match
-		, names  = []
+	var   pNames = Wikifier.parseStoryVariable(storyVar)
 		, retVal = undefined;
 
-	while ((match = re.exec(varText)) !== null)
-	{
-		// Remove full match from varText
-		varText = varText.slice(match[0].length);
-
-		// Base variable
-		if (match[1]) { names.push(match[1]); }
-
-		// Dot property
-		else if (match[2]) { names.push(match[2]); }
-
-		// Square-bracketed property (double quoted)
-		else if (match[3]) { names.push(match[3]); }
-
-		// Square-bracketed property (single quoted)
-		else if (match[4]) { names.push(match[4]); }
-
-		// Square-bracketed property (embedded $variable)
-		else if (match[5]) { names.push(Wikifier.getValue(match[5])); }
-
-		// Square-bracketed property (numeric index)
-		else if (match[6]) { names.push(Number(match[6])); }
-	}
-	if (varText === "" && names.length !== 0)
+	if (pNames.length !== 0)
 	{
 		retVal = state.active.variables;
-		for (var i = 0, len = names.length; i < len; i++)
+		for (var i = 0, len = pNames.length; i < len; i++)
 		{
-			if (typeof retVal[names[i]] !== "undefined")
+			if (typeof retVal[pNames[i]] !== "undefined")
 			{
-				retVal = retVal[names[i]];
+				retVal = retVal[pNames[i]];
 			}
 			else
 			{
@@ -366,6 +341,73 @@ Wikifier.getValue = function (varText)
 		}
 	}
 	return retVal;
+};
+
+/**
+ * Sets the value of the passed story $variable
+ */
+Wikifier.setValue = function (storyVar, newValue)
+{
+	var pNames = Wikifier.parseStoryVariable(storyVar);
+
+	if (pNames.length !== 0)
+	{
+		var   baseObj = state.active.variables
+			, varName = pNames.pop();
+		for (var i = 0, len = pNames.length; i < len; i++)
+		{
+			if (typeof baseObj[pNames[i]] !== "undefined")
+			{
+				baseObj = baseObj[pNames[i]];
+			}
+			else
+			{
+				baseObj = undefined;
+				break;
+			}
+		}
+		if (baseObj !== undefined)
+		{
+			baseObj[varName] = newValue;
+			return true;
+		}
+	}
+	return false;
+};
+
+/**
+ * Returns the property name chain of the passed story $variable, which may be of arbitrary complexity
+ */
+Wikifier.parseStoryVariable = function (varText)
+{
+	var   re     = /^(?:\$(\w+)|\.(\w+)|\[(?:(?:\"((?:\\.|[^\"\\])+)\")|(?:\'((?:\\.|[^\'\\])+)\')|(\$\w.*)|(\d+))\])/
+		, match
+		, pNames = [];
+
+	while ((match = re.exec(varText)) !== null)
+	{
+		// Remove full match from varText
+		varText = varText.slice(match[0].length);
+
+		// Base variable
+		if (match[1]) { pNames.push(match[1]); }
+
+		// Dot property
+		else if (match[2]) { pNames.push(match[2]); }
+
+		// Square-bracketed property (double quoted)
+		else if (match[3]) { pNames.push(match[3]); }
+
+		// Square-bracketed property (single quoted)
+		else if (match[4]) { pNames.push(match[4]); }
+
+		// Square-bracketed property (embedded $variable)
+		else if (match[5]) { pNames.push(Wikifier.getValue(match[5])); }
+
+		// Square-bracketed property (numeric index)
+		else if (match[6]) { pNames.push(Number(match[6])); }
+	}
+	return (varText === "") ? pNames : [];
 };
 
 /**
@@ -1088,49 +1130,6 @@ Wikifier.formatters =
 },
 
 {
-	name: "rawHtmlTags",
-	match: "<\\w+(?:\\s+[^\\u0000-\\u001F\\u007F-\\u009F\\s\"'>\\/=]+(?:\\s*=\\s*(?:\"[^\"]+\"|'[^']+'|[^\\s\"'=<>`]+))?)*\\s*\\/?>",
-	tagPattern: "<(\\w+)",
-	voidElements: [ "area", "base", "br", "col", "embed", "hr", "img", "input", "keygen", "link", "menuitem", "meta", "param", "source", "track", "wbr" ],
-	handler: function (w)
-	{
-		var   tagMatch = new RegExp(this.tagPattern).exec(w.matchText)
-			, tagName  = tagMatch && tagMatch[1];
-
-		if (tagName && tagName.toLowerCase() !== "html")
-		{
-			var   isVoid = this.voidElements.indexOf(tagName.toLowerCase()) !== -1
-				, terminator
-				, terminatorRegExp
-				, terminatorMatch;
-
-			if (!isVoid)
-			{
-				terminator = "<\\/" + tagName + "\\s*>";
-				terminatorRegExp = new RegExp(terminator, "gm");
-				terminatorRegExp.lastIndex = w.matchStart;
-				terminatorMatch = terminatorRegExp.exec(w.source);
-			}
-			if (isVoid || terminatorMatch)
-			{
-				var el = document.createElement(w.output.tagName);
-				el.innerHTML = w.matchText;
-				el = el.firstChild;
-				if (terminatorMatch)
-				{
-					w.subWikify(el, terminator);
-				}
-				w.output.appendChild(el);
-			}
-			else
-			{
-				throwError(w.output, 'HTML tag "' + tagName + '" is not closed');
-			}
-		}
-	}
-},
-
-{
 	name: "commentByBlock",
 	match: "/%",
 	lookahead: "/%((?:.|\\n)*?)%/",
@@ -1274,6 +1273,49 @@ Wikifier.formatters =
 		{
 			insertElement(w.output, "span", null, null, lookaheadMatch[1]);
 			w.nextMatch = this.lookaheadRegExp.lastIndex;
+		}
+	}
+},
+
+{	// n.b. This formatter MUST come after any formatter which handles HTML tag-like constructs (e.g. html & rawText)
+	name: "rawHtmlTags",
+	match: "<\\w+(?:\\s+[^\\u0000-\\u001F\\u007F-\\u009F\\s\"'>\\/=]+(?:\\s*=\\s*(?:\"[^\"]+\"|'[^']+'|[^\\s\"'=<>`]+))?)*\\s*\\/?>",
+	tagPattern: "<(\\w+)",
+	voidElements: [ "area", "base", "br", "col", "embed", "hr", "img", "input", "keygen", "link", "menuitem", "meta", "param", "source", "track", "wbr" ],
+	handler: function (w)
+	{
+		var   tagMatch = new RegExp(this.tagPattern).exec(w.matchText)
+			, tagName  = tagMatch && tagMatch[1];
+
+		if (tagName)	// && ["html", "nowiki"].indexOf(tagName.toLowerCase()) === -1)
+		{
+			var   isVoid = this.voidElements.indexOf(tagName.toLowerCase()) !== -1
+				, terminator
+				, terminatorRegExp
+				, terminatorMatch;
+
+			if (!isVoid)
+			{
+				terminator = "<\\/" + tagName + "\\s*>";
+				terminatorRegExp = new RegExp(terminator, "gm");
+				terminatorRegExp.lastIndex = w.matchStart;
+				terminatorMatch = terminatorRegExp.exec(w.source);
+			}
+			if (isVoid || terminatorMatch)
+			{
+				var el = document.createElement(w.output.tagName);
+				el.innerHTML = w.matchText;
+				el = el.firstChild;
+				if (terminatorMatch)
+				{
+					w.subWikify(el, terminator);
+				}
+				w.output.appendChild(el);
+			}
+			else
+			{
+				throwError(w.output, 'HTML tag "' + tagName + '" is not closed');
+			}
 		}
 	}
 }
