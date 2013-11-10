@@ -1,6 +1,71 @@
 /***********************************************************************************************************************
 ** [Begin macros.js]
 ***********************************************************************************************************************/
+/*
+** MACROS API:
+**
+**   macros.has(name [, searchTags])
+**       Returns whether the named macro exists, optionally searching through child tags as well.
+**       - name        : (String) Name of the macro to search for.
+**       - searchTags  : (Boolean, optional) Enables searching through child tags.
+**
+**   macros.get(name)
+**       Return the named macro definition, or null on failure.
+**       - name        : (String) Name of the macro to return.
+**
+**   macros.getHandler(name [, handler])
+**       Return the named macro's handler function, optionally specifying a non-default handler.
+**       - name        : (String) Name of the macro to access.
+**       - handler     : (String, optional) Name of the handler function to return.  Unnecessary for the default handler function.
+**
+**   macros.add(name , definition [, clone])
+**       Add new macro(s).
+**       - name        : (String|Array:String) Name, or names, of the macro(s) to add.
+**       - definition  : (Object|String) Definition of the macro(s) or the name of an existing macro whose definition to copy.
+**       - clone       : (Boolean, optional) Enables deep cloning of the definition.  Used to give macros separate instances of the same definition.
+**
+**       A definition object should have some of the following properties (only handler is absolutely required):
+**           - version   : (Object) Version { major: (Number), minor: (Number), revision: (Number) } (e.g. { major: 1, minor: 0, revision: 0 }).
+**           - skipArgs  : (Boolean) Disables parsing argument strings into discrete arguments.  Used by macros which only use the raw/full argument strings.
+**           - tags      : (Null|Array:String) Signifies the macro is a container macro.  Null, if there are no child tags, or the names of the child tags.
+**           - handler   : (Function) The default handler function.
+**       * Additional properties may be added for internal use, and alternate handler functions may also be specified.
+**
+**   macros.remove(name)
+**       Remove existing macro(s).
+**       - name        : (String|Array:String) Name, or names, of the macro(s) to remove.
+**
+**   macros.eval(expression, output, name)
+**       Return the named macro's handler function, optionally specifying a non-default handler.
+**       - name        : (String) Name of the macro to access.
+**       - handler     : (String, optional) Name of the handler function to return.  Unnecessary for the default handler function.
+**
+**   * There are other methods, but none of them are meant to be called directly.
+*/
+/*
+** MACRO HANDLER FUNCTION API:
+**
+**   Macro handlers are called with no arguments, but with 'this' set to a calling instance object.  The calling instance
+**   object contains the following data and method properties:
+**
+**   this.self       : (Object) The macro's definition.
+**   this.name       : (String) The name of the macro.
+**   this.args       : (Array) The argument string parsed into discrete arguments.
+**   this.args.raw   : (String) The raw unprocessed argument string.
+**   this.args.full  : (String) The argument string after having Twine operators replaced, suitable for use with eval().
+**   this.payload    : (Null|Array) <...describe container macro contents...>
+**   this.output     : (Array) The current output element.
+**   this.parser     : (Array) The Wikifier instance which generated the macro call.
+**   this.context    : (NUll|Array) <...describe calling instance object chain...>
+**
+**   this.contextHas(filter)
+**       Returns whether a member of the context chain passes the test implemented by the filter function.
+**       - filter      : (Function) Function used to test each member.  Passed a single argument, a calling instance.
+**
+**   this.contextSelect(filter)
+**       Returns a new array containing all members of the context chain that passed the test implemented by the filter function.
+**       - filter      : (Function) Function used to test each member.  Passed a single argument, a calling instance.
+*/
 
 /***********************************************************************************************************************
 ** [Macro Initialization]
@@ -686,7 +751,7 @@ macros.add("display", {
  */
 macros.add("print", {
 	version: { major: 2, minor: 0, revision: 0 },
-	fillArgsArray: false,
+	skipArgs: true,
 	handler: function ()
 	{
 		try
@@ -709,7 +774,7 @@ macros.add("print", {
  */
 macros.add("silently", {
 	version: { major: 4, minor: 0, revision: 0 },
-	fillArgsArray: false,
+	skipArgs: true,
 	tags: null,
 	handler: function ()
 	{
@@ -746,7 +811,7 @@ macros.add("silently", {
  */
 macros.add("if", {
 	version: { major: 3, minor: 0, revision: 0 },
-	fillArgsArray: false,
+	skipArgs: true,
 	tags: [ "elseif", "else" ],
 	handler: function ()
 	{
@@ -777,7 +842,7 @@ macros.add("if", {
  */
 macros.add("set", {
 	version: { major: 3, minor: 0, revision: 0 },
-	fillArgsArray: false,
+	skipArgs: true,
 	handler: function ()
 	{
 		macros.eval(this.args.full, this.output, this.name);
@@ -793,7 +858,7 @@ macros["set"] = { run: function (expression, output, name) { return macros.eval(
  */
 macros.add("unset", {
 	version: { major: 2, minor: 0, revision: 0 },
-	fillArgsArray: false,
+	skipArgs: true,
 	handler: function ()
 	{
 		var   expression = this.args.full
@@ -817,7 +882,7 @@ macros.add("unset", {
  */
 macros.add("remember", {
 	version: { major: 3, minor: 0, revision: 0 },
-	fillArgsArray: false,
+	skipArgs: true,
 	handler: function ()
 	{
 		var expression = this.args.full;
@@ -858,7 +923,7 @@ macros.add("remember", {
  */
 macros.add("forget", {
 	version: { major: 1, minor: 0, revision: 0 },
-	fillArgsArray: false,
+	skipArgs: true,
 	handler: function ()
 	{
 		var   expression = this.args.full
@@ -903,7 +968,7 @@ macros.add("run", "set");	// add <<run>> as an alias of <<set>>
 macros.add("script", {
 	version: { major: 1, minor: 0, revision: 0 },
 	tags: null,
-	fillArgsArray: false,
+	skipArgs: true,
 	handler: function ()
 	{
 		macros.eval(this.payload[0].contents.trim(), this.output, this.name);
@@ -922,13 +987,13 @@ macros.add("click", {
 	tags: null,
 	handler: function ()
 	{
-		function getWidgetArgs(context)
+		function getWidgetArgs(thisp)
 		{
 			var wargs;
 
-			if (state.active.variables.hasOwnProperty("args"))
+			if (thisp.context && state.active.variables.hasOwnProperty("args"))
 			{
-				if (Array.isArray(context) && context.some(function (v) { return v.self.isWidget; }))
+				if (thisp.contextHas(function (c) { return c.self.isWidget; }))
 				{
 					wargs = state.active.variables.args;
 				}
@@ -944,7 +1009,7 @@ macros.add("click", {
 
 		var   linkText
 			, passage
-			, widgetArgs = getWidgetArgs(this.context)
+			, widgetArgs = getWidgetArgs(this)
 			, el         = document.createElement("a");
 
 		if (typeof this.args[0] === "object")
@@ -1632,7 +1697,7 @@ macros.add("id", {
  */
 macros.add("runjs", {
 	version: { major: 3, minor: 0, revision: 0 },
-	fillArgsArray: false,
+	skipArgs: true,
 	handler: function ()
 	{
 		macros.eval(this.args.raw, this.output, this.name);

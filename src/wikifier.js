@@ -916,7 +916,7 @@ Wikifier.formatters =
 	name: "macro",
 	match: "<<",
 	lookaheadRegExp: /<<([^>\s]+)(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|[^>]|(?:>(?!>)))*)>>/gm,
-	working: { name: "", handlerName: "", arguments: "", index: 0, context: [] },
+	working: { name: "", handlerName: "", arguments: "", index: 0, context: null },
 	handler: function (w)
 	{
 		this.lookaheadRegExp.lastIndex = w.matchStart;
@@ -935,12 +935,12 @@ Wikifier.formatters =
 					/* legacy kludges */
 					if (macro.hasOwnProperty("excludeParams"))
 					{
-						macro["fillArgsArray"] = !macro["excludeParams"];
+						macro["skipArgs"] = macro["excludeParams"];
 						delete macro["excludeParams"];
 					}
 					/* /legacy kludges */
 
-					var payload;
+					var payload = null;
 					if (macro.hasOwnProperty("tags"))
 					{
 						payload = this.parseBody(w, macro.tags);
@@ -951,7 +951,7 @@ Wikifier.formatters =
 					}
 					if (typeof macro[funcName] === "function")
 					{
-						var args = (!macro.hasOwnProperty("fillArgsArray") || macro["fillArgsArray"]) ? macroArgs.readMacroParams() : [];
+						var args = (!macro.hasOwnProperty("skipArgs") || !macro["skipArgs"]) ? macroArgs.readMacroParams() : [];
 
 						// new-style macros
 						if (macro.hasOwnProperty("_macrosAPI"))
@@ -959,22 +959,56 @@ Wikifier.formatters =
 							// setup the call instance data
 							var callData =
 								{
-									"self":    macro,
-									"name":    macroName,
-									"args":    args,
-									"payload": payload,
-									"output":  w.output,
-									"parser":  w,
-									"context": (this.working.context.length !== 0) ? this.working.context.slice() : null
+									// data properties
+									  "self":    macro
+									, "name":    macroName
+									, "args":    args
+									, "payload": payload
+									, "output":  w.output
+									, "parser":  w
+									, "context": this.working.context
+
+									// method properties
+									, "contextHas": function (filter)
+										{
+											var c = this;
+
+											while ((c = c.context) !== null)
+											{
+												if (filter(c)) { return true; }
+											}
+											return false;
+										}
+									, "contextSelect": function (filter)
+										{
+											var   c   = this
+												, res = [];
+
+											while ((c = c.context) !== null)
+											{
+												if (filter(c)) { res.push(c); }
+											}
+											return res;
+										}
 								};
 							// inject the raw and full argument strings into the args array
 							callData.args["raw"]  = macroArgs;
 							callData.args["full"] = Wikifier.parse(macroArgs);
 
-							// call the handler, modifying the call context stack appropriately
-							this.working.context.push(callData);
-							macro[funcName].call(callData);
-							this.working.context.pop();
+							// call the handler, modifying the call context chain appropriately
+							//   n.b. there's no catch clause because this try/finally is here simply to ensure that
+							//        the call context is properly restored in the event that an uncaught exception is
+							//        thrown during the handler call
+							try
+							{
+								var prevContext = this.working.context;
+								this.working.context = callData;
+								macro[funcName].call(callData);
+							}
+							finally
+							{
+								this.working.context = prevContext;
+							}
 						}
 						// old-style macros
 						else
