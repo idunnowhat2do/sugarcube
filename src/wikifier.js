@@ -938,6 +938,11 @@ Wikifier.formatters =
 						macro["skipArgs"] = macro["excludeParams"];
 						delete macro["excludeParams"];
 					}
+					if (macro.hasOwnProperty("children") && !macro.hasOwnProperty("tags"))
+					{
+						macro["tags"] = macro["children"];
+						delete macro["children"];
+					}
 					/* /legacy kludges */
 
 					var payload = null;
@@ -957,7 +962,7 @@ Wikifier.formatters =
 						if (macro.hasOwnProperty("_macrosAPI"))
 						{
 							var   prevContext = this.working.context
-								, curContext  =	// setup the call instance object (should probably make a factory for this)
+								, curContext  =	// setup the execution context object (should probably make a factory for this)
 									{
 										// data properties
 										  "self":    macro
@@ -1000,10 +1005,10 @@ Wikifier.formatters =
 							curContext.args["raw"]  = macroArgs;
 							curContext.args["full"] = Wikifier.parse(macroArgs);
 
-							// call the handler, modifying the call context chain appropriately
+							// call the handler, modifying the execution context chain appropriately
 							//   n.b. there's no catch clause because this try/finally is here simply to ensure that
-							//        the call context is properly restored in the event that an uncaught exception is
-							//        thrown during the handler call
+							//        the execution context is properly restored in the event that an uncaught exception
+							//        is thrown during the handler call
 							try
 							{
 								this.working.context = curContext;

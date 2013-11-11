@@ -239,19 +239,19 @@ macros =
 /* Object.freeze(macros); */
 Object.defineProperties(macros, {
 	// data properties
-	"tags":           { writable: false, enumerable: false, configurable: false },
-	"definitions":    { writable: false, enumerable: false, configurable: false },
+	  "tags":           { writable: false, enumerable: false, configurable: false }
+	, "definitions":    { writable: false, enumerable: false, configurable: false }
 	// method properties
-	"has":            { writable: false, enumerable: false, configurable: false },
-	"get":            { writable: false, enumerable: false, configurable: false },
-	"getHandler":     { writable: false, enumerable: false, configurable: false },
-	"add":            { writable: false, enumerable: false, configurable: false },
-	"remove":         { writable: false, enumerable: false, configurable: false },
-	"registerTags":   { writable: false, enumerable: false, configurable: false },
-	"unregisterTags": { writable: false, enumerable: false, configurable: false },
-	"init":           { writable: false, enumerable: false, configurable: false },
-	"lateInit":       { writable: false, enumerable: false, configurable: false },
-	"eval":           { writable: false, enumerable: false, configurable: false }
+	, "add":            { writable: false, enumerable: false, configurable: false }
+	, "remove":         { writable: false, enumerable: false, configurable: false }
+	, "has":            { writable: false, enumerable: false, configurable: false }
+	, "get":            { writable: false, enumerable: false, configurable: false }
+	, "getHandler":     { writable: false, enumerable: false, configurable: false }
+	, "eval":           { writable: false, enumerable: false, configurable: false }
+	, "registerTags":   { writable: false, enumerable: false, configurable: false }
+	, "unregisterTags": { writable: false, enumerable: false, configurable: false }
+	, "init":           { writable: false, enumerable: false, configurable: false }
+	, "lateInit":       { writable: false, enumerable: false, configurable: false }
 });
 
 
@@ -1006,39 +1006,6 @@ macros.add("click", {
 			};
 		}(this.self, this.payload[0].contents.trim(), widgetArgs));
 		this.output.appendChild(el);
-	}
-});
-
-
-/*******************************************************************************
- * DOM, Boxing
- ******************************************************************************/
-/**
- * <<div>> & <<span>>  (Keep these???  It's a requested feature...)
- */
-macros.add(["div", "span"], {
-	version: { major: 1, minor: 0, revision: 0 },
-	tags: null,
-	handler: function ()
-	{
-		var   elId
-			, elClasses
-			, arg;
-
-		while (arg = this.args.shift())
-		{
-			switch (arg)
-			{
-			case "id":
-				elId = this.args.shift();
-				break;
-			case "class":
-				elClasses = this.args.shift();
-				break;
-			}
-		}
-
-		new Wikifier(insertElement(this.output, this.name, elId, elClasses), this.payload[0].contents);
 	}
 });
 
