@@ -13,9 +13,17 @@ var saveAs=saveAs||navigator.msSaveBlob&&navigator.msSaveBlob.bind(navigator)||f
 ** [Global Object/Prototype Extensions]
 ***********************************************************************************************************************/
 /**
- * Returns a random value from the array, between the range of begin and end if they are specified
+ * Returns a random value from the passed array in the range of lower and upper, if they are specified
  */
-Array.prototype.pick = function (lower, upper)
+Array.getRandom = function (array, lower, upper)
+{
+	return Array.isArray(array) ? array.getRandom(lower, upper) : undefined;
+};
+
+/**
+ * Returns a random value from the array in the range of lower and upper, if they are specified
+ */
+Array.prototype.getRandom = function (lower, upper)
 {
 	     if (lower == null)        { lower = 0; }
 	else if (lower < 0)            { lower = 0; }
