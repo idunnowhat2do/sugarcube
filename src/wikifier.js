@@ -956,44 +956,49 @@ Wikifier.formatters =
 						// new-style macros
 						if (macro.hasOwnProperty("_macrosAPI"))
 						{
-							// setup the call instance data
-							var callData =
-								{
-									// data properties
-									  "self":    macro
-									, "name":    macroName
-									, "args":    args
-									, "payload": payload
-									, "output":  w.output
-									, "parser":  w
-									, "context": this.working.context
+							var   prevContext = this.working.context
+								, curContext  =	// setup the call instance object (should probably make a factory for this)
+									{
+										// data properties
+										  "self":    macro
+										, "name":    macroName
+										, "args":    args
+										, "payload": payload
+										, "output":  w.output
+										, "parser":  w
+										, "context": this.working.context
 
-									// method properties
-									, "contextHas": function (filter)
-										{
-											var c = this;
-
-											while ((c = c.context) !== null)
+										// method properties
+										, "contextHas": function (filter)
 											{
-												if (filter(c)) { return true; }
-											}
-											return false;
-										}
-									, "contextSelect": function (filter)
-										{
-											var   c   = this
-												, res = [];
+												var c = this;
 
-											while ((c = c.context) !== null)
-											{
-												if (filter(c)) { res.push(c); }
+												while ((c = c.context) !== null)
+												{
+													if (filter(c)) { return true; }
+												}
+												return false;
 											}
-											return res;
-										}
-								};
+										, "contextSelect": function (filter)
+											{
+												var   c   = this
+													, res = [];
+
+												while ((c = c.context) !== null)
+												{
+													if (filter(c)) { res.push(c); }
+												}
+												return res;
+											}
+										, "error": function (message)
+											{
+												throwError(this.output, "<<" + this.name + ">>: " + message);
+												return false;
+											}
+									};
 							// inject the raw and full argument strings into the args array
-							callData.args["raw"]  = macroArgs;
-							callData.args["full"] = Wikifier.parse(macroArgs);
+							curContext.args["raw"]  = macroArgs;
+							curContext.args["full"] = Wikifier.parse(macroArgs);
 
 							// call the handler, modifying the call context chain appropriately
 							//   n.b. there's no catch clause because this try/finally is here simply to ensure that
@@ -1001,9 +1006,8 @@ Wikifier.formatters =
 							//        thrown during the handler call
 							try
 							{
-								var prevContext = this.working.context;
-								this.working.context = callData;
-								macro[funcName].call(callData);
+								this.working.context = curContext;
+								macro[funcName].call(curContext);
 							}
 							finally
 							{
@@ -1013,7 +1017,7 @@ Wikifier.formatters =
 						// old-style macros
 						else
 						{
-							w._macroRawArgs = macroArgs;	// cache the raw arguments for use by rawArgs()/fullArgs()
+							w._macroRawArgs = macroArgs;	// cache the raw arguments for use by Wikifier.rawArgs() & Wikifier.fullArgs()
 							macro[funcName](w.output, macroName, args, w, payload);
 							w._macroRawArgs = "";
 						}

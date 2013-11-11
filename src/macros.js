@@ -1,71 +1,6 @@
 /***********************************************************************************************************************
 ** [Begin macros.js]
 ***********************************************************************************************************************/
-/*
-** MACROS API:
-**
-**   macros.has(name [, searchTags])
-**       Returns whether the named macro exists, optionally searching through child tags as well.
-**       - name        : (String) Name of the macro to search for.
-**       - searchTags  : (Boolean, optional) Enables searching through child tags.
-**
-**   macros.get(name)
-**       Return the named macro definition, or null on failure.
-**       - name        : (String) Name of the macro to return.
-**
-**   macros.getHandler(name [, handler])
-**       Return the named macro's handler function, optionally specifying a non-default handler.
-**       - name        : (String) Name of the macro to access.
-**       - handler     : (String, optional) Name of the handler function to return.  Unnecessary for the default handler function.
-**
-**   macros.add(name , definition [, clone])
-**       Add new macro(s).
-**       - name        : (String|Array:String) Name, or names, of the macro(s) to add.
-**       - definition  : (Object|String) Definition of the macro(s) or the name of an existing macro whose definition to copy.
-**       - clone       : (Boolean, optional) Enables deep cloning of the definition.  Used to give macros separate instances of the same definition.
-**
-**       A definition object should have some of the following properties (only handler is absolutely required):
-**           - version   : (Object) Version { major: (Number), minor: (Number), revision: (Number) } (e.g. { major: 1, minor: 0, revision: 0 }).
-**           - skipArgs  : (Boolean) Disables parsing argument strings into discrete arguments.  Used by macros which only use the raw/full argument strings.
-**           - tags      : (Null|Array:String) Signifies the macro is a container macro.  Null, if there are no child tags, or the names of the child tags.
-**           - handler   : (Function) The default handler function.
-**       * Additional properties may be added for internal use, and alternate handler functions may also be specified.
-**
-**   macros.remove(name)
-**       Remove existing macro(s).
-**       - name        : (String|Array:String) Name, or names, of the macro(s) to remove.
-**
-**   macros.eval(expression, output, name)
-**       Return the named macro's handler function, optionally specifying a non-default handler.
-**       - name        : (String) Name of the macro to access.
-**       - handler     : (String, optional) Name of the handler function to return.  Unnecessary for the default handler function.
-**
-**   * There are other methods, but none of them are meant to be called directly.
-*/
-/*
-** MACRO HANDLER FUNCTION API:
-**
-**   Macro handlers are called with no arguments, but with 'this' set to a calling instance object.  The calling instance
-**   object contains the following data and method properties:
-**
-**   this.self       : (Object) The macro's definition.
-**   this.name       : (String) The name of the macro.
-**   this.args       : (Array) The argument string parsed into discrete arguments.
-**   this.args.raw   : (String) The raw unprocessed argument string.
-**   this.args.full  : (String) The argument string after having Twine operators replaced, suitable for use with eval().
-**   this.payload    : (Null|Array) <...describe container macro contents...>
-**   this.output     : (Array) The current output element.
-**   this.parser     : (Array) The Wikifier instance which generated the macro call.
-**   this.context    : (NUll|Array) <...describe calling instance object chain...>
-**
-**   this.contextHas(filter)
-**       Returns whether a member of the context chain passes the test implemented by the filter function.
-**       - filter      : (Function) Function used to test each member.  Passed a single argument, a calling instance.
-**
-**   this.contextSelect(filter)
-**       Returns a new array containing all members of the context chain that passed the test implemented by the filter function.
-**       - filter      : (Function) Function used to test each member.  Passed a single argument, a calling instance.
-*/
 
 /***********************************************************************************************************************
 ** [Macro Initialization]
@@ -77,31 +12,6 @@ macros =
 	definitions: {},
 
 	// method properties
-	has: function (name, searchTags)
-	{
-		return this.definitions.hasOwnProperty(name) || (searchTags && this.tags.hasOwnProperty(name));
-	},
-	get: function (name)
-	{
-		var macro = null;
-
-		if (this.definitions.hasOwnProperty(name) && typeof this.definitions[name]["handler"] === "function")
-		{
-			macro = this.definitions[name];
-		}
-		else if (this.hasOwnProperty(name) && typeof this[name]["handler"] === "function")
-		{
-			macro = this[name];
-		}
-		return macro;
-	},
-	getHandler: function (name, handler)
-	{
-		var macro = this.get(name);
-
-		if (!handler) { handler = "handler"; }
-		return (macro && macro.hasOwnProperty(handler) && typeof macro[handler] === "function") ? macro[handler] : null;
-	},
 	add: function (name, def, clone)
 	{
 		if (Array.isArray(name))
@@ -206,6 +116,43 @@ macros =
 			throw new Error("cannot remove child tag <<" + name + ">> of parent macro <<" + this.tags[name] + ">>");
 		}
 	},
+	has: function (name, searchTags)
+	{
+		return this.definitions.hasOwnProperty(name) || (searchTags && this.tags.hasOwnProperty(name));
+	},
+	get: function (name)
+	{
+		var macro = null;
+
+		if (this.definitions.hasOwnProperty(name) && typeof this.definitions[name]["handler"] === "function")
+		{
+			macro = this.definitions[name];
+		}
+		else if (this.hasOwnProperty(name) && typeof this[name]["handler"] === "function")
+		{
+			macro = this[name];
+		}
+		return macro;
+	},
+	getHandler: function (name, handler)
+	{
+		var macro = this.get(name);
+
+		if (!handler) { handler = "handler"; }
+		return (macro && macro.hasOwnProperty(handler) && typeof macro[handler] === "function") ? macro[handler] : null;
+	},
+	eval: function (expression, output, name)
+	{
+		try
+		{
+			eval("(function(){" + expression + "}());");
+			return true;
+		}
+		catch (e)
+		{
+			return throwError(output, "<<" + name + ">>: bad expression: " + e.message);
+		}
+	},
 	registerTags: function (parent, bodyTags)
 	{
 		if (!parent) { throw new Error("no parent specified"); }
@@ -285,18 +232,6 @@ macros =
 			if (fn) { fn(name); }
 		}
 		/* /legacy kludges */
-	},
-	eval: function (expression, output, name)
-	{
-		try
-		{
-			eval("(function(){" + expression + "}());");
-			return true;
-		}
-		catch (e)
-		{
-			return throwError(output, "<<" + name + ">>: bad expression: " + e.message);
-		}
 	}
 };
 
@@ -434,8 +369,7 @@ macros.add(["back", "return"], {
 			{
 				if (isNaN(this.args[1]) || this.args[1] < 1)
 				{
-					throwError(this.output, "<<" + this.name + '>>: the argument after "go" must be a whole number greater than zero');
-					return;
+					return this.error('the argument after "go" must be a whole number greater than zero');
 				}
 				steps = (this.args[1] < histLen) ? this.args[1] : histLen - 1;
 				pname = state.peek(steps).title;
@@ -449,8 +383,7 @@ macros.add(["back", "return"], {
 				}
 				if (!tale.has(this.args[1]))
 				{
-					throwError(this.output, "<<" + this.name + '>>: the "' + this.args[1] + '" passage does not exist');
-					return;
+					return this.error('the "' + this.args[1] + '" passage does not exist');
 				}
 				for (var i = histLen - 1; i >= 0; i--)
 				{
@@ -464,14 +397,12 @@ macros.add(["back", "return"], {
 				}
 				if (pname === undefined)
 				{
-					throwError(this.output, "<<" + this.name + '>>: cannot find passage "' + this.args[1] + '" in the current story history');
-					return;
+					return this.error('cannot find passage "' + this.args[1] + '" in the current story history');
 				}
 			}
 			else
 			{
-				throwError(this.output, "<<" + this.name + '>>: "' + this.args[0] + '" is not a valid action (go|to)');
-				return;
+				return this.error('"' + this.args[0] + '" is not a valid action (go|to)');
 			}
 		}
 		if (pname === undefined && state.length > 1)
@@ -481,13 +412,11 @@ macros.add(["back", "return"], {
 
 		if (pname === undefined)
 		{
-			throwError(this.output, "<<" + this.name + ">>: cannot find passage");
-			return;
+			return this.error("cannot find passage");
 		}
 		else if (steps === 0)
 		{
-			throwError(this.output, "<<" + this.name + ">>: already at the first passage in the current story history");
-			return;
+			return this.error("already at the first passage in the current story history");
 		}
 
 		el = document.createElement("a");
@@ -565,7 +494,7 @@ macros.add("choice", {
 	{
 		if (this.args.length === 0)
 		{
-			return throwError(this.output, "<<" + this.name + ">>: no passage specified");
+			return this.error("no passage specified");
 		}
 
 		var   linkText
@@ -627,7 +556,7 @@ macros.add("link", {
 
 		if (this.args.length === 0)
 		{
-			return throwError(this.output, "<<" + this.name + ">>: no link location specified");
+			return this.error("no link location specified");
 		}
 
 		var   argCount
@@ -645,7 +574,7 @@ macros.add("link", {
 		}
 		if (onceType && onceType !== "once" && onceType !== "keep")
 		{
-			return throwError(this.output, "<<" + this.name + '>>: "' + onceType + '" is not a valid action (once|keep)');
+			return this.error('"' + onceType + '" is not a valid action (once|keep)');
 		}
 
 		if (this.args.length === 2)
@@ -716,7 +645,7 @@ macros.add("display", {
 	{
 		if (this.args.length === 0)
 		{
-			return throwError(this.output, "<<" + this.name + ">>: no passage specified");
+			return this.error("no passage specified");
 		}
 
 		var passage;
@@ -731,7 +660,7 @@ macros.add("display", {
 		}
 		if (!tale.has(passage))
 		{
-			return throwError(this.output, "<<" + this.name + '>>: passage "' + passage + '" does not exist');
+			return this.error('passage "' + passage + '" does not exist');
 		}
 
 		passage = tale.get(passage);
@@ -764,7 +693,7 @@ macros.add("print", {
 		}
 		catch (e)
 		{
-			return throwError(this.output, "<<" + this.name + ">>: bad expression: " + e.message);
+			return this.error("bad expression: " + e.message);
 		}
 	}
 });
@@ -797,7 +726,7 @@ macros.add("silently", {
 		}
 		if (errList.length > 0)
 		{
-			return throwError(this.output, "<<" + this.name + ">>: error within contents: " + errList.join('; '));
+			return this.error("error within contents: " + errList.join('; '));
 		}
 	}
 });
@@ -828,7 +757,7 @@ macros.add("if", {
 		}
 		catch (e)
 		{
-			return throwError(this.output, "<<" + this.name + ">>: bad conditional expression: " + e.message);
+			return this.error("bad conditional expression: " + e.message);
 		}
 	}
 });
@@ -901,7 +830,7 @@ macros.add("remember", {
 
 			if (!storage.setItem("remember", remember))
 			{
-				return throwError(this.output, "<<" + this.name + ">>: unknown error, cannot remember: " + this.args.raw);
+				return this.error("unknown error, cannot remember: " + this.args.raw);
 			}
 		}
 	},
@@ -947,7 +876,7 @@ macros.add("forget", {
 
 			if (needStore && !storage.setItem("remember", remember))
 			{
-				return throwError(this.output, "<<" + this.name + ">>: unknown error, cannot update remember store");
+				return this.error("unknown error, cannot update remember store");
 			}
 		}
 	}
@@ -967,8 +896,8 @@ macros.add("run", "set");	// add <<run>> as an alias of <<set>>
  */
 macros.add("script", {
 	version: { major: 1, minor: 0, revision: 0 },
-	tags: null,
 	skipArgs: true,
+	tags: null,
 	handler: function ()
 	{
 		macros.eval(this.payload[0].contents.trim(), this.output, this.name);
@@ -1004,7 +933,7 @@ macros.add("click", {
 
 		if (this.args.length === 0)
 		{
-			return throwError(this.output, "<<" + this.name + ">>: no link text specified");
+			return this.error("no link text specified");
 		}
 
 		var   linkText
@@ -1130,14 +1059,14 @@ macros.add("addclass", {
 			var errors = [];
 			if (this.args.length < 1) { errors.push("selector"); }
 			if (this.args.length < 2) { errors.push("class names"); }
-			return throwError(this.output, "<<" + this.name + ">>: no " + errors.join(" or ") + " specified");
+			return this.error("no " + errors.join(" or ") + " specified");
 		}
 
 		var targets = $(this.args[0]);
 
 		if (targets.length === 0)
 		{
-			return throwError(this.output, "<<" + this.name + '>>: no elements matched the selector "' + this.args[0] + '"');
+			return this.error('no elements matched the selector "' + this.args[0] + '"');
 		}
 
 		targets.addClass(this.args[1].trim());
@@ -1153,14 +1082,14 @@ macros.add("removeclass", {
 	{
 		if (this.args.length === 0)
 		{
-			return throwError(this.output, "<<" + this.name + ">>: no selector specified");
+			return this.error("no selector specified");
 		}
 
 		var targets = $(this.args[0]);
 
 		if (targets.length === 0)
 		{
-			return throwError(this.output, "<<" + this.name + '>>: no elements matched the selector "' + this.args[0] + '"');
+			return this.error('no elements matched the selector "' + this.args[0] + '"');
 		}
 
 		if (this.args.length > 1)
@@ -1186,14 +1115,14 @@ macros.add("toggleclass", {
 			var errors = [];
 			if (this.args.length < 1) { errors.push("selector"); }
 			if (this.args.length < 2) { errors.push("class names"); }
-			return throwError(this.output, "<<" + this.name + ">>: no " + errors.join(" or ") + " specified");
+			return this.error("no " + errors.join(" or ") + " specified");
 		}
 
 		var targets = $(this.args[0]);
 
 		if (targets.length === 0)
 		{
-			return throwError(this.output, "<<" + this.name + '>>: no elements matched the selector "' + this.args[0] + '"');
+			return this.error('no elements matched the selector "' + this.args[0] + '"');
 		}
 
 		targets.toggleClass(this.args[1].trim());
@@ -1214,14 +1143,14 @@ macros.add("append", {
 	{
 		if (this.args.length === 0)
 		{
-			return throwError(this.output, "<<" + this.name + ">>: no selector specified");
+			return this.error("no selector specified");
 		}
 
 		var targets = $(this.args[0]);
 
 		if (targets.length === 0)
 		{
-			return throwError(this.output, "<<" + this.name + '>>: no elements matched the selector "' + this.args[0] + '"');
+			return this.error('no elements matched the selector "' + this.args[0] + '"');
 		}
 
 		var frag = document.createDocumentFragment();
@@ -1240,14 +1169,14 @@ macros.add("prepend", {
 	{
 		if (this.args.length === 0)
 		{
-			return throwError(this.output, "<<" + this.name + ">>: no selector specified");
+			return this.error("no selector specified");
 		}
 
 		var targets = $(this.args[0]);
 
 		if (targets.length === 0)
 		{
-			return throwError(this.output, "<<" + this.name + '>>: no elements matched the selector "' + this.args[0] + '"');
+			return this.error('no elements matched the selector "' + this.args[0] + '"');
 		}
 
 		var frag = document.createDocumentFragment();
@@ -1266,14 +1195,14 @@ macros.add("replace", {
 	{
 		if (this.args.length === 0)
 		{
-			return throwError(this.output, "<<" + this.name + ">>: no selector specified");
+			return this.error("no selector specified");
 		}
 
 		var targets = $(this.args[0]);
 
 		if (targets.length === 0)
 		{
-			return throwError(this.output, "<<" + this.name + '>>: no elements matched the selector "' + this.args[0] + '"');
+			return this.error('no elements matched the selector "' + this.args[0] + '"');
 		}
 
 		if (this.payload[0].contents)
@@ -1298,14 +1227,14 @@ macros.add("remove", {
 	{
 		if (this.args.length === 0)
 		{
-			return throwError(this.output, "<<" + this.name + ">>: no selector specified");
+			return this.error("no selector specified");
 		}
 
 		var targets = $(this.args[0]);
 
 		if (targets.length === 0)
 		{
-			return throwError(this.output, "<<" + this.name + '>>: no elements matched the selector "' + this.args[0] + '"');
+			return this.error('no elements matched the selector "' + this.args[0] + '"');
 		}
 
 		targets.remove();
@@ -1326,7 +1255,7 @@ macros.add("widget", {
 	{
 		if (this.args.length === 0)
 		{
-			return throwError(this.output, "<<" + this.name + ">>: no widget name specified");
+			return this.error("no widget name specified");
 		}
 
 		var widgetName = this.args[0];
@@ -1335,7 +1264,7 @@ macros.add("widget", {
 		{
 			if (!macros.get(widgetName).isWidget)
 			{
-				return throwError(this.output, "<<" + this.name + '>>: cannot clobber existing macro "' + widgetName + '"');
+				return this.error('cannot clobber existing macro "' + widgetName + '"');
 			}
 
 			// remove existing widget
@@ -1347,7 +1276,7 @@ macros.add("widget", {
 			macros.add(widgetName, {
 				version: { major: 1, minor: 0, revision: 0 },
 				isWidget: true,
-				handler: (function (widgetBody)
+				handler: (function (contents)
 				{
 					return function ()
 					{
@@ -1373,11 +1302,11 @@ macros.add("widget", {
 							state.active.variables.args.full = this.args.full;
 
 							// attempt to execute the widget
-							new Wikifier(this.output, widgetBody);
+							new Wikifier(this.output, contents);
 						}
 						catch (e)
 						{
-							return throwError(this.output, "<<" + this.name + '>>: cannot execute widget: ' + e.message);
+							return this.error("cannot execute widget: " + e.message);
 						}
 						finally
 						{
@@ -1401,7 +1330,7 @@ macros.add("widget", {
 		}
 		catch (e)
 		{
-			return throwError(this.output, "<<" + this.name + '>>: cannot create widget macro "' + widgetName + '": ' + e.message);
+			return this.error('cannot create widget macro "' + widgetName + '": ' + e.message);
 		}
 	}
 });
@@ -1420,14 +1349,14 @@ macros.add(["optiontoggle", "optionlist"], {
 	{
 		if (this.args.length === 0)
 		{
-			return throwError(this.output, "<<" + this.name + ">>: no option property specified");
+			return this.error("no option property specified");
 		}
 
 		var propertyName = this.args[0];
 
 		if (this.name === "optionlist" && this.args.length < 2)
 		{
-			return throwError(this.output, "<<" + this.name + ">>: no list specified");
+			return this.error("no list specified");
 		}
 
 		var   propertyId = slugify(propertyName)
@@ -1642,7 +1571,7 @@ macros.add("classupdate", {
 			if (this.args.length < 1) { errors.push("element ID"); }
 			if (this.args.length < 2) { errors.push("action"); }
 			if (this.args.length < 3) { errors.push("class names"); }
-			return throwError(this.output, "<<" + this.name + ">>: no " + errors.join(" or ") + " specified");
+			return this.error("no " + errors.join(" or ") + " specified");
 		}
 
 		var   targetEl = (this.args[0] === "body") ? document.body : document.getElementById(this.args[0])
@@ -1651,11 +1580,11 @@ macros.add("classupdate", {
 
 		if (!targetEl)
 		{
-			return throwError(this.output, "<<" + this.name + '>>: element with ID "' + this.args[0] + '" does not exist');
+			return this.error('element with ID "' + this.args[0] + '" does not exist');
 		}
 		if (updType !== "add" && updType !== "remove" && updType !== "toggle")
 		{
-			return throwError(this.output, "<<" + this.name + '>>: "' + updType + '" is not a valid action (add|remove|toggle)');
+			return this.error('"' + updType + '" is not a valid action (add|remove|toggle)');
 		}
 
 		for (var i = 0; i < classes.length ; i++)
@@ -1714,7 +1643,7 @@ macros.add("update", {
 	{
 		if (this.args.length === 0)
 		{
-			return throwError(this.output, "<<" + this.name + ">>: no element ID specified");
+			return this.error("no element ID specified");
 		}
 
 		var   parentEl = document.getElementById(this.args[0])
@@ -1722,11 +1651,11 @@ macros.add("update", {
 
 		if (!parentEl)
 		{
-			return throwError(this.output, "<<" + this.name + '>>: element with ID "' + this.args[0] + '" does not exist');
+			return this.error('element with ID "' + this.args[0] + '" does not exist');
 		}
 		if (updType && updType !== "append" && updType !== "prepend" && updType !== "replace")
 		{
-			return throwError(this.output, "<<" + this.name + '>>: "' + updType + '" is not a valid action (append|prepend|replace)');
+			return this.error('"' + updType + '" is not a valid action (append|prepend|replace)');
 		}
 
 		switch (updType)
