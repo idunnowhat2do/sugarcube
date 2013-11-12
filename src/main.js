@@ -55,9 +55,9 @@ config.browser =
 config.historyMode = (config.hasPushState ? (config.browser.isGecko ? modes.sessionHistory : modes.windowHistory) : modes.hashTag);
 
 var   formatter = null	// Wikifier formatters
+	, macros    = {}	// macros manager
 	, tale      = {}	// story manager
 	, state     = {}	// history manager
-	, macros    = {}	// macros manager
 	, storage   = {}	// persistant storage manager
 	, session   = {}	// session manager
 	, options   = {}	// options variable store
@@ -82,8 +82,9 @@ $(document).ready(function ()
 
 	console.log("[main()]");
 
-	// instantiate wikifier formatters, story, state, storage, and session objects
+	// instantiate wikifier formatters, macro-api, story, state, storage, and session objects
 	formatter = new WikiFormatter(Wikifier.formatters);
+	macros    = new Macros();
 	tale      = new Tale();
 	state     = new History();
 	storage   = new KeyValueStore("localStorage", tale.domId);
@@ -94,6 +95,9 @@ $(document).ready(function ()
 
 	// set the default saves ID
 	config.saves.id = tale.domId;
+
+	// standard macro library setup (this must be done before any setup for special passages)
+	addStandardMacros();
 
 	// setup for some of the special passages
 	setPageElement("story-banner", "StoryBanner");
