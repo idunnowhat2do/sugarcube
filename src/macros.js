@@ -1307,7 +1307,7 @@ macros.add("widget", {
  * Options
  ******************************************************************************/
 /**
- * <<option>>
+ * <<optionlist>> & <<optiontoggle>>
  */
 macros.add(["optiontoggle", "optionlist"], {
 	version: { major: 2, minor: 0, revision: 0 },
@@ -1318,18 +1318,16 @@ macros.add(["optiontoggle", "optionlist"], {
 		{
 			return this.error("no option property specified");
 		}
-
-		var propertyName = this.args[0];
-
 		if (this.name === "optionlist" && this.args.length < 2)
 		{
 			return this.error("no list specified");
 		}
 
-		var   propertyId = slugify(propertyName)
-			, elOption   = document.createElement("div")
-			, elLabel    = document.createElement("div")
-			, elControl  = document.createElement("div");
+		var   propertyName = this.args[0]
+			, propertyId   = slugify(propertyName)
+			, elOption     = document.createElement("div")
+			, elLabel      = document.createElement("div")
+			, elControl    = document.createElement("div");
 
 		elOption.appendChild(elLabel);
 		elOption.appendChild(elControl);
@@ -1341,7 +1339,7 @@ macros.add(["optiontoggle", "optionlist"], {
 		new Wikifier(elLabel, this.payload[0].contents.trim());
 
 		// setup the control
-		var onChangeBody = this.payload.length === 2 ? this.payload[1].contents.trim() : "";
+		var onChangeContents = this.payload.length === 2 ? this.payload[1].contents.trim() : "";
 		if (!options.hasOwnProperty(propertyName))
 		{
 			options[propertyName] = undefined;
@@ -1384,9 +1382,9 @@ macros.add(["optiontoggle", "optionlist"], {
 					macros.get("saveoptions").handler();
 
 					// if <<onchange>> exists, execute the contents and discard the output (if any)
-					if (onChangeBody !== "")
+					if (onChangeContents !== "")
 					{
-						new Wikifier(document.createElement("div"), onChangeBody);
+						new Wikifier(document.createElement("div"), onChangeContents);
 					}
 				}
 			}());
@@ -1394,13 +1392,16 @@ macros.add(["optiontoggle", "optionlist"], {
 		case "optionlist":
 			var   items   = this.args[1]
 				, elInput = document.createElement("select");
-			if (options.hasOwnProperty(items))
+			if (!Array.isArray(items))
 			{
-				items = options[items];
-			}
-			else
-			{
-				items = items.trim().split(/\s*,\s*/);
+				if (options.hasOwnProperty(items))
+				{
+					items = options[items];
+				}
+				else
+				{
+					items = items.trim().split(/\s*,\s*/);
+				}
 			}
 			if (options[propertyName] === undefined)
 			{
@@ -1421,9 +1422,9 @@ macros.add(["optiontoggle", "optionlist"], {
 					macros.get("saveoptions").handler();
 
 					// if <<onchange>> exists, execute the contents and discard the output (if any)
-					if (onChangeBody !== "")
+					if (onChangeContents !== "")
 					{
-						new Wikifier(document.createElement("div"), onChangeBody);
+						new Wikifier(document.createElement("div"), onChangeContents);
 					}
 				}
 			}());
