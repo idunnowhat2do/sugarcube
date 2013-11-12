@@ -916,7 +916,8 @@ Wikifier.formatters =
 	name: "macro",
 	match: "<<",
 	lookaheadRegExp: /<<([^>\s]+)(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|[^>]|(?:>(?!>)))*)>>/gm,
-	working: { name: "", handlerName: "", arguments: "", index: 0, context: null },
+	working: { name: "", handlerName: "", arguments: "", index: 0 },	// the working parse object
+	context: null,	// last execution context object (top-level macros, hierarchically, have a null context)
 	handler: function (w)
 	{
 		this.lookaheadRegExp.lastIndex = w.matchStart;
@@ -961,7 +962,7 @@ Wikifier.formatters =
 						// new-style macros
 						if (macro.hasOwnProperty("_macrosAPI"))
 						{
-							var   prevContext = this.working.context
+							var   prevContext = this.context
 								, curContext  =	// setup the execution context object (should probably make a factory for this)
 									{
 										// data properties
@@ -971,7 +972,7 @@ Wikifier.formatters =
 										, "payload": payload
 										, "output":  w.output
 										, "parser":  w
-										, "context": this.working.context
+										, "context": this.context
 
 										// method properties
 										, "contextHas": function (filter)
@@ -1011,12 +1012,12 @@ Wikifier.formatters =
 							//        is thrown during the handler call
 							try
 							{
-								this.working.context = curContext;
+								this.context = curContext;
 								macro[funcName].call(curContext);
 							}
 							finally
 							{
-								this.working.context = prevContext;
+								this.context = prevContext;
 							}
 						}
 						// old-style macros

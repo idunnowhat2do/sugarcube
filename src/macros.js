@@ -918,18 +918,17 @@ function addStandardMacros()
 		tags: null,
 		handler: function ()
 		{
-			function getWidgetArgs(thisp)
+			function getWidgetArgs()
 			{
 				var wargs;
 
-				if (thisp.context && state.active.variables.hasOwnProperty("args"))
+				if (this.context && state.active.variables.hasOwnProperty("args"))
 				{
-					if (thisp.contextHas(function (c) { return c.self.isWidget; }))
+					if (this.contextHas(function (c) { return c.self.isWidget; }))
 					{
 						wargs = state.active.variables.args;
 					}
 				}
-
 				return wargs;
 			}
 
@@ -940,7 +939,7 @@ function addStandardMacros()
 
 			var   linkText
 				, passage
-				, widgetArgs = getWidgetArgs(this)
+				, widgetArgs = getWidgetArgs.call(this)
 				, el         = document.createElement("a");
 
 			if (typeof this.args[0] === "object")
