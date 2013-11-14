@@ -7,8 +7,8 @@ Downloads and documentation can be found at [SugarCube's website](http://www.mot
 
 - Semantic HTML5 (for the most part, anyway).
 - Two primary modes of operation: History mode and Hash Tag mode.
-   - **History mode:** Works with the browser's history, so no more ever growing hash tag (fragment ID), and has fully persistent state within a story, even over page reloads.  (n.b. There are actually two, functionally equivalent, History modes: Window History mode, for most browsers, and Session History mode, especially for Firefox.)
-   - **Hash Tag mode:** The traditional Twine/Twee header mode, which is included largely for compatibility, but authors can choose to force its use over the Window/Session History modes if they desire.
+    - **History mode:** Works with the browser's history, so no more ever growing hash tag (fragment ID), and has fully persistent state within a story, even over page reloads.  (n.b. There are actually two, functionally equivalent, History modes: Window History mode, for most browsers, and Session History mode, especially for Firefox.)
+    - **Hash Tag mode:** The traditional Twine/Twee header mode, which is included largely for compatibility, but authors can choose to force its use over the Window/Session History modes if they desire.
 - The ability to easily save your progress, at any point, and revisit it at any time.
 - A completely author configurable Share menu, via the MenuShare passage.
 - Persistent end-user options, via the `options` variable, the MenuOptions passage, and the options macros.
