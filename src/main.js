@@ -5,7 +5,7 @@
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("November 12, 2013"), extensions: {} };
+var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("November 13, 2013"), extensions: {} };
 
 var modes =		// SugarCube History class modes
 {
@@ -113,6 +113,11 @@ $(document).ready(function ()
 	{
 		document.getElementById("menu-story").style.display = "block";
 		setPageElement("menu-story", "StoryMenu");
+	}
+	else if (tale.has("MenuStory"))
+	{
+		document.getElementById("menu-story").style.display = "block";
+		setPageElement("menu-story", "MenuStory");
 	}
 	if (tale.has("MenuOptions"))
 	{
