@@ -713,7 +713,7 @@ function addStandardMacros()
 			var   errTrap = document.createElement("div")
 				, errList = [];
 
-			// execute the contents
+			// wikify the contents
 			new Wikifier(errTrap, this.payload[0].contents.trim());
 
 			// discard the output, unless there were errors
@@ -729,7 +729,7 @@ function addStandardMacros()
 			}
 			if (errList.length > 0)
 			{
-				return this.error("error within contents: " + errList.join('; '));
+				return this.error("error" + (errList.length === 1 ? "" : "s") + " within contents (" + errList.join('; ') + ")");
 			}
 		}
 	});
@@ -1269,8 +1269,29 @@ function addStandardMacros()
 								state.active.variables.args.raw = this.args.raw;
 								state.active.variables.args.full = this.args.full;
 
-								// attempt to execute the widget
-								new Wikifier(this.output, contents);
+								// setup the error trapping variables
+								var   outFrag = document.createDocumentFragment()
+									, trapEl  = document.createElement("div")
+									, errList = [];
+
+								// wikify the widget contents
+								new Wikifier(trapEl, contents);
+
+								// carry over the output, unless there were errors
+								while (trapEl.hasChildNodes())
+								{
+									var fc = trapEl.firstChild;
+									if (fc.classList && fc.classList.contains("error")) { errList.push(fc.textContent); }
+									outFrag.appendChild(fc);
+								}
+								if (errList.length === 0)
+								{
+									this.output.appendChild(outFrag);
+								}
+								else
+								{
+									return this.error("error" + (errList.length === 1 ? "" : "s") + " within widget contents (" + errList.join('; ') + ")");
+								}
 							}
 							catch (e)
 							{
