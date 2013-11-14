@@ -10,8 +10,8 @@ Downloads and documentation can be found at [SugarCube's website](http://www.mot
     - **History mode:** Works with the browser's history, so no more ever growing hash tag (fragment ID), and has fully persistent state within a story, even over page reloads.  (n.b. There are actually two, functionally equivalent, History modes: Window History mode, for most browsers, and Session History mode, especially for Firefox.)
     - **Hash Tag mode:** The traditional Twine/Twee header mode, which is included largely for compatibility, but authors can choose to force its use over the Window/Session History modes if they desire.
 - The ability to easily save your progress, at any point, and revisit it at any time.
-- A completely author configurable Share menu, via the MenuShare passage.
-- Persistent end-user options, via the `options` variable, the MenuOptions passage, and the options macros.
+- A completely author configurable Share menu, via the `MenuShare` passage.
+- Persistent end-user options, via the `options` variable, the `MenuOptions` passage, and the options macros.
 - Twine/Twee tags as classes, on the active passage's container element and the page's `<body>` element, for styling.
 - Widget macros.  Widgets allow you to create macros by using the standard macros and wiki text that you use normally within your story, so all Twine/Twee authors can now create simple macros regardless of technical aptitude.
 - Supports the backslash as a line continuation character.  This is mostly useful for controlling whitespace when you want to wrap lines for readability, but not generate extra whitespace upon display, and the `<<silently>>` macro isn't an option because you need to generate output.  (similar to: [escape line breaks with backslashes](http://www.glorioustrainwrecks.com/node/5400 "http://www.glorioustrainwrecks.com/node/5400"), but embedded)
