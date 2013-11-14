@@ -169,7 +169,7 @@ $(document).ready(function ()
 	{
 		try
 		{
-			Wikifier.eval(widgets[i].text);
+			Wikifier.wikifyEval(widgets[i].text);
 		}
 		catch (e)
 		{
@@ -188,7 +188,7 @@ $(document).ready(function ()
 	{
 		try
 		{
-			Wikifier.eval(tale.get("StoryInit").text);
+			Wikifier.wikifyEval(tale.get("StoryInit").text);
 		}
 		catch (e)
 		{

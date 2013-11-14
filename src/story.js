@@ -218,7 +218,7 @@ History.prototype.display = function (title, link, render)
 		{
 			try
 			{
-				Wikifier.eval(tale.get("PassageReady").text);
+				Wikifier.wikifyEval(tale.get("PassageReady").text);
 			}
 			catch (e)
 			{
@@ -256,7 +256,7 @@ History.prototype.display = function (title, link, render)
 		{
 			try
 			{
-				Wikifier.eval(tale.get("PassageDone").text);
+				Wikifier.wikifyEval(tale.get("PassageDone").text);
 			}
 			catch (e)
 			{

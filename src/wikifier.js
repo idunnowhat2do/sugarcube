@@ -413,7 +413,7 @@ Wikifier.parseStoryVariable = function (varText)
 /**
  * Wikify the passed text and discard the output, throwing if there were errors
  */
-Wikifier.eval = function (text)
+Wikifier.wikifyEval = function (text)
 {
 	var errTrap = document.createElement("div");
 	try
