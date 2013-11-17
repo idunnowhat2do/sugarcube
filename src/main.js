@@ -5,7 +5,7 @@
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("November 16, 2013"), extensions: {} };
+var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("November 17, 2013"), extensions: {} };
 
 var modes =		// SugarCube History class modes
 {
@@ -770,8 +770,10 @@ var UISystem =
 			.css({
 				  "display": "none"
 				, "opacity": 0
-				, "top":     ""
 				, "left":    ""
+				, "right":   ""
+				, "top":     ""
+				, "bottom":  ""
 			})
 			.removeClass()
 			.empty();	// .empty() here will break static menus
@@ -821,17 +823,37 @@ var UISystem =
 				})
 				.fadeTo(200, options.opacity);
 
+			// setup the values for the menu's style attribute
+			var   menuStyle = { "display": "block", "opacity": 0 }
+				, horzSpace = parent.width() - menu.outerWidth(true)
+				, vertSpace = parent.height() - menu.outerHeight(true);
+			if (horzSpace <= 20)
+			{
+				menuStyle.left = menuStyle.right = "10px";
+			}
+			else
+			{
+				menuStyle.left = menuStyle.right = ~~(horzSpace / 2) + "px";
+			}
+			if (vertSpace <= 20)
+			{
+				menuStyle.top = menuStyle.bottom = "10px";
+			}
+			else
+			{
+				if ((vertSpace / 2) > options.top)
+				{
+					menuStyle.top = options.top + "px";
+				}
+				else
+				{
+					menuStyle.top = menuStyle.bottom = ~~(vertSpace / 2) + "px";
+				}
+			}
+
 			// display the menu
-			var   topPos  = ((parent.height() - menu.outerHeight()) / 2) + parent.scrollTop()
-				, leftPos = ((parent.width() - menu.outerWidth()) / 2) + parent.scrollLeft();
-			if (topPos > options.top) { topPos = options.top; }
 			menu
-				.css({
-					  "display": "block"
-					, "opacity": 0
-					, "top":     topPos + "px"
-					, "left":    leftPos + "px"
-				})
+				.css(menuStyle)
 				.fadeTo(200, 1);
 
 			// call the done function
