@@ -295,7 +295,13 @@ Wikifier.parse = function (expression)
 		{
 			var token = tMatch[5];
 
-			if (token[0] === "$")	// special case
+			// special case: if the token is "$", then it must be the jQuery function alias, so skip over it
+			if (token === "$")
+			{
+				continue;
+			}
+			// special case: if the token starts with a "$", then it's a $variable, so just replace the sigil ("$")
+			else if (token[0] === "$")
 			{
 				token = "$";
 			}
