@@ -443,11 +443,11 @@ var UISystem =
 		insertElement(document.body, "div", "ui-body");
 
 		// setup click handlers
-		UISystem.addClickHandler("#menu-saves",   null, function (evt) { UISystem.buildSaves(); });
-		UISystem.addClickHandler("#menu-rewind",  null, function (evt) { UISystem.buildRewind(); });
-		UISystem.addClickHandler("#menu-restart", null, function (evt) { UISystem.buildRestart(); });
-		UISystem.addClickHandler("#menu-options", null, function (evt) { UISystem.buildOptions(); });
-		UISystem.addClickHandler("#menu-share",   null, function (evt) { UISystem.buildShare(); });
+		UISystem.addClickHandler("#menu-saves",   null, function () { UISystem.buildSaves(); });
+		UISystem.addClickHandler("#menu-rewind",  null, function () { UISystem.buildRewind(); });
+		UISystem.addClickHandler("#menu-restart", null, function () { UISystem.buildRestart(); });
+		UISystem.addClickHandler("#menu-options", null, function () { UISystem.buildOptions(); });
+		UISystem.addClickHandler("#menu-share",   null, function () { UISystem.buildShare(); });
 	},
 	buildSaves: function ()
 	{
@@ -754,38 +754,47 @@ var UISystem =
 
 		return true;
 	},
-	close: function ()
+	close: function (evt)
 	{
+		$(window)
+			.off("resize", UISystem.resizeHandler);
+		$("#ui-body")
+			.css({
+				  display: "none"
+				, opacity: 0
+				, left:    ""
+				, right:   ""
+				, top:     ""
+				, bottom:  ""
+			})
+			.removeClass()
+			.empty();	// .empty() here will break static menus
 		/*
 		$("#ui-overlay")
 			.css({
 				  "display": "none"
 				, "opacity": 0
 			})
-			.fadeOut(200);
+			.fadeOut(200)
+			.add(".ui-close")
+			.off("click", UISystem.closeHandler);
 		*/
 		$("#ui-overlay")
-			.fadeOut(200);
-		$("#ui-body")
-			.css({
-				  "display": "none"
-				, "opacity": 0
-				, "left":    ""
-				, "right":   ""
-				, "top":     ""
-				, "bottom":  ""
-			})
-			.removeClass()
-			.empty();	// .empty() here will break static menus
+			.fadeOut(200)
+			.add(".ui-close")
+			.off("click", UISystem.closeHandler);
 		$(document.body)
 			.removeClass("ui-open");
+
+		// call the given "on close" callback function, if any
+		if (evt && typeof evt.data === "function")
+		{
+			evt.data(evt);
+		}
 	},
-	addClickHandler: function (target, options, startFunc, doneFunc, callbackFunc)
+	addClickHandler: function (target, options, startFunc, doneFunc, closeFunc)
 	{
-		options = $.extend({
-			  top:     50
-			, opacity: 0.8
-		}, options);
+		options = $.extend({ top: 50, opacity: 0.8 }, options);
 
 		$(target).click(function (evt) {
 			evt.preventDefault();	// this doesn't prevent bound events, only default actions (e.g. href links)
@@ -796,20 +805,14 @@ var UISystem =
 				startFunc(evt);
 			}
 
-			var   overlay = $("#ui-overlay")
-				, menu    = $("#ui-body")
-				, parent  = $(window);
+			var   parent  = $(window)
+				, overlay = $("#ui-overlay")
+				, menu    = $("#ui-body");
 
 			// setup close function handlers
 			overlay
 				.add(".ui-close")
-				.click(function (evt) {
-					UISystem.close();
-					if (typeof callbackFunc === "function")
-					{
-						callbackFunc(evt);
-					}
-				});
+				.on("click", null, closeFunc, UISystem.close);
 
 			// stop the body from scrolling
 			$(document.body)
@@ -818,42 +821,14 @@ var UISystem =
 			// display the overlay
 			overlay
 				.css({
-					  "display": "block"
-					, "opacity": 0
+					  display: "block"
+					, opacity: 0
 				})
 				.fadeTo(200, options.opacity);
 
-			// setup the values for the menu's style attribute
-			var   menuStyle = { "display": "block", "opacity": 0 }
-				, horzSpace = parent.width() - menu.outerWidth(true)
-				, vertSpace = parent.height() - menu.outerHeight(true);
-			if (horzSpace <= 20)
-			{
-				menuStyle.left = menuStyle.right = "10px";
-			}
-			else
-			{
-				menuStyle.left = menuStyle.right = ~~(horzSpace / 2) + "px";
-			}
-			if (vertSpace <= 20)
-			{
-				menuStyle.top = menuStyle.bottom = "10px";
-			}
-			else
-			{
-				if ((vertSpace / 2) > options.top)
-				{
-					menuStyle.top = options.top + "px";
-				}
-				else
-				{
-					menuStyle.top = menuStyle.bottom = ~~(vertSpace / 2) + "px";
-				}
-			}
-
 			// display the menu
 			menu
-				.css(menuStyle)
+				.css($.extend({ display: "block", opacity: 0 }, UISystem.calcPositionalProperties(options.top)))
 				.fadeTo(200, 1);
 
 			// call the done function
@@ -861,7 +836,60 @@ var UISystem =
 			{
 				doneFunc(evt);
 			}
+
+			// add the UI resize handler
+			parent.on("resize", null, options.top, $.debounce(40, UISystem.resizeHandler));
 		});
+	},
+	resizeHandler: function (evt)
+	{
+		var   parent = $(window)
+			, menu   = $("#ui-body")
+			, topPos = (evt && typeof evt.data !== "undefined") ? evt.data : 50;
+
+		if (menu.css("display") === "block")
+		{
+			// stow the menu and unset its positional properties (this is important!)
+			menu.css({ display: "none", left: "", right: "", top: "", bottom: "" });
+
+			// restore the menu with its new positional properties
+			menu.css($.extend({ display: "block" }, UISystem.calcPositionalProperties(topPos)));
+		}
+	},
+	calcPositionalProperties: function (topPos)
+	{
+		if (typeof topPos === "undefined") { topPos = 50; }
+
+		var   parent    = $(window)
+			, menu      = $("#ui-body")
+			, menuStyle = { left: "", right: "", top: "", bottom: "" }
+			, horzSpace = parent.width() - menu.outerWidth(true)
+			, vertSpace = parent.height() - menu.outerHeight(true);
+
+		if (horzSpace <= 20)
+		{
+			menuStyle.left = menuStyle.right = "10px";
+		}
+		else
+		{
+			menuStyle.left = menuStyle.right = ~~(horzSpace / 2) + "px";
+		}
+		if (vertSpace <= 20)
+		{
+			menuStyle.top = menuStyle.bottom = "10px";
+		}
+		else
+		{
+			if ((vertSpace / 2) > topPos)
+			{
+				menuStyle.top = topPos + "px";
+			}
+			else
+			{
+				menuStyle.top = menuStyle.bottom = ~~(vertSpace / 2) + "px";
+			}
+		}
+		return menuStyle;
 	}
 };
 
