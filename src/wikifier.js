@@ -13,8 +13,8 @@ String.prototype.readMacroParams = function ()
 {
 	// RegExp groups: Double quoted | Single quoted | Empty quotes | Double square-bracketed | Barewords
 	var   re     = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\')|[^'])+)')|((?:\"\")|(?:''))|(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^\"'\\s]\\S*))", "gm")
-		, params = []
-		, match;
+		, match
+		, params = [];
 
 	while ((match = re.exec(this)) !== null)
 	{
@@ -81,6 +81,12 @@ String.prototype.readMacroParams = function ()
 			else if (isBoolean(n))
 			{
 				n = (n === "true") ? true : false;
+			}
+
+			// Null literal, so coerce it into null
+			else if (n === "null")
+			{
+				n = null;
 			}
 
 			// Object/Array literals are too complex to automatically coerce and so are left as-is.  Authors really
@@ -263,37 +269,38 @@ Wikifier.prototype.fullArgs = function ()
 Wikifier.parse = function (expression)
 {
 	// Double quoted | Single quoted | Empty quotes | Operator delimiters | Barewords & Sigil
-	var   tRe    = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\\')|[^'])+)')|((?:\"\")|(?:''))|([=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}]+)|([^\"'=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}\\s]+))", "g")
-		, tMatch
-		, tMap   =
+	var   re    = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\\')|[^'])+)')|((?:\"\")|(?:''))|([=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}]+)|([^\"'=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}\\s]+))", "g")
+		, match
+		, map   =
 			{
 				// standard Twine/Twee operators
-				  "$"    : "state.active.variables."
-				, "eq"   : "=="
-				, "neq"  : "!="
-				, "gt"   : ">"
-				, "gte"  : ">="
-				, "lt"   : "<"
-				, "lte"  : "<="
-				, "and"  : "&&"
-				, "or"   : "||"
-				, "not"  : "!"
+				  "$"      : "state.active.variables."
+				, "eq"     : "=="
+				, "neq"    : "!="
+				, "gt"     : ">"
+				, "gte"    : ">="
+				, "lt"     : "<"
+				, "lte"    : "<="
+				, "and"    : "&&"
+				, "or"     : "||"
+				, "not"    : "!"
 				// Twine2-compatible operators
-				, "is"   : "=="
-				, "to"   : "="
+				, "is"     : "==="
+				, "is not" : "!=="
+				, "to"     : "="
 				// SugarCube operators
-				, "def"  : '"undefined" !== typeof'
-				, "ndef" : '"undefined" === typeof'
+				, "def"    : '"undefined" !== typeof'
+				, "ndef"   : '"undefined" === typeof'
 			};
 
-	while ((tMatch = tRe.exec(expression)) !== null)
+	while ((match = re.exec(expression)) !== null)
 	{
 		// noop: Double quoted | Single quoted | Empty quote | Operator delimiters
 
 		// Barewords & Sigil
-		if (tMatch[5])
+		if (match[5])
 		{
-			var token = tMatch[5];
+			var token = match[5];
 
 			// special case: if the token is "$", then it must be the jQuery function alias, so skip over it
 			if (token === "$")
@@ -305,16 +312,21 @@ Wikifier.parse = function (expression)
 			{
 				token = "$";
 			}
+			// special case: if the token is "is", check to see if it's part of the "is not" operator
+			else if (token === "is" && expression.slice(match.index, match.index + 6) === "is not")
+			{
+				token = "is not";
+			}
 
-			if (tMap[token])
+			if (map[token])
 			{
 				expression = expression.splice
 				(
-					  tMatch.index	// starting index
+					  match.index	// starting index
 					, token.length	// replace how many
-					, tMap[token]	// replacement string
+					, map[token]	// replacement string
 				);
-				tRe.lastIndex += tMap[token].length - token.length;
+				re.lastIndex += map[token].length - token.length;
 			}
 		}
 	}
