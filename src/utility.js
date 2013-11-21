@@ -15,15 +15,15 @@ var saveAs=saveAs||navigator.msSaveBlob&&navigator.msSaveBlob.bind(navigator)||f
 /**
  * Returns a random value from the passed array in the range of lower and upper, if they are specified
  */
-Array.getRandom = function (array, lower, upper)
+Array.random = function (array, lower, upper)
 {
-	return Array.isArray(array) ? array.getRandom(lower, upper) : undefined;
+	return Array.isArray(array) ? array.random(lower, upper) : undefined;
 };
 
 /**
  * Returns a random value from the array in the range of lower and upper, if they are specified
  */
-Array.prototype.getRandom = function (lower, upper)
+Array.prototype.random = function (lower, upper)
 {
 	     if (lower == null)        { lower = 0; }
 	else if (lower < 0)            { lower = 0; }
@@ -32,15 +32,7 @@ Array.prototype.getRandom = function (lower, upper)
 	else if (upper < 0)            { upper = 0; }
 	else if (upper >= this.length) { upper = this.length - 1; }
 
-	return this[getRandom(lower, upper)];
-};
-
-/**
- * Returns a decimal number eased from 0 to 1
- */
-Math.easeInOut = function (i)
-{
-	return (1 - ((Math.cos(i * Math.PI) + 1) / 2));
+	return this[random(lower, upper)];
 };
 
 /**
@@ -64,6 +56,14 @@ Number.prototype.clamp = function (min, max)
 	if (num > max) { num = max; }
 
 	return num;
+};
+
+/**
+ * Returns a decimal number eased from 0 to 1
+ */
+Math.easeInOut = function (i)
+{
+	return (1 - ((Math.cos(i * Math.PI) + 1) / 2));
 };
 
 /**
@@ -486,17 +486,45 @@ function generateUuid()
  * Returns a random integer in the range of min and max
  *   n.b. Using Math.round() will give you a non-uniform distribution!
  */
-function getRandom(min, max)
+function getRandom(/* min, max */) { return random.apply(null, arguments); }
+function random(min, max)
 {
+	if (arguments.length === 0) { return 0; }
+	if (arguments.length === 1)
+	{
+		max = min;
+		min = 0;
+	}
+	if (min > max)
+	{
+		var swap = max;
+		max = min;
+		min = swap;
+	}
+
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 /**
  * Returns a random float in the range of min and max
  */
-function getRandomArbitrary(min, max)
+function getRandomArbitrary(/* min, max */) { return randomFloat.apply(null, arguments); }
+function randomFloat(min, max)
 {
-	return Math.random() * (max - min) + min;
+	if (arguments.length === 0) { return 0.0; }
+	if (arguments.length === 1)
+	{
+		max = min;
+		min = 0.0;
+	}
+	if (min > max)
+	{
+		var swap = max;
+		max = min;
+		min = swap;
+	}
+
+	return (Math.random() * (max - min)) + min;
 }
 
 /**
