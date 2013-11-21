@@ -266,7 +266,7 @@ function registerMacroTags(parent, bodyTags)
 
 function evalMacroExpression(expression, place, macroName)
 {
-	return macros.eval.call(this, expression, place, macroName);
+	return macros.eval(expression, place, macroName);
 }
 
 
