@@ -5,7 +5,7 @@
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("November 17, 2013"), extensions: {} };
+var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("November 21, 2013"), extensions: {} };
 
 var modes =		// SugarCube History class modes
 {
@@ -82,7 +82,7 @@ $(document).ready(function ()
 
 	console.log("[main()]");
 
-	// instantiate wikifier formatters, macro-api, story, state, storage, and session objects
+	// instantiate the wikifier formatters, macro, story, state, storage, and session objects
 	formatter = new WikiFormatter(Wikifier.formatters);
 	macros    = new Macros();
 	tale      = new Tale();
