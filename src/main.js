@@ -5,7 +5,7 @@
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("November 21, 2013"), extensions: {} };
+var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("November 22, 2013"), extensions: {} };
 
 var modes =		// SugarCube History class modes
 {
@@ -35,7 +35,8 @@ var config =	// SugarCube config
 	// saves option properties
 	, saves:
 		{
-			  id:        "untitled-story"
+			  autosave:  undefined
+			, id:        "untitled-story"
 			, isAllowed: undefined
 			, onLoad:    undefined
 			, onSave:    undefined
@@ -95,6 +96,9 @@ $(document).ready(function ()
 
 	// set the default saves ID
 	config.saves.id = tale.domId;
+
+	// initialize the save system
+	SaveSystem.init();
 
 	// standard macro library setup (this must be done before any setup for special passages)
 	addStandardMacros();
@@ -212,22 +216,89 @@ $(document).ready(function ()
 ***********************************************************************************************************************/
 var SaveSystem =
 {
-	maxIndex: 0,
-	init: function (slot)
+	_bad: false,
+	maxIndex: -1,
+	init: function ()
 	{
-		var saves;
-		if (storage.hasItem("saves"))
+		if (storage.store === null) { return false; }
+
+		if (!storage.hasItem("saves"))
 		{
-			saves = storage.getItem("saves");
+			storage.setItem("saves", {
+				  autosave: null
+				, slots:    new Array(config.saves.slots)
+			});
 		}
-		else
+
+		var saves = storage.getItem("saves");
+		if (saves === null)
 		{
-			saves = new Array(config.saves.slots);
+			SaveSystem._bad = true;
+			return false;
+		}
+
+		/* legacy kludges */
+		if (Array.isArray(saves))
+		{
+			saves =
+			{
+				  autosave: null
+				, slots:    saves
+			};
 			storage.setItem("saves", saves);
 		}
-		SaveSystem.maxIndex = saves.length - 1;
+		/* /legacy kludges */
+
+		SaveSystem.maxIndex = saves.slots.length - 1;
+
+		return true;
 	},
-	save: function (slot)
+	OK: function ()
+	{
+		return SaveSystem.autosaveOK() || SaveSystem.slotsOK();
+	},
+	autosaveOK: function ()
+	{
+		return !SaveSystem._bad && typeof config.saves.autosave !== "undefined";
+	},
+	slotsOK: function ()
+	{
+		return !SaveSystem._bad && SaveSystem.maxIndex !== -1;
+	},
+	saveAuto: function (title)
+	{
+		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed())
+		{
+			return false;
+		}
+
+		var saves = storage.getItem("saves");
+		if (saves === null) { return false; }
+
+		saves.autosave = SaveSystem.marshal();
+		saves.autosave.title = title || tale.get(state.active.title).excerpt();
+		saves.autosave.date = Date.now();
+
+		return storage.setItem("saves", saves);
+	},
+	loadAuto: function ()
+	{
+		var saves = storage.getItem("saves");
+		if (saves === null) { return false; }
+		if (saves.autosave === null) { return false; }
+
+		return SaveSystem.unmarshal(saves.autosave);
+	},
+	deleteAuto: function ()
+	{
+		var saves = storage.getItem("saves");
+		if (saves === null) { return false; }
+
+		saves.autosave = null;
+
+		return storage.setItem("saves", saves);
+	},
+	save: function (slot, title)
 	{
 		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed())
 		{
@@ -235,41 +306,44 @@ var SaveSystem =
 			return false;
 		}
 		if (slot < 0 || slot > SaveSystem.maxIndex) { return false; }
-		if (!storage.hasItem("saves")) { return false; }
 
 		var saves = storage.getItem("saves");
-		if (slot > saves.length) { return false; }
+		if (saves === null) { return false; }
+		if (slot > saves.slots.length) { return false; }
 
-		saves[slot] = SaveSystem.marshal();
-		saves[slot].title = tale.get(state.active.title).excerpt();
+		saves.slots[slot] = SaveSystem.marshal();
+		saves.slots[slot].title = title || tale.get(state.active.title).excerpt();
+		saves.slots[slot].date = Date.now();
 
 		return storage.setItem("saves", saves);
 	},
 	load: function (slot)
 	{
 		if (slot < 0 || slot > SaveSystem.maxIndex) { return false; }
-		if (!storage.hasItem("saves")) { return false; }
 
 		var saves = storage.getItem("saves");
-		if (slot > saves.length) { return false; }
-		if (saves[slot] === null) { return false; }
+		if (saves === null) { return false; }
+		if (slot > saves.slots.length) { return false; }
+		if (saves.slots[slot] === null) { return false; }
 
-		return SaveSystem.unmarshal(saves[slot]);
+		return SaveSystem.unmarshal(saves.slots[slot]);
 	},
 	delete: function (slot)
 	{
 		if (slot < 0 || slot > SaveSystem.maxIndex) { return false; }
-		if (!storage.hasItem("saves")) { return false; }
 
 		var saves = storage.getItem("saves");
-		if (slot > saves.length) { return false; }
+		if (saves === null) { return false; }
+		if (slot > saves.slots.length) { return false; }
 
-		saves[slot] = null;
+		saves.slots[slot] = null;
+
 		return storage.setItem("saves", saves);
 	},
 	purge: function ()
 	{
-		return storage.removeItem("saves");
+		storage.removeItem("saves");
+		return SaveSystem.init();
 	},
 	exportSave: function ()
 	{
@@ -485,25 +559,96 @@ var UISystem =
 				return btn;
 			}
 
-			var   saves = storage.getItem("saves")
-				, tbody = document.createElement("tbody");
-			for (var i = 0; i < saves.length; i++)
+			var saves = storage.getItem("saves");
+			if (saves === null) { return false; }
+
+			var   tbody  = document.createElement("tbody")
+				, tr
+				, tdSlot
+				, tdLoad
+				, tdDesc
+				, tdDele;
+			var tdLoadBtn, tdDescTxt, tdDeleBtn;
+
+			if (SaveSystem.autosaveOK())
 			{
-				var   tr     = document.createElement("tr")
-					, tdSlot = document.createElement("td")
-					, tdLoad = document.createElement("td")
-					, tdDesc = document.createElement("td")
-					, tdDele = document.createElement("td");
+				  tr     = document.createElement("tr")
+				, tdSlot = document.createElement("td")
+				, tdLoad = document.createElement("td")
+				, tdDesc = document.createElement("td")
+				, tdDele = document.createElement("td");
+
+				//tdSlot.appendChild(document.createTextNode("\u25c6"));
+				tdDescTxt = document.createElement("b");
+				tdDescTxt.innerHTML = "A";
+				tdSlot.appendChild(tdDescTxt);
+
+				if (saves.autosave && saves.autosave.mode === config.historyMode)
+				{
+					tdLoadBtn = document.createElement("button");
+					tdLoadBtn.id = "saves-load-autosave";
+					tdLoadBtn.classList.add("load");
+					tdLoadBtn.classList.add("ui-close");
+					tdLoadBtn.innerHTML = "Load";
+					$(tdLoadBtn).click(SaveSystem.loadAuto);
+					tdLoad.appendChild(tdLoadBtn);
+
+					tdDescTxt = document.createTextNode(saves.autosave.title);
+					tdDesc.appendChild(tdDescTxt);
+					tdDesc.appendChild(document.createElement("br"));
+					tdDescTxt = document.createElement("small");
+					tdDescTxt.innerHTML = "Autosaved (" + new Date(saves.autosave.date).toLocaleString() + ")";
+					tdDesc.appendChild(tdDescTxt);
+
+					tdDeleBtn = document.createElement("button");
+					tdDeleBtn.id = "saves-delete-autosave";
+					tdDeleBtn.classList.add("delete");
+					tdDeleBtn.classList.add("ui-close");
+					tdDeleBtn.innerHTML = "Delete";
+					$(tdDeleBtn).click(SaveSystem.deleteAuto);
+					tdDele.appendChild(tdDeleBtn);
+				}
+				else
+				{
+					tdDescTxt = document.createElement("i");
+					tdDescTxt.innerHTML = "(autosave slot empty)";
+					tdDesc.appendChild(tdDescTxt);
+					tdDesc.classList.add("empty");
+				}
+
+				tr.appendChild(tdSlot);
+				tr.appendChild(tdLoad);
+				tr.appendChild(tdDesc);
+				tr.appendChild(tdDele);
+				tbody.appendChild(tr);
+			}
+			for (var i = 0; i < saves.slots.length; i++)
+			{
+				  tr     = document.createElement("tr")
+				, tdSlot = document.createElement("td")
+				, tdLoad = document.createElement("td")
+				, tdDesc = document.createElement("td")
+				, tdDele = document.createElement("td");
 
 				tdSlot.appendChild(document.createTextNode(i+1));
 
-				var tdLoadBtn, tdDescTxt, tdDeleBtn;
-				if (saves[i] && saves[i].mode === config.historyMode)
+				if (saves.slots[i] && saves.slots[i].mode === config.historyMode)
 				{
 					tdLoadBtn = createButton("load", "Load", i, SaveSystem.load);
 					tdLoad.appendChild(tdLoadBtn);
 
-					tdDescTxt = document.createTextNode(saves[i].title);
+					tdDescTxt = document.createTextNode(saves.slots[i].title);
+					tdDesc.appendChild(tdDescTxt);
+					tdDesc.appendChild(document.createElement("br"));
+					tdDescTxt = document.createElement("small");
+					if (saves.slots[i].date)
+					{
+						tdDescTxt.innerHTML = "Saved (" + new Date(saves.slots[i].date).toLocaleString() + ")";
+					}
+					else
+					{
+						tdDescTxt.innerHTML = "Saved (<i>unknown</i>)";
+					}
 					tdDesc.appendChild(tdDescTxt);
 
 					tdDeleBtn = createButton("delete", "Delete", i, SaveSystem.delete);
@@ -558,7 +703,7 @@ var UISystem =
 		var   menu    = document.getElementById("ui-body")
 			, list
 			, btnBar
-			, savesOK = storage.store !== null;
+			, savesOK = SaveSystem.OK();
 
 		// remove old contents
 		$(menu)
@@ -567,12 +712,9 @@ var UISystem =
 
 		if (savesOK)
 		{
-			// initialize the saves
-			SaveSystem.init();
-
 			// add saves list
 			list = createSaveList();
-			if (!list || list.length === 0)
+			if (!list)
 			{
 				list = document.createElement("div");
 				list.id = "saves-list"
