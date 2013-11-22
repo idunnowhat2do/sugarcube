@@ -265,6 +265,22 @@ History.prototype.display = function (title, link, render)
 		}
 	}
 
+	// handle autosaves
+	if (typeof config.saves.autosave !== "undefined")
+	{
+		if (typeof config.saves.autosave === "boolean")
+		{
+			if (config.saves.autosave)
+			{
+				SaveSystem.saveAuto();
+			}
+		}
+		else if (passage.tags.indexOf(config.saves.autosave) !== -1)
+		{
+			SaveSystem.saveAuto();
+		}
+	}
+
 	return el;
 };
 
@@ -551,14 +567,14 @@ Passage.prototype.render = function ()
 	}
 
 	// add passage header element
-	insertElement(passage, "header", "", "header");
+	insertElement(passage, "header", null, "header");
 
 	// add passage content element
-	var content = insertElement(passage, "div", "", "content");
+	var content = insertElement(passage, "div", null, "content");
 	new Wikifier(content, this.text);
 
 	// add passage footer element
-	insertElement(passage, "footer", "", "footer");
+	insertElement(passage, "footer", null, "footer");
 
 	// update the excerpt cache to reflect the rendered text
 	this.textExcerpt = Passage.getExcerptFromNode(content);
