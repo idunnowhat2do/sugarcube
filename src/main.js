@@ -5,7 +5,7 @@
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("November 22, 2013"), extensions: {} };
+var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("November 23, 2013"), extensions: {} };
 
 var modes =		// SugarCube History class modes
 {
@@ -83,6 +83,13 @@ $(document).ready(function ()
 
 	console.log("[main()]");
 
+	/**
+	 * WARNING!
+	 * 
+	 * The ordering of the code in this function is important, so be careful
+	 * when mucking around with it.
+	 */
+
 	// instantiate the wikifier formatters, macro, story, state, storage, and session objects
 	formatter = new WikiFormatter(Wikifier.formatters);
 	macros    = new Macros();
@@ -96,9 +103,6 @@ $(document).ready(function ()
 
 	// set the default saves ID
 	config.saves.id = tale.domId;
-
-	// initialize the save system
-	SaveSystem.init();
 
 	// standard macro library setup (this must be done before any setup for special passages)
 	addStandardMacros();
@@ -181,13 +185,16 @@ $(document).ready(function ()
 		}
 	}
 
-	/**
-	 * The ordering of the following code is important!
-	 */
-	// 1. call macros' "early" init functions
+	// initialize the save system (this must be done after script passages and before state initialization)
+	SaveSystem.init();
+
+	// initialize the user interface
+	UISystem.init();
+
+	// call macros' "early" init functions
 	macros.init();
 
-	// 2. execute the StoryInit passage
+	// execute the StoryInit passage
 	if (tale.has("StoryInit"))
 	{
 		try
@@ -200,14 +207,11 @@ $(document).ready(function ()
 		}
 	}
 
-	// 3. initialize our state
+	// initialize our state
 	state.init();	// this could take a while, so do it late
 
-	// 4. call macros' "late" init functions
+	// call macros' "late" init functions
 	macros.lateInit();
-
-	// 5. initialize the user interface
-	UISystem.init();
 });
 
 
@@ -217,19 +221,33 @@ $(document).ready(function ()
 var SaveSystem =
 {
 	_bad: false,
-	maxIndex: -1,
+	_max: -1,
 	init: function ()
 	{
+		function appendSlots(array, num)
+		{
+			for (var i = 0; i < num; i++)
+			{
+				array.push(null);
+			}
+			return array;
+		}
+
+		console.log("[SaveSystem.init()]");
+
+		if (config.saves.slots < 0) { config.saves.slots = 0; }
 		if (storage.store === null) { return false; }
 
+		// create and store the saves object, if it doesn't exist
 		if (!storage.hasItem("saves"))
 		{
 			storage.setItem("saves", {
 				  autosave: null
-				, slots:    new Array(config.saves.slots)
+				, slots:    appendSlots([], config.saves.slots)
 			});
 		}
 
+		// retrieve the saves object
 		var saves = storage.getItem("saves");
 		if (saves === null)
 		{
@@ -238,6 +256,7 @@ var SaveSystem =
 		}
 
 		/* legacy kludges */
+		// convert an old saves array into a new saves object
 		if (Array.isArray(saves))
 		{
 			saves =
@@ -249,7 +268,33 @@ var SaveSystem =
 		}
 		/* /legacy kludges */
 
-		SaveSystem.maxIndex = saves.slots.length - 1;
+		// handle the author changing the number of save slots
+		if (config.saves.slots !== saves.slots.length)
+		{
+			// attempt to decrease the number of slots
+			if (config.saves.slots < saves.slots.length)
+			{
+				// this will only compact the slots array, by removing empty slots, no saves will be deleted
+				saves.slots.reverse();
+				saves.slots = saves.slots.filter(function (val, i, aref) {
+					if (val === null && this.count > 0)
+					{
+						this.count--;
+						return false;
+					}
+					return true;
+				}, { count: saves.slots.length - config.saves.slots });
+				saves.slots.reverse();
+			}
+			// attempt to increase the number of slots
+			else if (config.saves.slots > saves.slots.length)
+			{
+				appendSlots(saves.slots, config.saves.slots - saves.slots.length);
+			}
+			storage.setItem("saves", saves);
+		}
+
+		SaveSystem._max = saves.slots.length - 1;
 
 		return true;
 	},
@@ -263,7 +308,7 @@ var SaveSystem =
 	},
 	slotsOK: function ()
 	{
-		return !SaveSystem._bad && SaveSystem.maxIndex !== -1;
+		return !SaveSystem._bad && SaveSystem._max !== -1;
 	},
 	saveAuto: function (title)
 	{
@@ -305,7 +350,7 @@ var SaveSystem =
 			window.alert("Saving is not allowed here.");
 			return false;
 		}
-		if (slot < 0 || slot > SaveSystem.maxIndex) { return false; }
+		if (slot < 0 || slot > SaveSystem._max) { return false; }
 
 		var saves = storage.getItem("saves");
 		if (saves === null) { return false; }
@@ -319,7 +364,7 @@ var SaveSystem =
 	},
 	load: function (slot)
 	{
-		if (slot < 0 || slot > SaveSystem.maxIndex) { return false; }
+		if (slot < 0 || slot > SaveSystem._max) { return false; }
 
 		var saves = storage.getItem("saves");
 		if (saves === null) { return false; }
@@ -330,7 +375,7 @@ var SaveSystem =
 	},
 	delete: function (slot)
 	{
-		if (slot < 0 || slot > SaveSystem.maxIndex) { return false; }
+		if (slot < 0 || slot > SaveSystem._max) { return false; }
 
 		var saves = storage.getItem("saves");
 		if (saves === null) { return false; }
@@ -382,7 +427,7 @@ var SaveSystem =
 				}
 				catch (evt)
 				{
-					// noop, the unmarshal() function will handle the error
+					// noop, the unmarshal() method will handle the error
 				}
 				SaveSystem.unmarshal(saveObj);
 			};
@@ -512,6 +557,8 @@ var UISystem =
 {
 	init: function ()
 	{
+		console.log("[UISystem.init()]");
+
 		// add menu containers to <body>
 		insertElement(document.body, "div", "ui-overlay");
 		insertElement(document.body, "div", "ui-body");
