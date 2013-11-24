@@ -36,7 +36,7 @@ History.prototype.clone = function (at)
 	at = 1 + (at ? Math.abs(at) : 0);
 	if (at > this.history.length) { return null; }
 
-	var dup = deepCopy(this.history[this.history.length - at]);
+	var dup = clone(this.history[this.history.length - at], true);
 	if (config.historyMode === modes.sessionHistory)
 	{
 		delete dup.sidx;
@@ -91,13 +91,13 @@ History.prototype.activate = function (state)
 	if (typeof state === "object")
 	{
 		if (state === null) { return null; }
-		this.active = deepCopy(state);
+		this.active = clone(state, true);
 	}
 	else
 	{
 		if (this.history.length === 0) { return null; }
 		if (state < 0 || state >= this.history.length) { return null; }
-		this.active = deepCopy(this.history[state]);
+		this.active = clone(this.history[state], true);
 	}
 	return this.active;
 };
@@ -165,7 +165,7 @@ History.prototype.display = function (title, link, render)
 			this.pop(this.top.sidx - window.history.state.sidx);
 		}
 
-		this.push({ title: passage.title, variables: deepCopy(this.active.variables) });
+		this.push({ title: passage.title, variables: clone(this.active.variables, true) });
 		this.activate(this.top);
 
 		if (config.historyMode === modes.windowHistory)
@@ -426,7 +426,7 @@ History.hashChangeHandler = function (evt)
 
 			// reset the history stack, making a copy of the <<remember>> variables
 			var remember = storage.getItem("remember");
-			state.active = { init: true, variables: (remember === null ? {} : deepCopy(remember)) };
+			state.active = { init: true, variables: (remember === null ? {} : clone(remember, true)) };
 			state.history = [];
 
 			el.style.visibility = "hidden";

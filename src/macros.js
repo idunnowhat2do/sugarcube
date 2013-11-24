@@ -15,11 +15,11 @@ function Macros()
 		definitions: {},
 
 		// method properties
-		add: function (name, def, clone)
+		add: function (name, def, deep)
 		{
 			if (Array.isArray(name))
 			{
-				name.forEach(function (n) { this.add(n, def, clone); }, this);
+				name.forEach(function (n) { this.add(n, def, deep); }, this);
 				return;
 			}
 
@@ -38,14 +38,14 @@ function Macros()
 				// add the macro definition
 				if (typeof def === "object")
 				{
-					this.definitions[name] = clone ? deepCopy(def) : def;
+					this.definitions[name] = deep ? clone(def, true) : def;
 				}
 				// add the macro alias
 				else
 				{
 					if (this.has(def))
 					{
-						this.definitions[name] = clone ? deepCopy(this.definitions[def]) : this.definitions[def];
+						this.definitions[name] = deep ? clone(this.definitions[def], true) : this.definitions[def];
 					}
 					else
 					{

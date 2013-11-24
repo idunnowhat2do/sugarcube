@@ -5,7 +5,7 @@
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("November 23, 2013"), extensions: {} };
+var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("November 24, 2013"), extensions: {} };
 
 var modes =		// SugarCube History class modes
 {
@@ -69,18 +69,6 @@ var   formatter = null	// Wikifier formatters
  */
 $(document).ready(function ()
 {
-	/**
-	 * Returns the passed DOM element, the DOM element corresponding to the
-	 * passed ID, or null on failure
-	 *     n.b. Legacy code for old scripts
-	 */
-	/*
-	var $ = function (id)
-	{
-		return (typeof id === "object") ? id : document.getElementById(id);
-	}
-	*/
-
 	console.log("[main()]");
 
 	/**
@@ -453,10 +441,10 @@ var SaveSystem =
 		switch (config.historyMode)
 		{
 		case modes.windowHistory:
-			saveObj.data = deepCopy(state.history);
+			saveObj.data = clone(state.history, true);
 			break;
 		case modes.sessionHistory:
-			saveObj.data = deepCopy(state.history.slice(0, state.active.sidx + 1));
+			saveObj.data = clone(state.history.slice(0, state.active.sidx + 1), true);
 			break;
 		case modes.hashTag:
 			saveObj.data = state.active.hash;
@@ -520,7 +508,7 @@ var SaveSystem =
 			for (var i = 0, len = saveObj.data.length; i < len; i++)
 			{
 				// load the state from the save
-				state.history.push(deepCopy(saveObj.data[i]));
+				state.history.push(clone(saveObj.data[i], true));
 
 				console.log("    > loading: " + i + " (" + state.history[i].title + ")");
 

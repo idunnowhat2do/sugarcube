@@ -118,23 +118,9 @@ function isBoolean(obj)
 }
 
 /**
- * Returns a shallow copy of the passed object
- *   n.b. Unused in SugarCube, only included for compatibility
+ * Returns a copy of the passed object (shallow by default, but deep if specified)
  */
-function clone(original)
-{
-	var clone = {};
-	for (var property in original)
-	{
-		clone[property] = original[property];
-	}
-	return clone;
-}
-
-/**
- * Returns a deep copy of the passed object
- */
-function deepCopy(orig)
+function clone(orig, deep)
 {
 	if (orig === null || typeof orig !== "object")
 	{
@@ -147,33 +133,43 @@ function deepCopy(orig)
 		return orig.clone(true);
 	}
 
-	// Special cases:
-	// Date
+	// Special case: Date
 	if (orig instanceof Date)
 	{
 		return new Date(orig.getTime());
 	}
-	// RegExp
+	// Special case: RegExp
 	if (orig instanceof RegExp)
 	{
 		return new RegExp(orig);
 	}
-	// DOM Elements
+	// Special case: DOM Elements
 	if (orig.nodeType && typeof orig.cloneNode === "function")
 	{
 		return orig.cloneNode(true);
 	}
 
 	// If we've reached here, we have a regular object, array, or function
+	//   n.b These do NOT preserve ES5 property attributes like 'writable', 'enumerable', etc.
+	//       That could be achieved by using Object.getOwnPropertyNames and Object.defineProperty
+	var dup;
 	if (Array.isArray(orig))
 	{
-		var ret = [];
+		dup = [];
 
-		// Note: this does NOT preserve ES5 property attributes like 'writable', 'enumerable', etc.
-		// That could be achieved by using Object.getOwnPropertyNames and Object.defineProperty
-		for (var i = 0; i < orig.length; i++)
+		if (deep)
 		{
-			ret.push(deepCopy(orig[i]));
+			for (var i = 0; i < orig.length; i++)
+			{
+				dup.push(clone(orig[i], true));
+			}
+		}
+		else
+		{
+			for (var i = 0; i < orig.length; i++)
+			{
+				dup.push(orig[i]);
+			}
 		}
 	}
 	else
@@ -182,18 +178,35 @@ function deepCopy(orig)
 		var proto = (Object.getPrototypeOf ? Object.getPrototypeOf(orig) : orig.__proto__);
 		if (!proto)
 		{
-			proto = orig.constructor.prototype;	//this line would probably only be reached by very old browsers
+			proto = orig.constructor.prototype;	// this will probably only be reached by very old browsers
 		}
-		var ret = Object.create(proto);
+		dup = Object.create(proto);
 
-		// Note: this does NOT preserve ES5 property attributes like 'writable', 'enumerable', etc.
-		// That could be achieved by using Object.getOwnPropertyNames and Object.defineProperty
-		for (var key in orig)
+		if (deep)
 		{
-			ret[key] = deepCopy(orig[key]);
+			for (var property in orig)
+			{
+				dup[property] = clone(orig[property], true);
+			}
+		}
+		else
+		{
+			for (var property in orig)
+			{
+				dup[property] = orig[property];
+			}
 		}
 	}
-	return ret;
+	return dup;
+}
+
+/**
+ * Returns a deep copy of the passed object
+ *   n.b. No longer used in SugarCube, since clone() was updated to be able to deep copy, kept only for compatibility
+ */
+function deepCopy(orig)
+{
+	return clone(orig, true);
 }
 
 /**
