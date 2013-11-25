@@ -7,7 +7,7 @@
 #
 #     Author   :  Thomas Michael Edwards <tmedwards@motoslave.net>
 #     Copyright:  Copyright © 2013 Thomas Michael Edwards. All rights reserved.
-#     Version  :  r15, 2013-11-09
+#     Version  :  r16, 2013-11-25
 #
 ################################################################################
 
@@ -25,6 +25,7 @@ use utf8;
 use File::Basename qw(fileparse);
 use File::Path qw(make_path);
 use Getopt::Long qw(:config no_getopt_compat no_gnu_compat no_ignore_case);	#see: http://perldoc.perl.org/Getopt/Long.html
+use POSIX qw(strftime);
 
 # setup
 binmode(STDOUT, ':encoding(Windows-1252)');	# for messages
@@ -168,7 +169,7 @@ open($infh, '<:encoding(UTF-8)', $CONFIG{'css'})	# auto decode on read
 my $styles = do { local $/; <$infh> };
 close($infh);
 
-# load the build info
+# load the build number
 open($infh, '+<:encoding(UTF-8)', $CONFIG{'build'})	# auto decode on read
 	or die("error: cannot open build info file (\"$CONFIG{'build'}\") for reading\n");
 my $build = 1 + do { local $/; <$infh> };
@@ -176,10 +177,15 @@ seek($infh, 0, 0);
 print $infh $build;
 close($infh);
 
+# get the build date
+my $date = strftime("\"%a, %d %b %Y\"", gmtime());
+
 # process the header template
-$template =~ s/\[\(\$VERSION\)\]/$build/g;
-$template =~ s/\[\(\$SCRIPTS\)\]/$scripts/g;
-$template =~ s/\[\(\$STYLES\)\]/$styles/g;
+$scripts  =~ s/\[\(\$BUILD\$\)\]/$build/g;
+$scripts  =~ s/\[\(\$DATE\$\)\]/$date/g;
+$template =~ s/\[\(\$BUILD\$\)\]/$build/g;
+$template =~ s/\[\(\$SCRIPTS\$\)\]/$scripts/g;
+$template =~ s/\[\(\$STYLES\$\)\]/$styles/g;
 
 # write the outfile
 make_path($outdir) if (!-d $outdir);
