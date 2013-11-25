@@ -211,13 +211,13 @@ function Macros()
 			for (var name in this.definitions)
 			{
 				var fn = this.getHandler(name, "init");
-				if (fn) { fn(name); }
+				if (fn) { fn.call(this.definitions[name], name); }
 			}
 			/* legacy kludges */
 			for (var name in this)
 			{
 				var fn = this.getHandler(name, "init");
-				if (fn) { fn(name); }
+				if (fn) { fn.call(this[name], name); }
 			}
 			/* /legacy kludges */
 		},
@@ -226,13 +226,13 @@ function Macros()
 			for (var name in this.definitions)
 			{
 				var fn = this.getHandler(name, "lateInit");
-				if (fn) { fn(name); }
+				if (fn) { fn.call(this.definitions[name], name); }
 			}
 			/* legacy kludges */
 			for (var name in this)
 			{
 				var fn = this.getHandler(name, "lateInit");
-				if (fn) { fn(name); }
+				if (fn) { fn.call(this[name], name); }
 			}
 			/* /legacy kludges */
 		}
@@ -257,7 +257,7 @@ function Macros()
 
 
 /***********************************************************************************************************************
-** [DEPRECIATED Macro Utility Functions]
+** [DEPRECATED Macro Utility Functions]
 ***********************************************************************************************************************/
 function registerMacroTags(parent, bodyTags)
 {
@@ -1528,15 +1528,15 @@ function addStandardMacros()
 
 
 	/***************************************************************************
-	** DEPRECIATED Macros
+	** DEPRECATED Macros
 	***************************************************************************/
 	/**
-	 * <<bind>> (DEPRECIATED)
+	 * <<bind>> (DEPRECATED)
 	 */
 	macros.add("bind", "click");	// add <<bind>> as an alias of <<click>>
 
 	/**
-	 * <<class>> (DEPRECIATED)
+	 * <<class>> (DEPRECATED)
 	 */
 	macros.add("class", {
 		version: { major: 2, minor: 2, revision: 0 },
@@ -1552,7 +1552,7 @@ function addStandardMacros()
 	});
 
 	/**
-	 * <<classupdate>> (DEPRECIATED)
+	 * <<classupdate>> (DEPRECATED)
 	 */
 	macros.add("classupdate", {
 		version: { major: 1, minor: 0, revision: 0 },
@@ -1599,7 +1599,7 @@ function addStandardMacros()
 	});
 
 	/**
-	 * <<id>> (DEPRECIATED)
+	 * <<id>> (DEPRECATED)
 	 */
 	macros.add("id", {
 		version: { major: 2, minor: 2, revision: 0 },
@@ -1615,7 +1615,7 @@ function addStandardMacros()
 	});
 
 	/**
-	 * <<runjs>> (DEPRECIATED)
+	 * <<runjs>> (DEPRECATED)
 	 */
 	macros.add("runjs", {
 		version: { major: 3, minor: 0, revision: 0 },
@@ -1627,7 +1627,7 @@ function addStandardMacros()
 	});
 
 	/**
-	 * <<update>> (DEPRECIATED)
+	 * <<update>> (DEPRECATED)
 	 */
 	macros.add("update", {
 		version: { major: 2, minor: 0, revision: 0 },
