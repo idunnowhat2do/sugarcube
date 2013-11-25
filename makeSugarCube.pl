@@ -7,7 +7,7 @@
 #
 #     Author   :  Thomas Michael Edwards <tmedwards@motoslave.net>
 #     Copyright:  Copyright © 2013 Thomas Michael Edwards. All rights reserved.
-#     Version  :  r16, 2013-11-25
+#     Version  :  r17, 2013-11-25
 #
 ################################################################################
 
@@ -95,6 +95,17 @@ chomp($outfile = shift(@ARGV)) if (@ARGV == 1);	# get the output file name, if o
 
 my $infh;
 
+# load the build number
+open($infh, '+<:encoding(UTF-8)', $CONFIG{'build'})	# auto decode on read
+	or die("error: cannot open build info file (\"$CONFIG{'build'}\") for reading\n");
+my $build = 1 + do { local $/; <$infh> };
+seek($infh, 0, 0);
+print $infh $build;
+close($infh);
+
+# get the build date
+my $date = strftime("\"%a, %d %b %Y\"", gmtime());
+
 # load the header template
 open($infh, '<:encoding(UTF-8)', $CONFIG{'template'})	# auto decode on read
 	or die("error: cannot open header template (\"$CONFIG{'template'}\") for reading\n");
@@ -121,6 +132,8 @@ foreach my $srcfile (@{$CONFIG{'js'}})
 	close($infh);
 	$scripts .= $script;
 }
+$scripts =~ s/\[\(\$BUILD\$\)\]/$build/g;
+$scripts =~ s/\[\(\$DATE\$\)\]/$date/g;
 if ($opt_minify)
 {
 	# write the tmpfile
@@ -169,20 +182,7 @@ open($infh, '<:encoding(UTF-8)', $CONFIG{'css'})	# auto decode on read
 my $styles = do { local $/; <$infh> };
 close($infh);
 
-# load the build number
-open($infh, '+<:encoding(UTF-8)', $CONFIG{'build'})	# auto decode on read
-	or die("error: cannot open build info file (\"$CONFIG{'build'}\") for reading\n");
-my $build = 1 + do { local $/; <$infh> };
-seek($infh, 0, 0);
-print $infh $build;
-close($infh);
-
-# get the build date
-my $date = strftime("\"%a, %d %b %Y\"", gmtime());
-
 # process the header template
-$scripts  =~ s/\[\(\$BUILD\$\)\]/$build/g;
-$scripts  =~ s/\[\(\$DATE\$\)\]/$date/g;
 $template =~ s/\[\(\$BUILD\$\)\]/$build/g;
 $template =~ s/\[\(\$SCRIPTS\$\)\]/$scripts/g;
 $template =~ s/\[\(\$STYLES\$\)\]/$styles/g;
