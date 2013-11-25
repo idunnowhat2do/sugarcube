@@ -5,7 +5,17 @@
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-var version = { title: "SugarCube", major: 1, minor: 0, revision: 0, date: new Date("November 24, 2013"), extensions: {} };
+var version =
+{
+	  title:      "SugarCube"
+	, major:      1
+	, minor:      0
+	, revision:   0
+	, build:      [($BUILD$)]
+	, date:       new Date([($DATE$)])
+	, extensions: {}
+	, toString:   function() { return this.title + " " + this.major + "." + this.minor + "." + this.revision + "." + this.build + " (" + this.date.toLocaleDateString() + ")"; }
+};
 
 var modes =		// SugarCube History class modes
 {
