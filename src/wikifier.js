@@ -73,7 +73,7 @@ String.prototype.readMacroParams = function ()
 				// n.b. Octal literals are not handled correctly by Number() (e.g. Number("077") yields 77, not 63).
 				//      We could use eval("077") instead, which does correctly yield 63, however, it's probably far
 				//      more likely that the average Twine/Twee author would expect "077" to yield 77 rather than 63.
-				//      So, we cater to author expectation and use Number().  Besides, Octals are depreciated anyway.
+				//      So, we cater to author expectation and use Number().  Besides, Octals are deprecated anyway.
 				n = Number(n);
 			}
 
@@ -1387,16 +1387,22 @@ Wikifier.formatters =
 Wikifier.createInternalLink = function (place, passage, text)
 {
 	var el = insertPassageLink(place, passage, text);
-	$(el).click(function () {
-		state.display(passage, el);
-	});
+	if (typeof passage !== "undefined")	// 0 is a valid ID and name, so we have to type check
+	{
+		$(el).click(function () {
+			state.display(passage, el);
+		});
+	}
 	return el;
 };
 
 Wikifier.createExternalLink = function (place, url, text)
 {
 	var el = insertElement(place, "a", null, "link-external", text);
-	el.href = url;
+	if (url)
+	{
+		el.href = url;
+	}
 	el.target = "_blank";
 	return el;
 };
