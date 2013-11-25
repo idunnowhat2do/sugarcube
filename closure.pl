@@ -7,7 +7,7 @@
 #
 #     Author   :  Thomas Michael Edwards <tmedwards@motoslave.net>
 #     Copyright:  Copyright © 2011–2013 Thomas Michael Edwards. All rights reserved.
-#     Version  :  r06, 2013-06-20
+#     Version  :  r07, 2013-11-25
 #
 ################################################################################
 
@@ -111,7 +111,7 @@ my @opt_naked   = grep { m/^-/ } @ARGV;
 if (!$opt_outfile)
 {
 	$opt_outfile = $opt_infiles[0];
-	$opt_outfile =~ s/(\.\w+)?$/-min$1/;
+	$opt_outfile =~ s/(\.\w+)?$/.min$1/;
 }
 
 # run closure
