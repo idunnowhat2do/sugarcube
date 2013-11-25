@@ -1193,15 +1193,30 @@ Wikifier.formatters =
 
 {
 	name: "commentByBlock",
-	match: "/%",
-	lookahead: "/%((?:.|\\n)*?)%/",
+	match: "/(?:%|\\*)",
+	lookaheadRegExp: /\/(%|\*)((?:.|\n)*?)\1\//gm,
 	handler: function (w)
 	{
-		var lookaheadRegExp = new RegExp(this.lookahead, "gm");
-		lookaheadRegExp.lastIndex = w.matchStart;
-		var lookaheadMatch = lookaheadRegExp.exec(w.source);
+		this.lookaheadRegExp.lastIndex = w.matchStart;
+		var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
 		if (lookaheadMatch && lookaheadMatch.index === w.matchStart)
 		{
+			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+		}
+	}
+},
+
+{
+	name: "htmlCommentByBlock",
+	match: "<!--",
+	lookaheadRegExp: /<!--((?:.|\\n)*?)-->/gm,
+	handler: function (w)
+	{
+		this.lookaheadRegExp.lastIndex = w.matchStart;
+		var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
+		if (lookaheadMatch && lookaheadMatch.index === w.matchStart)
+		{
+			w.output.appendChild(document.createComment(lookaheadMatch[1]));
 			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 		}
 	}
