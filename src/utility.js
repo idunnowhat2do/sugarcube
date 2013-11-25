@@ -216,6 +216,7 @@ function insertElement(place, type, id, classNames, text)
 {
 	var el = document.createElement(type);
 
+	// add attributes
 	if (id)
 	{
 		el.id = id;
@@ -224,14 +225,19 @@ function insertElement(place, type, id, classNames, text)
 	{
 		el.className = classNames;
 	}
+
+	// add content
 	if (text)
 	{
 		insertText(el, text);
 	}
+
+	// append it to the given node
 	if (place)
 	{
 		place.appendChild(el);
 	}
+
 	return el;
 }
 
@@ -242,23 +248,29 @@ function insertPassageLink(place, passage, text, classNames)
 {
 	var el = document.createElement("a");
 
-	el.className = tale.has(passage) ? "link-internal" : "link-broken";
+	// add attributes
+	if (typeof passage !== "undefined")	// 0 is a valid ID and name, so we have to type check
+	{
+		el.setAttribute("data-passage", passage);
+		el.className = tale.has(passage) ? "link-internal" : "link-broken";
+	}
 	if (classNames)
 	{
 		el.className += " " + classNames;
 	}
-	if (passage)
-	{
-		el.setAttribute("data-passage", passage);
-	}
+
+	// add content
 	if (text)
 	{
 		insertText(el, text);
 	}
+
+	// append it to the given node
 	if (place)
 	{
 		place.appendChild(el);
 	}
+
 	return el;
 }
 
