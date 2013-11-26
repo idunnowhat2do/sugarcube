@@ -113,6 +113,10 @@ History.prototype.init = function ()
 	}
 
 	// setup the history change handlers
+	//   n.b. do not update these to use jQuery; the "popstate" event gains
+	//        nothing from being wrapped in the jQuery Event object and it would
+	//        complicate either the handlers, by having to deal with it, or the
+	//        jQuery Event object, if we pushed the properties we need onto it
 	if (config.historyMode === modes.windowHistory)
 	{
 		window.addEventListener("popstate", History.popStateHandler_windowHistory, false);
