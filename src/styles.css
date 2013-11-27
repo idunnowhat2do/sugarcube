@@ -1,4 +1,10 @@
 
+/* Loading screen styling */
+body > #loading-screen { display: none; z-index: 100000; position: fixed; top: 0px; left: 0px; height: 100%; width: 100%; color: #fff; background-color: #111; text-align: center; }
+body > #loading-screen p { font-family: verdana,"dejavu sans",tahoma,arial,sans-serif; font-size: 2em; font-weight: bold; font-style: italic; }
+html.loading body > #loading-screen { display: block; }
+html.loading body > #ui-bar, html.loading body > #passages { display: none; }
+
 @font-face
 {
 	font-family: 'icomoon-sugarcube';
