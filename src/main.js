@@ -41,6 +41,7 @@ var config =	// SugarCube config
 	// general option properties
 	, displayPassageTitles: false
 	, historyMode:          modes.hashTag
+	, loadDelay:            0
 
 	// saves option properties
 	, saves:
@@ -55,9 +56,9 @@ var config =	// SugarCube config
 };
 config.browser =
 {
-	  isGecko:      (navigator && navigator.product === "Gecko") && (config.userAgent.indexOf("webkit") === -1)
-	, isIE:         (config.userAgent.indexOf("msie") !== -1) && (config.userAgent.indexOf("opera") === -1)
-	, ieVersion:    (function () { var ieVer = /msie (\d{1,2}\.\d)/.exec(config.userAgent); return ieVer ? +ieVer[1] : 0; }())
+	  isGecko:      (navigator && navigator.product === "Gecko" && config.userAgent.search(/webkit|trident/) === -1)
+	, isIE:         (config.userAgent.search(/msie|trident/) !== -1 && config.userAgent.indexOf("opera") === -1)
+	, ieVersion:    (function () { var ieVer = /(?:msie\s+|rv:)(\d{1,2}\.\d)/.exec(config.userAgent); return ieVer ? +ieVer[1] : 0; }())
 	// opera <= 12: "opera/9.80 (windows nt 6.1; wow64) presto/2.12.388 version/12.16"
 	// opera >= 15: "mozilla/5.0 (windows nt 6.1; wow64) applewebkit/537.36 (khtml, like gecko) chrome/28.0.1500.52 safari/537.36 opr/15.0.1147.130"
 	, isOpera:      (config.userAgent.indexOf("opera") !== -1) || (config.userAgent.indexOf(" opr/") !== -1)
@@ -567,6 +568,35 @@ var UISystem =
 		UISystem.addClickHandler("#menu-restart", null, function () { UISystem.buildRestart(); });
 		UISystem.addClickHandler("#menu-options", null, function () { UISystem.buildOptions(); });
 		UISystem.addClickHandler("#menu-share",   null, function () { UISystem.buildShare(); });
+
+		// disable the loading screen
+		if (document.readyState === "complete")
+		{
+			$(document.documentElement).removeClass("loading");
+		}
+		document.addEventListener("readystatechange", function () {
+			var html = $(document.documentElement);
+
+			console.log("**** document.readyState: " + document.readyState + "  (on: readystatechange)");
+			// readyState can be: "loading", "interactive", or "complete"
+			if (document.readyState === "complete")
+			{
+				console.log('---- removing class "loading" (in ' + config.loadDelay + 'ms)');
+				if (config.loadDelay > 0)
+				{
+					setTimeout(function () { html.removeClass("loading"); }, config.loadDelay);
+				}
+				else
+				{
+					html.removeClass("loading");
+				}
+			}
+			else
+			{
+				console.log('++++ adding class "loading"');
+				html.addClass("loading");
+			}
+		}, false);
 	},
 	buildSaves: function ()
 	{
