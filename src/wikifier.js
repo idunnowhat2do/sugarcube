@@ -845,8 +845,8 @@ Wikifier.formatters =
 {
 	name: "prettyLink",
 	match: "\\[\\[",
-	//lookaheadRegExp: /\[\[([^\|\]]*?)(?:\|(.*?))?\]\]/gm,
-	lookaheadRegExp: /\[\[(.*?)(?:\|(.*?))?\]\]/gm,
+	//lookaheadRegExp: /\[\[\s*([^\|\]]+?)(?:\s*\|\s*(.+?))?\s*\]\]/gm,
+	lookaheadRegExp: /\[\[\s*(.+?)(?:\s*\|\s*(.+?))?\s*\]\]/gm,
 	handler: function (w)
 	{
 		this.lookaheadRegExp.lastIndex = w.matchStart;
@@ -889,7 +889,8 @@ Wikifier.formatters =
 {
 	name: "image",
 	match: "\\[[<>]?[Ii][Mm][Gg]\\[",
-	lookaheadRegExp: /\[([<]?)([>]?)[Ii][Mm][Gg]\[(?:([^\|\]]+)\|)?([^\[\]\|]+)\](?:\[([^\]]*)\])?\]/gm,
+	//lookaheadRegExp: /\[([<]?)([>]?)[Ii][Mm][Gg]\[\s*(?:([^\|\]]+?)\s*\|\s*)?([^\[\]\|]+?)\s*\](?:\[\s*([^\]]+?)\s*\])?\]/gm,
+	lookaheadRegExp: /\[([<]?)([>]?)[Ii][Mm][Gg]\[\s*(?:(.+?)\s*\|\s*)?([^\|]+?)\s*\](?:\[\s*(.+?)\s*\])?\]/gm,
 	handler: function (w)
 	{
 		this.lookaheadRegExp.lastIndex = w.matchStart;
