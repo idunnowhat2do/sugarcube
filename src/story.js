@@ -171,17 +171,12 @@ History.prototype.display = function (title, link, render)
 
 		this.push({ title: passage.title, variables: clone(this.active.variables, true) });
 		this.activate(this.top);
-
+	}
+	if (render !== "back" || config.disableHistoryControls)
+	{
 		if (config.historyMode === modes.windowHistory)
 		{
-			if (window.history.state === null && this.history.length !== 1)
-			{
-				console.log("    > !DANGER! (window.history.state === null) && (this.history.length !== 1) !DANGER!");
-				window.alert("!DANGER! (window.history.state === null) && (this.history.length !== 1) !DANGER!");
-			}
-
-			//FIXME: this or that? if (window.history.state === null)
-			if (this.history.length === 1 && window.history.state === null)
+			if (window.history.state === null || config.disableHistoryControls)
 			{
 				window.history.replaceState(this.history, document.title);
 			}
@@ -192,7 +187,7 @@ History.prototype.display = function (title, link, render)
 		}
 		else if (config.historyMode === modes.sessionHistory)
 		{
-			if (window.history.state === null)
+			if (window.history.state === null || config.disableHistoryControls)
 			{
 				window.history.replaceState({ sidx: this.active.sidx, suid: this.suid }, document.title);
 			}
@@ -202,11 +197,7 @@ History.prototype.display = function (title, link, render)
 			}
 		}
 	}
-	if (config.historyMode === modes.hashTag)
-	{
-		this.active.hash = this.top.hash = this.save();
-	}
-	else if (config.historyMode === modes.sessionHistory)
+	if (config.historyMode === modes.hashTag || config.historyMode === modes.sessionHistory)
 	{
 		this.save();
 	}
@@ -248,7 +239,14 @@ History.prototype.display = function (title, link, render)
 		}
 		if (config.historyMode === modes.hashTag)
 		{
-			window.location.hash = this.hash = this.top.hash;
+			if (!config.disableHistoryControls)
+			{
+				window.location.hash = this.hash = this.active.hash;
+			}
+			else
+			{
+				session.setItem("activeHash", this.hash = this.active.hash);
+			}
 		}
 		window.scroll(0, 0);
 	}
@@ -310,7 +308,15 @@ History.prototype.restart = function ()
 	}
 	else
 	{
-		window.location.hash = "";
+		if (!config.disableHistoryControls)
+		{
+			window.location.hash = "";
+		}
+		else
+		{
+			session.removeItem("activeHash");
+			window.location.reload();
+		}
 	}
 };
 
@@ -338,8 +344,10 @@ History.prototype.save = function ()
 			}
 		}
 
-		// strip the trailing period
-		return "#" + order.substr(0, order.length - 1);
+		// save to the active & top history (stripping the trailing period)
+		this.active.hash = this.top.hash = "#" + order.substr(0, order.length - 1);
+
+		return this.active.hash;
 	}
 };
 
@@ -388,12 +396,19 @@ History.prototype.restore = function (suid)
 	}
 	else if (config.historyMode === modes.hashTag)
 	{
-		if (window.location.hash !== "" && window.location.hash !== "#")
+		var order;
+		if (session.hasItem("activeHash"))
+		{
+			order = session.getItem("activeHash").replace("#", "").split(".");
+		}
+		else if (window.location.hash !== "" && window.location.hash !== "#")
+		{
+			order = window.location.hash.replace("#", "").split(".");
+		}
+		if (order)
 		{
 			try
 			{
-				var order = window.location.hash.replace("#", "").split(".");
-
 				// render the passages in the order the reader clicked them
 				// we only show the very last one
 				for (var i = 0, end = order.length - 1; i <= end; i++)
@@ -433,13 +448,22 @@ History.hashChangeHandler = function (evt)
 			state.active = { init: true, variables: (remember === null ? {} : clone(remember, true)) };
 			state.history = [];
 
-			el.style.visibility = "hidden";
-			removeChildren(el);
-			if (!state.restore())
+			if (!config.disableHistoryControls)
 			{
-				window.alert("The passage you had previously visited could not be found.");
+				el.style.visibility = "hidden";
+				removeChildren(el);
+				if (!state.restore())
+				{
+					window.alert("The passage you had previously visited could not be found.");
+				}
+				el.style.visibility = "visible";
 			}
-			el.style.visibility = "visible";
+			else
+			{
+				session.setItem("activeHash", state.hash = window.location.hash);
+				window.location.hash = "";
+				return;
+			}
 		}
 		else
 		{

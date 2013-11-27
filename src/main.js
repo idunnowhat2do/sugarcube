@@ -40,8 +40,11 @@ var config =	// SugarCube config
 
 	// general option properties
 	, displayPassageTitles: false
-	, historyMode:          modes.hashTag
 	, loadDelay:            0
+
+	// history option properties
+	, disableHistoryControls: false
+	, historyMode:            modes.hashTag
 
 	// saves option properties
 	, saves:
@@ -524,13 +527,16 @@ var SaveSystem =
 				console.log("    > loading: " + i + " (" + state.history[i].title + ")");
 
 				// load the state into the window history
-				if (config.historyMode === modes.windowHistory)
+				if (!config.disableHistoryControls)
 				{
-					window.history.pushState(state.history, document.title);
-				}
-				else
-				{
-					window.history.pushState({ sidx: state.history[i].sidx, suid: state.suid }, document.title);
+					if (config.historyMode === modes.windowHistory)
+					{
+						window.history.pushState(state.history, document.title);
+					}
+					else
+					{
+						window.history.pushState({ sidx: state.history[i].sidx, suid: state.suid }, document.title);
+					}
 				}
 			}
 
@@ -540,7 +546,15 @@ var SaveSystem =
 			break;
 
 		case modes.hashTag:
-			window.location.hash = saveObj.data;
+			if (!config.disableHistoryControls)
+			{
+				window.location.hash = saveObj.data;
+			}
+			else
+			{
+				session.setItem("activeHash", saveObj.data);
+				window.location.reload();
+			}
 			break;
 		}
 
@@ -857,12 +871,15 @@ var UISystem =
 							document.title = tale.title;
 
 							// push the history states in order
-							for (var i = 0, end = p; i <= end; i++)
+							if (!config.disableHistoryControls)
 							{
-								console.log("    > pushing: " + i + " (" + state.history[i].title + ")");
+								for (var i = 0, end = p; i <= end; i++)
+								{
+									console.log("    > pushing: " + i + " (" + state.history[i].title + ")");
 
-								// load the state into the window history
-								window.history.pushState(state.history.slice(0, i + 1), document.title);
+									// load the state into the window history
+									window.history.pushState(state.history.slice(0, i + 1), document.title);
+								}
 							}
 
 							// stack ids are out of sync, pop our stack until
@@ -889,12 +906,22 @@ var UISystem =
 							state.regenerateSuid();
 
 							// push the history states in order
-							for (var i = 0, end = p; i <= end; i++)
+							if (config.disableHistoryControls)
 							{
-								console.log("    > pushing: " + i + " (" + state.history[i].title + ")");
+								console.log("    > pushing: " + p + " (" + state.history[p].title + ")");
 
 								// load the state into the window history
-								window.history.pushState({ sidx: state.history[i].sidx, suid: state.suid }, document.title);
+								window.history.replaceState({ sidx: state.history[p].sidx, suid: state.suid }, document.title);
+							}
+							else
+							{
+								for (var i = 0, end = p; i <= end; i++)
+								{
+									console.log("    > pushing: " + i + " (" + state.history[i].title + ")");
+
+									// load the state into the window history
+									window.history.pushState({ sidx: state.history[i].sidx, suid: state.suid }, document.title);
+								}
 							}
 
 							if (window.history.state.sidx < state.top.sidx)
@@ -916,7 +943,15 @@ var UISystem =
 					{
 						return function ()
 						{
-							window.location.hash = state.history[p].hash;
+							if (!config.disableHistoryControls)
+							{
+								window.location.hash = state.history[p].hash;
+							}
+							else
+							{
+								session.setItem("activeHash", state.history[p].hash);
+								window.location.reload();
+							}
 						};
 					}
 				}());

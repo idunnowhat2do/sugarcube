@@ -430,13 +430,13 @@ function addStandardMacros()
 				{
 					if (this.name === "back")
 					{
-						if (config.historyMode === modes.hashTag)
+						if (config.historyMode === modes.hashTag || config.disableHistoryControls)
 						{
 							return function ()
 							{
 								// pop the history stack
 								//     n.b. (steps > 0) is correct, since SugarCube's history stack does not store "dirty"
-								//          (i.e. pre-rendered/executed) states; in most other headers, something like
+								//          (i.e. post-rendered/executed) states; in most other headers, something like
 								//          (steps >= 0) would probably be necessary
 								while (steps > 0)
 								{
