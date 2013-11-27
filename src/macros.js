@@ -536,9 +536,9 @@ function addStandardMacros()
 		version: { major: 3, minor: 0, revision: 0 },
 		handler: function ()
 		{
-			function createInternalLink(output, passage, text)
+			function createInternalLink(passage, text)
 			{
-				var el = insertPassageLink(output, passage, text, "link-" + this.name);
+				var el = insertPassageLink(this.output, passage, text, "link-" + this.name);
 				$(el).click(function ()
 				{
 					if (onceType)
@@ -549,9 +549,9 @@ function addStandardMacros()
 				});
 				return el;
 			}
-			function createExternalLink(output, url, text)
+			function createExternalLink(url, text)
 			{
-				var el = insertElement(output, "a", null, "link-external link-" + this.name, text);
+				var el = insertElement(this.output, "a", null, "link-external link-" + this.name, text);
 				el.href = url;
 				el.target = "_blank";
 				return el;
@@ -619,17 +619,17 @@ function addStandardMacros()
 
 			if (argCount === 1)
 			{
-				createInternalLink(this.output, linkLoc, linkText);
+				createInternalLink.call(this, linkLoc, linkText);
 			}
 			else	// argCount === 2
 			{
 				if (tale.has(linkLoc))
 				{
-					createInternalLink(this.output, linkLoc, linkText);
+					createInternalLink.call(this, linkLoc, linkText);
 				}
 				else
 				{
-					createExternalLink(this.output, linkLoc, linkText);
+					createExternalLink.call(this, linkLoc, linkText);
 				}
 			}
 		}
