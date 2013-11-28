@@ -350,22 +350,6 @@ function throwError(place, message)
  */
 function fade(el, options)
 {
-	var current;
-	var proxy = el.cloneNode(true);
-	var direction = (options.fade == "in") ? 1 : -1;
-	el.parentNode.replaceChild(proxy, el);
-	if (options.fade == "in")
-	{
-		current = 0;
-		proxy.style.visibility = "visible"
-	}
-	else
-	{
-		current = 1;
-	}
-	setOpacity(proxy, current);
-	var interval = window.setInterval(tick, 25);
-
 	function tick()
 	{
 		current += 0.05 * direction;
@@ -375,7 +359,7 @@ function fade(el, options)
 			el.style.visibility = (options.fade == "in") ? "visible" : "hidden";
 			proxy.parentNode.replaceChild(el, proxy);
 			proxy = null;
-			window.clearInterval(interval);
+			window.clearInterval(intervalId);
 			if (options.onComplete)
 			{
 				options.onComplete();
@@ -393,6 +377,23 @@ function fade(el, options)
 		// CSS
 		el.style.opacity = opacity;
 	}
+
+	var   current
+		, proxy      = el.cloneNode(true)
+		, direction  = (options.fade == "in") ? 1 : -1
+		, intervalId;
+	el.parentNode.replaceChild(proxy, el);
+	if (options.fade == "in")
+	{
+		current = 0;
+		proxy.style.visibility = "visible"
+	}
+	else
+	{
+		current = 1;
+	}
+	setOpacity(proxy, current);
+	intervalId = window.setInterval(tick, 25);
 }
 
 /**
@@ -406,7 +407,7 @@ function scrollWindowTo(el)
 		window.scrollTo(0, start + direction * (distance * Math.easeInOut(progress)));
 		if (progress >= 1)
 		{
-			window.clearInterval(interval);
+			window.clearInterval(intervalId);
 		}
 	}
 	function findPosY(el)
@@ -450,12 +451,12 @@ function scrollWindowTo(el)
 		}
 	}
 
-	var   start     = window.scrollY ? window.scrollY : document.body.scrollTop
-		, end       = ensureVisible(el)
-		, distance  = Math.abs(start - end)
-		, progress  = 0
-		, direction = (start > end) ? -1 : 1
-		, interval  = window.setInterval(tick, 25);
+	var   start      = window.scrollY ? window.scrollY : document.body.scrollTop
+		, end        = ensureVisible(el)
+		, distance   = Math.abs(start - end)
+		, progress   = 0
+		, direction  = (start > end) ? -1 : 1
+		, intervalId = window.setInterval(tick, 25);
 }
 
 /**
