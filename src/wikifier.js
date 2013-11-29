@@ -944,9 +944,9 @@ Wikifier.formatters =
 		{
 			// if parseBody() is called below, it will change the current working
 			// values, so we must cache them now
-			var   macroName = this.working.name
-				, funcName  = this.working.handlerName
-				, macroArgs = this.working.arguments;
+			var   macroName   = this.working.name
+				, handlerName = this.working.handlerName
+				, macroArgs   = this.working.arguments;
 			try
 			{
 				var macro = macros.get(macroName);
@@ -974,7 +974,7 @@ Wikifier.formatters =
 							return throwError(w.output, "cannot find a closing tag for macro <<" + macroName + ">>");
 						}
 					}
-					if (typeof macro[funcName] === "function")
+					if (typeof macro[handlerName] === "function")
 					{
 						var args = (!macro.hasOwnProperty("skipArgs") || !macro["skipArgs"]) ? macroArgs.readMacroParams() : [];
 
@@ -985,13 +985,13 @@ Wikifier.formatters =
 								, curContext  =	// setup the execution context object (should probably make a factory for this)
 									{
 										// data properties
-										  "self":    macro
-										, "name":    macroName
-										, "args":    args
-										, "payload": payload
-										, "output":  w.output
-										, "parser":  w
-										, "context": this.context
+										  "self"    : macro
+										, "name"    : macroName
+										, "args"    : args
+										, "payload" : payload
+										, "output"  : w.output
+										, "parser"  : w
+										, "context" : this.context
 
 										// method properties
 										, "contextHas": function (filter)
@@ -1021,7 +1021,7 @@ Wikifier.formatters =
 												return false;
 											}
 									};
-							// inject the raw and full argument strings into the args array
+							// extend the args array with the raw and full argument strings
 							curContext.args["raw"]  = macroArgs;
 							curContext.args["full"] = Wikifier.parse(macroArgs);
 
@@ -1032,7 +1032,7 @@ Wikifier.formatters =
 							try
 							{
 								this.context = curContext;
-								macro[funcName].call(curContext);
+								macro[handlerName].call(curContext);
 							}
 							finally
 							{
@@ -1043,14 +1043,14 @@ Wikifier.formatters =
 						else
 						{
 							w._macroRawArgs = macroArgs;	// cache the raw arguments for use by Wikifier.rawArgs() & Wikifier.fullArgs()
-							macro[funcName](w.output, macroName, args, w, payload);
+							macro[handlerName](w.output, macroName, args, w, payload);
 							w._macroRawArgs = "";
 						}
 					}
 					else
 					{
-						return throwError(w.output, "macro <<" + macroName + '>> property "' + funcName + '" '
-							+ (macro.hasOwnProperty(funcName) ? "is not a function" : "does not exist"));
+						return throwError(w.output, "macro <<" + macroName + '>> property "' + handlerName + '" '
+							+ (macro.hasOwnProperty(handlerName) ? "is not a function" : "does not exist"));
 					}
 				}
 				else if (macros.tags.hasOwnProperty(macroName))
@@ -1069,10 +1069,10 @@ Wikifier.formatters =
 			}
 			finally
 			{
-				this.working.name = "";
+				this.working.name        = "";
 				this.working.handlerName = "";
-				this.working.arguments = "";
-				this.working.index = 0;
+				this.working.arguments   = "";
+				this.working.index       = 0;
 			}
 		}
 	},
@@ -1084,11 +1084,11 @@ Wikifier.formatters =
 			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 			this.lookaheadRegExp.lastIndex = w.nextMatch;
 
-			var funcSigil = lookaheadMatch[1].indexOf("::");
-			if (funcSigil !== -1)
+			var fnSigil = lookaheadMatch[1].indexOf("::");
+			if (fnSigil !== -1)
 			{
-				this.working.name = lookaheadMatch[1].slice(0, funcSigil);
-				this.working.handlerName = lookaheadMatch[1].slice(funcSigil + 2);
+				this.working.name = lookaheadMatch[1].slice(0, fnSigil);
+				this.working.handlerName = lookaheadMatch[1].slice(fnSigil + 2);
 			}
 			else
 			{
@@ -1115,8 +1115,10 @@ Wikifier.formatters =
 			, contentStart = w.nextMatch
 			, payload      = [];
 
-		while ((w.matchStart = w.source.indexOf("<<", w.nextMatch)) !== -1
-			&& this.parseTag(w))
+		while (
+			   (w.matchStart = w.source.indexOf("<<", w.nextMatch)) !== -1
+			&& this.parseTag(w)
+		)
 		{
 			var   tagName  = this.working.name
 				, tagArgs  = this.working.arguments
@@ -1130,7 +1132,7 @@ Wikifier.formatters =
 				break;
 
 			case closeAlt:
-				// fallthrough
+				/* FALL-THROUGH */
 			case closeTag:
 				opened--;
 				break;
@@ -1142,7 +1144,11 @@ Wikifier.formatters =
 					{
 						if (tagName === bodyTags[i])
 						{
-							payload.push({ name: curTag, arguments: curArgument, contents: w.source.slice(contentStart, tagBegin) });
+							payload.push({
+								  name      : curTag
+								, arguments : curArgument
+								, contents  : w.source.slice(contentStart, tagBegin)
+							});
 							curTag       = tagName;
 							curArgument  = tagArgs;
 							contentStart = tagEnd;
@@ -1153,7 +1159,11 @@ Wikifier.formatters =
 			}
 			if (opened === 0)
 			{
-				payload.push({ name: curTag, arguments: curArgument, contents: w.source.slice(contentStart, tagBegin) });
+				payload.push({
+					  name      : curTag
+					, arguments : curArgument
+					, contents  : w.source.slice(contentStart, tagBegin)
+				});
 				end = tagEnd;
 				break;
 			}
