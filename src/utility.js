@@ -287,9 +287,12 @@ function insertText(place, text)
  */
 function removeChildren(el)
 {
-	while (el.hasChildNodes())
+	if (el)
 	{
-		el.removeChild(el.firstChild);
+		while (el.hasChildNodes())
+		{
+			el.removeChild(el.firstChild);
+		}
 	}
 }
 
@@ -515,7 +518,7 @@ function generateUuid()
 function getRandom(/* min, max */) { return random.apply(null, arguments); }
 function random(min, max)
 {
-	if (arguments.length === 0) { return 0; }
+	if (arguments.length === 0) { throw new Error("random(): insufficient arguments"); }
 	if (arguments.length === 1)
 	{
 		max = min;
@@ -537,7 +540,7 @@ function random(min, max)
 function getRandomArbitrary(/* min, max */) { return randomFloat.apply(null, arguments); }
 function randomFloat(min, max)
 {
-	if (arguments.length === 0) { return 0.0; }
+	if (arguments.length === 0) { throw new Error("randomFloat(): insufficient arguments"); }
 	if (arguments.length === 1)
 	{
 		max = min;
