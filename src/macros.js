@@ -908,7 +908,7 @@ function addStandardMacros()
 
 
 	/***************************************************************************
-	 * Events
+	 * Interactive
 	 **************************************************************************/
 	/**
 	 * <<click>>
@@ -1006,6 +1006,49 @@ function addStandardMacros()
 					}
 				};
 			}(this.self, this.payload[0].contents.trim(), widgetArgs));
+			this.output.appendChild(el);
+		}
+	});
+
+	/**
+	 * <<textbox>>
+	 */
+	macros.add("textbox", {
+		version: { major: 1, minor: 0, revision: 0 },
+		handler: function ()
+		{
+			if (this.args.length === 0)
+			{
+				return this.error("no $variable name specified");
+			}
+
+			var   varName = this.args[0].replace("$", "")
+				, varId   = slugify(varName)
+				, passage = this.args.length > 1 ? this.args[1] : undefined
+				, el      = document.createElement("input");
+
+			el.type = "text";
+			el.id   = "textbox-" + varId;
+			if (typeof state.active.variables[varName] !== "undefined")
+			{
+				el.value = state.active.variables[varName];
+			}
+			$(el)
+				.change(function () {
+					state.active.variables[varName] = this.value;
+					if (typeof passage !== "undefined")
+					{
+						state.display(passage, this);
+					}
+				})
+				.keypress(function (evt) {
+					// fire a change event if Return/Enter is pressed (mostly for IE)
+					if (evt.which === 13)
+					{
+						evt.preventDefault();
+						$(this).change();
+					}
+				});
 			this.output.appendChild(el);
 		}
 	});
