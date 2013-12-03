@@ -243,14 +243,6 @@ Wikifier.prototype.outputText = function (place, startPos, endPos)
  */
 Wikifier.prototype.rawArgs = function ()
 {
-	/*
-	var   endPos  = this.source.indexOf(">>", this.matchStart)
-		, wsDelim = this.source.slice(this.matchStart + 2, endPos).search(/[\s\u00a0\u2028\u2029]/);	// Unicode space-character escapes required for IE
-
-	// +3 from: +2 to skip "<<" and +1 to eat the first whitespace character
-	return (wsDelim === -1) ? "" : this.source.slice(this.matchStart + wsDelim + 3, endPos);
-	*/
-
 	return this._macroRawArgs;
 };
 
@@ -1333,7 +1325,7 @@ Wikifier.formatters =
 
 {
 	name: "lineContinuation",
-	match: "\\\\[\\s\\u00a0\\u2028\\u2029]*?(?:\\n|$)",	// Unicode space-character escapes required for IE
+	match: "\\\\[\\s\\u00a0\\u2028\\u2029]*?(?:\\n|$)",	// Unicode space-character escapes required for IE < 11 (maybe < 10?)
 	handler: function (w)
 	{
 		w.nextMatch = w.matchStart + w.matchLength;
