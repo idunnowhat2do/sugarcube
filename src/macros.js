@@ -1055,13 +1055,13 @@ function addStandardMacros()
 
 
 	/***************************************************************************
-	 * DOM, Classes
+	 * DOM (Classes)
 	 **************************************************************************/
 	/**
-	 * <<addclass>>
+	 * <<addclass>> & <<toggleclass>>
 	 */
-	macros.add("addclass", {
-		version: { major: 1, minor: 0, revision: 0 },
+	macros.add(["addclass", "toggleclass"], {
+		version: { major: 2, minor: 0, revision: 0 },
 		protect: true,
 		handler: function ()
 		{
@@ -1080,7 +1080,15 @@ function addStandardMacros()
 				return this.error('no elements matched the selector "' + this.args[0] + '"');
 			}
 
-			targets.addClass(this.args[1].trim());
+			switch (this.name)
+			{
+			case "addclass":
+				targets.addClass(this.args[1].trim());
+				break;
+			case "toggleclass":
+				targets.toggleClass(this.args[1].trim());
+				break;
+			}
 		}
 	});
 
@@ -1114,41 +1122,15 @@ function addStandardMacros()
 		}
 	});
 
-	/**
-	 * <<toggleclass>>
-	 */
-	macros.add("toggleclass", {
-		version: { major: 1, minor: 0, revision: 0 },
-		handler: function ()
-		{
-			if (this.args.length < 2)
-			{
-				var errors = [];
-				if (this.args.length < 1) { errors.push("selector"); }
-				if (this.args.length < 2) { errors.push("class names"); }
-				return this.error("no " + errors.join(" or ") + " specified");
-			}
-
-			var targets = $(this.args[0]);
-
-			if (targets.length === 0)
-			{
-				return this.error('no elements matched the selector "' + this.args[0] + '"');
-			}
-
-			targets.toggleClass(this.args[1].trim());
-		}
-	});
-
 
 	/***************************************************************************
-	 * DOM, Content
+	 * DOM (Content)
 	 **************************************************************************/
 	/**
-	 * <<append>>
+	 * <<append>>, <<prepend>>, & <<replace>>
 	 */
-	macros.add("append", {
-		version: { major: 1, minor: 0, revision: 0 },
+	macros.add(["append", "prepend", "replace"], {
+		version: { major: 2, minor: 0, revision: 0 },
 		tags: null,
 		handler: function ()
 		{
@@ -1164,67 +1146,25 @@ function addStandardMacros()
 				return this.error('no elements matched the selector "' + this.args[0] + '"');
 			}
 
-			var frag = document.createDocumentFragment();
-			new Wikifier(frag, this.payload[0].contents);
-			targets.append(frag);
-		}
-	});
-
-	/**
-	 * <<prepend>>
-	 */
-	macros.add("prepend", {
-		version: { major: 1, minor: 0, revision: 0 },
-		tags: null,
-		handler: function ()
-		{
-			if (this.args.length === 0)
+			if (this.name === "replace")
 			{
-				return this.error("no selector specified");
+				targets.empty();
 			}
-
-			var targets = $(this.args[0]);
-
-			if (targets.length === 0)
-			{
-				return this.error('no elements matched the selector "' + this.args[0] + '"');
-			}
-
-			var frag = document.createDocumentFragment();
-			new Wikifier(frag, this.payload[0].contents);
-			targets.prepend(frag);
-		}
-	});
-
-	/**
-	 * <<replace>>
-	 */
-	macros.add("replace", {
-		version: { major: 1, minor: 0, revision: 0 },
-		tags: null,
-		handler: function ()
-		{
-			if (this.args.length === 0)
-			{
-				return this.error("no selector specified");
-			}
-
-			var targets = $(this.args[0]);
-
-			if (targets.length === 0)
-			{
-				return this.error('no elements matched the selector "' + this.args[0] + '"');
-			}
-
-			if (this.payload[0].contents)
+			if (this.payload[0].contents !== "")
 			{
 				var frag = document.createDocumentFragment();
 				new Wikifier(frag, this.payload[0].contents);
-				targets.empty().append(frag);
-			}
-			else
-			{
-				targets.empty();
+				switch (this.name)
+				{
+				case "replace":
+					/* FALL-THROUGH */
+				case "append":
+					targets.append(frag);
+					break;
+				case "prepend":
+					targets.prepend(frag);
+					break;
+				}
 			}
 		}
 	});
