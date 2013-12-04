@@ -21,10 +21,36 @@ a.link-internal, a.link-external, a.link-back, a.link-return { font-weight: bold
 a.link-internal:hover, a.link-external:hover, a.link-back:hover, a.link-return:hover { text-decoration: underline; }
 a.link-broken { padding: 3px; color: #000; background-color: red; font-weight: bold; text-decoration: none; }
 input, textarea { min-width: 16em; color: #fff; background-color: #444; border: 1px solid #fff; }
+input { padding: 2px 3px; }
 input:focus, textarea:focus { border: 1px solid #292; }
 input:hover, textarea:hover { border: 1px solid #f70; }
 noscript { color: red; font-size: 210%; font-weight: bold; }
+button
+{
+	cursor: pointer;
+	padding: 4px 6px;
+	color: #fff;
+	background-color: #36c;
+	border: 1px solid #58e;
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+	text-decoration: none;
+	text-shadow: 1px 1px rgba(0, 0, 0, 0.4);
+	-webkit-transition-duration: 200ms;
+	-moz-transition-duration: 200ms;
+	transition-duration: 200ms;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+	user-select: none;
+}
+button:hover { background-color: #58e; border: 1px solid #7af; }
+button:active { background-color: #f70; border: 1px solid #f92; }
 .error { margin: 0 12px 0 3px; padding: 3px 5px; color: #000; background-color: red; font-weight: bold; }
+.highlight, .marked { color: yellow; font-weight: bold; font-style: italic; }
 .transition-in { opacity: 0; }
 
 #ui-bar { position: fixed; top: 3.5em; left: 3.5em; width: 14.5em; margin: 0; padding: 0 1.5em 0 0; border-right: 1px solid #fff; }
@@ -69,10 +95,7 @@ a.link-return:after { content: "\00a0\00a0\e00b"; }
 #credits, #version { margin-top: 1em; color: #999; font-weight: normal; font-size: 71%; }
 
 /* Default menu styling */
-body.ui-open
-{
-	overflow: hidden;
-}
+body.ui-open { overflow: hidden; }
 #ui-overlay
 {
 	display: none;
@@ -108,38 +131,6 @@ body.ui-open
 #ui-body hr { height: 1px; border: none; background-color: #fff; }
 
 /* Default menu button styling */
-#ui-body button
-{
-	cursor: pointer;
-	padding: 4px 6px;
-	color: #fff;
-	background-color: #36c;
-	border: 1px solid #58e;
-	-webkit-border-radius: 4px;
-	-moz-border-radius: 4px;
-	border-radius: 4px;
-	text-decoration: none;
-	text-shadow: 1px 1px rgba(0, 0, 0, 0.4);
-	-webkit-transition-duration: 200ms;
-	-moz-transition-duration: 200ms;
-	transition-duration: 200ms;
-	-webkit-user-select: none;
-	-khtml-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
-	-o-user-select: none;
-	user-select: none;
-}
-#ui-body button:hover
-{
-	background-color: #58e;
-	border: 1px solid #7af;
-}
-#ui-body button:active
-{
-	background-color: #f70;
-	border: 1px solid #f92;
-}
 #ui-body > ul > li + li > button, #ui-body .controls > button + button
 {
 	margin-left: 12px;
@@ -293,7 +284,5 @@ body.ui-open
 .passage table { margin: 0.8em 1.0em; border-collapse: collapse; font-size: 100%; }
 .passage th, .passage td, .passage tr, .passage caption { padding: 3px; }
 .passage hr { height: 1px; border: none; background-color: #fff; }
-
-.highlight, .marked { color: yellow; font-weight: bold; font-style: italic; }
 
 #store-area { display: none; }
