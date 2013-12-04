@@ -24,9 +24,10 @@ function History()
 // setup accessors and mutators
 History.prototype =
 {
-	get top ()      { return (this.history.length !== 0) ? this.history[this.history.length - 1] : null; },
-	get isEmpty ()  { return this.history.length === 0; },
-	get length ()   { return this.history.length; }
+	get top ()     { return (this.history.length !== 0) ? this.history[this.history.length - 1] : null; },
+	get bottom ()  { return (this.history.length !== 0) ? this.history[0] : null; },
+	get isEmpty () { return this.history.length === 0; },
+	get length ()  { return this.history.length; }
 };
 
 /*
@@ -75,6 +76,7 @@ History.prototype.push = function (/* variadic */)
 		}
 		this.history.push(state);
 	}
+	return this.history.length;
 };
 
 History.prototype.pop = function (num)
@@ -88,6 +90,8 @@ History.prototype.pop = function (num)
 
 History.prototype.activate = function (state)
 {
+	if (arguments.length === 0) { return; }	// maybe throw?
+
 	if (typeof state === "object")
 	{
 		if (state === null) { return null; }
@@ -619,8 +623,8 @@ Passage.prototype.reset = function ()
 	var store = document.getElementById("store-area").childNodes;
 	for (var i = 0; i < store.length; i++)
 	{
-		var el = store[i];
-		var tiddlerTitle;
+		var   el = store[i]
+			, tiddlerTitle;
 		if (el.getAttribute && (tiddlerTitle = el.getAttribute("tiddler")))
 		{
 			if (this.title == tiddlerTitle)
@@ -640,30 +644,30 @@ Passage.prototype.excerpt = function ()
 
 Passage.getExcerptFromText = function (text, count)
 {
-	var pattern = new RegExp("(\\S+(?:\\s+\\S+){0," + (typeof count !== 'undefined' ? count - 1 : 7) + "})");
-	var result = text
-		// strip macro tags (replace with a space)
-		.replace(/<<.*?>>/g, " ")
-		// strip html tags (replace with a space)
-		.replace(/<.*?>/g, " ")
-		// the above might have left problematic whitespace, so trim
-		.trim()
-		// strip wiki tables
-		.replace(/^\s*\|.*\|.*?$/gm, "")
-		// strip wiki images
-		.replace(/\[[<>]?img\[[^\]]*\]\]/g, "")
-		// clean wiki links, i.e. remove all but the pretty link text
-		.replace(/\[\[([^|\]]*)(?:|[^\]]*)?\]\]/g, "$1")
-		// clean wiki !headings
-		.replace(/^\s*!+(.*?)$/gm, "$1")
-		// clean wiki bold/italic/underline/highlight formatting
-		.replace(/\'{2}|\/{2}|_{2}|@{2}/g, "")
-		// compact remaining whitespace
-		.replace(/\s+/g, " ")
-		// a final trim
-		.trim()
-		// lastly, match the excerpt
-		.match(pattern);
+	var   pattern = new RegExp("(\\S+(?:\\s+\\S+){0," + (typeof count !== 'undefined' ? count - 1 : 7) + "})")
+		, result  = text
+			// strip macro tags (replace with a space)
+			.replace(/<<.*?>>/g, " ")
+			// strip html tags (replace with a space)
+			.replace(/<.*?>/g, " ")
+			// the above might have left problematic whitespace, so trim
+			.trim()
+			// strip wiki tables
+			.replace(/^\s*\|.*\|.*?$/gm, "")
+			// strip wiki images
+			.replace(/\[[<>]?img\[[^\]]*\]\]/g, "")
+			// clean wiki links, i.e. remove all but the pretty link text
+			.replace(/\[\[([^|\]]*)(?:|[^\]]*)?\]\]/g, "$1")
+			// clean wiki !headings
+			.replace(/^\s*!+(.*?)$/gm, "$1")
+			// clean wiki bold/italic/underline/highlight formatting
+			.replace(/\'{2}|\/{2}|_{2}|@{2}/g, "")
+			// compact remaining whitespace
+			.replace(/\s+/g, " ")
+			// a final trim
+			.trim()
+			// lastly, match the excerpt
+			.match(pattern);
 	return (result ? result[1] + "\u2026" : "\u2026");
 };
 
