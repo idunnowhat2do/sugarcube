@@ -1036,10 +1036,6 @@ function addStandardMacros()
 			$(el)
 				.change(function () {
 					state.active.variables[varName] = this.value;
-					if (typeof passage !== "undefined")
-					{
-						state.display(passage, this);
-					}
 				})
 				.keypress(function (evt) {
 					// fire a change event if Return/Enter is pressed (mostly for IE)
@@ -1047,6 +1043,10 @@ function addStandardMacros()
 					{
 						evt.preventDefault();
 						$(this).change();
+						if (typeof passage !== "undefined")
+						{
+							state.display(passage, this);
+						}
 					}
 				});
 			this.output.appendChild(el);
