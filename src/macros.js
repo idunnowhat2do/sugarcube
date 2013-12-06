@@ -1014,7 +1014,7 @@ function addStandardMacros()
 	 * <<textbox>>
 	 */
 	macros.add("textbox", {
-		version: { major: 1, minor: 0, revision: 0 },
+		version: { major: 1, minor: 1, revision: 0 },
 		handler: function ()
 		{
 			if (this.args.length === 0)
