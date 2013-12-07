@@ -55,7 +55,7 @@ function Macros()
 				Object.defineProperty(this.definitions, name, { writable: false });
 
 				/* legacy kludges */
-				this.definitions[name]["_macrosAPI"] = true;
+				this.definitions[name]["_USE_MACROS_API"] = true;
 				/* /legacy kludges */
 			}
 			catch (e)
@@ -331,7 +331,7 @@ function addStandardMacros()
 	 * <<back>> & <<return>>
 	 */
 	macros.add(["back", "return"], {
-		version: { major: 4, minor: 0, revision: 0 },
+		version: { major: 4, minor: 1, revision: 0 },
 		handler: function ()
 		{
 			var   steps = 1
@@ -388,14 +388,22 @@ function addStandardMacros()
 					{
 						return this.error('the "' + this.args[1] + '" passage does not exist');
 					}
-					for (var i = histLen - 1; i >= 0; i--)
+					if (this.name === "return")	// || config.disableHistoryTracking)	// allow <<back>> to work like <<return>> when config.disableHistoryTracking is enabled
 					{
-						if (state.history[i].title === this.args[1])
+						pname = this.args[1];
+						ltext += ' (to "' + pname + '")';
+					}
+					else
+					{
+						for (var i = histLen - 1; i >= 0; i--)
 						{
-							steps = (histLen - 1) - i;
-							pname = this.args[1];
-							ltext += ' (to "' + pname + '")';
-							break;
+							if (state.history[i].title === this.args[1])
+							{
+								steps = (histLen - 1) - i;
+								pname = this.args[1];
+								ltext += ' (to "' + pname + '")';
+								break;
+							}
 						}
 					}
 					if (pname === undefined)

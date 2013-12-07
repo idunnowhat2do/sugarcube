@@ -971,7 +971,7 @@ Wikifier.formatters =
 						var args = (!macro.hasOwnProperty("skipArgs") || !macro["skipArgs"]) ? macroArgs.readMacroParams() : [];
 
 						// new-style macros
-						if (macro.hasOwnProperty("_macrosAPI"))
+						if (macro.hasOwnProperty("_USE_MACROS_API"))
 						{
 							var   prevContext = this.context
 								, curContext  =	// setup the execution context object (should probably make a factory for this)

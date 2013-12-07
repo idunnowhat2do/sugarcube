@@ -165,12 +165,19 @@ History.prototype.display = function (title, link, render)
 	// create a fresh entry in the history
 	if (render !== "back")
 	{
-		if (config.historyMode === modes.sessionHistory && !this.isEmpty && window.history.state.sidx < this.top.sidx)
+		if (!this.isEmpty)
 		{
-			console.log("    > stacks out of sync; popping " + (this.top.sidx - window.history.state.sidx) + " states to equalize");
-			// stack ids are out of sync, pop our stack until we're back
-			// in sync with the window.history
-			this.pop(this.top.sidx - window.history.state.sidx);
+			if (config.disableHistoryTracking)
+			{
+				this.pop();
+			}
+			else if (config.historyMode === modes.sessionHistory && window.history.state.sidx < this.top.sidx)
+			{
+				console.log("    > stacks out of sync; popping " + (this.top.sidx - window.history.state.sidx) + " states to equalize");
+				// stack IDs are out of sync, pop our stack until we're back in
+				// sync with the window.history
+				this.pop(this.top.sidx - window.history.state.sidx);
+			}
 		}
 
 		this.push({ title: passage.title, variables: clone(this.active.variables, true) });

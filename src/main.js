@@ -7,65 +7,66 @@
 ***********************************************************************************************************************/
 var version =
 {
-	  title:      "SugarCube"
-	, major:      1
-	, minor:      0
-	, revision:   0
-	, build:      [($BUILD$)]
-	, date:       new Date([($DATE$)])
-	, extensions: {}
-	, toString:   function() { return this.title + " " + this.major + "." + this.minor + "." + this.revision + "." + this.build + " (" + this.date.toLocaleDateString() + ")"; }
+	  title      : "SugarCube"
+	, major      : 1
+	, minor      : 0
+	, revision   : 0
+	, build      : [($BUILD$)]
+	, date       : new Date([($DATE$)])
+	, extensions : {}
+	, toString   : function() { return this.title + " " + this.major + "." + this.minor + "." + this.revision + "." + this.build + " (" + this.date.toLocaleDateString() + ")"; }
 };
 
 var modes =		// SugarCube History class modes
 {
-	  hashTag:        1
-	, windowHistory:  2
-	, sessionHistory: 3
+	  hashTag        : 1
+	, windowHistory  : 2
+	, sessionHistory : 3
 };
 
 var config =	// SugarCube config
 {
 	// capability properties
-	  hasPushState:      ("history" in window) && ("pushState" in window.history)
+	  hasPushState      : ("history" in window) && ("pushState" in window.history)
 	  // the try/catch and length property access here is required due to a monumentally stupid
 	  // Firefox bug [ #748620; https://bugzilla.mozilla.org/show_bug.cgi?id=748620 ]
-	, hasLocalStorage:   ("localStorage" in window) && (function () { try { return window.localStorage != null && window.localStorage.length >= 0 } catch (e) { return false } }())	// use != to catch both null & undefined
-	, hasSessionStorage: ("sessionStorage" in window) && (function () { try { return window.sessionStorage != null && window.sessionStorage.length >= 0 } catch (e) { return false } }())	// use != to catch both null & undefined
-	, hasFileAPI:        window.File && window.FileReader && window.Blob
+	, hasLocalStorage   : ("localStorage" in window) && (function () { try { return window.localStorage != null && window.localStorage.length >= 0 } catch (e) { return false } }())	// use != to catch both null & undefined
+	, hasSessionStorage : ("sessionStorage" in window) && (function () { try { return window.sessionStorage != null && window.sessionStorage.length >= 0 } catch (e) { return false } }())	// use != to catch both null & undefined
+	, hasFileAPI        : window.File && window.FileReader && window.Blob
 
 	// basic browser detection
-	, userAgent: navigator.userAgent.toLowerCase()
-	, browser:   {}
+	, userAgent : navigator.userAgent.toLowerCase()
+	, browser   : {}
 
 	// general option properties
-	, displayPassageTitles: false
-	, loadDelay:            0
+	, displayPassageTitles : false
+	, loadDelay            : 0
 
 	// history option properties
-	, disableHistoryControls: false
-	, historyMode:            modes.hashTag
+	, disableHistoryControls : false
+	, disableHistoryTracking : false
+	, historyMode            : modes.hashTag
 
 	// saves option properties
 	, saves:
 		{
-			  autosave:  undefined
-			, id:        "untitled-story"
-			, isAllowed: undefined
-			, onLoad:    undefined
-			, onSave:    undefined
-			, slots:     8
+			  autosave  : undefined
+			, id        : "untitled-story"
+			, isAllowed : undefined
+			, onLoad    : undefined
+			, onSave    : undefined
+			, slots     : 8
 		}
 };
 config.browser =
 {
-	  isGecko:      (navigator && navigator.product === "Gecko" && config.userAgent.search(/webkit|trident/) === -1)
-	, isIE:         (config.userAgent.search(/msie|trident/) !== -1 && config.userAgent.indexOf("opera") === -1)
-	, ieVersion:    (function () { var ieVer = /(?:msie\s+|rv:)(\d{1,2}\.\d)/.exec(config.userAgent); return ieVer ? +ieVer[1] : 0; }())
+	  isGecko      : (navigator && navigator.product === "Gecko" && config.userAgent.search(/webkit|trident/) === -1)
+	, isIE         : (config.userAgent.search(/msie|trident/) !== -1 && config.userAgent.indexOf("opera") === -1)
+	, ieVersion    : (function () { var ieVer = /(?:msie\s+|rv:)(\d{1,2}\.\d)/.exec(config.userAgent); return ieVer ? +ieVer[1] : 0; }())
 	// opera <= 12: "opera/9.80 (windows nt 6.1; wow64) presto/2.12.388 version/12.16"
 	// opera >= 15: "mozilla/5.0 (windows nt 6.1; wow64) applewebkit/537.36 (khtml, like gecko) chrome/28.0.1500.52 safari/537.36 opr/15.0.1147.130"
-	, isOpera:      (config.userAgent.indexOf("opera") !== -1) || (config.userAgent.indexOf(" opr/") !== -1)
-	, operaVersion: (function () { var re = new RegExp((/applewebkit|chrome/.test(config.userAgent) ? "opr" : "version") + "\\/(\\d{1,2}\\.\\d+)"), oprVer = re.exec(config.userAgent); return oprVer ? +oprVer[1] : 0; }())
+	, isOpera      : (config.userAgent.indexOf("opera") !== -1) || (config.userAgent.indexOf(" opr/") !== -1)
+	, operaVersion : (function () { var re = new RegExp((/applewebkit|chrome/.test(config.userAgent) ? "opr" : "version") + "\\/(\\d{1,2}\\.\\d+)"), oprVer = re.exec(config.userAgent); return oprVer ? +oprVer[1] : 0; }())
 };
 config.historyMode = (config.hasPushState ? (config.browser.isGecko ? modes.sessionHistory : modes.windowHistory) : modes.hashTag);
 
@@ -207,6 +208,13 @@ $(document).ready(function ()
 		{
 			window.alert("There is a technical problem with this story (StoryInit: " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
 		}
+	}
+
+	// finalize the config.disableHistoryControls setting before initializing our state
+	//   n.b. we do this here to give the author every opportunity to modify config.disableHistoryTracking during setup
+	if (config.disableHistoryTracking)
+	{
+		config.disableHistoryControls = true;
 	}
 
 	// initialize our state
