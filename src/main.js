@@ -130,20 +130,6 @@ $(document).ready(function ()
 		document.getElementById("menu-story").style.display = "block";
 		setPageElement("menu-story", "MenuStory");
 	}
-	if (tale.has("MenuOptions"))
-	{
-		if (tale.get("MenuOptions").text.trim() !== "")
-		{
-			document.getElementById("menu-options").style.display = "block";
-		}
-	}
-	if (tale.has("MenuShare"))
-	{
-		if (tale.get("MenuShare").text.trim() !== "")
-		{
-			document.getElementById("menu-share").style.display = "block";
-		}
-	}
 
 	// setup for story stylesheets & scripts (order: stylesheets, scripts, widgets)
 	var styles = tale.lookup("tags", "stylesheet");
@@ -580,25 +566,61 @@ var UISystem =
 	{
 		console.log("[UISystem.init()]");
 
+		var   html   = $(document.documentElement)
+			, target;
+
 		// add menu containers to <body>
 		insertElement(document.body, "div", "ui-overlay");
 		insertElement(document.body, "div", "ui-body");
 
-		// setup click handlers
-		UISystem.addClickHandler("#menu-saves",   null, function () { UISystem.buildSaves(); });
-		UISystem.addClickHandler("#menu-rewind",  null, function () { UISystem.buildRewind(); });
-		UISystem.addClickHandler("#menu-restart", null, function () { UISystem.buildRestart(); });
-		UISystem.addClickHandler("#menu-options", null, function () { UISystem.buildOptions(); });
-		UISystem.addClickHandler("#menu-share",   null, function () { UISystem.buildShare(); });
+		// setup Save menu
+		UISystem.addClickHandler("#menu-saves", null, function () { UISystem.buildSaves(); });
 
-		// disable the loading screen
+		// setup Rewind menu
+		target = $("#menu-rewind");
+		if (!config.disableHistoryTracking && tale.lookup("tags", "bookmark").length > 0)
+		{
+			target.css({ display: "block" });
+			UISystem.addClickHandler(target.find("a"), null, function () { UISystem.buildRewind(); });
+		}
+		else
+		{
+			target.remove();
+		}
+
+		// setup Restart menu
+		UISystem.addClickHandler("#menu-restart", null, function () { UISystem.buildRestart(); });
+
+		// setup Options menu
+		target = $("#menu-options");
+		if (tale.has("MenuOptions") && tale.get("MenuOptions").text.trim() !== "")
+		{
+			target.css({ display: "block" });
+			UISystem.addClickHandler(target.find("a"), null, function () { UISystem.buildOptions(); });
+		}
+		else
+		{
+			target.remove();
+		}
+
+		// setup Share menu
+		target = $("#menu-share");
+		if (tale.has("MenuShare") && tale.get("MenuShare").text.trim() !== "")
+		{
+			target.css({ display: "block" });
+			UISystem.addClickHandler(target.find("a"), null, function () { UISystem.buildShare(); });
+		}
+		else
+		{
+			target.remove();
+		}
+
+		// handle the loading screen
 		if (document.readyState === "complete")
 		{
-			$(document.documentElement).removeClass("loading");
+			html.removeClass("loading");
 		}
 		document.addEventListener("readystatechange", function () {
-			var html = $(document.documentElement);
-
 			console.log("**** document.readyState: " + document.readyState + "  (on: readystatechange)");
 			// readyState can be: "loading", "interactive", or "complete"
 			if (document.readyState === "complete")

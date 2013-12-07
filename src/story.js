@@ -840,7 +840,8 @@ Tale.prototype.get = function (key)
 	return;	//FIXME: should this return null instead of undefined?
 };
 
-Tale.prototype.lookup = function (key, value, sortKey) {
+Tale.prototype.lookup = function (key, value, sortKey)
+{
 	var results = [];
 	if (!sortKey) { sortKey = "title"; }
 
