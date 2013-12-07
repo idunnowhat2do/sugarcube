@@ -714,7 +714,7 @@ Passage.getExcerptFromNode = function (node, count)
 		return output;
 	}
 
-	var   excerptRe = new RegExp("(\\S+(?:\\s+\\S+){0," + (typeof count != 'undefined' ? count - 1 : 7) + "})")
+	var   excerptRe = new RegExp("(\\S+(?:\\s+\\S+){0," + (typeof count !== 'undefined' ? count - 1 : 7) + "})")
 		, excerpt   = getTextFromNode(node).trim();
 
 	if (excerpt)
@@ -776,12 +776,21 @@ Passage.mergeClassNames = function (/* variadic */)
 ***********************************************************************************************************************/
 function Tale()
 {
+	console.log("[Tale()]");
+
 	this.passages = {};
+	/*
+	// Why are we normalizing the entire document?  Better question, why are we
+	// normalizing the story content store at all?  It, literally, cannot be in
+	// a denormalized state to begin with.  Denormalization only occurs with
+	// dynamically created content, when empty or adjacent text nodes are created.
 	if (document.normalize)
 	{
 		document.normalize();
 	}
+	*/
 	var store = document.getElementById("store-area").childNodes;
+
 	for (var i = 0; i < store.length; i++)
 	{
 		var el = store[i];
@@ -842,8 +851,8 @@ Tale.prototype.get = function (key)
 
 Tale.prototype.lookup = function (key, value, sortKey)
 {
-	var results = [];
 	if (!sortKey) { sortKey = "title"; }
+	var results = [];
 
 	for (var pname in this.passages)
 	{
