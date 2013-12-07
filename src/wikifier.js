@@ -140,9 +140,13 @@ function Wikifier(place, source)
 	this.source    = source;
 	this.output    = place;
 	this.nextMatch = 0;
-	this.formatter = formatter;	// formatter comes from the top-level scope
+	this.formatter = formatter;	// formatter comes from the top-level scope of the module
 
 	this.subWikify(this.output);
+	if (typeof this.output.normalize === "function")
+	{
+		this.output.normalize();
+	}
 }
 
 Wikifier.prototype.subWikify = function (output, terminator)
