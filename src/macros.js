@@ -544,10 +544,10 @@ function addStandardMacros()
 	 * <<link>>
 	 */
 	macros.add("link", {
-		version: { major: 3, minor: 0, revision: 0 },
+		version: { major: 3, minor: 1, revision: 0 },
 		handler: function ()
 		{
-			function createInternalLink(passage, text)
+			function createInternalLink(passage, text, setFn)
 			{
 				var el = insertPassageLink(this.output, passage, text, "link-" + this.name);
 				$(el).click(function ()
@@ -556,6 +556,7 @@ function addStandardMacros()
 					{
 						state.active.variables["#link"][passage] = true;
 					}
+					if (typeof setFn === "function") { setFn(); }
 					state.display(passage, el);
 				});
 				return el;
@@ -576,6 +577,7 @@ function addStandardMacros()
 			var   argCount
 				, linkText
 				, linkLoc
+				, setFn
 				, onceType;
 
 			if (this.args.length === 3)
@@ -603,6 +605,7 @@ function addStandardMacros()
 				{	// argument was in wiki link syntax
 					linkText = this.args[0].text;
 					linkLoc  = this.args[0].link;
+					setFn    = this.args[0].setFn;
 					argCount = this.args[0].count;
 				}
 				else
@@ -630,13 +633,13 @@ function addStandardMacros()
 
 			if (argCount === 1)
 			{
-				createInternalLink.call(this, linkLoc, linkText);
+				createInternalLink.call(this, linkLoc, linkText, setFn);
 			}
 			else	// argCount === 2
 			{
 				if (tale.has(linkLoc))
 				{
-					createInternalLink.call(this, linkLoc, linkText);
+					createInternalLink.call(this, linkLoc, linkText, setFn);
 				}
 				else
 				{
@@ -680,11 +683,11 @@ function addStandardMacros()
 			passage = tale.get(passage);
 			if (this.args[1])
 			{
-				new Wikifier(insertElement(this.output, this.args[1], null, passage.domId), passage.text);
+				new Wikifier(insertElement(this.output, this.args[1], null, passage.domId), passage.processText());
 			}
 			else
 			{
-				new Wikifier(this.output, passage.text);
+				new Wikifier(this.output, passage.processText());
 			}
 		}
 	});

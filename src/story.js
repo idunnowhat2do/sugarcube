@@ -542,15 +542,16 @@ function Passage(title, el, order)
 			if (this.tags.length > 0)
 			{
 				// tags to skip transforming into classes
-				//     "passage"      : the default class
-				//     "stylesheet"   : special tag
-				//     "script"       : special tag
-				//     "widget"       : special tag
 				//     "debug"        : special tag
+				//     "nobr"         : special tag
+				//     "passage"      : the default class
+				//     "script"       : special tag
+				//     "stylesheet"   : special tag
+				//     "widget"       : special tag
 				//     "twine.*"      : special tag (in theory, anyway)
 				//   ? "twinequest.*" : private use tag
 				//   ? "tq.*"         : private use tag, AFAIK shorthand form of twinequest.*
-				var tagsToSkip = /^(?:passage|stylesheet|script|widget|debug|twine\.\w*)$/i;
+				var tagsToSkip = /^(?:debug|nobr|passage|script|stylesheet|widget|twine\.\w*)$/i;
 
 				var tagClasses = [];
 				for (var i = 0; i < this.tags.length; i++)
@@ -591,6 +592,17 @@ function Passage(title, el, order)
 	}
 }
 
+Passage.prototype.processText = function ()
+{
+	var res = this.text;
+
+	if (this.tags.indexOf("nobr") !== -1)
+	{
+		res = res.replace(/\n/g, "");	// maybe use zero-width-space or zero-width-non-joiner?
+	}
+	return res;
+};
+
 Passage.prototype.render = function ()
 {
 	console.log("[<Passage>.render()]");
@@ -610,7 +622,7 @@ Passage.prototype.render = function ()
 
 	// add passage content element
 	var content = insertElement(passage, "div", null, "content");
-	new Wikifier(content, this.text);
+	new Wikifier(content, this.processText());
 
 	// add passage footer element
 	insertElement(passage, "footer", null, "footer");
