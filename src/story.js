@@ -779,16 +779,11 @@ function Tale()
 	console.log("[Tale()]");
 
 	this.passages = {};
-	/*
-	// Why are we normalizing the entire document?  Better question, why are we
-	// normalizing the story content store at all?  It, literally, cannot be in
-	// a denormalized state to begin with.  Denormalization only occurs with
-	// dynamically created content, when empty or adjacent text nodes are created.
+	// Chrome breaks some data URLs if you don't normalize
 	if (document.normalize)
 	{
 		document.normalize();
 	}
-	*/
 	var store = document.getElementById("store-area").childNodes;
 
 	for (var i = 0; i < store.length; i++)
