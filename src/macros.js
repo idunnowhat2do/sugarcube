@@ -153,7 +153,7 @@ function Macros()
 			}
 			catch (e)
 			{
-				return throwError(output, "<<" + name + ">>: bad expression: " + e.message);
+				return output ? throwError(output, "<<" + name + ">>: bad expression: " + e.message) : false;
 			}
 		},
 		registerTags: function (parent, bodyTags)
@@ -282,7 +282,7 @@ function addStandardMacros()
 	 * <<actions>>
 	 */
 	macros.add("actions", {
-		version: { major: 2, minor: 0, revision: 0 },
+		version: { major: 2, minor: 1, revision: 0 },
 		handler: function ()
 		{
 			var list = insertElement(this.output, "ul");
@@ -294,12 +294,14 @@ function addStandardMacros()
 			for (var i = 0; i < this.args.length; i++)
 			{
 				var   linkText
-					, passage;
+					, passage
+					, setFn;
 
 				if (typeof this.args[i] === "object")
 				{	// argument was in wiki link syntax
 					linkText = this.args[i].text;
 					passage  = this.args[i].link;
+					setFn    = this.args[i].setFn;
 				}
 				else
 				{	// argument was simply the passage name
@@ -313,16 +315,14 @@ function addStandardMacros()
 
 				var link = insertPassageLink(insertElement(list, "li"), passage, linkText);
 				link.classList.add("link-" + this.name);
-				$(link).click(function ()
-				{
-					var   p = passage
-						, l = link;
+				$(link).click(function (p, l, fn) {
 					return function ()
 					{
+						if (typeof fn === "function") { fn(); }
 						state.active.variables["#actions"][p] = true;
 						state.display(p, l);
 					};
-				}());
+				}(passage, link, setFn));
 			}
 		}
 	});
@@ -497,10 +497,10 @@ function addStandardMacros()
 	}, true);
 
 	/**
-	 * <<choice>> (only for compatibility with Jonah)
+	 * <<choice>>
 	 */
 	macros.add("choice", {
-		version: { major: 3, minor: 0, revision: 0 },
+		version: { major: 3, minor: 1, revision: 0 },
 		handler: function ()
 		{
 			if (this.args.length === 0)
@@ -509,7 +509,8 @@ function addStandardMacros()
 			}
 
 			var   linkText
-				, passage;
+				, passage
+				, setFn;
 
 			if (this.args.length === 1)
 			{
@@ -517,6 +518,7 @@ function addStandardMacros()
 				{	// argument was in wiki link syntax
 					linkText = this.args[0].text;
 					passage  = this.args[0].link;
+					setFn    = this.args[0].setFn;
 				}
 				else
 				{	// argument was simply the passage name
@@ -532,6 +534,7 @@ function addStandardMacros()
 			var el = insertPassageLink(this.output, passage, linkText, "link-" + this.name);
 			$(el).click(function ()
 			{
+				if (typeof setFn === "function") { setFn(); }
 				state.display(passage, el);
 			});
 		}

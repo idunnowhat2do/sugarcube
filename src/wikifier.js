@@ -12,7 +12,8 @@
 String.prototype.readMacroParams = function ()
 {
 	// RegExp groups: Double quoted | Single quoted | Empty quotes | Double square-bracketed | Barewords
-	var   re     = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\')|[^'])+)')|((?:\"\")|(?:''))|(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^\"'\\s]\\S*))", "gm")
+	//var   re     = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\')|[^'])+)')|((?:\"\")|(?:''))|(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^\"'\\s]\\S*))", "gm")
+	var   re     = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\')|[^'])+)')|((?:\"\")|(?:''))|(?:(\\[\\[((?:\\s|\\S)*?)\\](?:\\[\\s*(.+?)\\s*\\])?\\]))|([^\"'\\s]\\S*))", "gm")
 		, match
 		, params = [];
 
@@ -32,18 +33,29 @@ String.prototype.readMacroParams = function ()
 		// Double square-bracketed
 		else if (match[4])
 		{
-			n = match[4];
+			n = match[5].trim();
 
 			// Convert to an object
 			var delim = n.indexOf("|");
 			if (delim === -1)
 			{
-				n = { "count": 1, "link": n, "text": n };
+				n = {
+					  count : 1
+					, link  : n
+					, text  : n
+				};
 			}
 			else
 			{
-				n = { "count": 2, "link": n.slice(delim + 1), "text": n.slice(0, delim) };
+				n = {
+					  count : 2
+					, link  : n.slice(delim + 1).ltrim()
+					, text  : n.slice(0, delim).rtrim()
+				};
 			}
+			n.setFn = match[6]
+				? function (ex) { return function () { macros.eval(ex, null, null); }; }(Wikifier.parse(match[6]))
+				: null;
 
 			// Check for $variables
 			for (var propName in n)
@@ -57,9 +69,9 @@ String.prototype.readMacroParams = function ()
 		}
 
 		// Barewords
-		else if (match[5])
+		else if (match[7])
 		{
-			n = match[5];
+			n = match[7];
 
 			// $variable, so substitute its value
 			if (/\$\w+/.test(n))
@@ -842,7 +854,7 @@ Wikifier.formatters =
 	name: "prettyLink",
 	match: "\\[\\[",
 	//lookaheadRegExp: /\[\[\s*([^\|\]]+?)(?:\s*\|\s*(.+?))?\s*\]\]/gm,
-	lookaheadRegExp: /\[\[\s*(.+?)(?:\s*\|\s*(.+?))?\s*\]\]/gm,
+	lookaheadRegExp: /\[\[\s*(.+?)(?:\s*\|\s*(.+?))?\s*\](?:\[\s*(.+?)\s*\])?\]/gm,
 	handler: function (w)
 	{
 		this.lookaheadRegExp.lastIndex = w.matchStart;
@@ -851,13 +863,16 @@ Wikifier.formatters =
 		{
 			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 
-			var text = lookaheadMatch[1][0] === "$" ? Wikifier.getValue(lookaheadMatch[1]) : lookaheadMatch[1];
+			var   text  = lookaheadMatch[1][0] === "$" ? Wikifier.getValue(lookaheadMatch[1]) : lookaheadMatch[1]
+				, setFn = lookaheadMatch[3]
+					? function (ex) { return function () { macros.eval(ex, null, null); }; }(Wikifier.parse(lookaheadMatch[3]))
+					: null;
 			if (lookaheadMatch[2])
 			{
 				var link = lookaheadMatch[2][0] === "$" ? Wikifier.getValue(lookaheadMatch[2]) : lookaheadMatch[2];
 				if (tale.has(link))
 				{
-					Wikifier.createInternalLink(w.output, link, text);
+					Wikifier.createInternalLink(w.output, link, text, setFn);
 				}
 				else
 				{
@@ -866,7 +881,7 @@ Wikifier.formatters =
 			}
 			else
 			{
-				Wikifier.createInternalLink(w.output, text, text);
+				Wikifier.createInternalLink(w.output, text, text, setFn);
 			}
 		}
 	}
@@ -886,7 +901,7 @@ Wikifier.formatters =
 	name: "image",
 	match: "\\[[<>]?[Ii][Mm][Gg]\\[",
 	//lookaheadRegExp: /\[([<]?)([>]?)[Ii][Mm][Gg]\[\s*(?:([^\|\]]+?)\s*\|\s*)?([^\[\]\|]+?)\s*\](?:\[\s*([^\]]+?)\s*\])?\]/gm,
-	lookaheadRegExp: /\[([<]?)([>]?)[Ii][Mm][Gg]\[\s*(?:(.+?)\s*\|\s*)?([^\|]+?)\s*\](?:\[\s*(.+?)\s*\])?\]/gm,
+	lookaheadRegExp: /\[([<]?)([>]?)[Ii][Mm][Gg]\[\s*(?:(.+?)\s*\|\s*)?([^\|]+?)\s*\](?:\[\s*(.+?)\s*\])?(?:\[\s*(.+?)\s*\])?\]/gm,
 	handler: function (w)
 	{
 		this.lookaheadRegExp.lastIndex = w.matchStart;
@@ -895,13 +910,17 @@ Wikifier.formatters =
 		{
 			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 
-			var el = w.output;
+			var   el    = w.output
+				, setFn = lookaheadMatch[6]
+					? function (ex) { return function () { macros.eval(ex, null, null); }; }(Wikifier.parse(lookaheadMatch[6]))
+					: null;
+
 			if (lookaheadMatch[5])
 			{
 				var link = lookaheadMatch[5][0] === "$" ? Wikifier.getValue(lookaheadMatch[5]) : lookaheadMatch[5];
 				if (tale.has(link))
 				{
-					el = Wikifier.createInternalLink(el, link);
+					el = Wikifier.createInternalLink(el, link, null, setFn);
 				}
 				else
 				{
@@ -1406,12 +1425,13 @@ Wikifier.formatters =
 
 ];	// End formatters
 
-Wikifier.createInternalLink = function (place, passage, text)
+Wikifier.createInternalLink = function (place, passage, text, callback)
 {
 	var el = insertPassageLink(place, passage, text);
 	if (typeof passage !== "undefined")	// 0 is a valid ID and name, so we have to type check
 	{
 		$(el).click(function () {
+			if (typeof callback === "function") { callback(); }
 			state.display(passage, el);
 		});
 	}
