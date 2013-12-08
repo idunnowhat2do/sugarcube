@@ -7,7 +7,7 @@
 #
 #     Author   :  Thomas Michael Edwards <tmedwards@motoslave.net>
 #     Copyright:  Copyright © 2013 Thomas Michael Edwards. All rights reserved.
-#     Version  :  r17, 2013-11-25
+#     Version  :  r18, 2013-12-08
 #
 ################################################################################
 
@@ -35,14 +35,15 @@ $| = 1;										# set autoflush
 # globals
 my %CONFIG		=
 (
-	'template'	=> 'src/header.tmpl',
-	'js'		=> ['src/polyfills.js', 'src/utility.js', 'src/main.js', 'src/story.js', 'src/wikifier.js', 'src/macros.js'],
-	'css'		=> 'src/styles.css',
-	'build'		=> '.build'
+	  'build'     => '.build'
+	, 'templates' =>
+		{
+			  'src/header-1.3.tmpl' => 'dist/1.3/header.html'
+			, 'src/header-1.4.tmpl' => 'dist/1.4/header.html'
+		}
+	, 'js'        => [ 'src/polyfills.js', 'src/utility.js', 'src/main.js', 'src/story.js', 'src/wikifier.js', 'src/macros.js' ]
+	, 'css'       => 'src/styles.css'
 );
-my $outfile		= 'dist/header.html';
-my $outdir;
-my $outfh;
 
 # prototypes
 
@@ -56,11 +57,9 @@ my $outfh;
 sub usage(;$)
 {
 	my $verbose	= shift();
-	my $short	= 'Usage: makeSugarCube.pl [options] [outfile]';
+	my $short	= 'Usage: makeSugarCube.pl [options]';
 	my $long	= << "END_LONG";
 $short
-
-  outfile                   Optional output file name.
 
 Options:
   -d, --debug               Keep debugging code; implies -u.
@@ -78,13 +77,11 @@ my $opt_debug			= 0;
 my $opt_minify			= 1;
 GetOptions
 (
-	'debug'				=> sub { $opt_debug = 1, $opt_minify = 0 },
-	'unminified'		=> sub { $opt_minify = 0 },
-	'help|?'			=> sub { usage(1) },
+	'debug'      => sub { $opt_debug = 1, $opt_minify = 0 },
+	'unminified' => sub { $opt_minify = 0 },
+	'help|?'     => sub { usage(1) },
 ) or exit(1);
-usage(0) if (@ARGV > 1);
-chomp($outfile = shift(@ARGV)) if (@ARGV == 1);	# get the output file name, if one was supplied
-($_, $outdir, $_) = fileparse($outfile);
+usage(0) if (@ARGV != 0);
 
 
 ################################################################################
@@ -105,12 +102,6 @@ close($infh);
 
 # get the build date
 my $date = strftime("\"%a, %d %b %Y\"", gmtime());
-
-# load the header template
-open($infh, '<:encoding(UTF-8)', $CONFIG{'template'})	# auto decode on read
-	or die("error: cannot open header template (\"$CONFIG{'template'}\") for reading\n");
-my $template = do { local $/; <$infh> };
-close($infh);
 
 # load and combine the scripts
 my $scripts = '';
@@ -145,11 +136,11 @@ if ($opt_minify)
 
 	my $pipecmd = join ' ',
 	(
-		'closure.pl',
-		'-w',
-		#'-c UTF-8',
-		'-o -',
-		'"'.$tmpfile.'"'
+		  'closure.pl'
+		, '-w',
+		#, '-c UTF-8'
+		, '-o -'
+		, '"'.$tmpfile.'"'
 	);
 	open($infh, '-|:encoding(UTF-8)', $pipecmd)	# auto decode on read
 		or die("error: cannot open scripts pipe from closure.pl for reading\n");
@@ -171,7 +162,7 @@ if (!$opt_debug)
 {
 	# wrap the scripts in an anonymous function
 	$scripts =
-		';(function () {'
+		  ';(function () {'
 		. ($opt_minify ? $scripts : "\n" . $scripts . "\n")
 		. '}());';
 }
@@ -182,17 +173,32 @@ open($infh, '<:encoding(UTF-8)', $CONFIG{'css'})	# auto decode on read
 my $styles = do { local $/; <$infh> };
 close($infh);
 
-# process the header template
-$template =~ s/\[\(\$BUILD\$\)\]/$build/g;
-$template =~ s/\[\(\$SCRIPTS\$\)\]/$scripts/g;
-$template =~ s/\[\(\$STYLES\$\)\]/$styles/g;
+# process the header templates and write the outfiles
+foreach my $tplname (keys $CONFIG{'templates'})
+{
+	my $outfile = $CONFIG{'templates'}{$tplname};
+	my $outdir;
+	my $outfh;
+	($_, $outdir, $_) = fileparse($outfile);
 
-# write the outfile
-make_path($outdir) if (!-d $outdir);
-open($outfh, '>:encoding(UTF-8)', $outfile)	# auto encode on write
-	or die("error: cannot open output file (\"$outfile\") for writing\n");
-print $outfh $template;
-close($outfh);
+	# load the header template
+	open($infh, '<:encoding(UTF-8)', $tplname)	# auto decode on read
+		or die("error: cannot open header template (\"$tplname\") for reading\n");
+	my $template = do { local $/; <$infh> };
+	close($infh);
+
+	# process the header template
+	$template =~ s/\[\(\$BUILD\$\)\]/$build/g;
+	$template =~ s/\[\(\$SCRIPTS\$\)\]/$scripts/g;
+	$template =~ s/\[\(\$STYLES\$\)\]/$styles/g;
+
+	# write the outfile
+	make_path($outdir) if (!-d $outdir);
+	open($outfh, '>:encoding(UTF-8)', $outfile)	# auto encode on write
+		or die("error: cannot open output file (\"$outfile\") for writing\n");
+	print $outfh $template;
+	close($outfh);
+}
 
 
 ################################################################################
