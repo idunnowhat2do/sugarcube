@@ -600,6 +600,11 @@ Passage.prototype.processText = function ()
 	{
 		res = res.replace(/\n/g, "");	// maybe use zero-width-space or zero-width-non-joiner?
 	}
+	// check for Twine 1.4 Base64 image passage transclusion
+	if (this.tags.indexOf("Twine.image") !== -1)
+	{
+		res = "[img[" + res + "]]";
+	}
 	return res;
 };
 
@@ -621,7 +626,7 @@ Passage.prototype.render = function ()
 	insertElement(passage, "header", null, "header");
 
 	// add passage content element
-	var content = insertElement(passage, "div", null, "content");
+	var content = insertElement(passage, "div", null, "body content");
 	new Wikifier(content, this.processText());
 
 	// add passage footer element
@@ -865,12 +870,28 @@ Tale.prototype.lookup = function (key, value, sortKey)
 	{
 		var passage = this.passages[pname];
 
-		for (var i = 0; i < passage[key].length; i++)
+		switch (typeof passage[key])
 		{
-			if (passage[key][i] == value)
+		case "undefined":
+			/* noop */
+			break;
+		case "object":
+			// currently, we assume that the only properties which are objects
+			// will be either arrays or array-like-objects
+			for (var i = 0; i < passage[key].length; i++)
+			{
+				if (passage[key][i] == value)	// use lazy equality
+				{
+					results.push(passage);
+				}
+			}
+			break;
+		default:
+			if (passage[key] == value)	// use lazy equality
 			{
 				results.push(passage);
 			}
+			break;
 		}
 	}
 
