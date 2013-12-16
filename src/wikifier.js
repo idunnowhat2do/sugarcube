@@ -136,12 +136,14 @@ String.prototype.unDash = function ()
 function WikiFormatter(formatters)
 {
 	this.formatters = [];
+	this.byName     = {};
 	var pattern     = [];
 
 	for (var i = 0; i < formatters.length; i++)
 	{
 		pattern.push("(" + formatters[i].match + ")");
 		this.formatters.push(formatters[i]);
+		this.byName[formatters[i].name] = this.formatters[this.formatters.length - 1];
 	}
 
 	this.formatterRegExp = new RegExp(pattern.join("|"), "gm");
@@ -910,10 +912,11 @@ Wikifier.formatters =
 		{
 			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 
-			var   el    = w.output
-				, setFn = lookaheadMatch[6]
+			var   el     = w.output
+				, setFn  = lookaheadMatch[6]
 					? function (ex) { return function () { macros.eval(ex, null, null); }; }(Wikifier.parse(lookaheadMatch[6]))
-					: null;
+					: null
+				, source;
 
 			if (lookaheadMatch[5])
 			{
@@ -929,7 +932,17 @@ Wikifier.formatters =
 				el.classList.add("link-image");
 			}
 			el = insertElement(el, "img");
-			el.src = lookaheadMatch[4][0] === "$" ? Wikifier.getValue(lookaheadMatch[4]) : lookaheadMatch[4];
+			source = lookaheadMatch[4][0] === "$" ? Wikifier.getValue(lookaheadMatch[4]) : lookaheadMatch[4];
+			// check for Twine 1.4 Base64 image passage transclusion
+			if (source.slice(0, 5) !== "data:" && tale.has(source))
+			{
+				var passage = tale.get(source);
+				if (passage.tags.indexOf("Twine.image") !== -1)
+				{
+					source = passage.text;
+				}
+			}
+			el.src = source;
 			if (lookaheadMatch[3])
 			{
 				el.title = lookaheadMatch[3][0] === "$" ? Wikifier.getValue(lookaheadMatch[3]) : lookaheadMatch[3];
