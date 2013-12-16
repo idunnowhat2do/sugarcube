@@ -324,6 +324,26 @@ function addStyle(css)
 	var style = document.createElement("style");
 	style.type = "text/css";
 
+	// check for Twine 1.4 Base64 image passage transclusion
+	if (formatter.byName["image"].lookaheadRegExp.test(css))
+	{
+		css = css.replace(
+			  formatter.byName["image"].lookaheadRegExp
+			, function(match, left, right, title, source)
+				{
+					if (source.slice(0, 5) !== "data:" && tale.has(source))
+					{
+						var passage = tale.get(source);
+						if (passage.tags.indexOf("Twine.image") !== -1)
+						{
+							source = passage.text;
+						}
+					}
+					return "url(" + source + ")";
+				}
+		);
+	}
+
 	// for IE
 	if (style.styleSheet)
 	{
