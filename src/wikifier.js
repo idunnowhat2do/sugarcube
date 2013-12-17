@@ -467,25 +467,70 @@ Wikifier.wikifyEval = function (text)
 	}
 }
 
-Wikifier.textPrimitives =
+/**
+ * Create and return an internal link
+ */
+Wikifier.createInternalLink = function (place, passage, text, callback)
 {
-	//anyDigit:      "[0-9]",
-	//anyNumberChar: "[0-9\\.E]",
-	urlPattern:    "(?:file|https?|mailto|ftp|irc|news|data):[^\\s'\"]+(?:/|\\b)"
+	var el = insertPassageLink(place, passage, text);
+	if (typeof passage !== "undefined")	// 0 is a valid ID and name, so we have to type check
+	{
+		$(el).click(function () {
+			if (typeof callback === "function") { callback(); }
+			state.display(passage, el);
+		});
+	}
+	return el;
 };
-if (!((new RegExp("[\u0150\u0170]", "g")).test("\u0150")))
+
+/**
+ * Create and return an external link
+ */
+Wikifier.createExternalLink = function (place, url, text)
 {
-	//Wikifier.textPrimitives.upperLetter = "[A-Z\u00c0-\u00de]";
-	//Wikifier.textPrimitives.lowerLetter = "[a-z\u00df-\u00ff_0-9\\-]";
-	Wikifier.textPrimitives.anyLetter = "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-]";
+	var el = insertElement(place, "a", null, "link-external", text);
+	if (url)
+	{
+		el.href = url;
+	}
+	el.target = "_blank";
+	return el;
+};
+
+/**
+ * Setup the basic text primitives (regular expressions)
+ */
+if (!((new RegExp("[\u0150\u0170]","g")).test("\u0150")))
+{
+	Wikifier.textPrimitives =
+	{
+		/*
+		  upperLetter     : "[A-Z\u00c0-\u00de]"
+		, lowerLetter     : "[a-z0-9_\\-\u00df-\u00ff]"
+		, anyLetter       : "[A-Za-z0-9_\\-\u00c0-\u00de\u00df-\u00ff]"
+		, anyLetterStrict : "[A-Za-z0-9\u00c0-\u00de\u00df-\u00ff]"
+		*/
+		anyLetter: "[A-Za-z0-9_\\-\u00c0-\u00de\u00df-\u00ff]"
+	};
 }
 else
 {
-	//Wikifier.textPrimitives.upperLetter = "[A-Z\u00c0-\u00de\u0150\u0170]";
-	//Wikifier.textPrimitives.lowerLetter = "[a-z\u00df-\u00ff_0-9\\-\u0151\u0171]";
-	Wikifier.textPrimitives.anyLetter = "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-\u0150\u0170\u0151\u0171]";
-};
+	Wikifier.textPrimitives =
+	{
+		/*
+		  upperLetter     : "[A-Z\u00c0-\u00de\u0150\u0170]"
+		, lowerLetter     : "[a-z0-9_\\-\u00df-\u00ff\u0151\u0171]"
+		, anyLetter       : "[A-Za-z0-9_\\-\u00c0-\u00de\u00df-\u00ff\u0150\u0170\u0151\u0171]"
+		, anyLetterStrict : "[A-Za-z0-9\u00c0-\u00de\u00df-\u00ff\u0150\u0170\u0151\u0171]"
+		*/
+		anyLetter: "[A-Za-z0-9_\\-\u00c0-\u00de\u00df-\u00ff\u0150\u0170\u0151\u0171]"
+	};
+}
+Wikifier.textPrimitives.urlPattern = "(?:file|https?|mailto|ftp|javascript|irc|news|data):[^\\s'\"]+(?:/|\\b)";
 
+/**
+ * Setup helper functions for the formatters
+ */
 Wikifier.formatterHelpers =
 {
 	charFormatHelper: function (w)
@@ -562,6 +607,9 @@ Wikifier.formatterHelpers =
 	}
 };
 
+/**
+ * Setup the wiki formatters
+ */
 Wikifier.formatters =
 [	// Begin formatters
 
@@ -1465,30 +1513,6 @@ Wikifier.formatters =
 }
 
 ];	// End formatters
-
-Wikifier.createInternalLink = function (place, passage, text, callback)
-{
-	var el = insertPassageLink(place, passage, text);
-	if (typeof passage !== "undefined")	// 0 is a valid ID and name, so we have to type check
-	{
-		$(el).click(function () {
-			if (typeof callback === "function") { callback(); }
-			state.display(passage, el);
-		});
-	}
-	return el;
-};
-
-Wikifier.createExternalLink = function (place, url, text)
-{
-	var el = insertElement(place, "a", null, "link-external", text);
-	if (url)
-	{
-		el.href = url;
-	}
-	el.target = "_blank";
-	return el;
-};
 
 
 /***********************************************************************************************************************
