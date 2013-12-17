@@ -631,20 +631,13 @@ function addStandardMacros()
 				}
 			}
 
-			if (argCount === 1)
+			if (argCount === 1 || !Wikifier.formatterHelpers.isExternalLink(linkLoc))
 			{
 				createInternalLink.call(this, linkLoc, linkText, setFn);
 			}
-			else	// argCount === 2
+			else
 			{
-				if (tale.has(linkLoc))
-				{
-					createInternalLink.call(this, linkLoc, linkText, setFn);
-				}
-				else
-				{
-					createExternalLink.call(this, linkLoc, linkText);
-				}
+				createExternalLink.call(this, linkLoc, linkText);
 			}
 		}
 	});
