@@ -1470,7 +1470,7 @@ Wikifier.formatters =
 },
 
 {	// n.b. This formatter MUST come after any formatter which handles HTML tag-like constructs (e.g. html & rawText)
-	name: "rawHtmlTags",
+	name: "htmlTag",
 	match: "<\\w+(?:\\s+[^\\u0000-\\u001F\\u007F-\\u009F\\s\"'>\\/=]+(?:\\s*=\\s*(?:\"[^\"]+\"|'[^']+'|[^\\s\"'=<>`]+))?)*\\s*\\/?>",
 	tagPattern: "<(\\w+)",
 	voidElements: [ "area", "base", "br", "col", "embed", "hr", "img", "input", "keygen", "link", "menuitem", "meta", "param", "source", "track", "wbr" ],
