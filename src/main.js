@@ -79,6 +79,8 @@ var   formatter = null	// Wikifier formatters
 	, options   = {}	// options variable store
 	, setup     = {};	// author setup variable store
 
+var twineTestPlay;	// Twine 1.4+ "Test Play From Here" feature variable
+
 /**
  * Main function, entry point for story startup
  */
