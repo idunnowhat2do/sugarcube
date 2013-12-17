@@ -467,6 +467,25 @@ Wikifier.wikifyEval = function (text)
 	}
 }
 
+Wikifier.textPrimitives =
+{
+	//anyDigit:      "[0-9]",
+	//anyNumberChar: "[0-9\\.E]",
+	urlPattern:    "(?:file|https?|mailto|ftp|irc|news|data):[^\\s'\"]+(?:/|\\b)"
+};
+if (!((new RegExp("[\u0150\u0170]", "g")).test("\u0150")))
+{
+	//Wikifier.textPrimitives.upperLetter = "[A-Z\u00c0-\u00de]";
+	//Wikifier.textPrimitives.lowerLetter = "[a-z\u00df-\u00ff_0-9\\-]";
+	Wikifier.textPrimitives.anyLetter = "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-]";
+}
+else
+{
+	//Wikifier.textPrimitives.upperLetter = "[A-Z\u00c0-\u00de\u0150\u0170]";
+	//Wikifier.textPrimitives.lowerLetter = "[a-z\u00df-\u00ff_0-9\\-\u0151\u0171]";
+	Wikifier.textPrimitives.anyLetter = "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-\u0150\u0170\u0151\u0171]";
+};
+
 Wikifier.formatterHelpers =
 {
 	charFormatHelper: function (w)
@@ -529,6 +548,17 @@ Wikifier.formatterHelpers =
 			insertElement(w.output, "pre", null, null, text);
 			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 		}
+	},
+	isExternalLink: function(link)
+	{
+		if (tale.has(link)) { return false; }
+
+		var urlRegExp = new RegExp("^" + Wikifier.textPrimitives.urlPattern, "gim");
+		if (urlRegExp.test(link) || link.search(/[\.\/\\#]/) !== -1)
+		{
+			return true;
+		}
+		return false;
 	}
 };
 
@@ -855,8 +885,7 @@ Wikifier.formatters =
 {
 	name: "prettyLink",
 	match: "\\[\\[",
-	//lookaheadRegExp: /\[\[\s*([^\|\]]+?)(?:\s*\|\s*(.+?))?\s*\]\]/gm,
-	lookaheadRegExp: /\[\[\s*(.+?)(?:\s*\|\s*(.+?))?\s*\](?:\[\s*(.+?)\s*\])?\]/gm,
+	lookaheadRegExp: /\[\[\s*(.+?)(?:\s*\|\s*(~?)(.+?))?\s*\](?:\[\s*(.+?)\s*\])?\]/gm,
 	handler: function (w)
 	{
 		this.lookaheadRegExp.lastIndex = w.matchStart;
@@ -866,19 +895,19 @@ Wikifier.formatters =
 			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 
 			var   text  = lookaheadMatch[1][0] === "$" ? Wikifier.getValue(lookaheadMatch[1]) : lookaheadMatch[1]
-				, setFn = lookaheadMatch[3]
-					? function (ex) { return function () { macros.eval(ex, null, null); }; }(Wikifier.parse(lookaheadMatch[3]))
+				, setFn = lookaheadMatch[4]
+					? function (ex) { return function () { macros.eval(ex, null, null); }; }(Wikifier.parse(lookaheadMatch[4]))
 					: null;
-			if (lookaheadMatch[2])
+			if (lookaheadMatch[3])
 			{
-				var link = lookaheadMatch[2][0] === "$" ? Wikifier.getValue(lookaheadMatch[2]) : lookaheadMatch[2];
-				if (tale.has(link))
+				var link = lookaheadMatch[3][0] === "$" ? Wikifier.getValue(lookaheadMatch[3]) : lookaheadMatch[3];
+				if (!lookaheadMatch[2] && Wikifier.formatterHelpers.isExternalLink(link))
 				{
-					Wikifier.createInternalLink(w.output, link, text, setFn);
+					Wikifier.createExternalLink(w.output, link, text);
 				}
 				else
 				{
-					Wikifier.createExternalLink(w.output, link, text);
+					Wikifier.createInternalLink(w.output, link, text, setFn);
 				}
 			}
 			else
@@ -891,7 +920,7 @@ Wikifier.formatters =
 
 {
 	name: "urlLink",
-	match: "(?:http|https|mailto|ftp):[^\\s'\"]+(?:/|\\b)",
+	match: Wikifier.textPrimitives.urlPattern,
 	handler: function (w)
 	{
 		var el = Wikifier.createExternalLink(w.output, w.matchText);
@@ -902,8 +931,7 @@ Wikifier.formatters =
 {
 	name: "image",
 	match: "\\[[<>]?[Ii][Mm][Gg]\\[",
-	//lookaheadRegExp: /\[([<]?)([>]?)[Ii][Mm][Gg]\[\s*(?:([^\|\]]+?)\s*\|\s*)?([^\[\]\|]+?)\s*\](?:\[\s*([^\]]+?)\s*\])?\]/gm,
-	lookaheadRegExp: /\[([<]?)([>]?)[Ii][Mm][Gg]\[\s*(?:(.+?)\s*\|\s*)?([^\|]+?)\s*\](?:\[\s*(.+?)\s*\])?(?:\[\s*(.+?)\s*\])?\]/gm,
+	lookaheadRegExp: /\[([<]?)([>]?)[Ii][Mm][Gg]\[\s*(?:(.+?)\s*\|\s*)?([^\|]+?)\s*\](?:\[\s*(~?)(.+?)\s*\])?(?:\[\s*(.+?)\s*\])?\]/gm,
 	handler: function (w)
 	{
 		this.lookaheadRegExp.lastIndex = w.matchStart;
@@ -913,21 +941,21 @@ Wikifier.formatters =
 			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 
 			var   el     = w.output
-				, setFn  = lookaheadMatch[6]
-					? function (ex) { return function () { macros.eval(ex, null, null); }; }(Wikifier.parse(lookaheadMatch[6]))
+				, setFn  = lookaheadMatch[7]
+					? function (ex) { return function () { macros.eval(ex, null, null); }; }(Wikifier.parse(lookaheadMatch[7]))
 					: null
 				, source;
 
-			if (lookaheadMatch[5])
+			if (lookaheadMatch[6])
 			{
-				var link = lookaheadMatch[5][0] === "$" ? Wikifier.getValue(lookaheadMatch[5]) : lookaheadMatch[5];
-				if (tale.has(link))
+				var link = lookaheadMatch[6][0] === "$" ? Wikifier.getValue(lookaheadMatch[6]) : lookaheadMatch[6];
+				if (!lookaheadMatch[5] && Wikifier.formatterHelpers.isExternalLink(link))
 				{
-					el = Wikifier.createInternalLink(el, link, null, setFn);
+					el = Wikifier.createExternalLink(el, link);
 				}
 				else
 				{
-					el = Wikifier.createExternalLink(el, link);
+					el = Wikifier.createInternalLink(el, link, null, setFn);
 				}
 				el.classList.add("link-image");
 			}
@@ -1460,25 +1488,6 @@ Wikifier.createExternalLink = function (place, url, text)
 	}
 	el.target = "_blank";
 	return el;
-};
-
-Wikifier.textPrimitives =
-{
-	//anyDigit: "[0-9]",
-	//anyNumberChar: "[0-9\\.E]",
-	//urlPattern: "(?:http|https|mailto|ftp):[^\\s'\"]+(?:/|\\b)"
-};
-if (!((new RegExp("[\u0150\u0170]", "g")).test("\u0150")))
-{
-	//Wikifier.textPrimitives.upperLetter = "[A-Z\u00c0-\u00de]";
-	//Wikifier.textPrimitives.lowerLetter = "[a-z\u00df-\u00ff_0-9\\-]";
-	Wikifier.textPrimitives.anyLetter = "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-]";
-}
-else
-{
-	//Wikifier.textPrimitives.upperLetter = "[A-Z\u00c0-\u00de\u0150\u0170]";
-	//Wikifier.textPrimitives.lowerLetter = "[a-z\u00df-\u00ff_0-9\\-\u0151\u0171]";
-	Wikifier.textPrimitives.anyLetter = "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-\u0150\u0170\u0151\u0171]";
 };
 
 
