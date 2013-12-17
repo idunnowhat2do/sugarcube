@@ -544,7 +544,7 @@ function addStandardMacros()
 	 * <<link>>
 	 */
 	macros.add("link", {
-		version: { major: 3, minor: 1, revision: 0 },
+		version: { major: 3, minor: 2, revision: 0 },
 		handler: function ()
 		{
 			function createInternalLink(passage, text, setFn)
