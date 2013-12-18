@@ -103,6 +103,16 @@ $(document).ready(function ()
 	storage   = new KeyValueStore("localStorage", tale.domId);
 	session   = new KeyValueStore("sessionStorage", tale.domId);
 
+	// export identifiers for debugging purposes
+	window.SugarCube =
+	{
+		  macros  : macros
+		, tale    : tale
+		, state   : state
+		, storage : storage
+		, session : session
+	};
+
 	// set the document title
 	document.title = tale.title;
 
