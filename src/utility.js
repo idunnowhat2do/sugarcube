@@ -325,10 +325,12 @@ function addStyle(css)
 	style.type = "text/css";
 
 	// check for Twine 1.4 Base64 image passage transclusion
-	if (formatter.byName["image"].lookaheadRegExp.test(css))
+	var imageRe = new RegExp(formatter.byName["image"].lookaheadRegExp.source, "gm");
+	if (imageRe.test(css))
 	{
-		css = css.replace(
-			  formatter.byName["image"].lookaheadRegExp
+		css = css.replace
+		(
+			  imageRe
 			, function(match, left, right, title, source)
 				{
 					if (source.slice(0, 5) !== "data:" && tale.has(source))
