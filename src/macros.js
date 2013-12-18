@@ -342,14 +342,14 @@ function addStandardMacros()
 
 			// translate wiki link syntax into the <<back>>/<<return>> "to" syntax
 			if (this.args.length === 1 && typeof this.args[0] === "object")
-			{	// argument was in wiki link syntax
+			{
 				if (this.args[0].count === 1)
-				{	// passage only syntax: [[...]]
+				{	// simple link syntax: [[...]]
 					this.args.push(this.args[0].link);
 					this.args[0] = "to"
 				}
 				else
-				{	// text and passage syntax: [[...|...]]
+				{	// pretty link syntax: [[...|...]]
 					this.args.push("to");
 					this.args.push(this.args[0].link);
 					this.args[0] = this.args[0].text;
@@ -544,31 +544,9 @@ function addStandardMacros()
 	 * <<link>>
 	 */
 	macros.add("link", {
-		version: { major: 3, minor: 2, revision: 0 },
+		version: { major: 3, minor: 3, revision: 0 },
 		handler: function ()
 		{
-			function createInternalLink(passage, text, setFn)
-			{
-				var el = insertPassageLink(this.output, passage, text, "link-" + this.name);
-				$(el).click(function ()
-				{
-					if (onceType)
-					{
-						state.active.variables["#link"][passage] = true;
-					}
-					if (typeof setFn === "function") { setFn(); }
-					state.display(passage, el);
-				});
-				return el;
-			}
-			function createExternalLink(url, text)
-			{
-				var el = insertElement(this.output, "a", null, "link-external link-" + this.name, text);
-				el.href = url;
-				el.target = "_blank";
-				return el;
-			}
-
 			if (this.args.length === 0)
 			{
 				return this.error("no link location specified");
@@ -577,8 +555,10 @@ function addStandardMacros()
 			var   argCount
 				, linkText
 				, linkLoc
+				, isExternal
 				, setFn
-				, onceType;
+				, onceType
+				, el;
 
 			if (this.args.length === 3)
 			{
@@ -603,16 +583,21 @@ function addStandardMacros()
 			{
 				if (typeof this.args[0] === "object")
 				{	// argument was in wiki link syntax
-					linkText = this.args[0].text;
-					linkLoc  = this.args[0].link;
-					setFn    = this.args[0].setFn;
-					argCount = this.args[0].count;
+					linkText   = this.args[0].text;
+					linkLoc    = this.args[0].link;
+					isExternal = this.args[0].isExternal;
+					setFn      = this.args[0].setFn;
+					argCount   = this.args[0].count;
 				}
 				else
 				{	// argument was simply the link location
 					linkText = linkLoc = this.args[0];
 					argCount = 1;
 				}
+			}
+			if (isExternal === undefined)
+			{
+				isExternal = Wikifier.formatterHelpers.isExternalLink(linkLoc);
 			}
 
 			if (onceType)
@@ -631,13 +616,24 @@ function addStandardMacros()
 				}
 			}
 
-			if (argCount === 1 || !Wikifier.formatterHelpers.isExternalLink(linkLoc))
+			if (isExternal)
 			{
-				createInternalLink.call(this, linkLoc, linkText, setFn);
+				el = insertElement(this.output, "a", null, "link-external link-" + this.name, linkText);
+				el.href = linkLoc;
+				el.target = "_blank";
 			}
 			else
 			{
-				createExternalLink.call(this, linkLoc, linkText);
+				el = insertPassageLink(this.output, linkLoc, linkText, "link-" + this.name);
+				$(el).click(function ()
+				{
+					if (onceType)
+					{
+						state.active.variables["#link"][linkLoc] = true;
+					}
+					if (typeof setFn === "function") { setFn(); }
+					state.display(linkLoc, el);
+				});
 			}
 		}
 	});
