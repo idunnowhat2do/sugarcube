@@ -282,7 +282,7 @@ function addStandardMacros()
 	 * <<actions>>
 	 */
 	macros.add("actions", {
-		version: { major: 2, minor: 1, revision: 0 },
+		version: { major: 2, minor: 2, revision: 0 },
 		handler: function ()
 		{
 			var list = insertElement(this.output, "ul");
@@ -295,7 +295,8 @@ function addStandardMacros()
 			{
 				var   linkText
 					, passage
-					, setFn;
+					, setFn
+					, el;
 
 				if (typeof this.args[i] === "object")
 				{	// argument was in wiki link syntax
@@ -313,16 +314,14 @@ function addStandardMacros()
 					continue;
 				}
 
-				var link = insertPassageLink(insertElement(list, "li"), passage, linkText);
-				link.classList.add("link-" + this.name);
-				$(link).click(function (p, l, fn) {
+				el = Wikifier.createInternalLink(insertElement(list, "li"), passage, linkText, function (p, fn) {
 					return function ()
 					{
-						if (typeof fn === "function") { fn(); }
 						state.active.variables["#actions"][p] = true;
-						state.display(p, l);
+						if (typeof fn === "function") { fn(); }
 					};
-				}(passage, link, setFn));
+				}(passage, setFn));
+				el.classList.add("link-" + this.name);
 			}
 		}
 	});
@@ -500,7 +499,7 @@ function addStandardMacros()
 	 * <<choice>>
 	 */
 	macros.add("choice", {
-		version: { major: 3, minor: 1, revision: 0 },
+		version: { major: 4, minor: 0, revision: 0 },
 		handler: function ()
 		{
 			if (this.args.length === 0)
@@ -510,7 +509,9 @@ function addStandardMacros()
 
 			var   linkText
 				, passage
-				, setFn;
+				, setFn
+				, choiceId  = state.active.title
+				, el;
 
 			if (this.args.length === 1)
 			{
@@ -531,12 +532,21 @@ function addStandardMacros()
 				linkText = this.args[1];
 			}
 
-			var el = insertPassageLink(this.output, passage, linkText, "link-" + this.name);
-			$(el).click(function ()
+			if (!state.active.variables.hasOwnProperty("#choice"))
 			{
+				state.active.variables["#choice"] = {};
+			}
+			else if (state.active.variables["#choice"][choiceId])
+			{
+				insertElement(this.output, "span", null, "link-disabled link-" + this.name, linkText);
+				return;
+			}
+
+			el = Wikifier.createInternalLink(this.output, passage, linkText, function () {
+				state.active.variables["#choice"][choiceId] = true;
 				if (typeof setFn === "function") { setFn(); }
-				state.display(passage, el);
 			});
+			el.classList.add("link-" + this.name);
 		}
 	});
 
@@ -544,7 +554,7 @@ function addStandardMacros()
 	 * <<link>>
 	 */
 	macros.add("link", {
-		version: { major: 3, minor: 3, revision: 0 },
+		version: { major: 3, minor: 4, revision: 0 },
 		handler: function ()
 		{
 			if (this.args.length === 0)
@@ -552,32 +562,30 @@ function addStandardMacros()
 				return this.error("no link location specified");
 			}
 
-			var   argCount
-				, linkText
+			var   linkText
 				, linkLoc
 				, isExternal
 				, setFn
-				, onceType
+				, limit
 				, el;
 
 			if (this.args.length === 3)
 			{
-				onceType = this.args.pop();
+				limit = this.args.pop();
 			}
-			else if (this.args.length === 2 && (this.args[1] === "once" || this.args[1] === "keep"))
+			else if (this.args.length === 2 && (this.args[1] === "keep" || this.args[1] === "remove" || this.args[1] === "once"))
 			{
-				onceType = this.args.pop();
+				limit = this.args.pop();
 			}
-			if (onceType && onceType !== "once" && onceType !== "keep")
+			if (limit && limit !== "keep" && limit !== "remove" && limit !== "once")
 			{
-				return this.error('"' + onceType + '" is not a valid action (once|keep)');
+				return this.error('"' + limit + '" is not a valid action (keep|remove)');
 			}
 
 			if (this.args.length === 2)
 			{
 				linkText = this.args[0];
 				linkLoc  = this.args[1];
-				argCount = 2;
 			}
 			else
 			{
@@ -587,12 +595,10 @@ function addStandardMacros()
 					linkLoc    = this.args[0].link;
 					isExternal = this.args[0].isExternal;
 					setFn      = this.args[0].setFn;
-					argCount   = this.args[0].count;
 				}
 				else
 				{	// argument was simply the link location
 					linkText = linkLoc = this.args[0];
-					argCount = 1;
 				}
 			}
 			if (isExternal === undefined)
@@ -600,7 +606,7 @@ function addStandardMacros()
 				isExternal = Wikifier.formatterHelpers.isExternalLink(linkLoc);
 			}
 
-			if (onceType)
+			if (limit)
 			{
 				if (!state.active.variables.hasOwnProperty("#link"))
 				{
@@ -608,9 +614,9 @@ function addStandardMacros()
 				}
 				else if (state.active.variables["#link"][linkLoc])
 				{
-					if (onceType === "keep")
+					if (limit === "keep")
 					{
-						insertText(this.output, linkText);
+						insertElement(this.output, "span", null, "link-disabled link-" + this.name, linkText);
 					}
 					return;
 				}
@@ -618,23 +624,16 @@ function addStandardMacros()
 
 			if (isExternal)
 			{
-				el = insertElement(this.output, "a", null, "link-external link-" + this.name, linkText);
-				el.href = linkLoc;
-				el.target = "_blank";
+				el = Wikifier.createExternalLink(this.output, linkLoc, linkText);
 			}
 			else
 			{
-				el = insertPassageLink(this.output, linkLoc, linkText, "link-" + this.name);
-				$(el).click(function ()
-				{
-					if (onceType)
-					{
-						state.active.variables["#link"][linkLoc] = true;
-					}
+				el = Wikifier.createInternalLink(this.output, linkLoc, linkText, function () {
+					if (limit) { state.active.variables["#link"][linkLoc] = true; }
 					if (typeof setFn === "function") { setFn(); }
-					state.display(linkLoc, el);
 				});
 			}
+			el.classList.add("link-" + this.name);
 		}
 	});
 
@@ -646,7 +645,7 @@ function addStandardMacros()
 	 * <<display>>
 	 */
 	macros.add("display", {
-		version: { major: 3, minor: 0, revision: 0 },
+		version: { major: 3, minor: 1, revision: 0 },
 		handler: function ()
 		{
 			if (this.args.length === 0)
@@ -669,15 +668,15 @@ function addStandardMacros()
 				return this.error('passage "' + passage + '" does not exist');
 			}
 
+			var el = this.output;
+
 			passage = tale.get(passage);
 			if (this.args[1])
 			{
-				new Wikifier(insertElement(this.output, this.args[1], null, passage.domId), passage.processText());
+				el = insertElement(el, this.args[1], null, passage.domId);
+				el.setAttribute("data-passage", passage.title);
 			}
-			else
-			{
-				new Wikifier(this.output, passage.processText());
-			}
+			new Wikifier(el, passage.processText());
 		}
 	});
 
