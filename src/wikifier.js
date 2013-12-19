@@ -459,7 +459,20 @@ Wikifier.wikifyEval = function (text)
  */
 Wikifier.createInternalLink = function (place, passage, text, callback)
 {
-	var el = insertPassageLink(place, passage, text);
+	var el = document.createElement("a");
+	if (typeof passage !== "undefined")	// 0 is a valid ID and name, so we have to type check
+	{
+		el.setAttribute("data-passage", passage);
+		el.className = tale.has(passage) ? "link-internal" : "link-broken";
+	}
+	if (text)
+	{
+		insertText(el, text);
+	}
+	if (place)
+	{
+		place.appendChild(el);
+	}
 	if (typeof passage !== "undefined")	// 0 is a valid ID and name, so we have to type check
 	{
 		$(el).click(function () {
