@@ -202,7 +202,8 @@ function clone(orig, deep)
 
 /**
  * Returns a deep copy of the passed object
- *   n.b. No longer used in SugarCube, since clone() was updated to be able to deep copy, kept only for compatibility
+ *
+ * (DEPRECATED): No longer used in SugarCube, since clone() was updated to be able to deep copy, kept only for compatibility
  */
 function deepCopy(orig)
 {
@@ -243,6 +244,8 @@ function insertElement(place, type, id, classNames, text)
 
 /**
  * Returns the new <a> element, optionally appending it to the passed DOM element (if any)
+ *
+ * (DEPRECATED): No longer used in SugarCube, since Wikifier.createInternalLink() was updated to include both a link text and callback function parameter, kept only for compatibility
  */
 function insertPassageLink(place, passage, text, classNames)
 {
