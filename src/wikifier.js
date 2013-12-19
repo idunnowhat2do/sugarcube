@@ -62,7 +62,7 @@ String.prototype.readMacroParams = function ()
 				n = Wikifier.getValue(n);
 			}
 
-			// Numeric literal, so coerce it into a number
+			// Numeric literal, so convert it into a number
 			else if (isNumeric(n))
 			{
 				// n.b. Octal literals are not handled correctly by Number() (e.g. Number("077") yields 77, not 63).
@@ -75,21 +75,27 @@ String.prototype.readMacroParams = function ()
 				n = Number(n);
 			}
 
-			// Boolean literal, so coerce it into a boolean
+			// Boolean literal, so convert it into a boolean
 			else if (isBoolean(n))
 			{
 				n = (n === "true") ? true : false;
 			}
 
-			// Null literal, so coerce it into null
+			// Null literal, so convert it into null
 			else if (n === "null")
 			{
 				n = null;
 			}
 
-			// Object/Array literals are too complex to automatically coerce and so are left as-is.  Authors really
-			// shouldn't be passing object/array literals as arguments anyway.  If they want to pass a complex type,
-			// store it in a variable and pass that instead.
+			// Undefined literal, so convert it into undefined
+			else if (n === "undefined")
+			{
+				n = undefined;
+			}
+
+			// Object/Array literals are too complex to worry about automatically converting and so are left as-is.
+			// Authors really shouldn't be passing object/array literals as arguments anyway.  If they want to pass
+			// a complex type, store it in a variable and pass that instead.
 		}
 
 		params.push(n);
