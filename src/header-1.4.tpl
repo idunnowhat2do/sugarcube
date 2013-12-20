@@ -66,7 +66,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 (function(){
 "use strict";
 [($SCRIPTS$)]
+/* Commented out until the next Twine 1.4.x release
 twineTestPlay = "START_AT";
+*/
 }());
 </script>
 <style type="text/css">[($STYLES$)]</style>
