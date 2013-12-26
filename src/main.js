@@ -88,6 +88,13 @@ $(document).ready(function ()
 {
 	console.log("[main()]");
 
+	if (!window.JSON || !document.querySelector || !document.head)
+	{
+		$(document.documentElement).removeClass("loading");
+		$("#passages").children().replace("<b>Apologies.  This story requires a less obsolescent web browser.</b>");
+		return;
+	}
+
 	/**
 	 * WARNING!
 	 * 
