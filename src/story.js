@@ -816,13 +816,13 @@ function Tale()
 		if (el.getAttribute && (tiddlerTitle = el.getAttribute("tiddler")))
 		{
 			this.passages[tiddlerTitle] = new Passage(tiddlerTitle, el, i);
+			if (tiddlerTitle === "StoryTitle" && el.textContent.trim() !== "")
+			{
+				this.title = el.textContent.trim();
+			}
 		}
 	}
-	if (this.passages.StoryTitle)
-	{
-		this.title = this.passages.StoryTitle.text;
-	}
-	else
+	if (typeof this.title === "undefined")
 	{
 		this.title = "Untitled Story";
 	}
