@@ -104,36 +104,35 @@ $(document).ready(function ()
 	 * when mucking around with it.
 	 */
 
-	// instantiate the wikifier formatters, macro, story, state, storage, and session objects
+	// instantiate the wikifier formatters, macro, story, and state objects
 	formatter = new WikiFormatter(Wikifier.formatters);
 	macros    = new Macros();
 	tale      = new Tale();
 	state     = new History();
-	storage   = new KeyValueStore("localStorage", tale.domId);
-	session   = new KeyValueStore("sessionStorage", tale.domId);
-
-	// export identifiers for debugging purposes
-	window.SugarCube =
-	{
-		  macros  : macros
-		, tale    : tale
-		, state   : state
-		, storage : storage
-		, session : session
-	};
-
-	// set the document title
-	document.title = tale.title;
-
-	// set the default saves ID
-	config.saves.id = tale.domId;
 
 	// standard macro library setup (this must be done before any setup for special passages)
 	addStandardMacros();
 
+	// set the document title
+	var storyTitle = setPageElement("story-title", "StoryTitle", tale.title);
+	if (storyTitle.textContent !== tale.title) { tale.setTitle(storyTitle.textContent); }
+	document.title = tale.title;
+
+	// n.b. Trying to use (directly or indirectly) the storage and/or session objects within
+	//      StoryTitle, will cause an error.  There's not much I can do about that though, as
+	//      it's a chicken & egg problem.  The story title must be finalized before anything
+	//      requiring its normalized (slugified) form can proceed.	This is unlikely to ever
+	//      be an issue, but....
+
+	// instantiate the storage and session objects
+	storage = new KeyValueStore("localStorage", tale.domId);
+	session = new KeyValueStore("sessionStorage", tale.domId);
+
+	// set the default saves ID
+	config.saves.id = tale.domId;
+
 	// setup for some of the special passages
 	setPageElement("story-banner", "StoryBanner");
-	setPageElement("story-title", "StoryTitle", tale.title);
 	setPageElement("story-subtitle", "StorySubtitle");
 	setPageElement("story-author", "StoryAuthor");
 	if (tale.has("StoryCaption"))
@@ -229,6 +228,16 @@ $(document).ready(function ()
 
 	// call macros' "late" init functions
 	macros.lateInit();
+
+	// lastly, export identifiers for debugging purposes
+	window.SugarCube =
+	{
+		  macros  : macros
+		, tale    : tale
+		, state   : state
+		, storage : storage
+		, session : session
+	};
 });
 
 
