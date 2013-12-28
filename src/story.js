@@ -21,7 +21,7 @@ function History()
 	this.history = [];
 }
 
-// setup accessors and mutators
+// setup accessor and mutator properties
 History.prototype =
 {
 	get top ()     { return (this.history.length !== 0) ? this.history[this.history.length - 1] : null; },
@@ -638,7 +638,7 @@ Passage.prototype.render = function ()
 	// execute pre-render tasks
 	for (var task in prerender)
 	{
-		if (typeof prerender[task] === "function") { prerender[task].call(this, content); }
+		if (typeof prerender[task] === "function") { prerender[task].call(this, content, task); }
 	}
 
 	// wikify the passage into the content element
@@ -647,7 +647,7 @@ Passage.prototype.render = function ()
 	// execute post-render tasks
 	for (var task in postrender)
 	{
-		if (typeof postrender[task] === "function") { postrender[task].call(this, content); }
+		if (typeof postrender[task] === "function") { postrender[task].call(this, content, task); }
 	}
 
 	// update the excerpt cache to reflect the rendered text
@@ -830,16 +830,14 @@ function Tale()
 			this.passages[tiddlerTitle] = new Passage(tiddlerTitle, el, i);
 		}
 	}
-	if (this.passages.StoryTitle)
-	{
-		this.title = this.passages.StoryTitle.text;
-	}
-	else
-	{
-		this.title = "Untitled Story";
-	}
-	this.domId = slugify(this.title);
+	this.setTitle(this.passages.StoryTitle ? this.passages.StoryTitle.text : "Untitled Story");
 }
+
+Tale.prototype.setTitle = function (title)
+{
+	this.title = title;
+	this.domId = slugify(title);
+};
 
 Tale.prototype.has = function (key)
 {
