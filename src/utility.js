@@ -300,7 +300,7 @@ function removeChildren(el)
 }
 
 /**
- * Wikifies a passage into a DOM element corresponding to the passed ID
+ * Wikifies a passage into a DOM element corresponding to the passed ID and returns the element
  */
 function setPageElement(id, title, defaultText)
 {
@@ -312,11 +312,12 @@ function setPageElement(id, title, defaultText)
 		{
 			new Wikifier(place, tale.get(title).text);
 		}
-		else if (defaultText != null && defaultText !== "")	// use != to catch both null & undefined
+		else if (defaultText != null && defaultText !== "")	// use lazy equality on null check
 		{
 			new Wikifier(place, defaultText);
 		}
 	}
+	return place;
 }
 
 /**
