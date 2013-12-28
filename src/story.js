@@ -715,8 +715,6 @@ Passage.getExcerptFromText = function (text, count)
 
 Passage.getExcerptFromNode = function (node, count)
 {
-	if (!node.hasChildNodes()) { return ""; }
-
 	function getTextFromNode(node)
 	{
 		if (!node.hasChildNodes()) { return ""; }
@@ -748,6 +746,8 @@ Passage.getExcerptFromNode = function (node, count)
 		}
 		return output;
 	}
+
+	if (!node.hasChildNodes()) { return ""; }
 
 	var   excerptRe = new RegExp("(\\S+(?:\\s+\\S+){0," + (typeof count !== 'undefined' ? count - 1 : 7) + "})")
 		, excerpt   = getTextFromNode(node).trim();
