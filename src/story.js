@@ -111,10 +111,10 @@ History.prototype.init = function ()
 	console.log("[<History>.init()]");
 
 	// display the initial passage
-	if (typeof twineTestPlay !== "undefined")	// enables the Twine 1.4+ "Test Play From Here" feature
+	if (typeof testPlay !== "undefined")	// enables the Twine 1.4+ "Test Play From Here" feature
 	{
-		console.log('    > display: "' + twineTestPlay + '" (twineTestPlay)');
-		this.display(twineTestPlay);
+		console.log('    > display: "' + testPlay + '" (testPlay)');
+		this.display(testPlay);
 	}
 	else if (!this.restore())
 	{
@@ -617,6 +617,8 @@ Passage.prototype.processText = function ()
 Passage.prototype.render = function ()
 {
 	console.log("[<Passage>.render()]");
+
+	// create the new passage element
 	var passage = insertElement(null, "section", this.domId, "passage");
 	passage.setAttribute("data-passage", this.title);
 	passage.style.visibility = "hidden";
@@ -628,15 +630,25 @@ Passage.prototype.render = function ()
 		passage.classList.add(this.classes[i]);
 	}
 
-	// add passage header element
+	// add the passage header, content, and footer elements
 	insertElement(passage, "header", null, "header");
-
-	// add passage content element
 	var content = insertElement(passage, "div", null, "body content");
+	insertElement(passage, "footer", null, "footer");
+
+	// execute pre-render tasks
+	for (var task in prerender)
+	{
+		if (typeof prerender[task] === "function") { prerender[task].call(this, content); }
+	}
+
+	// wikify the passage into the content element
 	new Wikifier(content, this.processText());
 
-	// add passage footer element
-	insertElement(passage, "footer", null, "footer");
+	// execute post-render tasks
+	for (var task in postrender)
+	{
+		if (typeof postrender[task] === "function") { postrender[task].call(this, content); }
+	}
 
 	// update the excerpt cache to reflect the rendered text
 	this.textExcerpt = Passage.getExcerptFromNode(content);

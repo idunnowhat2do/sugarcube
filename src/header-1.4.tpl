@@ -67,7 +67,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 "use strict";
 [($SCRIPTS$)]
 /* Commented out until the next Twine 1.4.x release
-twineTestPlay = "START_AT";
+testPlay = "START_AT";
 */
 }());
 </script>
