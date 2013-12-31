@@ -684,13 +684,13 @@ function addStandardMacros()
 	 * <<nobr>>
 	 */
 	macros.add("nobr", {
-		version: { major: 1, minor: 0, revision: 0 },
+		version: { major: 1, minor: 1, revision: 0 },
 		skipArgs: true,
 		tags: null,
 		handler: function ()
 		{
 			// wikify the contents, after removing all newlines
-			new Wikifier(this.output, this.payload[0].contents.replace(/\n/g, ""));	// maybe use zero-width-space or zero-width-non-joiner?
+			new Wikifier(this.output, this.payload[0].contents.replace(/\n/g, " "));
 		}
 	});
 
