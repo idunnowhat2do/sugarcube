@@ -329,23 +329,30 @@ function addStyle(css)
 	style.type = "text/css";
 
 	// check for Twine 1.4 Base64 image passage transclusion
-	var imageRe = new RegExp(formatter.byName["image"].lookaheadRegExp.source, "gm");
-	if (imageRe.test(css))
+	var   matchRe = new RegExp(formatter.byName["image"].lookaheadRegExp.source, "gm")
+		, parseRe = new RegExp(Wikifier.textPrimitives.imagePattern);
+	if (matchRe.test(css))
 	{
 		css = css.replace
 		(
-			  imageRe
-			, function(match, left, right, title, source)
+			  matchRe
+			, function(wikiImage)
 				{
-					if (source.slice(0, 5) !== "data:" && tale.has(source))
-					{
-						var passage = tale.get(source);
-						if (passage.tags.indexOf("Twine.image") !== -1)
+					var parseMatch = parseRe.exec(wikiImage);
+					if (parseMatch !== null)
+					{	// 1=(left), 2=(right), 3=(title), 4=source, 5=(~), 6=(link), 7=(set)
+						var source = parseMatch[4];
+						if (source.slice(0, 5) !== "data:" && tale.has(source))
 						{
-							source = passage.text;
+							var passage = tale.get(source);
+							if (passage.tags.indexOf("Twine.image") !== -1)
+							{
+								source = passage.text;
+							}
 						}
+						return "url(" + source + ")";
 					}
-					return "url(" + source + ")";
+					return wikiImage;
 				}
 		);
 	}
