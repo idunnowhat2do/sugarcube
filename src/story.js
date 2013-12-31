@@ -604,7 +604,7 @@ Passage.prototype.processText = function ()
 
 	if (this.tags.indexOf("nobr") !== -1)
 	{
-		res = res.replace(/\n/g, "");	// maybe use zero-width-space or zero-width-non-joiner?
+		res = res.replace(/\n/g, " ");
 	}
 	// check for Twine 1.4 Base64 image passage transclusion
 	if (this.tags.indexOf("Twine.image") !== -1)
