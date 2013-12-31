@@ -57,6 +57,12 @@ var config =	// SugarCube config
 			, onSave    : undefined
 			, slots     : 8
 		}
+
+	// error messages properties
+	, errors:
+		{
+			savesNotAllowed: "Saving has been disallowed on this passage."
+		}
 };
 config.browser =
 {
@@ -373,7 +379,7 @@ var SaveSystem =
 	{
 		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed())
 		{
-			window.alert("Saving is not allowed here.");
+			window.alert(config.errors.savesNotAllowed);
 			return false;
 		}
 		if (slot < 0 || slot > SaveSystem._max) { return false; }
@@ -422,7 +428,7 @@ var SaveSystem =
 
 		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed())
 		{
-			window.alert("Saving is not allowed here.");
+			window.alert(config.errors.savesNotAllowed);
 			return;
 		}
 
