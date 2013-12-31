@@ -12,7 +12,8 @@
 String.prototype.readMacroParams = function ()
 {
 	// RegExp groups: Double quoted | Single quoted | Empty quotes | Double square-bracketed | Barewords
-	var   re     = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\')|[^'])+)')|((?:\"\")|(?:''))|(?:(\\[\\[(?:\\s|\\S)*?\\](?:\\[(?:\\s|\\S)*?\\])?\\]))|([^\"'\\s]\\S*))", "gm")
+	//var   re     = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\')|[^'])+)')|((?:\"\")|(?:''))|(?:(\\[\\[(?:\\s|\\S)*?\\](?:\\[(?:\\s|\\S)*?\\])?\\]))|([^\"'\\s]\\S*))", "gm")
+	var   re     = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\')|[^'])+)')|((?:\"\")|(?:''))|(?:(\\[\\[(?:\\s|\\S)*?\\]\\]))|([^\"'\\s]\\S*))", "gm")
 		, match
 		, params = [];
 
@@ -35,7 +36,7 @@ String.prototype.readMacroParams = function ()
 			n = match[4];
 
 			// Convert to an object
-			var   linkRe    = new RegExp(formatter.byName["prettyLink"].lookaheadRegExp.source)
+			var   linkRe    = new RegExp(Wikifier.textPrimitives.linkPattern)
 				, linkMatch = linkRe.exec(n)
 				, linkObj   = {};
 			if (linkMatch !== null)
@@ -532,7 +533,9 @@ else
 		anyLetter: "[A-Za-z0-9_\\-\u00c0-\u00de\u00df-\u00ff\u0150\u0170\u0151\u0171]"
 	};
 }
-Wikifier.textPrimitives.urlPattern = "(?:file|https?|mailto|ftp|javascript|irc|news|data):[^\\s'\"]+(?:/|\\b)";
+Wikifier.textPrimitives.urlPattern   = "(?:file|https?|mailto|ftp|javascript|irc|news|data):[^\\s'\"]+(?:/|\\b)";
+Wikifier.textPrimitives.linkPattern  = "\\[\\[\\s*(?:(.+?)\\s*\\|\\s*)?(~)?(.+?)\\s*\\](?:\\[\\s*(.+?)\\s*\\])?\\]";	// 1=(text), 2=(~), 3=link, 4=(set)
+Wikifier.textPrimitives.imagePattern = "\\[([<]?)([>]?)[Ii][Mm][Gg]\\[\\s*(?:(.+?)\\s*\\|\\s*)?([^\\|]+?)\\s*\\](?:\\[\\s*(~)?(.+?)\\s*\\])?(?:\\[\\s*(.+?)\\s*\\])?\\]";	// 1=(left), 2=(right), 3=(title), 4=source, 5=(~), 6=(link), 7=(set)
 
 /**
  * Setup helper functions for the formatters
@@ -770,7 +773,7 @@ Wikifier.formatters =
 				}
 				col++;
 			}
-		} while (matched);		
+		} while (matched);
 	}
 },
 
@@ -939,27 +942,32 @@ Wikifier.formatters =
 {
 	name: "prettyLink",
 	match: "\\[\\[",
-	lookaheadRegExp: /\[\[\s*(?:(.+?)\s*\|\s*)?(~)?(.+?)\s*\](?:\[\s*(.+?)\s*\])?\]/gm,	// 1=(text), 2=(~), 3=link, 4=(set)
+	lookaheadRegExp: /(\[\[(?:\s|\S)*?\]\])/gm,
 	handler: function (w)
 	{
 		this.lookaheadRegExp.lastIndex = w.matchStart;
 		var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
 		if (lookaheadMatch && lookaheadMatch.index === w.matchStart)
 		{
-			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+			var   re    = new RegExp("^" + Wikifier.textPrimitives.linkPattern + "$")
+				, match = re.exec(lookaheadMatch[0]);
+			if (match !== null)
+			{	// 1=(text), 2=(~), 3=link, 4=(set)
+				w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 
-			var   link  = /\$\w+/.test(lookaheadMatch[3]) ? Wikifier.getValue(lookaheadMatch[3]) : lookaheadMatch[3]
-				, text  = lookaheadMatch[1] ? (/\$\w+/.test(lookaheadMatch[1]) ? Wikifier.getValue(lookaheadMatch[1]) : lookaheadMatch[1]) : link
-				, setFn = lookaheadMatch[4]
-					? function (ex) { return function () { macros.eval(ex, null, null); }; }(Wikifier.parse(lookaheadMatch[4]))
-					: null;
-			if (!lookaheadMatch[2] && Wikifier.formatterHelpers.isExternalLink(link))
-			{
-				Wikifier.createExternalLink(w.output, link, text);
-			}
-			else
-			{
-				Wikifier.createInternalLink(w.output, link, text, setFn);
+				var   link  = /\$\w+/.test(match[3]) ? Wikifier.getValue(match[3]) : match[3]
+					, text  = match[1] ? (/\$\w+/.test(match[1]) ? Wikifier.getValue(match[1]) : match[1]) : link
+					, setFn = match[4]
+						? function (ex) { return function () { macros.eval(ex, null, null); }; }(Wikifier.parse(match[4]))
+						: null;
+				if (!match[2] && Wikifier.formatterHelpers.isExternalLink(link))
+				{
+					Wikifier.createExternalLink(w.output, link, text);
+				}
+				else
+				{
+					Wikifier.createInternalLink(w.output, link, text, setFn);
+				}
 			}
 		}
 	}
@@ -978,57 +986,62 @@ Wikifier.formatters =
 {
 	name: "image",
 	match: "\\[[<>]?[Ii][Mm][Gg]\\[",
-	lookaheadRegExp: /\[([<]?)([>]?)[Ii][Mm][Gg]\[\s*(?:(.+?)\s*\|\s*)?([^\|]+?)\s*\](?:\[\s*(~)?(.+?)\s*\])?(?:\[\s*(.+?)\s*\])?\]/gm,
+	lookaheadRegExp: /(\[[<>]?[Ii][Mm][Gg]\[(?:\s|\S)*?\]\])/gm,
 	handler: function (w)
 	{
 		this.lookaheadRegExp.lastIndex = w.matchStart;
 		var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
 		if (lookaheadMatch && lookaheadMatch.index === w.matchStart)
 		{
-			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+			var   re    = new RegExp("^" + Wikifier.textPrimitives.imagePattern + "$")
+				, match = re.exec(lookaheadMatch[0]);
+			if (match !== null)
+			{	// 1=(left), 2=(right), 3=(title), 4=source, 5=(~), 6=(link), 7=(set)
+				w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 
-			var   el     = w.output
-				, setFn  = lookaheadMatch[7]
-					? function (ex) { return function () { macros.eval(ex, null, null); }; }(Wikifier.parse(lookaheadMatch[7]))
-					: null
-				, source;
+				var   el     = w.output
+					, setFn  = match[7]
+						? function (ex) { return function () { macros.eval(ex, null, null); }; }(Wikifier.parse(match[7]))
+						: null
+					, source;
 
-			if (lookaheadMatch[6])
-			{
-				var link = /\$\w+/.test(lookaheadMatch[6]) ? Wikifier.getValue(lookaheadMatch[6]) : lookaheadMatch[6];
-				if (!lookaheadMatch[5] && Wikifier.formatterHelpers.isExternalLink(link))
+				if (match[6])
 				{
-					el = Wikifier.createExternalLink(el, link);
+					var link = /\$\w+/.test(match[6]) ? Wikifier.getValue(match[6]) : match[6];
+					if (!match[5] && Wikifier.formatterHelpers.isExternalLink(link))
+					{
+						el = Wikifier.createExternalLink(el, link);
+					}
+					else
+					{
+						el = Wikifier.createInternalLink(el, link, null, setFn);
+					}
+					el.classList.add("link-image");
 				}
-				else
+				el = insertElement(el, "img");
+				source = /\$\w+/.test(match[4]) ? Wikifier.getValue(match[4]) : match[4];
+				// check for Twine 1.4 Base64 image passage transclusion
+				if (source.slice(0, 5) !== "data:" && tale.has(source))
 				{
-					el = Wikifier.createInternalLink(el, link, null, setFn);
+					var passage = tale.get(source);
+					if (passage.tags.indexOf("Twine.image") !== -1)
+					{
+						source = passage.text;
+					}
 				}
-				el.classList.add("link-image");
-			}
-			el = insertElement(el, "img");
-			source = /\$\w+/.test(lookaheadMatch[4]) ? Wikifier.getValue(lookaheadMatch[4]) : lookaheadMatch[4];
-			// check for Twine 1.4 Base64 image passage transclusion
-			if (source.slice(0, 5) !== "data:" && tale.has(source))
-			{
-				var passage = tale.get(source);
-				if (passage.tags.indexOf("Twine.image") !== -1)
+				el.src = source;
+				if (match[3])
 				{
-					source = passage.text;
+					el.title = /\$\w+/.test(match[3]) ? Wikifier.getValue(match[3]) : match[3];
 				}
-			}
-			el.src = source;
-			if (lookaheadMatch[3])
-			{
-				el.title = /\$\w+/.test(lookaheadMatch[3]) ? Wikifier.getValue(lookaheadMatch[3]) : lookaheadMatch[3];
-			}
-			if (lookaheadMatch[1])
-			{
-				el.align = "left";
-			}
-			else if (lookaheadMatch[2])
-			{
-				el.align = "right";
+				if (match[1])
+				{
+					el.align = "left";
+				}
+				else if (match[2])
+				{
+					el.align = "right";
+				}
 			}
 		}
 	}
@@ -1430,7 +1443,8 @@ Wikifier.formatters =
 	match: "--",
 	handler: function (w)
 	{
-		insertElement(w.output, "span").innerHTML = "\u2014";
+		//insertElement(w.output, "span", null, null, "\u2014");
+		insertText(w.output, "\u2014");
 	}
 },
 
@@ -1496,7 +1510,10 @@ Wikifier.formatters =
 			{
 				var el = document.createElement(w.output.tagName);
 				el.innerHTML = w.matchText;
-				el = el.firstChild;
+				while (el.firstChild)
+				{
+					el = el.firstChild;
+				}
 				if (terminatorMatch)
 				{
 					w.subWikify(el, terminator);
