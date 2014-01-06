@@ -769,6 +769,7 @@ Passage.unescapeLineBreaks = function (text)
 	{
 		return text
 			.replace(/\\n/gm, '\n')
+			.replace(/\\t/gm, '\t')		// Twine 1.4.1 "feature"
 			.replace(/\\s|\\/gm, '\\')	// "\\s" is required to workaround a Twine "feature"
 			.replace(/\r/gm, "");
 	}
