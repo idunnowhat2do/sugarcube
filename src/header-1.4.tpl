@@ -7,9 +7,14 @@
 <!--
 
 SugarCube (build: [($BUILD$)]): A free (gratis and libre) header for Twine/Twee, based on TiddlyWiki.
-Copyright (c) 2013 Thomas Michael Edwards.
+Copyright (c) 2013-2014 Thomas Michael Edwards.
 
-Special thanks to: barabbas, Napdragon, mignon, and Leon.
+-->
+<!--
+
+Story Build Info:
+  * "TIME"
+  * "VERSION"
 
 -->
 <script type="text/javascript">

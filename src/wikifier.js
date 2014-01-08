@@ -150,10 +150,6 @@ function Wikifier(place, source)
 	this.formatter = formatter;	// formatter comes from the top-level scope of the module
 
 	this.subWikify(this.output);
-	if (typeof this.output.normalize === "function")
-	{
-		this.output.normalize();
-	}
 }
 
 Wikifier.prototype.subWikify = function (output, terminator)
