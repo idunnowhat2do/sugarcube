@@ -244,8 +244,20 @@ History.prototype.display = function (title, link, render)
 	el.style.visibility = "visible";
 	if (render !== "offscreen")
 	{
-		var passages = document.getElementById("passages");
-		removeChildren(passages);
+		var   passages = document.getElementById("passages")
+			, outgoing = passages.querySelector(".passage");
+		if (outgoing !== null && config.passageTransitionOut)
+		{
+			outgoing.id = "out-" + outgoing.id;
+			outgoing.classList.add("transition-out");
+			setTimeout(function () {
+				if (outgoing.parentNode) { outgoing.parentNode.removeChild(outgoing); }
+			}, config.passageTransitionOut);	// in milliseconds
+		}
+		else
+		{
+			removeChildren(passages);
+		}
 		el.classList.add("transition-in");
 		passages.appendChild(el);
 		setTimeout(function () { el.classList.remove("transition-in"); }, 1);
