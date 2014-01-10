@@ -75,6 +75,7 @@ config.browser =
 	, operaVersion : (function () { var re = new RegExp((/applewebkit|chrome/.test(config.userAgent) ? "opr" : "version") + "\\/(\\d{1,2}\\.\\d+)"), oprVer = re.exec(config.userAgent); return oprVer ? +oprVer[1] : 0; }())
 };
 config.historyMode = (config.hasPushState ? (config.browser.isGecko ? modes.sessionHistory : modes.windowHistory) : modes.hashTag);
+config.transitionEndEventName = (function () { var teMap = { "transition": "transitionend", "MSTransition": "msTransitionEnd", "WebkitTransition": "webkitTransitionEnd", "MozTransition": "transitionend" }, el = document.createElement("div"); for (var tName in teMap) { if (el.style[tName] !== undefined) { return teMap[tName]; } } return ""; }());
 
 var   formatter = null	// Wikifier formatters
 	, macros    = {}	// macros manager
@@ -96,7 +97,7 @@ $(document).ready(function ()
 {
 	console.log("[main()]");
 
-	if (!window.JSON || !document.querySelector || !document.head)
+	if (!document.head || !document.querySelector || !window.JSON)
 	{
 		$(document.documentElement).removeClass("loading");
 		$("#passages").children().replace("<b>Apologies.  This story requires a less obsolescent web browser.</b>");

@@ -246,13 +246,30 @@ History.prototype.display = function (title, link, render)
 	{
 		var   passages = document.getElementById("passages")
 			, outgoing = passages.querySelector(".passage");
-		if (outgoing !== null && config.passageTransitionOut)
+		if
+		(
+			outgoing !== null
+			&&
+			(
+				typeof config.passageTransitionOut === "number"
+				|| (typeof config.passageTransitionOut === "boolean" && config.transitionEndEventName !== "")
+			)
+		)
 		{
 			outgoing.id = "out-" + outgoing.id;
 			outgoing.classList.add("transition-out");
-			setTimeout(function () {
-				if (outgoing.parentNode) { outgoing.parentNode.removeChild(outgoing); }
-			}, config.passageTransitionOut);	// in milliseconds
+			if (typeof config.passageTransitionOut === "boolean")
+			{
+				$(outgoing).on(config.transitionEndEventName, function () {
+					if (this.parentNode) { this.parentNode.removeChild(this); }
+				});
+			}
+			else
+			{
+				setTimeout(function () {
+					if (outgoing.parentNode) { outgoing.parentNode.removeChild(outgoing); }
+				}, config.passageTransitionOut);	// in milliseconds
+			}
 		}
 		else
 		{
