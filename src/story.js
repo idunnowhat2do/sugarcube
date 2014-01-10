@@ -252,7 +252,7 @@ History.prototype.display = function (title, link, render)
 			&&
 			(
 				typeof config.passageTransitionOut === "number"
-				|| (typeof config.passageTransitionOut === "boolean" && config.transitionEndEventName !== "")
+				|| (typeof config.passageTransitionOut === "boolean" && config.passageTransitionOut && config.transitionEndEventName !== "")
 			)
 		)
 		{
