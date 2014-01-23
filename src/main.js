@@ -111,8 +111,7 @@ $(document).ready(function ()
 	 * when mucking around with it.
 	 */
 
-	// instantiate the wikifier formatters, macro, story, and state objects
-	formatter = new WikiFormatter(Wikifier.formatters);
+	// instantiate the macro, story, and state objects
 	macros    = new Macros();
 	tale      = new Tale();
 	state     = new History();
@@ -200,6 +199,9 @@ $(document).ready(function ()
 			window.alert("There is a technical problem with this story (" + widgets[i].title + ": " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
 		}
 	}
+
+	// instantiate the wikifier formatters  (this must be done after script passages and before state initialization)
+	formatter = new WikiFormatter(Wikifier.formatters);
 
 	// initialize the save system (this must be done after script passages and before state initialization)
 	SaveSystem.init();
@@ -611,7 +613,7 @@ var UISystem =
 		insertElement(document.body, "div", "ui-overlay");
 		insertElement(document.body, "div", "ui-body");
 
-		// setup Save menu
+		// setup Saves menu
 		UISystem.addClickHandler("#menu-saves", null, function () { UISystem.buildSaves(); });
 
 		// setup Rewind menu
