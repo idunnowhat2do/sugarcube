@@ -118,8 +118,8 @@ History.prototype.init = function ()
 	}
 	else if (!this.restore())
 	{
-		console.log('    > display: "Start"');
-		this.display("Start");
+		console.log('    > display: "' + config.startPassage + '"');
+		this.display(config.startPassage);
 	}
 
 	// setup the history change handlers

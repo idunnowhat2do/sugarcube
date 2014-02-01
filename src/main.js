@@ -41,6 +41,7 @@ var config =	// SugarCube config
 	// general option properties
 	, displayPassageTitles : false
 	, loadDelay            : 0
+	, startPassage         : "Start"
 
 	// history option properties
 	, disableHistoryControls : false
