@@ -111,7 +111,7 @@ History.prototype.init = function ()
 	console.log("[<History>.init()]");
 
 	// display the initial passage
-	if (typeof testPlay !== "undefined")	// enables the Twine 1.4+ "Test Play From Here" feature
+	if (typeof testPlay !== "undefined" && testPlay !== "")	// enables the Twine 1.4+ "Test Play From Here" feature
 	{
 		console.log('    > display: "' + testPlay + '" (testPlay)');
 		this.display(testPlay);
