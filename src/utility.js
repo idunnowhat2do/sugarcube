@@ -17,7 +17,15 @@ var saveAs=saveAs||navigator.msSaveBlob&&navigator.msSaveBlob.bind(navigator)||f
  */
 Array.random = function (array, lower, upper)
 {
-	return Array.isArray(array) ? array.random(lower, upper) : undefined;
+	if (Array.isArray(array))
+	{
+		return array.random(lower, upper);
+	}
+	else if (array.hasOwnProperty("length"))
+	{
+		return Array.prototype.slice.call(array, 0).random(lower, upper);
+	}
+	return undefined;
 };
 
 /**
