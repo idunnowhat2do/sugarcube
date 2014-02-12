@@ -10,7 +10,7 @@ function technicalError(what, where, mesg)
 	var errMesg = "Apologies! There is a technical problem with this " + what + ". You may be able to continue, but some parts may not work properly.";
 	if (where != null || mesg != null) errMesg += "\n\nError";
 	if (where != null) errMesg += " [" + where + "]";
-	if (where != null && mesg != null) errMesg += ": ";
+	if (where != null || mesg != null) errMesg += ": ";
 	if (mesg != null) errMesg += mesg;
 	return errMesg;
 }
