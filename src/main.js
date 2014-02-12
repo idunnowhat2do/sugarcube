@@ -3,6 +3,31 @@
 ***********************************************************************************************************************/
 
 /***********************************************************************************************************************
+** [Error Handling Setup]
+***********************************************************************************************************************/
+function technicalError(what, where, mesg)
+{
+	var errMesg = "Apologies! There is a technical problem with this " + what + ". You may be able to continue, but some parts may not work properly.";
+	if (where != null || mesg != null) errMesg += "\n\nError";
+	if (where != null) errMesg += " [" + where + "]";
+	if (where != null && mesg != null) errMesg += ": ";
+	if (mesg != null) errMesg += mesg;
+	return errMesg;
+}
+
+function technicalAlert(where, mesg)
+{
+	window.alert(technicalError((config && config.errorName) || "page", where, mesg));
+}
+
+window.onerror = function (errMesg, url, lineno)
+{
+	technicalAlert(null, errMesg);
+	window.onerror = null;
+};
+
+
+/***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
 var version =
@@ -60,10 +85,13 @@ var config =	// SugarCube config
 		}
 
 	// error messages properties
-	, errors:
-		{
-			savesNotAllowed: "Saving has been disallowed on this passage."
-		}
+	, errorName : "game"
+	, errors    : {}
+};
+config.errors =
+{
+	  savesNotAllowed : "Saving has been disallowed on this passage."
+	, upgradeBrowser  : "Apologies! Your web browser lacks capabilities that this " + config.errorName + " requires. Please consider upgrading it or switching to a more modern web browser."
 };
 config.browser =
 {
@@ -101,7 +129,7 @@ $(document).ready(function ()
 	if (!document.head || !document.querySelector || !window.JSON)
 	{
 		$(document.documentElement).removeClass("loading");
-		$("#passages").children().replace("<b>Apologies.  This story requires a less obsolescent web browser.</b>");
+		$("#passages").empty().append("<h1>" + config.errors.upgradeBrowser + "</h1>");
 		return;
 	}
 
@@ -186,7 +214,7 @@ $(document).ready(function ()
 					}
 				}
 			}
-			window.alert("There is a technical problem with this story (" + scripts[i].title + ": " + errMesg + "). You may be able to continue reading, but all parts of the story may not work properly.");
+			technicalAlert(scripts[i].title, errMesg);
 		}
 	}
 	var widgets = tale.lookup("tags", "widget");
@@ -198,7 +226,7 @@ $(document).ready(function ()
 		}
 		catch (e)
 		{
-			window.alert("There is a technical problem with this story (" + widgets[i].title + ": " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
+			technicalAlert(widgets[i].title, e.message);
 		}
 	}
 
@@ -220,7 +248,7 @@ $(document).ready(function ()
 		}
 		catch (e)
 		{
-			window.alert("There is a technical problem with this story (StoryInit: " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
+			technicalAlert("StoryInit", e.message);
 		}
 	}
 
@@ -511,7 +539,7 @@ var SaveSystem =
 
 		if (!saveObj || !saveObj.hasOwnProperty("mode") || !saveObj.hasOwnProperty("id") || !saveObj.hasOwnProperty("data"))
 		{
-			window.alert("Save is missing the required game data.  Either you've loaded a file which isn't a save, or the save has become corrupted.\n\nAborting load.");
+			window.alert("Save is missing the required " + config.errorName + " data.  Either you've loaded a file which isn't a save, or the save has become corrupted.\n\nAborting load.");
 			return false;
 		}
 		if (saveObj.mode !== config.historyMode)
@@ -532,7 +560,7 @@ var SaveSystem =
 
 		if (saveObj.id !== config.saves.id)
 		{
-			window.alert("Save is from the wrong story.\n\nAborting load.");
+			window.alert("Save is from the wrong " + config.errorName + ".\n\nAborting load.");
 			return false;
 		}
 
@@ -906,7 +934,7 @@ var UISystem =
 		}
 		else
 		{
-			window.alert("Apologies!  Your browser either has none of the features required to support saves or has disabled them.\n\nThe former may be solved by updating it to a more recent version or by switching to a more modern browser.\n\nThe latter may be solved by loosening its security restrictions or, perhaps, by viewing the story via the HTTP protocol.");
+			window.alert("Apologies! Your browser either has none of the features required to support saves or has disabled them.\n\nThe former may be solved by updating it to a newer version or by switching to a more modern browser.\n\nThe latter may be solved by loosening its security restrictions or, perhaps, by viewing the " + config.errorName + " via the HTTP protocol.");
 			return false;
 		}
 	},

@@ -234,7 +234,7 @@ History.prototype.display = function (title, link, render)
 			}
 			catch (e)
 			{
-				window.alert("There is a technical problem with this story (PassageReady: " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
+				technicalAlert("PassageReady", e.message);
 			}
 		}
 	}
@@ -308,7 +308,7 @@ History.prototype.display = function (title, link, render)
 			}
 			catch (e)
 			{
-				window.alert("There is a technical problem with this story (PassageDone: " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
+				technicalAlert("PassageDone", e.message);
 			}
 		}
 	}
@@ -500,7 +500,7 @@ History.hashChangeHandler = function (evt)
 				removeChildren(el);
 				if (!state.restore())
 				{
-					window.alert("The passage you had previously visited could not be found.");
+					technicalAlert(null, "The passage you had previously visited could not be found.");
 				}
 				el.style.visibility = "visible";
 			}

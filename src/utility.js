@@ -664,7 +664,7 @@ KeyValueStore.prototype.setItem = function (sKey, sValue)
 		{
 			if (e == QUOTA_EXCEEDED_ERR)
 			{
-				window.alert("Unable to store key; " + this.name + " quota exceeded");
+				technicalAlert(null, "Unable to store key; " + this.name + " quota exceeded");
 			}
 			return false;
 		}
@@ -689,12 +689,12 @@ KeyValueStore.prototype.setItem = function (sKey, sValue)
 		}
 		catch (e)
 		{
-			window.alert("Unable to store key; cookie error: " + e.message);
+			technicalAlert(null, "Unable to store key; cookie error: " + e.message);
 			return false;
 		}
 		if (!this.hasItem(oKey))
 		{
-			window.alert("Unable to store key; unknown cookie error");
+			technicalAlert(null, "Unable to store key; unknown cookie error");
 			return false;
 		}
 	}
