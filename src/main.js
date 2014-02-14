@@ -102,6 +102,14 @@ config.browser =
 	// opera >= 15: "mozilla/5.0 (windows nt 6.1; wow64) applewebkit/537.36 (khtml, like gecko) chrome/28.0.1500.52 safari/537.36 opr/15.0.1147.130"
 	, isOpera      : (config.userAgent.indexOf("opera") !== -1) || (config.userAgent.indexOf(" opr/") !== -1)
 	, operaVersion : (function () { var re = new RegExp((/applewebkit|chrome/.test(config.userAgent) ? "opr" : "version") + "\\/(\\d{1,2}\\.\\d+)"), oprVer = re.exec(config.userAgent); return oprVer ? +oprVer[1] : 0; }())
+	, isMobile     :
+		{
+			  any        : function () { return (config.browser.isMobile.Android || config.browser.isMobile.BlackBerry || config.browser.isMobile.iOS || config.browser.isMobile.Windows); }
+			, Android    : (config.userAgent.search(/android/) !== -1)
+			, BlackBerry : (config.userAgent.search(/blackberry/) !== -1)
+			, iOS        : (config.userAgent.search(/ip(?:hone|ad|od)/) !== -1)
+			, Windows    : (config.userAgent.search(/iemobile/) !== -1)
+		}
 };
 config.historyMode = (config.hasPushState ? (config.browser.isGecko ? modes.sessionHistory : modes.windowHistory) : modes.hashTag);
 config.transitionEndEventName = (function () { var teMap = { "transition": "transitionend", "MSTransition": "msTransitionEnd", "WebkitTransition": "webkitTransitionEnd", "MozTransition": "transitionend" }, el = document.createElement("div"); for (var tName in teMap) { if (el.style[tName] !== undefined) { return teMap[tName]; } } return ""; }());
@@ -968,7 +976,7 @@ var UISystem =
 		{
 			btnBar = document.createElement("div");
 			list = document.createElement("ul");
-			if (config.hasFileAPI && (!config.browser.isOpera || config.browser.operaVersion >= 15))
+			if (config.hasFileAPI && !config.browser.isMobile.any() && (!config.browser.isOpera || config.browser.operaVersion >= 15))
 			{
 				list.appendChild(createActionItem("export", "Save to Disk\u2026", SaveSystem.exportSave));
 				list.appendChild(createActionItem("import", "Load from Disk\u2026", function (evt) {
