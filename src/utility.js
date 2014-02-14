@@ -318,7 +318,7 @@ function setPageElement(id, title, defaultText)
 		removeChildren(place);
 		if (tale.has(title))
 		{
-			new Wikifier(place, tale.get(title).text);
+			new Wikifier(place, tale.get(title).processText().trim());
 		}
 		else if (defaultText != null && defaultText !== "")	// use lazy equality on null check
 		{
