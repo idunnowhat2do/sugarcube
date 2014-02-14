@@ -61,12 +61,13 @@ button:active { background-color: #f70; border: 1px solid #f92; }
 #ui-bar li { margin-bottom: 1em; }
 #ui-bar li a { text-decoration: none; }
 
+#story-title, #story-subtitle, #story-author, #story-caption, #menu-story { white-space: pre-line; }
 #story-caption, #menu-story, #menu-rewind, #menu-options, #menu-share { display: none; }
 #story-title { margin: 0; font-size: 210%; }
 #story-subtitle { font-size: 111%; }
 #story-author { font-size: 111%; }
 #story-caption { margin-top: 3em; text-align: right; }
-#menu-story { line-height: 1.2; }
+#menu-story { line-height: 1.125; }
 
 [data-icon], a.link-back:before, a.link-return:after, a.link-external:after,
 #menu-saves a:before, #menu-rewind a:before, #menu-restart a:before, #menu-options a:before, #menu-share a:before,
@@ -277,7 +278,7 @@ body.ui-open { overflow: hidden; }
 #ui-body.options a[id|="option-input"].enabled:before { content: "\e003\00a0\00a0"; }
 
 #passages { margin-left: 16em; padding-left: 1.5em; border-left: 1px solid #fff; }
-.passage { line-height: 1.75; margin-bottom: 2em; text-align: left; transition: opacity 400ms ease-in; -webkit-transition: opacity 400ms ease-in; }
+.passage { line-height: 1.75; margin-bottom: 2em; text-align: left; white-space: pre-line; transition: opacity 400ms ease-in; -webkit-transition: opacity 400ms ease-in; }
 .passage .actions { list-style: none; padding-top: 1.3em; text-align: center; }
 .passage .actions li { display: inline; margin-right: 6em; }
 .passage ul, .passage ol { margin-left: 0.5em; padding-left: 1.5em; }

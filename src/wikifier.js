@@ -1456,6 +1456,8 @@ Wikifier.formatters =
 	}
 },
 
+/* [FIXME] Replacing this with the CSS property "white-space: pre-line", if no
+ *         issues come up, remove this and party like it's 3099
 {
 	name: "lineBreak",
 	match: "\\n|<br ?/?>",
@@ -1464,6 +1466,7 @@ Wikifier.formatters =
 		insertElement(w.output, "br");
 	}
 },
+*/
 
 {
 	name: "rawText",
