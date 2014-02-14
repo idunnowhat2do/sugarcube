@@ -396,8 +396,7 @@ var SaveSystem =
 	getAuto: function ()
 	{
 		var saves = storage.getItem("saves");
-		if (saves === null) { return false; }
-		if (saves.autosave === null) { return false; }
+		if (saves === null) { return null; }
 
 		return saves.autosave;
 	},
@@ -459,12 +458,11 @@ var SaveSystem =
 	},
 	get: function (slot)
 	{
-		if (slot < 0 || slot > SaveSystem._max) { return false; }
+		if (slot < 0 || slot > SaveSystem._max) { return null; }
 
 		var saves = storage.getItem("saves");
-		if (saves === null) { return false; }
-		if (slot > saves.slots.length) { return false; }
-		if (saves.slots[slot] === null) { return false; }
+		if (saves === null) { return null; }
+		if (slot > saves.slots.length) { return null; }
 
 		return saves.slots[slot];
 	},
