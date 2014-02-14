@@ -590,12 +590,15 @@ Wikifier.formatterHelpers =
 		var lookaheadMatch = lookaheadRegExp.exec(w.source);
 		if (lookaheadMatch && lookaheadMatch.index === w.matchStart)
 		{
+			/* [FIXME] I doubt this is necessary anymore, remove it later if no one complains
 			var text = lookaheadMatch[1];
 			if (config.browser.isIE && config.browser.ieVersion < 10)
 			{
 				text = text.replace(/\n/g, "\r");
 			}
 			insertElement(w.output, "pre", null, null, text);
+			*/
+			insertElement(w.output, "pre", null, null, lookaheadMatch[1]);
 			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 		}
 	},
@@ -918,22 +921,23 @@ Wikifier.formatters =
 	handler: Wikifier.formatterHelpers.monospacedByLineHelper
 },
 
-{
-	name: "monospacedByLineForPlugin",
-	match: "^//\\{\\{\\{\\n",
-	lookahead: "^//\\{\\{\\{\\n\\n*((?:^[^\\n]*\\n)+?)(\\n*^//\\}\\}\\}$\\n?)",
-	handler: Wikifier.formatterHelpers.monospacedByLineHelper
-},
-
-{
-	name: "wikifyCommentForPlugin",
-	match: "^/\\*\\*\\*\\n",
-	terminator: "^\\*\\*\\*/\\n",
-	handler: function (w)
-	{
-		w.subWikify(w.output, this.terminator);
-	}
-},
+// [FIXME] These aren't really used in the headers, remove them later if no one complains
+//{
+//	name: "monospacedByLineForPlugin",
+//	match: "^//\\{\\{\\{\\n",
+//	lookahead: "^//\\{\\{\\{\\n\\n*((?:^[^\\n]*\\n)+?)(\\n*^//\\}\\}\\}$\\n?)",
+//	handler: Wikifier.formatterHelpers.monospacedByLineHelper
+//},
+//
+//{
+//	name: "wikifyCommentForPlugin",
+//	match: "^/\\*\\*\\*\\n",
+//	terminator: "^\\*\\*\\*/\\n",
+//	handler: function (w)
+//	{
+//		w.subWikify(w.output, this.terminator);
+//	}
+//},
 
 {
 	name: "prettyLink",
@@ -1439,7 +1443,6 @@ Wikifier.formatters =
 	match: "--",
 	handler: function (w)
 	{
-		//insertElement(w.output, "span", null, null, "\u2014");
 		insertText(w.output, "\u2014");
 	}
 },
