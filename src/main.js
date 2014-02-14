@@ -305,8 +305,8 @@ var SaveSystem =
 		if (!storage.hasItem("saves"))
 		{
 			storage.setItem("saves", {
-				  autosave: null
-				, slots:    appendSlots([], config.saves.slots)
+				  autosave : null
+				, slots    : appendSlots([], config.saves.slots)
 			});
 		}
 
@@ -324,8 +324,8 @@ var SaveSystem =
 		{
 			saves =
 			{
-				  autosave: null
-				, slots:    saves
+				  autosave : null
+				, slots    : saves
 			};
 			storage.setItem("saves", saves);
 		}
@@ -361,6 +361,10 @@ var SaveSystem =
 
 		return true;
 	},
+	length: function ()
+	{
+		return SaveSystem._max + 1;
+	},
 	OK: function ()
 	{
 		return SaveSystem.autosaveOK() || SaveSystem.slotsOK();
@@ -372,6 +376,30 @@ var SaveSystem =
 	slotsOK: function ()
 	{
 		return !SaveSystem._bad && SaveSystem._max !== -1;
+	},
+	hasAuto: function ()
+	{
+		var saves = storage.getItem("saves");
+		if (saves === null) { return false; }
+		if (saves.autosave === null) { return false; }
+
+		return true;
+	},
+	getAuto: function ()
+	{
+		var saves = storage.getItem("saves");
+		if (saves === null) { return false; }
+		if (saves.autosave === null) { return false; }
+
+		return saves.autosave;
+	},
+	loadAuto: function ()
+	{
+		var saves = storage.getItem("saves");
+		if (saves === null) { return false; }
+		if (saves.autosave === null) { return false; }
+
+		return SaveSystem.unmarshal(saves.autosave);
 	},
 	saveAuto: function (title)
 	{
@@ -389,14 +417,6 @@ var SaveSystem =
 
 		return storage.setItem("saves", saves);
 	},
-	loadAuto: function ()
-	{
-		var saves = storage.getItem("saves");
-		if (saves === null) { return false; }
-		if (saves.autosave === null) { return false; }
-
-		return SaveSystem.unmarshal(saves.autosave);
-	},
 	deleteAuto: function ()
 	{
 		var saves = storage.getItem("saves");
@@ -405,6 +425,51 @@ var SaveSystem =
 		saves.autosave = null;
 
 		return storage.setItem("saves", saves);
+	},
+	count: function ()
+	{
+		if (!SaveSystem.slotsOK()) { return 0; }
+
+		var saves = storage.getItem("saves");
+		if (saves === null) { return 0; }
+
+		var count = 0;
+		for (var i = 0; i < saves.slots.length; i++) { if (saves.slots[i] !== null) { count++; } }
+
+		return count;
+	},
+	has: function (slot)
+	{
+		if (slot < 0 || slot > SaveSystem._max) { return false; }
+
+		var saves = storage.getItem("saves");
+		if (saves === null) { return false; }
+		if (slot > saves.slots.length) { return false; }
+		if (saves.slots[slot] === null) { return false; }
+
+		return true;
+	},
+	get: function (slot)
+	{
+		if (slot < 0 || slot > SaveSystem._max) { return false; }
+
+		var saves = storage.getItem("saves");
+		if (saves === null) { return false; }
+		if (slot > saves.slots.length) { return false; }
+		if (saves.slots[slot] === null) { return false; }
+
+		return saves.slots[slot];
+	},
+	load: function (slot)
+	{
+		if (slot < 0 || slot > SaveSystem._max) { return false; }
+
+		var saves = storage.getItem("saves");
+		if (saves === null) { return false; }
+		if (slot > saves.slots.length) { return false; }
+		if (saves.slots[slot] === null) { return false; }
+
+		return SaveSystem.unmarshal(saves.slots[slot]);
 	},
 	save: function (slot, title)
 	{
@@ -424,17 +489,6 @@ var SaveSystem =
 		saves.slots[slot].date = Date.now();
 
 		return storage.setItem("saves", saves);
-	},
-	load: function (slot)
-	{
-		if (slot < 0 || slot > SaveSystem._max) { return false; }
-
-		var saves = storage.getItem("saves");
-		if (saves === null) { return false; }
-		if (slot > saves.slots.length) { return false; }
-		if (saves.slots[slot] === null) { return false; }
-
-		return SaveSystem.unmarshal(saves.slots[slot]);
 	},
 	delete: function (slot)
 	{
