@@ -52,13 +52,13 @@ var modes =		// SugarCube History class modes
 var config =	// SugarCube config
 {
 	// capability properties
-	  hasPushState      : ("history" in window) && ("pushState" in window.history)
+	  hasPushState      : (("history" in window) && ("pushState" in window.history))
 	  // the try/catch and length property access here is required due to a monumentally stupid
 	  // Firefox bug [ #748620; https://bugzilla.mozilla.org/show_bug.cgi?id=748620 ]
-	, hasLocalStorage   : ("localStorage" in window) && (function () { try { return window.localStorage != null && window.localStorage.length >= 0 } catch (e) { return false } }())	// use != to catch both null & undefined
-	, hasSessionStorage : ("sessionStorage" in window) && (function () { try { return window.sessionStorage != null && window.sessionStorage.length >= 0 } catch (e) { return false } }())	// use != to catch both null & undefined
-	, hasFileAPI        : window.File && window.FileReader && window.Blob
-
+	  // the try/catch is also required due to the iOS browser core throwing on setItem() calls when in private mode
+	, hasLocalStorage   : (("localStorage" in window) && ("setItem" in window.localStorage) && (function (wls) { try { if (wls != null && wls.length >= 0) { var tkey = "SugarCube_storage_test"; wls.setItem(tkey, true); wls.removeItem(tkey); return true; } return false; } catch (e) { return false; } }(window.localStorage)))	// use lazy equality on null check
+	, hasSessionStorage : (("sessionStorage" in window) && ("setItem" in window.sessionStorage) && (function (wss) { try { if (wss != null && wss.length >= 0) { var tkey = "SugarCube_storage_test"; wss.setItem(tkey, true); wss.removeItem(tkey); return true; } return false; } catch (e) { return false; } }(window.sessionStorage)))	// use lazy equality on null check
+	, hasFileAPI        : (("File" in window) && ("FileReader" in window) && ("Blob" in window))
 	// basic browser detection
 	, userAgent : navigator.userAgent.toLowerCase()
 	, browser   : {}
@@ -88,6 +88,7 @@ var config =	// SugarCube config
 	, errorName : "game"
 	, errors    : {}
 };
+config.transitionEndEventName = (function () { var teMap = { "transition": "transitionend", "MSTransition": "msTransitionEnd", "WebkitTransition": "webkitTransitionEnd", "MozTransition": "transitionend" }, el = document.createElement("div"); for (var tName in teMap) { if (el.style[tName] !== undefined) { return teMap[tName]; } } return ""; }());
 config.errors =
 {
 	  savesNotAllowed : "Saving has been disallowed on this passage."
@@ -111,9 +112,10 @@ config.browser =
 			, Windows    : (config.userAgent.search(/iemobile/) !== -1)
 		}
 };
+// adjust these based on the specific browser used
 config.historyMode = (config.hasPushState ? (config.browser.isGecko ? modes.sessionHistory : modes.windowHistory) : modes.hashTag);
-config.transitionEndEventName = (function () { var teMap = { "transition": "transitionend", "MSTransition": "msTransitionEnd", "WebkitTransition": "webkitTransitionEnd", "MozTransition": "transitionend" }, el = document.createElement("div"); for (var tName in teMap) { if (el.style[tName] !== undefined) { return teMap[tName]; } } return ""; }());
-
+config.hasFileAPI = config.hasFileAPI && !config.browser.isMobile.any() && (!config.browser.isOpera || config.browser.operaVersion >= 15);
+ 
 var   formatter = null	// Wikifier formatters
 	, macros    = {}	// macros manager
 	, tale      = {}	// story manager
@@ -970,11 +972,11 @@ var UISystem =
 		}
 
 		// add action list (export, import, and purge) and import input
-		if (savesOK || (config.hasFileAPI && (!config.browser.isOpera || config.browser.operaVersion >= 15)))
+		if (savesOK || config.hasFileAPI)
 		{
 			btnBar = document.createElement("div");
 			list = document.createElement("ul");
-			if (config.hasFileAPI && !config.browser.isMobile.any() && (!config.browser.isOpera || config.browser.operaVersion >= 15))
+			if (config.hasFileAPI)
 			{
 				list.appendChild(createActionItem("export", "Save to Disk\u2026", SaveSystem.exportSave));
 				list.appendChild(createActionItem("import", "Load from Disk\u2026", function (evt) {
@@ -1147,7 +1149,7 @@ var UISystem =
 		$(menu)
 			.empty()
 			.addClass("options");
-		new Wikifier(menu, tale.get("MenuOptions").text.trim());
+		new Wikifier(menu, tale.get("MenuOptions").processText().trim());
 
 		return true;
 	},
@@ -1158,8 +1160,8 @@ var UISystem =
 		$(menu)
 			.empty()
 			.addClass("share");
-		new Wikifier(menu, tale.get("MenuShare").text.trim());
-		menu.innerHTML = menu.innerHTML.replace(/(?:<br\s*\/?>)+/g, "\n");
+		new Wikifier(menu, tale.get("MenuShare").processText().trim());
+		$("br", menu).remove();
 
 		return true;
 	},
