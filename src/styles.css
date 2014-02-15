@@ -292,9 +292,10 @@ body.ui-open { overflow: hidden; }
 {
 	body { margin: 3.5%; }
 
-	#ui-bar { position: static; top: auto; left: auto; width: 100%; margin: 0; padding: 0; border-right: none; border-bottom: 1px solid #fff; }
+	#ui-bar { position: relative; top: 0; left: 0; width: 100%; margin: 0; padding: 0; border-right: none; border-bottom: 1px solid #fff; }
 	#ui-bar header, #ui-bar #story-caption, #ui-bar footer { text-align: left; width: 60%; }
-	#ui-bar nav { position: absolute; top: 1%; right: 3.5%; margin-top: 0; }
+	#ui-bar nav { position: absolute; top: 0; right: 0; margin: 0; }
+	#ui-bar ul { margin: 0; }
 	#ui-bar li { margin-bottom: 0.5em; }
 	#ui-bar li#menu-story { margin-bottom: 0.7em; line-height: 0.9; }
 
