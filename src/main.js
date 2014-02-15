@@ -1132,11 +1132,11 @@ var UISystem =
 
 		$(menu)
 			.empty()
-			.addClass("restart")
-			.append('<p>Are you sure that you want to restart?  Unsaved progress will be lost.</p><ul><li><button id="restart-ok" class="ui-close">OK</button></li><li><button id="restart-cancel" class="ui-close">Cancel</button></li></ul></div>');
+			.addClass("dialog restart")
+			.append('<p>Are you sure that you want to restart?  Unsaved progress will be lost.</p><ul><li><button id="restart-ok" class="ui-close">OK</button></li><li><button id="restart-cancel" class="ui-close">Cancel</button></li></ul>');
 
-		// add additional click handler for the OK button
-		$("#restart-ok").click(function () {
+		// add an additional click handler for the OK button
+		$("#ui-body #restart-ok").click(function () {
 			state.restart();
 		});
 
@@ -1148,7 +1148,7 @@ var UISystem =
 
 		$(menu)
 			.empty()
-			.addClass("options");
+			.addClass("dialog options");
 		new Wikifier(menu, tale.get("MenuOptions").processText().trim());
 
 		return true;
@@ -1163,6 +1163,72 @@ var UISystem =
 		new Wikifier(menu, tale.get("MenuShare").processText().trim().replace(/\n+/g, "\n"));
 
 		return true;
+	},
+	addClickHandler: function (target, options, startFunc, doneFunc, closeFunc)
+	{
+		$(target).click(function (evt) {
+			evt.preventDefault();	// this doesn't prevent bound events, only default actions (e.g. href links)
+
+			// call the start function
+			if (typeof startFunc === "function")
+			{
+				startFunc(evt);
+			}
+
+			// show the dialog
+			UISystem.show(options, closeFunc);
+
+			// call the done function
+			if (typeof doneFunc === "function")
+			{
+				doneFunc(evt);
+			}
+		});
+	},
+	alert: function (message, options, closeFunc)
+	{
+		var menu = document.getElementById("ui-body");
+
+		$(menu)
+			.empty()
+			.addClass("dialog alert")
+			.append('<p>' + message + '</p><ul><li><button id="alert-ok" class="ui-close">OK</button></li></ul>');
+
+		// show the dialog
+		UISystem.show(options, closeFunc);
+	},
+	show: function (options, closeFunc)
+	{
+		options = $.extend({ top: 50, opacity: 0.8 }, options);
+
+		var   parent  = $(window)
+			, overlay = $("#ui-overlay")
+			, dialog  = $("#ui-body");
+
+		// setup close function handlers
+		overlay
+			.add(".ui-close")
+			.on("click", null, closeFunc, UISystem.close);
+
+		// stop the body from scrolling
+		$(document.body)
+			.addClass("ui-open");
+
+		// display the overlay
+		overlay
+			.css({
+				  display: "block"
+				, opacity: 0
+			})
+			.fadeTo(200, options.opacity);
+
+		// display the dialog
+		dialog
+			.css($.extend({ display: "block", opacity: 0 }, UISystem.calcPositionalProperties(options.top)))
+			.fadeTo(200, 1);
+
+		// add the UI resize handler
+		parent.on("resize", null, options.top, $.debounce(40, UISystem.resizeHandler));
 	},
 	close: function (evt)
 	{
@@ -1202,104 +1268,55 @@ var UISystem =
 			evt.data(evt);
 		}
 	},
-	addClickHandler: function (target, options, startFunc, doneFunc, closeFunc)
-	{
-		options = $.extend({ top: 50, opacity: 0.8 }, options);
-
-		$(target).click(function (evt) {
-			evt.preventDefault();	// this doesn't prevent bound events, only default actions (e.g. href links)
-
-			// call the start function
-			if (typeof startFunc === "function")
-			{
-				startFunc(evt);
-			}
-
-			var   parent  = $(window)
-				, overlay = $("#ui-overlay")
-				, menu    = $("#ui-body");
-
-			// setup close function handlers
-			overlay
-				.add(".ui-close")
-				.on("click", null, closeFunc, UISystem.close);
-
-			// stop the body from scrolling
-			$(document.body)
-				.addClass("ui-open");
-
-			// display the overlay
-			overlay
-				.css({
-					  display: "block"
-					, opacity: 0
-				})
-				.fadeTo(200, options.opacity);
-
-			// display the menu
-			menu
-				.css($.extend({ display: "block", opacity: 0 }, UISystem.calcPositionalProperties(options.top)))
-				.fadeTo(200, 1);
-
-			// call the done function
-			if (typeof doneFunc === "function")
-			{
-				doneFunc(evt);
-			}
-
-			// add the UI resize handler
-			parent.on("resize", null, options.top, $.debounce(40, UISystem.resizeHandler));
-		});
-	},
 	resizeHandler: function (evt)
 	{
 		var   parent = $(window)
-			, menu   = $("#ui-body")
+			, dialog = $("#ui-body")
 			, topPos = (evt && typeof evt.data !== "undefined") ? evt.data : 50;
 
-		if (menu.css("display") === "block")
+		if (dialog.css("display") === "block")
 		{
-			// stow the menu and unset its positional properties (this is important!)
-			menu.css({ display: "none", left: "", right: "", top: "", bottom: "" });
+			// stow the dialog and unset its positional properties (this is important!)
+			dialog.css({ display: "none", left: "", right: "", top: "", bottom: "" });
 
-			// restore the menu with its new positional properties
-			menu.css($.extend({ display: "block" }, UISystem.calcPositionalProperties(topPos)));
+			// restore the dialog with its new positional properties
+			dialog.css($.extend({ display: "block" }, UISystem.calcPositionalProperties(topPos)));
 		}
 	},
 	calcPositionalProperties: function (topPos)
 	{
 		if (typeof topPos === "undefined") { topPos = 50; }
 
-		var   parent    = $(window)
-			, menu      = $("#ui-body")
-			, menuStyle = { left: "", right: "", top: "", bottom: "" }
-			, horzSpace = parent.width() - menu.outerWidth(true)
-			, vertSpace = parent.height() - menu.outerHeight(true);
+		var   parent      = $(window)
+			, dialog      = $("#ui-body")
+			, dialogStyle = { left: "", right: "", top: "", bottom: "" }
+			, horzSpace   = parent.width() - dialog.outerWidth(true)
+			, vertSpace   = parent.height() - dialog.outerHeight(true);
 
 		if (horzSpace <= 20)
 		{
-			menuStyle.left = menuStyle.right = "10px";
+			dialogStyle.left = dialogStyle.right = "10px";
 		}
 		else
 		{
-			menuStyle.left = menuStyle.right = ~~(horzSpace / 2) + "px";
+			dialogStyle.left = dialogStyle.right = ~~(horzSpace / 2) + "px";
 		}
 		if (vertSpace <= 20)
 		{
-			menuStyle.top = menuStyle.bottom = "10px";
+			dialogStyle.top = dialogStyle.bottom = "10px";
 		}
 		else
 		{
 			if ((vertSpace / 2) > topPos)
 			{
-				menuStyle.top = topPos + "px";
+				dialogStyle.top = topPos + "px";
 			}
 			else
 			{
-				menuStyle.top = menuStyle.bottom = ~~(vertSpace / 2) + "px";
+				dialogStyle.top = dialogStyle.bottom = ~~(vertSpace / 2) + "px";
 			}
 		}
-		return menuStyle;
+		return dialogStyle;
 	}
 };
 

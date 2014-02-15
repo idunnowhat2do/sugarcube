@@ -53,6 +53,8 @@ button:active { background-color: #f70; border: 1px solid #f92; }
 .highlight, .marked { color: yellow; font-weight: bold; font-style: italic; }
 .transition-in { opacity: 0; }
 
+#store-area { display: none; }
+
 #ui-bar { position: fixed; top: 3.5em; left: 3.5em; width: 14.5em; margin: 0; padding: 0 1.5em 0 0; border-right: 1px solid #fff; }
 #ui-bar header, #ui-bar nav, #ui-bar footer { text-align: right; }
 #ui-bar header, #ui-bar nav { font-weight: bold; }
@@ -132,10 +134,20 @@ body.ui-open { overflow: hidden; }
 #ui-body hr { height: 1px; border: none; background-color: #fff; }
 
 /* Default menu button styling */
-#ui-body > ul > li + li > button, #ui-body .controls > button + button
+#ui-body > ul > li + li > button
 {
 	margin-left: 12px;
 }
+
+/* General dialog styling */
+#ui-body.dialog
+{
+	min-width: 280px;
+	padding: 0.33em 1em 0.66em;
+}
+#ui-body.dialog > p { white-space: pre-line; }
+#ui-body.dialog > ul { display: block; width: 100%; margin: 0; padding: 0; list-style: none; text-align: left; }
+#ui-body.dialog > ul li { display: inline-block; margin: 0; padding: 0.4em 0.4em 0.5em; }
 
 /* Saves menu styling */
 #ui-body.saves table
@@ -195,17 +207,7 @@ body.ui-open { overflow: hidden; }
 	background-color: #47b;
 }
 
-/* Options & Restart menu styling */
-#ui-body.options, #ui-body.restart
-{
-	min-width: 280px;
-	padding: 0.33em 1em 0.66em;
-}
-/*
-@media screen and (min-width: ???) { #ui-body.options { min-width: ???; } }
-*/
-#ui-body.options ul, #ui-body.restart ul { display: block; margin: 0; padding: 0; list-style: none; }
-#ui-body.options li, #ui-body.restart li { display: inline-block; margin: 0; padding: 0.4em 0.4em 0.5em; }
+/* Options menu styling */
 #ui-body.options [id|="option-body"] { display: table; width: 100%; }
 #ui-body.options div[id|="option-body"] + div[id|="option-body"],
 #ui-body.options div[id|="option-body"] + br + div[id|="option-body"]
@@ -277,6 +279,7 @@ body.ui-open { overflow: hidden; }
 #ui-body.options a[id|="option-input"]:before { content: "\e002\00a0\00a0"; }
 #ui-body.options a[id|="option-input"].enabled:before { content: "\e003\00a0\00a0"; }
 
+/* Passages area styling */
 #passages { margin-left: 16em; padding-left: 1.5em; border-left: 1px solid #fff; }
 .passage { line-height: 1.75; margin-bottom: 2em; text-align: left; white-space: pre-line; transition: opacity 400ms ease-in; -webkit-transition: opacity 400ms ease-in; }
 .passage .actions { list-style: none; padding-top: 1.3em; text-align: center; }
@@ -286,8 +289,7 @@ body.ui-open { overflow: hidden; }
 .passage th, .passage td, .passage tr, .passage caption { padding: 3px; }
 .passage hr { height: 1px; border: none; background-color: #fff; }
 
-#store-area { display: none; }
-
+/* Basic mobile device styling */
 @media screen and (max-width: 768px)
 {
 	body { margin: 3.5%; }
