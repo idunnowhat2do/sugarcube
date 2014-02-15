@@ -1462,24 +1462,20 @@ function addStandardMacros()
 	 * <<optionbar>>
 	 */
 	macros.add("optionbar", {
-		version: { major: 2, minor: 0, revision: 0 },
+		version: { major: 3, minor: 0, revision: 0 },
 		handler: function ()
 		{
-			var   elSet   = document.createElement("div")
-				, elClose = document.createElement("button")
-				, elReset = document.createElement("button");
+			var   elSet   = document.createElement("ul")
+				, elOK    = document.createElement("li")
+				, elReset = document.createElement("li");
 
-			elSet.appendChild(elClose);
+			elSet.appendChild(elOK);
 			elSet.appendChild(elReset);
 
-			elSet.classList.add("controls");
-			elClose.classList.add("ui-close");
-			elReset.classList.add("ui-close");
+			elOK.appendChild(insertElement(null, "button", "options-ok", "ui-close", "OK"));
+			elReset.appendChild(insertElement(null, "button", "options-reset", "ui-close", "Reset to Defaults"));
 
-			insertText(elClose, "Close");
-			insertText(elReset, "Reset to Defaults");
-
-			$(elReset).click(function (evt) {
+			$("button", elReset).click(function (evt) {
 				macros.get("deleteoptions").handler();
 				window.location.reload();
 			});
