@@ -698,7 +698,7 @@ Passage.prototype.reset = function ()
 			, tiddlerTitle;
 		if (el.getAttribute && (tiddlerTitle = el.getAttribute("tiddler")))
 		{
-			if (this.title == tiddlerTitle)
+			if (this.title === tiddlerTitle)
 			{
 				this.text = Passage.unescapeLineBreaks(el.firstChild ? el.firstChild.nodeValue : "");
 				return;
@@ -794,7 +794,7 @@ Passage.getExcerptFromNode = function (node, count)
 
 Passage.unescapeLineBreaks = function (text)
 {
-	if (text && text != "")
+	if (text && text !== "")
 	{
 		return text
 			.replace(/\\n/gm, '\n')
@@ -853,14 +853,25 @@ function Tale()
 
 	for (var i = 0; i < store.length; i++)
 	{
-		var el = store[i];
-		var tiddlerTitle;
+		var   el = store[i]
+			, tiddlerTitle;
 		if (el.getAttribute && (tiddlerTitle = el.getAttribute("tiddler")))
 		{
 			this.passages[tiddlerTitle] = new Passage(tiddlerTitle, el, i);
 		}
 	}
-	this.setTitle(this.passages.StoryTitle ? this.passages.StoryTitle.text : "Untitled Story");
+
+	if (this.passages.hasOwnProperty("StoryTitle"))
+	{
+		var buf = document.createElement("div");
+		new Wikifier(buf, this.passages.StoryTitle.processText().trim());
+		this.setTitle(buf.textContent);
+	}
+	else
+	{
+		this.setTitle("Untitled Story");
+	}
+
 }
 
 Tale.prototype.setTitle = function (title)
