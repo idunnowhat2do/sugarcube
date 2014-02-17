@@ -63,7 +63,6 @@ button:active { background-color: #f70; border: 1px solid #f92; }
 #ui-bar li { margin-bottom: 1em; }
 #ui-bar li a { text-decoration: none; }
 
-#story-title, #story-subtitle, #story-author, #story-caption, #menu-story { white-space: pre-line; }
 #story-caption, #menu-story, #menu-rewind, #menu-options, #menu-share { display: none; }
 #story-title { margin: 0; font-size: 210%; }
 #story-subtitle { font-size: 111%; }
@@ -145,7 +144,6 @@ body.ui-open { overflow: hidden; }
 	min-width: 280px;
 	padding: 0.33em 1em 0.66em;
 }
-#ui-body.dialog > p { white-space: pre-line; }
 #ui-body.dialog > ul { display: block; width: 100%; margin: 0; padding: 0; list-style: none; text-align: left; }
 #ui-body.dialog > ul li { display: inline-block; margin: 0; padding: 0.4em 0.4em 0.5em; }
 
@@ -281,7 +279,7 @@ body.ui-open { overflow: hidden; }
 
 /* Passages area styling */
 #passages { margin-left: 16em; padding-left: 1.5em; border-left: 1px solid #fff; }
-.passage { line-height: 1.75; margin-bottom: 2em; text-align: left; white-space: pre-line; transition: opacity 400ms ease-in; -webkit-transition: opacity 400ms ease-in; }
+.passage { line-height: 1.75; margin-bottom: 2em; text-align: left; transition: opacity 400ms ease-in; -webkit-transition: opacity 400ms ease-in; }
 .passage .actions { list-style: none; padding-top: 1.3em; text-align: center; }
 .passage .actions li { display: inline; margin-right: 6em; }
 .passage ul, .passage ol { margin-left: 0.5em; padding-left: 1.5em; }

@@ -1162,7 +1162,8 @@ var UISystem =
 		$(menu)
 			.empty()
 			.addClass("share");
-		new Wikifier(menu, tale.get("MenuShare").processText().trim().replace(/\n+/g, "\n"));
+		new Wikifier(menu, tale.get("MenuShare").processText().trim());
+		$("br", menu).remove();
 
 		return true;
 	},
