@@ -1039,7 +1039,7 @@ function addStandardMacros()
 			}
 
 			var   varName = this.args[0].replace("$", "")
-				, varId   = slugify(varName)
+				, varId   = Util.slugify(varName)
 				, passage = this.args.length > 1 ? this.args[1] : undefined
 				, el      = document.createElement("input");
 
@@ -1345,7 +1345,7 @@ function addStandardMacros()
 			}
 
 			var   propertyName = this.args[0]
-				, propertyId   = slugify(propertyName)
+				, propertyId   = Util.slugify(propertyName)
 				, elOption     = document.createElement("div")
 				, elLabel      = document.createElement("div")
 				, elControl    = document.createElement("div");

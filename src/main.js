@@ -49,7 +49,17 @@ var modes =		// SugarCube History class modes
 	, sessionHistory : 3
 };
 
-var config =	// SugarCube config
+var sysconfig =	// SugarCube system config (internal use only)
+{
+	// HistoryPRNG properties
+	  HistoryPRNG:
+		{
+			  isEnabled        : false
+			, replacedMathPRNG : false
+		}
+};
+
+var config =	// SugarCube config (author/developer use)
 {
 	// capability properties
 	  hasPushState      : (("history" in window) && ("pushState" in window.history))
@@ -67,6 +77,7 @@ var config =	// SugarCube config
 	, displayPassageTitles : false
 	, loadDelay            : 0
 	, startPassage         : "Start"
+	, updatePageElements   : true
 
 	// history option properties
 	, disableHistoryControls : false
@@ -165,26 +176,18 @@ $(document).ready(function ()
 	// set the default saves ID
 	config.saves.id = tale.domId;
 
-	// setup for some of the special passages
-	setPageElement("story-banner", "StoryBanner");
-	setPageElement("story-title", "StoryTitle", tale.title);
-	setPageElement("story-subtitle", "StorySubtitle");
-	setPageElement("story-author", "StoryAuthor");
+/*
+	// setup for the non-passage page elements
 	if (tale.has("StoryCaption"))
 	{
 		document.getElementById("story-caption").style.display = "block";
-		setPageElement("story-caption", "StoryCaption");
 	}
-	if (tale.has("StoryMenu"))
+	if (tale.has("StoryMenu") || tale.has("MenuStory"))
 	{
 		document.getElementById("menu-story").style.display = "block";
-		setPageElement("menu-story", "StoryMenu");
 	}
-	else if (tale.has("MenuStory"))
-	{
-		document.getElementById("menu-story").style.display = "block";
-		setPageElement("menu-story", "MenuStory");
-	}
+	UISystem.setPageElements();
+*/
 
 	// setup for story stylesheets & scripts (order: stylesheets, scripts, widgets)
 	var styles = tale.lookup("tags", "stylesheet");
@@ -268,11 +271,15 @@ $(document).ready(function ()
 	window.SugarCube =
 	{
 		  config  : config
+		, setup   : setup
 		, macros  : macros
 		, tale    : tale
 		, state   : state
 		, storage : storage
 		, session : session
+		, History : History
+		, Util    : Util
+		, clone   : clone
 	};
 });
 
@@ -294,6 +301,18 @@ var SaveSystem =
 			}
 			return array;
 		}
+		/* legacy kludges */
+		function convertOldSave(saveObj)
+		{
+			saveObj.state =
+			{
+				  mode    : saveObj.mode
+				, history : saveObj.data
+			};
+			delete saveObj.mode;
+			delete saveObj.data;
+		}
+		/* /legacy kludges */
 
 		console.log("[SaveSystem.init()]");
 
@@ -355,6 +374,35 @@ var SaveSystem =
 			}
 			storage.setItem("saves", saves);
 		}
+
+		/* legacy kludges */
+		// convert old-style saves
+		var needSave = false;
+		if
+		(
+			   saves.autosave !== null
+			&& saves.autosave.hasOwnProperty("data")
+			&& !saves.autosave.hasOwnProperty("state")
+		)
+		{
+			convertOldSave(saves.autosave);
+			needSave = true;
+		}
+		for (var i = 0; i < saves.slots.length; i++)
+		{
+			if
+			(
+				   saves.slots[i] !== null
+				&& saves.slots[i].hasOwnProperty("data")
+				&& !saves.slots[i].hasOwnProperty("state")
+			)
+			{
+				convertOldSave(saves.slots[i]);
+				needSave = true;
+			}
+		}
+		if (needSave) { storage.setItem("saves", saves); }
+		/* /legacy kludges */
 
 		SaveSystem._max = saves.slots.length - 1;
 
@@ -424,6 +472,10 @@ var SaveSystem =
 
 		return storage.setItem("saves", saves);
 	},
+	isEmpty: function ()
+	{
+		return SaveSystem.count() === 0;
+	},
 	count: function ()
 	{
 		if (!SaveSystem.slotsOK()) { return 0; }
@@ -472,7 +524,7 @@ var SaveSystem =
 	{
 		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed())
 		{
-			window.alert(config.errors.savesNotAllowed);
+			UISystem.alert(config.errors.savesNotAllowed);
 			return false;
 		}
 		if (slot < 0 || slot > SaveSystem._max) { return false; }
@@ -510,7 +562,7 @@ var SaveSystem =
 
 		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed())
 		{
-			window.alert(config.errors.savesNotAllowed);
+			UISystem.alert(config.errors.savesNotAllowed);
 			return;
 		}
 
@@ -556,25 +608,12 @@ var SaveSystem =
 
 		var saveObj =
 		{
-			  mode: config.historyMode
-			, id:   config.saves.id
+			  id    : config.saves.id
+			, state : History.marshal()
 		};
-
 		if (config.saves.version)
 		{
 			saveObj.version = config.saves.version;
-		}
-		switch (config.historyMode)
-		{
-		case modes.windowHistory:
-			saveObj.data = clone(state.history, true);
-			break;
-		case modes.sessionHistory:
-			saveObj.data = clone(state.history.slice(0, state.active.sidx + 1), true);
-			break;
-		case modes.hashTag:
-			saveObj.data = state.active.hash;
-			break;
 		}
 
 		if (typeof config.saves.onSave === "function")
@@ -588,86 +627,37 @@ var SaveSystem =
 	{
 		console.log("[SaveSystem.unmarshal()]");
 
-		if (!saveObj || !saveObj.hasOwnProperty("mode") || !saveObj.hasOwnProperty("id") || !saveObj.hasOwnProperty("data"))
+		try
 		{
-			window.alert("Save is missing the required " + config.errorName + " data.  Either you've loaded a file which isn't a save, or the save has become corrupted.\n\nAborting load.");
-			return false;
-		}
-		if (saveObj.mode !== config.historyMode)
-		{
-			window.alert("Save is from the wrong history mode.\n\nAborting load.");
-			return false;
-		}
-
-		if (typeof config.saves.onLoad === "function")
-		{
-			var errMsg = config.saves.onLoad(saveObj);
-			if (errMsg)
+			if (!saveObj || !saveObj.hasOwnProperty("id") || !saveObj.hasOwnProperty("state"))
 			{
-				window.alert(errMsg + "\n\nAborting load.");
-				return false;
-			}
-		}
-
-		if (saveObj.id !== config.saves.id)
-		{
-			window.alert("Save is from the wrong " + config.errorName + ".\n\nAborting load.");
-			return false;
-		}
-
-		switch (config.historyMode)
-		{
-		case modes.windowHistory:
-			// fallthrough
-		case modes.sessionHistory:
-			// necessary?
-			document.title = tale.title;
-
-			// start a new state history (do not call init()!)
-			state = new History();
-			if (config.historyMode === modes.sessionHistory)
-			{
-				state.regenerateSuid();
-			}
-
-			// restore the history states in order
-			for (var i = 0, len = saveObj.data.length; i < len; i++)
-			{
-				// load the state from the save
-				state.history.push(clone(saveObj.data[i], true));
-
-				console.log("    > loading: " + i + " (" + state.history[i].title + ")");
-
-				// load the state into the window history
-				if (!config.disableHistoryControls)
+				if (!saveObj || !saveObj.hasOwnProperty("mode") || !saveObj.hasOwnProperty("id") || !saveObj.hasOwnProperty("data"))
 				{
-					if (config.historyMode === modes.windowHistory)
-					{
-						window.history.pushState(state.history, document.title);
-					}
-					else
-					{
-						window.history.pushState({ sidx: state.history[i].sidx, suid: state.suid }, document.title);
-					}
+					throw new Error("Save is missing required data.  Either you've loaded a file which isn't a save, or the save has become corrupted.");
+				}
+				else
+				{
+					throw new Error("Old-style saves seen in SaveSystem.unmarshal().");
 				}
 			}
 
-			// activate the current top and display the passage
-			state.activate(state.top);
-			state.display(state.active.title, null, "back");
-			break;
+			if (typeof config.saves.onLoad === "function")
+			{
+				config.saves.onLoad(saveObj);
+			}
 
-		case modes.hashTag:
-			if (!config.disableHistoryControls)
+			if (saveObj.id !== config.saves.id)
 			{
-				window.location.hash = saveObj.data;
+				throw new Error("Save is from the wrong " + config.errorName + ".");
 			}
-			else
-			{
-				session.setItem("activeHash", saveObj.data);
-				window.location.reload();
-			}
-			break;
+
+			// restore the state
+			History.unmarshal(saveObj.state);
+		}
+		catch (e)
+		{
+			UISystem.alert(e.message + "\n\nAborting load.");
+			return false;
 		}
 
 		return true;
@@ -686,6 +676,17 @@ var UISystem =
 
 		var   html   = $(document.documentElement)
 			, target;
+
+		// setup for the non-passage page elements
+		if (tale.has("StoryCaption"))
+		{
+			document.getElementById("story-caption").style.display = "block";
+		}
+		if (tale.has("StoryMenu") || tale.has("MenuStory"))
+		{
+			document.getElementById("menu-story").style.display = "block";
+		}
+		UISystem.setPageElements();
 
 		// add menu containers to <body>
 		insertElement(document.body, "div", "ui-overlay");
@@ -760,6 +761,18 @@ var UISystem =
 			}
 		}, false);
 	},
+	setPageElements: function ()
+	{
+		/**
+		 * Setup for the non-passage page elements
+		 */
+		setPageElement("story-banner",   "StoryBanner");
+		setPageElement("story-title",    "StoryTitle", tale.title);
+		setPageElement("story-subtitle", "StorySubtitle");
+		setPageElement("story-author",   "StoryAuthor");
+		setPageElement("story-caption",  "StoryCaption");
+		setPageElement("menu-story",     ["StoryMenu", "MenuStory"]);
+	},
 	buildSaves: function ()
 	{
 		console.log("[buildSaves()]");
@@ -820,7 +833,7 @@ var UISystem =
 				tdDescTxt.innerHTML = "A";
 				tdSlot.appendChild(tdDescTxt);
 
-				if (saves.autosave && saves.autosave.mode === config.historyMode)
+				if (saves.autosave && saves.autosave.state.mode === config.historyMode)
 				{
 					tdLoadBtn = document.createElement("button");
 					tdLoadBtn.id = "saves-load-autosave";
@@ -869,7 +882,7 @@ var UISystem =
 
 				tdSlot.appendChild(document.createTextNode(i+1));
 
-				if (saves.slots[i] && saves.slots[i].mode === config.historyMode)
+				if (saves.slots[i] && saves.slots[i].state.mode === config.historyMode)
 				{
 					tdLoadBtn = createButton("load", "Load", i, SaveSystem.load);
 					tdLoad.appendChild(tdLoadBtn);

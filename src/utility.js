@@ -110,22 +110,6 @@ String.prototype.readBracketedList = function ()
 ** [Function Library]
 ***********************************************************************************************************************/
 /**
- * Returns whether the passed value is numeric
- */
-function isNumeric(obj)
-{
-	return typeof obj === "number" || (!isNaN(parseFloat(obj)) && isFinite(obj));
-}
-
-/**
- * Returns whether the passed value is boolean-ish
- */
-function isBoolean(obj)
-{
-	return typeof obj === "boolean" || (typeof obj === "string" && (obj === "true" || obj === "false"));
-}
-
-/**
  * Returns a copy of the passed object (shallow by default, but deep if specified)
  */
 function clone(orig, deep)
@@ -310,22 +294,27 @@ function removeChildren(el)
 /**
  * Wikifies a passage into a DOM element corresponding to the passed ID and returns the element
  */
-function setPageElement(id, title, defaultText)
+function setPageElement(id, titles, defaultText)
 {
-	var place = (typeof id === "object") ? id : document.getElementById(id);
-	if (place)
+	var el = (typeof id === "object") ? id : document.getElementById(id);
+	if (el)
 	{
-		removeChildren(place);
-		if (tale.has(title))
+		removeChildren(el);
+		if (!Array.isArray(titles)) { titles = [ titles ]; }
+		for (var i = 0; i < titles.length; i++)
 		{
-			new Wikifier(place, tale.get(title).processText().trim());
+			if (tale.has(titles[i]))
+			{
+				new Wikifier(el, tale.get(titles[i]).processText().trim());
+				return el;
+			}
 		}
-		else if (defaultText != null && defaultText !== "")	// use lazy equality on null check
+		if (defaultText != null && defaultText !== "")	// use lazy equality on null check
 		{
-			new Wikifier(place, defaultText);
+			new Wikifier(el, defaultText);
 		}
 	}
-	return place;
+	return el;
 }
 
 /**
@@ -503,50 +492,6 @@ function scrollWindowTo(el)
 		, intervalId = window.setInterval(tick, 25);
 }
 
-/**
- * Returns a lowercased and underscore encoded version of the passed string
- */
-function slugify(str)
-{
-	return str
-		.trim()
-		.replace(/[^\w\s\u2013\u2014-]+/g, '')
-		.replace(/[_\s\u2013\u2014-]+/g, '-')
-		.toLocaleLowerCase();
-}
-
-/**
- * Returns a base64 encoding of the passed UTF-8 string
- */
-function utf8ToBase64(str)
-{
-	return window.btoa(unescape(encodeURIComponent(str)));
-}
-
-/**
- * Returns a UTF-8 string from the passed base64 encoding
- */
-function base64ToUtf8(str)
-{
-	return decodeURIComponent(escape(window.atob(str)));
-}
-
-/**
- * Returns a v4 Universally Unique IDentifier (UUID), a.k.a. Globally Unique IDentifier (GUID)
- *     [RFC4122] http://www.ietf.org/rfc/rfc4122.txt
- */
-function generateUuid()
-{
-	// this uses a combination of Math.random() and Date().getTime() to harden itself
-	// against bad Math.random() generators and reduce the likelihood of a collision
-	var d = new Date().getTime();
-	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-		var r = (d + Math.random()*16)%16 | 0;
-		d = Math.floor(d/16);
-		return (c === 'x' ? r : (r&0x7|0x8)).toString(16);
-	});
-}
-
 
 /***********************************************************************************************************************
 ** [Function Library, Story Utilities]
@@ -611,6 +556,122 @@ function visited(title)
 	}
 	return count;
 }
+
+
+/***********************************************************************************************************************
+** [Function Library (Namespaced via static Util object)]
+***********************************************************************************************************************/
+var Util =
+{
+
+	/**
+	 * Backup Math.random for system-level tasks, like generateUuid(), in case it's replaced later
+	 */
+	random: Math.random,
+
+	/**
+	 * Returns whether the passed value is numeric
+	 */
+	isNumeric: function (obj)
+	{
+		return typeof obj === "number" || (!isNaN(parseFloat(obj)) && isFinite(obj));
+	},
+
+	/**
+	 * Returns whether the passed value is boolean-ish
+	 */
+	isBoolean: function (obj)
+	{
+		return typeof obj === "boolean" || (typeof obj === "string" && (obj === "true" || obj === "false"));
+	},
+
+	/**
+	 * Returns a lowercased and underscore encoded version of the passed string
+	 */
+	slugify: function (str)
+	{
+		return str
+			.trim()
+			.replace(/[^\w\s\u2013\u2014-]+/g, '')
+			.replace(/[_\s\u2013\u2014-]+/g, '-')
+			.toLocaleLowerCase();
+	},
+
+	/**
+	 * Returns a base64 encoding of the passed UTF-8 string
+	 */
+	utf8ToBase64: function (str)
+	{
+		return window.btoa(unescape(encodeURIComponent(str)));
+	},
+
+	/**
+	 * Returns a UTF-8 string from the passed base64 encoding
+	 */
+	base64ToUtf8: function (str)
+	{
+		return decodeURIComponent(escape(window.atob(str)));
+	},
+
+	/**
+	 * Returns a v4 Universally Unique IDentifier (UUID), a.k.a. Globally Unique IDentifier (GUID)
+	 *     [RFC4122] http://www.ietf.org/rfc/rfc4122.txt
+	 */
+	generateUuid: function ()
+	{
+		// this uses a combination of Math.random() and Date().getTime() to harden itself
+		// against bad Math.random() generators and reduce the likelihood of a collision
+		var d = new Date().getTime();
+		return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+			var r = (d + Util.random()*16)%16 | 0;
+			d = Math.floor(d/16);
+			return (c === 'x' ? r : (r&0x7|0x8)).toString(16);
+		});
+	}
+
+};
+
+
+/***********************************************************************************************************************
+** [Seedable PRNG (Wrapper for seedrandom.js)]
+***********************************************************************************************************************/
+function SeedablePRNG(seed, useEntropy)
+{
+	return new Math.seedrandom(seed, useEntropy, function(prng, seed) {
+		return {
+			  random : function () { this.count++; return this._prng(); }
+			, _prng  : prng
+			, seed   : seed
+			, count  : 0
+		};
+	});
+}
+
+SeedablePRNG.marshal = function (prng)
+{
+	if (!prng || !prng.hasOwnProperty("seed") || !prng.hasOwnProperty("count"))
+	{
+		throw new Error("PRNG is missing required data.");
+	}
+
+	return { seed: prng.seed, count: prng.count };
+};
+
+SeedablePRNG.unmarshal = function (prngObj)
+{
+	if (!prngObj || !prngObj.hasOwnProperty("seed") || !prngObj.hasOwnProperty("count"))
+	{
+		throw new Error("PRNG object is missing required data.");
+	}
+
+	// create a new PRNG using the original seed
+	var prng = new SeedablePRNG(prngObj.seed, false);
+
+	// pull values until the new PRNG is in sync with the original
+	for (var i = 0; i < prngObj.count; i++) { prng.random(); }
+
+	return prng;
+};
 
 
 /***********************************************************************************************************************

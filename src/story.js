@@ -46,6 +46,8 @@ History.prototype.clone = function (at)
 };
 */
 
+History.prototype.random = function () { return Math.random(); };
+
 History.prototype.index = function (idx)
 {
 	if (this.history.length === 0) { return null; }
@@ -103,6 +105,14 @@ History.prototype.activate = function (state)
 		if (state < 0 || state >= this.history.length) { return null; }
 		this.active = clone(this.history[state], true);
 	}
+	if (this.prng)
+	{
+		this.prng = SeedablePRNG.unmarshal({
+			  seed  : this.prng.seed
+			, count : this.active.rcount
+		});
+	}
+
 	return this.active;
 };
 
@@ -187,6 +197,10 @@ History.prototype.display = function (title, link, render)
 		}
 
 		this.push({ title: passage.title, variables: clone(this.active.variables, true) });
+		if (this.prng)
+		{
+			this.top.rcount = this.prng.count;
+		}
 		this.activate(this.top);
 	}
 	if (render !== "back" || config.disableHistoryControls)
@@ -313,6 +327,12 @@ History.prototype.display = function (title, link, render)
 		}
 	}
 
+	// update the non-passage page elements, if enabled
+	if (config.updatePageElements)
+	{
+		UISystem.setPageElements();
+	}
+
 	// handle autosaves
 	if (typeof config.saves.autosave !== "undefined")
 	{
@@ -334,8 +354,9 @@ History.prototype.display = function (title, link, render)
 
 History.prototype.regenerateSuid = function ()
 {
+	console.log("[<History>.regenerateSuid()]");
 	session.removeItem("activeHistory");
-	this.suid = generateUuid();
+	this.suid = Util.generateUuid();
 	this.save();
 };
 
@@ -369,10 +390,12 @@ History.prototype.restart = function ()
 History.prototype.save = function ()
 {
 	console.log("[<History>.save()]");
+	console.log("    > this.suid: " + this.suid);
 	if (config.historyMode === modes.sessionHistory)
 	{
 		if (session.setItem("history." + this.suid, this.history))
 		{
+			console.log("    > activeHistory: " + this.suid);
 			session.setItem("activeHistory", this.suid);
 		}
 	}
@@ -426,7 +449,7 @@ History.prototype.restore = function (suid)
 			}
 			else
 			{
-				this.suid = generateUuid();
+				this.suid = Util.generateUuid();
 			}
 		}
 		if (this.suid && session.hasItem("history." + this.suid))
@@ -489,10 +512,11 @@ History.hashChangeHandler = function (evt)
 		{
 			var el = document.getElementById("passages");
 
-			// reset the history stack, making a copy of the <<remember>> variables
+			// reset the history, making a copy of the <<remember>> variables
 			var remember = storage.getItem("remember");
-			state.active = { init: true, variables: (remember === null ? {} : clone(remember, true)) };
-			state.history = [];
+			window.SugarCube.state = state = new History();
+			if (remember !== null) { state.active.variables = clone(remember, true); }
+			if (sysconfig.HistoryPRNG.isEnabled) { History.initPRNG(); }
 
 			if (!config.disableHistoryControls)
 			{
@@ -553,6 +577,128 @@ History.popStateHandler_sessionHistory = function (evt)
 	state.display(state.activate(evt.state.sidx).title, null, "back");
 };
 
+History.initPRNG = function (seed, useEntropy)
+{
+	console.log("[History.initPRNG()]");
+
+	sysconfig.HistoryPRNG.isEnabled = true;
+	state.prng = new SeedablePRNG(seed, useEntropy);
+	state.active.rcount = state.prng.count;
+
+	if (!sysconfig.HistoryPRNG.replacedMathPRNG)
+	{
+		sysconfig.HistoryPRNG.replacedMathPRNG = true;
+		Math.random = function () {
+			console.log("**** HistoryPRNG: Math.random() called!");
+			return state.prng.random();
+		};
+	}
+};
+
+History.marshal = function ()
+{
+	console.log("[History.marshal()]");
+
+	var stateObj =
+	{
+		mode : config.historyMode
+	};
+	if (state.prng)
+	{
+		stateObj.rseed = state.prng.seed;
+	}
+	switch (config.historyMode)
+	{
+	case modes.windowHistory:
+		stateObj.history = clone(state.history, true);
+		break;
+	case modes.sessionHistory:
+		stateObj.history = clone(state.history.slice(0, state.active.sidx + 1), true);
+		break;
+	case modes.hashTag:
+		stateObj.history = state.active.hash;
+		break;
+	}
+
+	return stateObj;
+};
+
+History.unmarshal = function (stateObj)
+{
+	console.log("[History.unmarshal()]");
+
+	if (!stateObj || !stateObj.hasOwnProperty("mode") || !stateObj.hasOwnProperty("history"))
+	{
+		throw new Error("State object is missing required data.");
+	}
+	if (stateObj.mode !== config.historyMode)
+	{
+		throw new Error("State object is from the wrong history mode.");
+	}
+
+	switch (config.historyMode)
+	{
+	case modes.windowHistory:
+		// fallthrough
+	case modes.sessionHistory:
+		// necessary?
+		document.title = tale.title;
+
+		// start a new state history (do not call init()!)
+		window.SugarCube.state = state = new History();
+		if (sysconfig.HistoryPRNG.isEnabled)
+		{
+			History.initPRNG(stateObj.hasOwnProperty("rseed") ? stateObj.rseed : null);
+		}
+		if (config.historyMode === modes.sessionHistory)
+		{
+			state.regenerateSuid();
+			//console.log("    > [History.unmarshal()] this.suid: " + state.suid);
+		}
+
+		// restore the history states in order
+		for (var i = 0, len = stateObj.history.length; i < len; i++)
+		{
+			// load the state from the save
+			state.history.push(clone(stateObj.history[i], true));
+
+			console.log("    > loading: " + i + " (" + state.history[i].title + ")");
+
+			// load the state into the window history
+			if (!config.disableHistoryControls)
+			{
+				if (config.historyMode === modes.windowHistory)
+				{
+					window.history.pushState(state.history, document.title);
+					//console.log("        > window.history.state: " + i + " (" + window.history.state[i].title + ")");
+				}
+				else
+				{
+					window.history.pushState({ sidx: state.history[i].sidx, suid: state.suid }, document.title);
+					//console.log("        > window.history.state: " + window.history.state.sidx + "/" + window.history.state.suid);
+				}
+			}
+		}
+
+		// activate the current top and display the passage
+		state.activate(state.top);
+		state.display(state.active.title, null, "back");
+		break;
+
+	case modes.hashTag:
+		if (!config.disableHistoryControls)
+		{
+			window.location.hash = stateObj.history;
+		}
+		else
+		{
+			session.setItem("activeHash", stateObj.history);
+			window.location.reload();
+		}
+		break;
+	}
+};
+
 
 /***********************************************************************************************************************
 ** [Passage]
@@ -563,7 +709,7 @@ function Passage(title, el, order)
 	if (el)
 	{
 		this.id          = order;
-		this.domId       = "passage-" + slugify(this.title);
+		this.domId       = "passage-" + Util.slugify(this.title);
 		this.text        = Passage.unescapeLineBreaks(el.firstChild ? el.firstChild.nodeValue : "");
 		this.textExcerpt = Passage.getExcerptFromText(this.text);
 		this.tags        = el.hasAttribute("tags") ? el.getAttribute("tags").trim() : "";
@@ -594,7 +740,7 @@ function Passage(title, el, order)
 					var tag = this.tags[i].toLowerCase();
 					if (!tagsToSkip.test(tag))
 					{
-						tagClasses.push(slugify(tag));
+						tagClasses.push(Util.slugify(tag));
 					}
 				}
 				if (tagClasses.length > 0)
@@ -877,7 +1023,7 @@ function Tale()
 Tale.prototype.setTitle = function (title)
 {
 	this.title = title;
-	this.domId = slugify(title);
+	this.domId = Util.slugify(title);
 };
 
 Tale.prototype.has = function (key)

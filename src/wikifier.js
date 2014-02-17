@@ -64,7 +64,7 @@ String.prototype.readMacroParams = function ()
 			}
 
 			// Numeric literal, so convert it into a number
-			else if (isNumeric(n))
+			else if (Util.isNumeric(n))
 			{
 				// n.b. Octal literals are not handled correctly by Number() (e.g. Number("077") yields 77, not 63).
 				//      We could use eval("077") instead, which does correctly yield 63, however, it's probably far
@@ -77,7 +77,7 @@ String.prototype.readMacroParams = function ()
 			}
 
 			// Boolean literal, so convert it into a boolean
-			else if (isBoolean(n))
+			else if (Util.isBoolean(n))
 			{
 				n = (n === "true") ? true : false;
 			}
