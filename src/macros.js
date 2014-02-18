@@ -758,7 +758,7 @@ function addStandardMacros()
 	 * <<if>>
 	 */
 	macros.add("if", {
-		version: { major: 3, minor: 0, revision: 0 },
+		version: { major: 3, minor: 0, revision: 1 },
 		skipArgs: true,
 		tags: [ "elseif", "else" ],
 		handler: function ()
@@ -767,7 +767,11 @@ function addStandardMacros()
 			{
 				for (var i = 0, len = this.payload.length; i < len; i++)
 				{
-					if (this.payload[i].name === "else" || eval(Wikifier.parse(this.payload[i].arguments)))
+					if (this.payload[i].name === "else" && this.payload[i].arguments.length !== 0)
+					{
+						throw new Error("<<else>> does not accept an expression, invalid: " + this.payload[i].arguments);
+					}
+					if (this.payload[i].name === "else" || !!eval(Wikifier.parse(this.payload[i].arguments)))
 					{
 						new Wikifier(this.output, this.payload[i].contents);
 						break;
