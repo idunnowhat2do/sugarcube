@@ -684,6 +684,7 @@ var UISystem =
 		{
 			document.getElementById("menu-story").style.display = "block";
 		}
+		setPageElement("story-title", "StoryTitle", tale.title);
 		UISystem.setPageElements();
 
 		// add menu containers to <body>
@@ -766,7 +767,6 @@ var UISystem =
 		 * Setup for the non-passage page elements
 		 */
 		setPageElement("story-banner",   "StoryBanner");
-		setPageElement("story-title",    "StoryTitle", tale.title);
 		setPageElement("story-subtitle", "StorySubtitle");
 		setPageElement("story-author",   "StoryAuthor");
 		setPageElement("story-caption",  "StoryCaption");
