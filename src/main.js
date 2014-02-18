@@ -8,6 +8,7 @@
 function technicalError(what, where, mesg)
 {
 	var errMesg = "Apologies! There is a technical problem with this " + what + ". You may be able to continue, but some parts may not work properly.";
+	// use lazy equality on these null checks
 	if (where != null || mesg != null) errMesg += "\n\nError";
 	if (where != null) errMesg += " [" + where + "]";
 	if (where != null || mesg != null) errMesg += ": ";
@@ -176,7 +177,7 @@ $(document).ready(function ()
 	// set the default saves ID
 	config.saves.id = tale.domId;
 
-/*
+	/* FIXME: If no issue crop up from moving this into UISystem.init(), purge this
 	// setup for the non-passage page elements
 	if (tale.has("StoryCaption"))
 	{
@@ -187,7 +188,7 @@ $(document).ready(function ()
 		document.getElementById("menu-story").style.display = "block";
 	}
 	UISystem.setPageElements();
-*/
+	*/
 
 	// setup for story stylesheets & scripts (order: stylesheets, scripts, widgets)
 	var styles = tale.lookup("tags", "stylesheet");
@@ -277,9 +278,6 @@ $(document).ready(function ()
 		, state   : state
 		, storage : storage
 		, session : session
-		, History : History
-		, Util    : Util
-		, clone   : clone
 	};
 });
 

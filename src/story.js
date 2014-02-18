@@ -46,8 +46,6 @@ History.prototype.clone = function (at)
 };
 */
 
-History.prototype.random = function () { return Math.random(); };
-
 History.prototype.index = function (idx)
 {
 	if (this.history.length === 0) { return null; }
