@@ -761,6 +761,7 @@ var UISystem =
 	},
 	setPageElements: function ()
 	{
+		console.log("[UISystem.setPageElements()]");
 		/**
 		 * Setup for the non-passage page elements
 		 */
@@ -773,17 +774,12 @@ var UISystem =
 	},
 	buildSaves: function ()
 	{
-		console.log("[buildSaves()]");
-
-		function createActionItem(bId, bText, bAction)
+		function createActionItem(bId, bClass, bText, bAction)
 		{
 			var li = document.createElement("li");
 			var btn = document.createElement("button");
 			btn.id = "saves-" + bId;
-			if (bId !== "import")
-			{
-				btn.classList.add("ui-close");
-			}
+			if (bClass) { btn.className = bClass; }
 			btn.innerHTML = bText;
 			$(btn).click(bAction);
 			li.appendChild(btn);
@@ -791,18 +787,15 @@ var UISystem =
 		}
 		function createSaveList()
 		{
-			function createButton(bIdClass, bText, bSlot, bAction)
+			function createButton(bId, bClass, bText, bSlot, bAction)
 			{
 				var btn = document.createElement("button");
-				btn.id = "saves-" + bIdClass + "-" + bSlot;
-				btn.classList.add(bIdClass);
-				btn.classList.add("ui-close");
+				btn.id = "saves-" + bId + "-" + bSlot;
+				if (bClass) { btn.className = bClass; }
+				btn.classList.add(bId);
 				btn.innerHTML = bText;
 				$(btn).click(function (i) {
-					return function ()
-					{
-						bAction(i);
-					};
+					return function () { bAction(i); };
 				}(bSlot));
 				return btn;
 			}
@@ -851,9 +844,11 @@ var UISystem =
 					tdDeleBtn = document.createElement("button");
 					tdDeleBtn.id = "saves-delete-autosave";
 					tdDeleBtn.classList.add("delete");
-					tdDeleBtn.classList.add("ui-close");
 					tdDeleBtn.innerHTML = "Delete";
-					$(tdDeleBtn).click(SaveSystem.deleteAuto);
+					$(tdDeleBtn).click(function () {
+						SaveSystem.deleteAuto();
+						UISystem.buildSaves();	// rebuild the saves menu
+					});
 					tdDele.appendChild(tdDeleBtn);
 				}
 				else
@@ -882,7 +877,7 @@ var UISystem =
 
 				if (saves.slots[i] && saves.slots[i].state.mode === config.historyMode)
 				{
-					tdLoadBtn = createButton("load", "Load", i, SaveSystem.load);
+					tdLoadBtn = createButton("load", "ui-close", "Load", i, SaveSystem.load);
 					tdLoad.appendChild(tdLoadBtn);
 
 					tdDescTxt = document.createTextNode(saves.slots[i].title);
@@ -899,12 +894,15 @@ var UISystem =
 					}
 					tdDesc.appendChild(tdDescTxt);
 
-					tdDeleBtn = createButton("delete", "Delete", i, SaveSystem.delete);
+					tdDeleBtn = createButton("delete", null, "Delete", i, function (i) {
+						SaveSystem.delete(i);
+						UISystem.buildSaves();	// rebuild the saves menu
+					});
 					tdDele.appendChild(tdDeleBtn);
 				}
 				else
 				{
-					tdLoadBtn = createButton("save", "Save", i, SaveSystem.save);
+					tdLoadBtn = createButton("save", "ui-close", "Save", i, SaveSystem.save);
 					tdLoad.appendChild(tdLoadBtn);
 
 					tdDescTxt = document.createElement("i");
@@ -948,13 +946,14 @@ var UISystem =
 			return el;
 		}
 
-		var   menu    = document.getElementById("ui-body")
+		console.log("[UISystem.buildSaves()]");
+
+		var   dialog  = document.getElementById("ui-body")
 			, list
 			, btnBar
 			, savesOK = SaveSystem.OK();
 
-		// remove old contents
-		$(menu)
+		$(dialog)
 			.empty()
 			.addClass("saves");
 
@@ -968,7 +967,7 @@ var UISystem =
 				list.id = "saves-list"
 				list.innerHTML = "<i>No save slots found</i>";
 			}
-			menu.appendChild(list);
+			dialog.appendChild(list);
 		}
 
 		// add action list (export, import, and purge) and import input
@@ -978,20 +977,23 @@ var UISystem =
 			list = document.createElement("ul");
 			if (config.hasFileAPI)
 			{
-				list.appendChild(createActionItem("export", "Save to Disk\u2026", SaveSystem.exportSave));
-				list.appendChild(createActionItem("import", "Load from Disk\u2026", function (evt) {
+				list.appendChild(createActionItem("export", "ui-close", "Save to Disk\u2026", SaveSystem.exportSave));
+				list.appendChild(createActionItem("import", null, "Load from Disk\u2026", function (evt) {
 					if (!document.getElementById("saves-import-file"))
 					{
-						menu.appendChild(createSavesImport());
+						dialog.appendChild(createSavesImport());
 					}
 				}));
 			}
 			if (savesOK)
 			{
-				list.appendChild(createActionItem("purge", "Purge Save Slots", SaveSystem.purge));
+				list.appendChild(createActionItem("purge", null, "Purge Save Slots", function (evt) {
+					SaveSystem.purge();
+					UISystem.buildSaves();	// rebuild the saves menu
+				}));
 			}
 			btnBar.appendChild(list);
-			menu.appendChild(btnBar);
+			dialog.appendChild(btnBar);
 			return true;
 		}
 		else
@@ -1002,11 +1004,12 @@ var UISystem =
 	},
 	buildRewind: function ()
 	{
-		var   menu     = document.getElementById("ui-body")
+		console.log("[UISystem.buildRewind()]");
+
+		var   dialog   = document.getElementById("ui-body")
 			, hasItems = false;
 
-		// remove old contents
-		$(menu)
+		$(dialog)
 			.empty()
 			.addClass("rewind");
 
@@ -1115,7 +1118,7 @@ var UISystem =
 					}
 				}());
 				el.innerHTML = passage.excerpt();
-				menu.appendChild(el);
+				dialog.appendChild(el);
 				hasItems = true;
 			}
 		}
@@ -1123,14 +1126,16 @@ var UISystem =
 		{
 			var el = document.createElement("div");
 			el.innerHTML = "<i>No passages available</i>";
-			menu.appendChild(el);
+			dialog.appendChild(el);
 		}
 	},
 	buildRestart: function ()
 	{
-		var menu = document.getElementById("ui-body");
+		console.log("[UISystem.buildRestart()]");
 
-		$(menu)
+		var dialog = document.getElementById("ui-body");
+
+		$(dialog)
 			.empty()
 			.addClass("dialog restart")
 			.append('<p>Are you sure that you want to restart?  Unsaved progress will be lost.</p><ul><li><button id="restart-ok" class="ui-close">OK</button></li><li><button id="restart-cancel" class="ui-close">Cancel</button></li></ul>');
@@ -1144,53 +1149,36 @@ var UISystem =
 	},
 	buildOptions: function ()
 	{
-		var menu = document.getElementById("ui-body");
+		console.log("[UISystem.buildOptions()]");
 
-		$(menu)
+		var dialog = document.getElementById("ui-body");
+
+		$(dialog)
 			.empty()
 			.addClass("dialog options");
-		new Wikifier(menu, tale.get("MenuOptions").processText().trim());
+		new Wikifier(dialog, tale.get("MenuOptions").processText().trim());
 
 		return true;
 	},
 	buildShare: function ()
 	{
-		var menu = document.getElementById("ui-body");
+		console.log("[UISystem.buildShare()]");
 
-		$(menu)
+		var dialog = document.getElementById("ui-body");
+
+		$(dialog)
 			.empty()
 			.addClass("share");
-		new Wikifier(menu, tale.get("MenuShare").processText().trim());
-		$("br", menu).remove();
+		new Wikifier(dialog, tale.get("MenuShare").processText().trim());
+		$("br", dialog).remove();
 
 		return true;
 	},
-	addClickHandler: function (target, options, startFunc, doneFunc, closeFunc)
-	{
-		$(target).click(function (evt) {
-			evt.preventDefault();	// this doesn't prevent bound events, only default actions (e.g. href links)
-
-			// call the start function
-			if (typeof startFunc === "function")
-			{
-				startFunc(evt);
-			}
-
-			// show the dialog
-			UISystem.show(options, closeFunc);
-
-			// call the done function
-			if (typeof doneFunc === "function")
-			{
-				doneFunc(evt);
-			}
-		});
-	},
 	alert: function (message, options, closeFunc)
 	{
-		var menu = document.getElementById("ui-body");
+		var dialog = document.getElementById("ui-body");
 
-		$(menu)
+		$(dialog)
 			.empty()
 			.addClass("dialog alert")
 			.append('<p>' + message + '</p><ul><li><button id="alert-ok" class="ui-close">OK</button></li></ul>');
@@ -1198,25 +1186,33 @@ var UISystem =
 		// show the dialog
 		UISystem.show(options, closeFunc);
 	},
+	addClickHandler: function (target, options, startFunc, doneFunc, closeFunc)
+	{
+		$(target).click(function (evt) {
+			evt.preventDefault();	// does not prevent bound events, only default actions (e.g. href links)
+
+			// call the start function
+			if (typeof startFunc === "function") { startFunc(evt); }
+
+			// show the dialog
+			UISystem.show(options, closeFunc);
+
+			// call the done function
+			if (typeof doneFunc === "function") { doneFunc(evt); }
+		});
+	},
 	show: function (options, closeFunc)
 	{
 		options = $.extend({ top: 50, opacity: 0.8 }, options);
 
-		var   parent  = $(window)
-			, overlay = $("#ui-overlay")
-			, dialog  = $("#ui-body");
-
-		// setup close function handlers
-		overlay
-			.add(".ui-close")
-			.on("click", null, closeFunc, UISystem.close);
-
-		// stop the body from scrolling
+		// stop the body from scrolling and setup the delegated UI close handler
 		$(document.body)
-			.addClass("ui-open");
+			.addClass("ui-open")
+			.on("click.uisystem-close", ".ui-close", closeFunc, UISystem.close);
 
 		// display the overlay
-		overlay
+		$("#ui-overlay")
+			.addClass("ui-close")
 			.css({
 				  display: "block"
 				, opacity: 0
@@ -1224,17 +1220,19 @@ var UISystem =
 			.fadeTo(200, options.opacity);
 
 		// display the dialog
-		dialog
+		$("#ui-body")
 			.css($.extend({ display: "block", opacity: 0 }, UISystem.calcPositionalProperties(options.top)))
 			.fadeTo(200, 1);
 
 		// add the UI resize handler
-		parent.on("resize", null, options.top, $.debounce(40, UISystem.resizeHandler));
+		$(window)
+			.on("resize.uisystem", null, options.top, $.debounce(40, UISystem.resizeHandler));
 	},
 	close: function (evt)
 	{
+		// pretty much reverse the actions taken in UISystem.show()
 		$(window)
-			.off("resize", UISystem.resizeHandler);
+			.off("resize.uisystem");
 		$("#ui-body")
 			.css({
 				  display: "none"
@@ -1253,14 +1251,13 @@ var UISystem =
 				, "opacity": 0
 			})
 			.fadeOut(200)
-			.add(".ui-close")
-			.off("click", UISystem.closeHandler);
+			.removeClass();
 		*/
 		$("#ui-overlay")
 			.fadeOut(200)
-			.add(".ui-close")
-			.off("click", UISystem.closeHandler);
+			.removeClass();
 		$(document.body)
+			.off("click.uisystem-close")
 			.removeClass("ui-open");
 
 		// call the given "on close" callback function, if any
@@ -1271,8 +1268,7 @@ var UISystem =
 	},
 	resizeHandler: function (evt)
 	{
-		var   parent = $(window)
-			, dialog = $("#ui-body")
+		var   dialog = $("#ui-body")
 			, topPos = (evt && typeof evt.data !== "undefined") ? evt.data : 50;
 
 		if (dialog.css("display") === "block")
