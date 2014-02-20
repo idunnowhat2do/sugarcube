@@ -11,7 +11,7 @@
  */
 String.prototype.readMacroParams = function ()
 {
-	// Groups: 1=double quoted | 2=single quoted | 3=back quoted | 4=empty quotes | 5=double square-bracketed | 6=barewords
+	// Groups: 1=double quoted | 2=single quoted | 3=empty quotes | 4=double square-bracketed | 5=barewords
 	var   re     = new RegExp(Wikifier.textPrimitives.macroArgPattern, "gm")
 		, match
 		, params = [];
@@ -26,20 +26,13 @@ String.prototype.readMacroParams = function ()
 		// Single quoted
 		else if (match[2]) { n = match[2]; }
 
-		// Back quoted
-		else if (match[3])
-		{
-			// Evaluate the expression (this might throw, but that's okay)
-			n = eval(Wikifier.parse(match[3]));
-		}
-
 		// Empty quotes
-		else if (match[4]) { n = ""; }
+		else if (match[3]) { n = ""; }
 
 		// Double square-bracketed
-		else if (match[5])
+		else if (match[4])
 		{
-			n = match[5];
+			n = match[4];
 
 			// Convert to an object
 			var   linkRe    = new RegExp(Wikifier.textPrimitives.linkPattern)
@@ -59,9 +52,9 @@ String.prototype.readMacroParams = function ()
 		}
 
 		// Barewords
-		else if (match[6])
+		else if (match[5])
 		{
-			n = match[6];
+			n = match[5];
 
 			// $variable, so substitute its value
 			if (/\$\w+/.test(n))
@@ -541,10 +534,9 @@ Wikifier.textPrimitives.imagePattern    = "\\[([<]?)([>]?)[Ii][Mm][Gg]\\[\\s*(?:
 Wikifier.textPrimitives.macroArgPattern = "(?:" + [
 		  "(?:\"((?:(?:\\\\\")|[^\"])+)\")" // 1=double quoted
 		, "(?:'((?:(?:\\\\')|[^'])+)')"     // 2=single quoted
-		, "(?:`((?:(?:\\\\`)|[^`])+)`)"     // 3=back quoted
-		, "((?:\"\")|(?:'')|(?:``))"        // 4=empty quotes
-		, "(?:(\\[\\[(?:\\s|\\S)*?\\]\\]))" // 5=double square-bracketed
-		, "([^\"'\\s]\\S*)"                 // 6=barewords
+		, "(?:`((?:(?:\\\\`)|[^`])+)`)"     // 3=empty quotes
+		, "(?:(\\[\\[(?:\\s|\\S)*?\\]\\]))" // 4=double square-bracketed
+		, "([^\"'\\s]\\S*)"                 // 5=barewords
 	].join("|") + ")";
 
 /**
