@@ -534,7 +534,7 @@ Wikifier.textPrimitives.imagePattern    = "\\[([<]?)([>]?)[Ii][Mm][Gg]\\[\\s*(?:
 Wikifier.textPrimitives.macroArgPattern = "(?:" + [
 		  "(?:\"((?:(?:\\\\\")|[^\"])+)\")" // 1=double quoted
 		, "(?:'((?:(?:\\\\')|[^'])+)')"     // 2=single quoted
-		, "(?:`((?:(?:\\\\`)|[^`])+)`)"     // 3=empty quotes
+		, "((?:\"\")|(?:''))"               // 3=empty quotes
 		, "(?:(\\[\\[(?:\\s|\\S)*?\\]\\]))" // 4=double square-bracketed
 		, "([^\"'\\s]\\S*)"                 // 5=barewords
 	].join("|") + ")";
