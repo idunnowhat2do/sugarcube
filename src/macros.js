@@ -769,7 +769,7 @@ function addStandardMacros()
 				{
 					if (this.payload[i].name === "else" && this.payload[i].arguments.length !== 0)
 					{
-						throw new Error("<<else>> does not accept an expression, invalid: " + this.payload[i].arguments);
+						throw new Error("<<else>> does not accept an expression (perhaps you meant to use <<elseif>> instead), invalid: " + this.payload[i].arguments);
 					}
 					if (this.payload[i].name === "else" || !!eval(Wikifier.parse(this.payload[i].arguments)))
 					{
