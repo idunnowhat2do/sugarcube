@@ -19,7 +19,7 @@ Downloads and documentation can be found at [SugarCube's website](http://www.mot
 - Supports the current set of TiddlyWiki markup (e.g. adds `<nowiki>…</nowiki>` & table caption markup).
 - Supports the use of $variables in both the wiki link and image markup syntaxes (e.g. `[[$goThere]]` & `[img[$someImgSrc]]`).
 - Extends both the wiki link and image link markup syntaxes to allow setting $variables, exactly like `<<set>>`, upon clicking the link (e.g. `[[Take the red pill|Took pill][$pill = "red"]]`).
-- Embeds the jQuery library (2.x series).
+- Embeds the jQuery library (2.x series) and the seedrandom.js library.
 
 ## Requirements ##
 SugarCube's sole requirement is a modern web browser, and by *modern* I mean one released within the last several years (you do not need the absolute latest and greatest shiny).
