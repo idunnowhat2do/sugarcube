@@ -496,7 +496,6 @@ function scrollWindowTo(el)
 /***********************************************************************************************************************
 ** [Function Library, Story Utilities]
 ***********************************************************************************************************************/
-
 /**
  * Returns a random integer in the range of min and max
  *   n.b. Using Math.round() will give you a non-uniform distribution!
@@ -745,7 +744,7 @@ KeyValueStore.prototype.setItem = function (sKey, sValue)
 		cookie.push("path=/");
 		try
 		{
-			console.log("    > setItem:cookie: " + cookie.join("; "));
+			DEBUG("    > setItem:cookie: " + cookie.join("; "));
 			document.cookie = cookie.join("; ");
 		}
 		catch (e)
@@ -812,7 +811,7 @@ KeyValueStore.prototype.removeMatchingItems = function (sKey)
 {
 	if (!sKey) { return false; }
 
-	console.log("[<KeyValueStore>.removeMatchingItems()]");
+	DEBUG("[<KeyValueStore>.removeMatchingItems()]");
 
 	var matched = [];
 	var keyRegexp = new RegExp(("^" + this.prefix + sKey).replace(/\./g, "\\.") + ".*");
@@ -843,7 +842,7 @@ KeyValueStore.prototype.removeMatchingItems = function (sKey)
 	}
 	for (var i = 0; i < matched.length; i++)
 	{
-		console.log("    > removing key: " + matched[i]);
+		DEBUG("    > removing key: " + matched[i]);
 		this.removeItem(matched[i]);
 	}
 	return true;

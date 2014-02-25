@@ -7,9 +7,9 @@
 ***********************************************************************************************************************/
 function History()
 {
-	console.log("[History()]");
-	console.log("    > mode: " + (config.historyMode === modes.hashTag ? "hashTag" : (config.historyMode === modes.windowHistory ? "windowHistory" : "sessionHistory")));
-	if (window.history.state) { if (config.historyMode === modes.windowHistory) { console.log("    > window.history.state: " + window.history.state.length); } else if (config.historyMode === modes.sessionHistory) { console.log("    > window.history.state: " + window.history.state.sidx + "/" + window.history.state.suid); } } else { console.log("    > window.history.state: null (" + window.history.state + ")"); }
+	DEBUG("[History()]");
+	DEBUG("    > mode: " + (config.historyMode === modes.hashTag ? "hashTag" : (config.historyMode === modes.windowHistory ? "windowHistory" : "sessionHistory")));
+	if (window.history.state) { if (config.historyMode === modes.windowHistory) { DEBUG("    > window.history.state: " + window.history.state.length); } else if (config.historyMode === modes.sessionHistory) { DEBUG("    > window.history.state: " + window.history.state.sidx + "/" + window.history.state.suid); } } else { DEBUG("    > window.history.state: null (" + window.history.state + ")"); }
 
 	// currently active/displayed state
 	this.active = { init: true, variables: {} };	// allows macro initialization to set variables at startup
@@ -116,17 +116,17 @@ History.prototype.activate = function (state)
 
 History.prototype.init = function ()
 {
-	console.log("[<History>.init()]");
+	DEBUG("[<History>.init()]");
 
 	// display the initial passage
 	if (typeof testPlay !== "undefined" && testPlay !== "")	// enables the Twine 1.4+ "Test Play From Here" feature
 	{
-		console.log('    > display: "' + testPlay + '" (testPlay)');
+		DEBUG('    > display: "' + testPlay + '" (testPlay)');
 		this.display(testPlay);
 	}
 	else if (!this.restore())
 	{
-		console.log('    > display: "' + config.startPassage + '"');
+		DEBUG('    > display: "' + config.startPassage + '"');
 		this.display(config.startPassage);
 	}
 
@@ -151,7 +151,7 @@ History.prototype.init = function ()
 
 History.prototype.display = function (title, link, render)
 {
-	console.log("[<History>.display()]");
+	DEBUG("[<History>.display()]");
 	// n.b. the title parameter can either be a passage title (string) or passage ID (number), so
 	//      after loading the passage, always refer to passage.title and never the title parameter
 	var passage = tale.get(title);
@@ -161,17 +161,17 @@ History.prototype.display = function (title, link, render)
 	{
 		if (config.historyMode === modes.sessionHistory)
 		{
-			console.log("    [SH]> state.active.init && !state.isEmpty; activating: " + (window.history.state !== null ? "window.history.state.sidx" : "state.top"));
+			DEBUG("    [SH]> state.active.init && !state.isEmpty; activating: " + (window.history.state !== null ? "window.history.state.sidx" : "state.top"));
 			this.activate(window.history.state !== null ? window.history.state.sidx : this.top);
 		}
 		else if (config.historyMode === modes.windowHistory)
 		{
-			console.log("    [WH]> state.active.init && !state.isEmpty; activating: state.top");
+			DEBUG("    [WH]> state.active.init && !state.isEmpty; activating: state.top");
 			this.activate(this.top);
 		}
 		else
 		{
-			console.log("    [HT]> state.active.init && !state.isEmpty; activating: state.top");
+			DEBUG("    [HT]> state.active.init && !state.isEmpty; activating: state.top");
 			this.activate(this.top);
 		}
 	}
@@ -187,7 +187,7 @@ History.prototype.display = function (title, link, render)
 			}
 			else if (config.historyMode === modes.sessionHistory && window.history.state.sidx < this.top.sidx)
 			{
-				console.log("    > stacks out of sync; popping " + (this.top.sidx - window.history.state.sidx) + " states to equalize");
+				DEBUG("    > stacks out of sync; popping " + (this.top.sidx - window.history.state.sidx) + " states to equalize");
 				// stack IDs are out of sync, pop our stack until we're back in
 				// sync with the window.history
 				this.pop(this.top.sidx - window.history.state.sidx);
@@ -352,7 +352,7 @@ History.prototype.display = function (title, link, render)
 
 History.prototype.regenerateSuid = function ()
 {
-	console.log("[<History>.regenerateSuid()]");
+	DEBUG("[<History>.regenerateSuid()]");
 	session.removeItem("activeHistory");
 	this.suid = Util.generateUuid();
 	this.save();
@@ -360,7 +360,7 @@ History.prototype.regenerateSuid = function ()
 
 History.prototype.restart = function ()
 {
-	console.log("[<History>.restart()]");
+	DEBUG("[<History>.restart()]");
 	if (config.historyMode === modes.windowHistory)
 	{
 		window.history.pushState(null, document.title);	// yes, null
@@ -387,13 +387,13 @@ History.prototype.restart = function ()
 
 History.prototype.save = function ()
 {
-	console.log("[<History>.save()]");
-	console.log("    > this.suid: " + this.suid);
+	DEBUG("[<History>.save()]");
+	DEBUG("    > this.suid: " + this.suid);
 	if (config.historyMode === modes.sessionHistory)
 	{
 		if (session.setItem("history." + this.suid, this.history))
 		{
-			console.log("    > activeHistory: " + this.suid);
+			DEBUG("    > activeHistory: " + this.suid);
 			session.setItem("activeHistory", this.suid);
 		}
 	}
@@ -420,7 +420,7 @@ History.prototype.save = function ()
 
 History.prototype.restore = function (suid)
 {
-	console.log("[<History>.restore()]");
+	DEBUG("[<History>.restore()]");
 	if (config.historyMode === modes.windowHistory)
 	{
 		if (window.history.state !== null)
@@ -453,7 +453,7 @@ History.prototype.restore = function (suid)
 		if (this.suid && session.hasItem("history." + this.suid))
 		{
 			this.history = session.getItem("history." + this.suid);
-			console.log("    > window.history.state.sidx: " + window.history.state.sidx);
+			DEBUG("    > window.history.state.sidx: " + window.history.state.sidx);
 			if (tale.has(this.history[window.history.state.sidx].title))
 			{
 				this.display(this.history[window.history.state.sidx].title, null, "back");
@@ -484,7 +484,7 @@ History.prototype.restore = function (suid)
 
 					if (!tale.has(id)) { return false; }
 
-					console.log("    > id: " + id + " (" + order[i] + ")");
+					DEBUG("    > id: " + id + " (" + order[i] + ")");
 
 					this.display(id, null, (i === end) ? null : "offscreen");
 				}
@@ -493,7 +493,7 @@ History.prototype.restore = function (suid)
 			}
 			catch (e)
 			{
-				console.log("restore failed", e);
+				DEBUG(true, "restore failed", e);
 			}
 		}
 	}
@@ -502,7 +502,7 @@ History.prototype.restore = function (suid)
 
 History.hashChangeHandler = function (evt)
 {
-	console.log("[History.hashChangeHandler()]");
+	DEBUG("[History.hashChangeHandler()]");
 
 	if (window.location.hash !== state.hash)
 	{
@@ -543,8 +543,8 @@ History.hashChangeHandler = function (evt)
 
 History.popStateHandler_windowHistory = function (evt)
 {
-	console.log("[History.popStateHandler_windowHistory()]");
-	if (evt.state === null) { console.log("    > evt.state: null; no-op"); }
+	DEBUG("[History.popStateHandler_windowHistory()]");
+	DEBUG(evt.state === null, "    > evt.state: null; no-op");
 
 	// no-op if state is null
 	if (evt.state === null) { return; }
@@ -558,8 +558,8 @@ History.popStateHandler_windowHistory = function (evt)
 
 History.popStateHandler_sessionHistory = function (evt)
 {
-	console.log("[History.popStateHandler_sessionHistory()]");
-	if (evt.state === null) { console.log("    > evt.state: null; no-op"); }
+	DEBUG("[History.popStateHandler_sessionHistory()]");
+	DEBUG(evt.state === null, "    > evt.state: null; no-op");
 
 	// no-op if state is null
 	if (evt.state === null) { return; }
@@ -567,7 +567,7 @@ History.popStateHandler_sessionHistory = function (evt)
 	// update the history stack if necessary
 	if (evt.state.suid !== state.suid)
 	{
-		console.log("    > state from previous history detected, swapping in history");
+		DEBUG("    > state from previous history detected, swapping in history");
 		state.save();
 		state.restore(evt.state.suid);
 	}
@@ -577,7 +577,7 @@ History.popStateHandler_sessionHistory = function (evt)
 
 History.initPRNG = function (seed, useEntropy)
 {
-	console.log("[History.initPRNG()]");
+	DEBUG("[History.initPRNG()]");
 
 	sysconfig.HistoryPRNG.isEnabled = true;
 	state.prng = new SeedablePRNG(seed, useEntropy);
@@ -587,7 +587,7 @@ History.initPRNG = function (seed, useEntropy)
 	{
 		sysconfig.HistoryPRNG.replacedMathPRNG = true;
 		Math.random = function () {
-			console.log("**** HistoryPRNG: Math.random() called!");
+			DEBUG("**** HistoryPRNG: Math.random() called!");
 			return state.prng.random();
 		};
 	}
@@ -595,7 +595,7 @@ History.initPRNG = function (seed, useEntropy)
 
 History.marshal = function ()
 {
-	console.log("[History.marshal()]");
+	DEBUG("[History.marshal()]");
 
 	var stateObj =
 	{
@@ -623,7 +623,7 @@ History.marshal = function ()
 
 History.unmarshal = function (stateObj)
 {
-	console.log("[History.unmarshal()]");
+	DEBUG("[History.unmarshal()]");
 
 	if (!stateObj || !stateObj.hasOwnProperty("mode") || !stateObj.hasOwnProperty("history"))
 	{
@@ -651,7 +651,7 @@ History.unmarshal = function (stateObj)
 		if (config.historyMode === modes.sessionHistory)
 		{
 			state.regenerateSuid();
-			//console.log("    > [History.unmarshal()] this.suid: " + state.suid);
+			//DEBUG("    > [History.unmarshal()] this.suid: " + state.suid);
 		}
 
 		// restore the history states in order
@@ -660,7 +660,7 @@ History.unmarshal = function (stateObj)
 			// load the state from the save
 			state.history.push(clone(stateObj.history[i], true));
 
-			console.log("    > loading: " + i + " (" + state.history[i].title + ")");
+			DEBUG("    > loading: " + i + " (" + state.history[i].title + ")");
 
 			// load the state into the window history
 			if (!config.disableHistoryControls)
@@ -668,12 +668,12 @@ History.unmarshal = function (stateObj)
 				if (config.historyMode === modes.windowHistory)
 				{
 					window.history.pushState(state.history, document.title);
-					//console.log("        > window.history.state: " + i + " (" + window.history.state[i].title + ")");
+					//DEBUG("        > window.history.state: " + i + " (" + window.history.state[i].title + ")");
 				}
 				else
 				{
 					window.history.pushState({ sidx: state.history[i].sidx, suid: state.suid }, document.title);
-					//console.log("        > window.history.state: " + window.history.state.sidx + "/" + window.history.state.suid);
+					//DEBUG("        > window.history.state: " + window.history.state.sidx + "/" + window.history.state.suid);
 				}
 			}
 		}
@@ -789,7 +789,7 @@ Passage.prototype.processText = function ()
 
 Passage.prototype.render = function ()
 {
-	console.log("[<Passage>.render()]");
+	DEBUG("[<Passage>.render()]");
 
 	// create the new passage element
 	var passage = insertElement(null, "section", this.domId, "passage");
@@ -913,7 +913,7 @@ Passage.getExcerptFromNode = function (node, count)
 				output += nodes[i].textContent;
 				break;
 			default:
-				console.log(" ~> nodes[" + i + "].nodeType: " + nodes[i].nodeType);
+				DEBUG(" ~> nodes[" + i + "].nodeType: " + nodes[i].nodeType);
 				break;
 			}
 		}
@@ -985,7 +985,7 @@ Passage.mergeClassNames = function (/* variadic */)
 ***********************************************************************************************************************/
 function Tale()
 {
-	console.log("[Tale()]");
+	DEBUG("[Tale()]");
 
 	this.passages = {};
 	// Chrome breaks some data URLs if you don't normalize
