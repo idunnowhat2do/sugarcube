@@ -41,8 +41,8 @@ String.prototype.readMacroParams = function ()
 			if (linkMatch !== null)
 			{	// 1=(text), 2=(~), 3=link, 4=(set)
 				linkObj.count      = linkMatch[1] ? 2 : 1;
-				linkObj.link       = /\$\w+/.test(linkMatch[3]) ? Wikifier.getValue(linkMatch[3]) : linkMatch[3];
-				linkObj.text       = linkMatch[1] ? (/\$\w+/.test(linkMatch[1]) ? Wikifier.getValue(linkMatch[1]) : linkMatch[1]) : linkObj.link;
+				linkObj.link       = /^\$\w+/.test(linkMatch[3]) ? Wikifier.getValue(linkMatch[3]) : linkMatch[3];
+				linkObj.text       = linkMatch[1] ? (/^\$\w+/.test(linkMatch[1]) ? Wikifier.getValue(linkMatch[1]) : linkMatch[1]) : linkObj.link;
 				linkObj.isExternal = !linkMatch[2] && Wikifier.formatterHelpers.isExternalLink(linkObj.link);
 				linkObj.setFn      = linkMatch[4]
 					? function (ex) { return function () { macros.eval(ex, null, null); }; }(Wikifier.parse(linkMatch[4]))
@@ -57,7 +57,7 @@ String.prototype.readMacroParams = function ()
 			n = match[5];
 
 			// $variable, so substitute its value
-			if (/\$\w+/.test(n))
+			if (/^\$\w+/.test(n))
 			{
 				n = Wikifier.getValue(n);
 			}
@@ -961,8 +961,8 @@ Wikifier.formatters =
 			{	// 1=(text), 2=(~), 3=link, 4=(set)
 				w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 
-				var   link  = /\$\w+/.test(match[3]) ? Wikifier.getValue(match[3]) : match[3]
-					, text  = match[1] ? (/\$\w+/.test(match[1]) ? Wikifier.getValue(match[1]) : match[1]) : link
+				var   link  = /^\$\w+/.test(match[3]) ? Wikifier.getValue(match[3]) : match[3]
+					, text  = match[1] ? (/^\$\w+/.test(match[1]) ? Wikifier.getValue(match[1]) : match[1]) : link
 					, setFn = match[4]
 						? function (ex) { return function () { macros.eval(ex, null, null); }; }(Wikifier.parse(match[4]))
 						: null;
@@ -1013,7 +1013,7 @@ Wikifier.formatters =
 
 				if (match[6])
 				{
-					var link = /\$\w+/.test(match[6]) ? Wikifier.getValue(match[6]) : match[6];
+					var link = /^\$\w+/.test(match[6]) ? Wikifier.getValue(match[6]) : match[6];
 					if (!match[5] && Wikifier.formatterHelpers.isExternalLink(link))
 					{
 						el = Wikifier.createExternalLink(el, link);
@@ -1025,7 +1025,7 @@ Wikifier.formatters =
 					el.classList.add("link-image");
 				}
 				el = insertElement(el, "img");
-				source = /\$\w+/.test(match[4]) ? Wikifier.getValue(match[4]) : match[4];
+				source = /^\$\w+/.test(match[4]) ? Wikifier.getValue(match[4]) : match[4];
 				// check for Twine 1.4 Base64 image passage transclusion
 				if (source.slice(0, 5) !== "data:" && tale.has(source))
 				{
@@ -1038,7 +1038,7 @@ Wikifier.formatters =
 				el.src = source;
 				if (match[3])
 				{
-					el.title = /\$\w+/.test(match[3]) ? Wikifier.getValue(match[3]) : match[3];
+					el.title = /^\$\w+/.test(match[3]) ? Wikifier.getValue(match[3]) : match[3];
 				}
 				if (match[1])
 				{
