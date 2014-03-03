@@ -1020,7 +1020,7 @@ function Tale()
 
 Tale.prototype.setTitle = function (title)
 {
-	this.title = title;
+	this.title = document.title = title;
 	this.domId = Util.slugify(title);
 };
 

@@ -202,19 +202,6 @@ $(document).ready(function ()
 	// set the default saves ID
 	config.saves.id = tale.domId;
 
-	/* FIXME: If no issue crop up from moving this into UISystem.init(), purge this
-	// setup for the non-passage page elements
-	if (tale.has("StoryCaption"))
-	{
-		document.getElementById("story-caption").style.display = "block";
-	}
-	if (tale.has("StoryMenu") || tale.has("MenuStory"))
-	{
-		document.getElementById("menu-story").style.display = "block";
-	}
-	UISystem.setPageElements();
-	*/
-
 	// setup for story stylesheets & scripts (order: stylesheets, scripts, widgets)
 	var styles = tale.lookup("tags", "stylesheet");
 	for (var i = 0; i < styles.length; i++)
