@@ -6,8 +6,8 @@
 #     Build SugarCube (a header for Twine/Twee).
 #
 #     Author   :  Thomas Michael Edwards <tmedwards@motoslave.net>
-#     Copyright:  Copyright © 2013 Thomas Michael Edwards. All rights reserved.
-#     Version  :  r20, 2013-12-17
+#     Copyright:  Copyright © 2013–2014 Thomas Michael Edwards. All rights reserved.
+#     Version  :  r21, 2014-03-04
 #
 ################################################################################
 
@@ -41,7 +41,8 @@ my %CONFIG		=
 			  'src/header-1.3.tpl' => 'dist/1.3/header.html'
 			, 'src/header-1.4.tpl' => 'dist/1.4/header.html'
 		}
-	, 'js'        => [ 'src/polyfills.js', 'src/utility.js', 'src/main.js', 'src/story.js', 'src/wikifier.js', 'src/macros.js' ]
+	, 'js.core'   => [ 'src/polyfills.js', 'src/utility.js', 'src/main.js', 'src/story.js', 'src/wikifier.js', 'src/macros.js' ]
+	, 'js.debug'  => [ 'src/debug.js' ]
 	, 'css'       => 'src/styles.css'
 );
 
@@ -105,7 +106,7 @@ my $date = strftime("\"%a, %d %b %Y\"", gmtime());
 
 # load and combine the scripts
 my $scripts = '';
-foreach my $srcfile (@{$CONFIG{'js'}})
+foreach my $srcfile ((@{$CONFIG{'js.core'}}, $opt_debug ? @{$CONFIG{'js.debug'}} : ()))
 {
 	if (!-f $srcfile)
 	{
@@ -117,7 +118,7 @@ foreach my $srcfile (@{$CONFIG{'js'}})
 	my $script = '';
 	foreach my $line (<$infh>)
 	{
-		next if (!$opt_debug and $line =~ m/console\.log/);
+		next if (!$opt_debug and $line =~ m/DEBUG\s*\(/);
 		$script .= $line;
 	}
 	close($infh);
