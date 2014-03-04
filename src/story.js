@@ -713,8 +713,8 @@ function Passage(title, el, order)
 		this.tags        = el.hasAttribute("tags") ? el.getAttribute("tags").trim() : "";
 		if (this.tags)
 		{
-			this.tags = this.tags.split(/\s+/);	//readBracketedList();
-			this.classes = [];
+			this.tags      = this.tags.split(/\s+/);	// readBracketedList();
+			this.classes   = [];
 			this.className = "";
 
 			// add tags as classes
@@ -750,23 +750,23 @@ function Passage(title, el, order)
 					// sort and filter out non-uniques
 					tagClasses = tagClasses.sort().filter(function (val, i, aref) { return (i === 0 || aref[i-1] != val) ? true : false });
 
-					this.classes = tagClasses;
+					this.classes   = tagClasses;
 					this.className = tagClasses.join(' ');
 				}
 			}
 		}
 		else
 		{
-			this.tags = [];
-			this.classes = [];
+			this.tags      = [];
+			this.classes   = [];
 			this.className = "";
 		}
 	}
 	else
 	{
-		this.text = "<html><span class=\"error\">Error: this passage does not exist</span></html>";
-		this.tags = [];
-		this.classes = [];
+		this.text      = "<html><span class=\"error\">Error: this passage does not exist</span></html>";
+		this.tags      = [];
+		this.classes   = [];
 		this.className = "";
 	}
 }
@@ -1084,6 +1084,7 @@ Tale.prototype.lookup = function (key, value, sortKey)
 				if (passage[key][i] == value)	// use lazy equality
 				{
 					results.push(passage);
+					break;
 				}
 			}
 			break;
@@ -1096,7 +1097,7 @@ Tale.prototype.lookup = function (key, value, sortKey)
 		}
 	}
 
-	results.sort(function (a, b) { return (a[sortKey] == b[sortKey]) ? 0 : ((a[sortKey] < b[sortKey]) ? -1 : +1); });
+	results.sort(function (a, b) { return (a[sortKey] == b[sortKey]) ? 0 : ((a[sortKey] < b[sortKey]) ? -1 : +1); });	// use lazy equality
 
 	return results;
 };
