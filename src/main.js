@@ -92,8 +92,8 @@ var config =	// SugarCube config (author/developer use)
 	  // the try/catch and length property access here is required due to a monumentally stupid
 	  // Firefox bug [ #748620; https://bugzilla.mozilla.org/show_bug.cgi?id=748620 ]
 	  // the try/catch is also required due to the iOS browser core throwing on setItem() calls when in private mode
-	, hasLocalStorage   : (("localStorage" in window) && ("setItem" in window.localStorage) && (function (wls) { try { if (wls != null && wls.length >= 0) { var tkey = "SugarCube_storage_test"; wls.setItem(tkey, true); wls.removeItem(tkey); return true; } return false; } catch (e) { return false; } }(window.localStorage)))	// use lazy equality on null check
-	, hasSessionStorage : (("sessionStorage" in window) && ("setItem" in window.sessionStorage) && (function (wss) { try { if (wss != null && wss.length >= 0) { var tkey = "SugarCube_storage_test"; wss.setItem(tkey, true); wss.removeItem(tkey); return true; } return false; } catch (e) { return false; } }(window.sessionStorage)))	// use lazy equality on null check
+	, hasLocalStorage   : (("localStorage" in window) && (function (wls) { try { if (wls != null && wls.length >= 0) { var tkey = "SugarCube_storage_test"; wls.setItem(tkey, true); wls.removeItem(tkey); return true; } return false; } catch (e) { return false; } }(window.localStorage)))	// use lazy equality on null check
+	, hasSessionStorage : (("sessionStorage" in window) && (function (wss) { try { if (wss != null && wss.length >= 0) { var tkey = "SugarCube_storage_test"; wss.setItem(tkey, true); wss.removeItem(tkey); return true; } return false; } catch (e) { return false; } }(window.sessionStorage)))	// use lazy equality on null check
 	, hasFileAPI        : (("File" in window) && ("FileReader" in window) && ("Blob" in window))
 	// basic browser detection
 	, userAgent : navigator.userAgent.toLowerCase()
