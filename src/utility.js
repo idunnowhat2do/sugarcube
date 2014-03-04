@@ -33,10 +33,10 @@ Array.random = function (array, lower, upper)
  */
 Array.prototype.random = function (lower, upper)
 {
-	     if (lower == null)        { lower = 0; }
+	     if (lower == null)        { lower = 0; }	// use lazy equality
 	else if (lower < 0)            { lower = 0; }
 	else if (lower >= this.length) { lower = this.length - 1; }
-	     if (upper == null)        { upper = this.length - 1; }
+	     if (upper == null)        { upper = this.length - 1; }	// use lazy equality
 	else if (upper < 0)            { upper = 0; }
 	else if (upper >= this.length) { upper = this.length - 1; }
 
@@ -546,15 +546,67 @@ function randomFloat(min, max)
  */
 function visited(title)
 {
-	if (!title) { title = state.top.title; }
-	var count = 0;
+	if (arguments.length === 0) { title = state.active.title; }
 
+	var count = 0;
 	for (var i = 0; i < state.history.length; i++)
 	{
 		if (state.history[i].title === title) { count++; }
 	}
 	return count;
 }
+
+/**
+ * Returns an integer count of how many passages within the story history are tagged with all of the tags
+ */
+function visitedTags(/* variadic */)
+{
+	if (arguments.length === 0) { return 0; }
+
+	var count = 0;
+	for (var i = 0; i < state.history.length; i++)
+	{
+		var tags = tale.get(state.history[i].title).tags;
+
+		if (tags.length !== 0)
+		{
+			var found = 0;
+
+			for (var j = 0; j < arguments.length; j++)
+			{
+				if (tags.indexOf(arguments[j]) !== -1) { found++; }
+			}
+			if (found === arguments.length) { count++; }
+		}
+	}
+	return count;
+}
+
+/**
+ * Returns a new array containing the tags of the passage(s)
+ */
+function tags(/* variadic */)
+{
+	if (arguments.length === 0)
+	{
+		return tale.get(state.active.title).tags.slice(0);
+	}
+	else
+	{
+		var tags = [];
+		for (var i = 0; i < arguments.length; i++)
+		{
+			tags = tags.concat(tale.get(arguments[i]).tags);
+		}
+		return tags;
+	}
+}
+
+/**
+ * Vanilla-header compatibility shims
+ */
+function either(/* variadic */) { return Array.random(arguments); }
+function visitedTag(/* variadic */) { return visitedTags.apply(null, arguments); }
 
 
 /***********************************************************************************************************************
