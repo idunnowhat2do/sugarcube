@@ -71,7 +71,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 <style type="text/css">[($STYLES$)]</style>
 </head>
 <body id="body">
-	<div id="loading-screen"><p>Loading Story Resources&hellip;<br /><progress></progress></p></div>
+	<div id="loading-screen"><p>Loading Resources&hellip;<br /><progress></progress></p></div>
 	<div id="ui-bar">
 		<header id="title">
 			<div id="story-banner"></div>
