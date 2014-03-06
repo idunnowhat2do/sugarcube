@@ -9,7 +9,7 @@ function History()
 {
 	DEBUG("[History()]");
 	DEBUG("    > mode: " + (config.historyMode === modes.hashTag ? "hashTag" : (config.historyMode === modes.windowHistory ? "windowHistory" : "sessionHistory")));
-	if (window.history.state) { if (config.historyMode === modes.windowHistory) { DEBUG("    > window.history.state: " + window.history.state.length); } else if (config.historyMode === modes.sessionHistory) { DEBUG("    > window.history.state: " + window.history.state.sidx + "/" + window.history.state.suid); } } else { DEBUG("    > window.history.state: null (" + window.history.state + ")"); }
+	if (window.history.state) { if (config.historyMode === modes.windowHistory) { DEBUG("    > window.history.state: " + window.history.state.length); } else if (config.historyMode === modes.sessionHistory) { DEBUG("    > window.history.state: " + window.history.state.sidx + "/" + window.history.state.suid); } } else { DEBUG("    > window.history.state: " + window.history.state); }
 
 	// currently active/displayed state
 	this.active = { init: true, variables: {} };	// allows macro initialization to set variables at startup
@@ -33,7 +33,7 @@ History.prototype =
 /*
 History.prototype.clone = function (at)
 {
-	if (this.history.length == 0) { return null; }
+	if (this.history.length === 0) { return null; }
 	at = 1 + (at ? Math.abs(at) : 0);
 	if (at > this.history.length) { return null; }
 
@@ -205,6 +205,7 @@ History.prototype.display = function (title, link, render)
 	{
 		if (config.historyMode === modes.windowHistory)
 		{
+			DEBUG("    > typeof window.history.state: "+ typeof window.history.state);
 			if (window.history.state === null || config.disableHistoryControls)
 			{
 				window.history.replaceState(this.history, document.title);
@@ -216,6 +217,7 @@ History.prototype.display = function (title, link, render)
 		}
 		else if (config.historyMode === modes.sessionHistory)
 		{
+			DEBUG("    > typeof window.history.state: "+ typeof window.history.state);
 			if (window.history.state === null || config.disableHistoryControls)
 			{
 				window.history.replaceState({ sidx: this.active.sidx, suid: this.suid }, document.title);
@@ -423,6 +425,8 @@ History.prototype.restore = function (suid)
 	DEBUG("[<History>.restore()]");
 	if (config.historyMode === modes.windowHistory)
 	{
+		DEBUG("    > typeof window.history: "+ typeof window.history);
+		DEBUG("    > typeof window.history.state: "+ typeof window.history.state);
 		if (window.history.state !== null)
 		{
 			this.history = window.history.state;

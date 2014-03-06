@@ -22,6 +22,37 @@
 ** [Polyfills, Piecemeal]
 ***********************************************************************************************************************/
 /**
+ * Adds support for window.history.state to browsers which lack it (notably some versions of Safari/iOS)
+ */
+if (("history" in window) && ("pushState" in window.history) && !("state" in window.history))
+{
+	DEBUG("[Polyfill: window.history.state]");
+	(function (origPush, origReplace) {
+		// initialize window.history.state to null
+		window.history.state = null;
+
+		// replace the default pushState()/replaceState() methods with wrappers
+		// which set window.history.state to the appropriate value
+		window.history.pushState = function (state) {
+			origPush.apply(window.history, arguments);
+			window.history.state = state;
+		};
+		window.history.replaceState = function (state) {
+			origReplace.apply(window.history, arguments);
+			window.history.state = state;
+		};
+
+		// add an event handler for popstate which sets window.history.state to
+		// the appropriate value, and make the handler initiate capture so that
+		// it will be called before any other popstate handlers
+		window.addEventListener("popstate", function (evt) {
+			DEBUG("[Polyfill: window.history.state -> popstate handler]");
+			window.history.state = evt.state;
+		}, true);
+	})(window.history.pushState, window.history.replaceState);
+}
+
+/**
  * Returns the first index at which a given element can be found in the array, or -1 if it is not present.
  */
 if (!Array.prototype.indexOf)
