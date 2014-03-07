@@ -201,31 +201,30 @@ History.prototype.display = function (title, link, render)
 		}
 		this.activate(this.top);
 	}
-	if (render !== "back" || config.disableHistoryControls)
+	if (config.historyMode !== modes.hashTag && (render !== "back" || config.disableHistoryControls))
 	{
+		DEBUG("    > typeof window.history.state: " + typeof window.history.state);
+		var stateObj;
 		if (config.historyMode === modes.windowHistory)
 		{
-			DEBUG("    > typeof window.history.state: "+ typeof window.history.state);
-			if (window.history.state === null || config.disableHistoryControls)
+			stateObj = { history: this.history };
+			if (this.hasOwnProperty("prng"))
 			{
-				window.history.replaceState(this.history, document.title);
-			}
-			else
-			{
-				window.history.pushState(this.history, document.title);
+				stateObj.rseed = this.prng.seed;
 			}
 		}
 		else if (config.historyMode === modes.sessionHistory)
 		{
-			DEBUG("    > typeof window.history.state: "+ typeof window.history.state);
-			if (window.history.state === null || config.disableHistoryControls)
-			{
-				window.history.replaceState({ sidx: this.active.sidx, suid: this.suid }, document.title);
-			}
-			else
-			{
-				window.history.pushState({ sidx: this.active.sidx, suid: this.suid }, document.title);
-			}
+			stateObj = { suid: this.suid, sidx: this.active.sidx };
+		}
+
+		if (window.history.state === null || config.disableHistoryControls)
+		{
+			window.history.replaceState(stateObj, document.title);
+		}
+		else
+		{
+			window.history.pushState(stateObj, document.title);
 		}
 	}
 	if (config.historyMode === modes.hashTag || config.historyMode === modes.sessionHistory)
@@ -393,7 +392,12 @@ History.prototype.save = function ()
 	DEBUG("    > this.suid: " + this.suid);
 	if (config.historyMode === modes.sessionHistory)
 	{
-		if (session.setItem("history." + this.suid, this.history))
+		var stateObj = { history: this.history };
+		if (this.hasOwnProperty("prng"))
+		{
+			stateObj.rseed = this.prng.seed;
+		}
+		if (session.setItem("history." + this.suid, stateObj))
 		{
 			DEBUG("    > activeHistory: " + this.suid);
 			session.setItem("activeHistory", this.suid);
@@ -429,7 +433,11 @@ History.prototype.restore = function (suid)
 		DEBUG("    > typeof window.history.state: "+ typeof window.history.state);
 		if (window.history.state !== null)
 		{
-			this.history = window.history.state;
+			this.history = window.history.state.history;
+			if (this.hasOwnProperty("prng") && window.history.state.hasOwnProperty("rseed"))
+			{
+				this.prng.seed = window.history.state.rseed;
+			}
 		}
 		if (!this.isEmpty && tale.has(this.top.title))
 		{
@@ -456,7 +464,12 @@ History.prototype.restore = function (suid)
 		}
 		if (this.suid && session.hasItem("history." + this.suid))
 		{
-			this.history = session.getItem("history." + this.suid);
+			var stateObj = session.getItem("history." + this.suid);
+			this.history = stateObj.history;
+			if (this.hasOwnProperty("prng") && stateObj.hasOwnProperty("rseed"))
+			{
+				this.prng.seed = stateObj.rseed;
+			}
 			DEBUG("    > window.history.state.sidx: " + window.history.state.sidx);
 			if (tale.has(this.history[window.history.state.sidx].title))
 			{
@@ -553,10 +566,14 @@ History.popStateHandler_windowHistory = function (evt)
 	// no-op if state is null
 	if (evt.state === null) { return; }
 
-	// throw error if state is empty
-	if (evt.state.length === 0) { throw new Error("Guru meditation error!"); }
+	// throw error if state has no history or history is empty
+	if (!evt.state.hasOwnProperty("history") || evt.state.history.length === 0) { throw new Error("Guru meditation error!"); }
 
-	state.history = evt.state;
+	state.history = evt.state.history;
+	if (state.hasOwnProperty("prng") && evt.state.hasOwnProperty("rseed"))
+	{
+		state.prng.seed = evt.state.rseed;
+	}
 	state.display(state.activate(state.top).title, null, "back");
 };
 
@@ -605,7 +622,7 @@ History.marshal = function ()
 	{
 		mode : config.historyMode
 	};
-	if (state.prng)
+	if (state.hasOwnProperty("prng"))
 	{
 		stateObj.rseed = state.prng.seed;
 	}
