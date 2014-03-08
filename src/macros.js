@@ -933,8 +933,8 @@ function addStandardMacros()
 	/**
 	 * <<click>>
 	 */
-	macros.add("click", {
-		version: { major: 3, minor: 0, revision: 0 },
+	macros.add(["click", "button"], {
+		version: { major: 4, minor: 0, revision: 0 },
 		tags: null,
 		handler: function ()
 		{
@@ -954,28 +954,28 @@ function addStandardMacros()
 
 			if (this.args.length === 0)
 			{
-				return this.error("no link text specified");
+				return this.error("no " + (this.name === "click" ? "link" : "button") + " text specified");
 			}
 
-			var   linkText
+			var   elText
 				, passage
 				, widgetArgs = getWidgetArgs.call(this)
-				, el         = document.createElement("a");
+				, el         = document.createElement(this.name === "click" ? "a" : "button");
 
 			if (typeof this.args[0] === "object")
 			{	// argument was in wiki link syntax
-				linkText = this.args[0].text;
-				passage  = this.args[0].link;
+				elText  = this.args[0].text;
+				passage = this.args[0].link;
 			}
 			else
 			{	// argument was simply the link text
-				linkText = this.args[0];
-				passage  = this.args.length > 1 ? this.args[1] : undefined;
+				elText  = this.args[0];
+				passage = this.args.length > 1 ? this.args[1] : undefined;
 			}
 
 			el.classList.add("link-" + (passage ? (tale.has(passage) ? "internal" : "broken") : "internal"));
 			el.classList.add("link-" + this.name);
-			insertText(el, linkText);
+			insertText(el, elText);
 			$(el).click(function (self, contents, widgetArgs)
 			{
 				return function ()
@@ -1034,24 +1034,27 @@ function addStandardMacros()
 	 * <<textbox>>
 	 */
 	macros.add("textbox", {
-		version: { major: 1, minor: 1, revision: 0 },
+		version: { major: 2, minor: 0, revision: 0 },
 		handler: function ()
 		{
-			if (this.args.length === 0)
+			if (this.args.length < 2)
 			{
-				return this.error("no $variable name specified");
+				var errors = [];
+				if (this.args.length < 1) { errors.push("$variable name"); }
+				if (this.args.length < 2) { errors.push("default value"); }
+				return this.error("no " + errors.join(" or ") + " specified");
 			}
 
 			var   varName = this.args[0].replace("$", "")
 				, varId   = Util.slugify(varName)
-				, passage = this.args.length > 1 ? this.args[1] : undefined
+				, passage = this.args.length > 2 ? this.args[2] : undefined
 				, el      = document.createElement("input");
 
-			el.type = "text";
-			el.id   = "textbox-" + varId;
-			if (typeof state.active.variables[varName] !== "undefined")
+			el.type  = "text";
+			el.id    = "textbox-" + varId;
+			if (typeof this.args[1] !== "undefined")
 			{
-				el.value = state.active.variables[varName];
+				el.value = this.args[1];
 			}
 			$(el)
 				.change(function () {
@@ -1068,6 +1071,36 @@ function addStandardMacros()
 							state.display(passage, this);
 						}
 					}
+				});
+			this.output.appendChild(el);
+		}
+	});
+
+	/**
+	 * <<checkbox>> & <<radiobutton>>
+	 */
+	macros.add(["checkbox", "radiobutton"], {
+		version: { major: 1, minor: 0, revision: 0 },
+		handler: function ()
+		{
+			if (this.args.length < 2)
+			{
+				var errors = [];
+				if (this.args.length < 1) { errors.push("$variable name"); }
+				if (this.args.length < 2) { errors.push("default value"); }
+				return this.error("no " + errors.join(" or ") + " specified");
+			}
+
+			var   varName  = this.args[0].replace("$", "")
+				, varId    = Util.slugify(varName)
+				, el       = document.createElement("input");
+
+			el.type  = this.name === "checkbox" ? "checkbox" : "radio";
+			el.id    = this.name + "-" + varId;
+			el.value = this.args[1];
+			$(el)
+				.change(function () {
+					state.active.variables[varName] = this.value;
 				});
 			this.output.appendChild(el);
 		}
