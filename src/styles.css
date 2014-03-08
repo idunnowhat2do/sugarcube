@@ -20,7 +20,8 @@ a:active { color: #f70; }
 a.link-internal, a.link-external, a.link-back, a.link-return { font-weight: bold; text-decoration: none; }
 a.link-internal:hover, a.link-external:hover, a.link-back:hover, a.link-return:hover { text-decoration: underline; }
 a.link-broken { padding: 3px; color: #000; background-color: red; font-weight: bold; text-decoration: none; }
-input, textarea { min-width: 16em; color: #fff; background-color: #444; border: 1px solid #fff; }
+input, textarea { color: #fff; background-color: #444; border: 1px solid #fff; }
+input[type="text"], textarea { min-width: 16em; }
 input { padding: 2px 3px; }
 input:focus, textarea:focus { border: 1px solid #292; }
 input:hover, textarea:hover { border: 1px solid #f70; }
