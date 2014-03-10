@@ -998,8 +998,8 @@ function addStandardMacros()
 							state.active.variables.args = widgetArgs;
 						}
 
-						// attempt to execute the contents and discard the output (if any)
-						new Wikifier(document.createElement("div"), contents);
+						// wikify the contents and discard any output, unless there were errors
+						Wikifier.wikifyEval(contents);
 
 						if (widgetArgs !== undefined)
 						{
