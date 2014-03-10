@@ -934,7 +934,7 @@ function addStandardMacros()
 	 * <<click>>
 	 */
 	macros.add(["click", "button"], {
-		version: { major: 4, minor: 0, revision: 0 },
+		version: { major: 4, minor: 1, revision: 0 },
 		tags: null,
 		handler: function ()
 		{
