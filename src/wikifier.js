@@ -441,10 +441,14 @@ Wikifier.wikifyEval = function (text)
 			var fc = errTrap.firstChild;
 			if (fc.classList && fc.classList.contains("error"))
 			{
-				throw new Error(fc.textContent.replace(/^Error:\s+/, ""));
+				throw new Error(fc.textContent);
 			}
 			errTrap.removeChild(fc);
 		}
+	}
+	catch (e)
+	{
+		throw new Error(e.message.replace(/^Error:\s+/, ""));
 	}
 	finally
 	{

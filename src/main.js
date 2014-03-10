@@ -12,7 +12,7 @@ function technicalError(what, where, mesg)
 	if (where != null || mesg != null) errMesg += "\n\nError";
 	if (where != null) errMesg += " [" + where + "]";
 	if (where != null || mesg != null) errMesg += ": ";
-	if (mesg != null) errMesg += mesg;
+	if (mesg != null) errMesg += mesg.replace(/^Error:\s+/, "");
 	return errMesg;
 }
 
@@ -21,11 +21,7 @@ function technicalAlert(where, mesg)
 	window.alert(technicalError((config && config.errorName) || "page", where, mesg));
 }
 
-window.onerror = function (errMesg, url, lineno)
-{
-	technicalAlert(null, errMesg);
-	window.onerror = null;
-};
+window.onerror = function (mesg, url, lineno) { technicalAlert(null, mesg); };
 
 
 /***********************************************************************************************************************
