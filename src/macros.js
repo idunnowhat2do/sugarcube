@@ -1034,7 +1034,7 @@ function addStandardMacros()
 	 * <<textbox>>
 	 */
 	macros.add("textbox", {
-		version: { major: 2, minor: 0, revision: 0 },
+		version: { major: 2, minor: 1, revision: 0 },
 		handler: function ()
 		{
 			if (this.args.length < 2)
@@ -1052,6 +1052,7 @@ function addStandardMacros()
 
 			el.type  = "text";
 			el.id    = "textbox-" + varId;
+			el.name  = "textbox-" + varId;
 			if (typeof this.args[1] !== "undefined")
 			{
 				el.value = this.args[1];
@@ -1080,24 +1081,26 @@ function addStandardMacros()
 	 * <<checkbox>> & <<radiobutton>>
 	 */
 	macros.add(["checkbox", "radiobutton"], {
-		version: { major: 1, minor: 0, revision: 0 },
+		version: { major: 2, minor: 0, revision: 0 },
 		handler: function ()
 		{
 			if (this.args.length < 2)
 			{
 				var errors = [];
 				if (this.args.length < 1) { errors.push("$variable name"); }
-				if (this.args.length < 2) { errors.push("default value"); }
+				if (this.args.length < 2) { errors.push("value"); }
 				return this.error("no " + errors.join(" or ") + " specified");
 			}
 
-			var   varName  = this.args[0].replace("$", "")
-				, varId    = Util.slugify(varName)
-				, el       = document.createElement("input");
+			var   varName = this.args[0].replace("$", "")
+				, varId   = Util.slugify(varName)
+				, el      = document.createElement("input");
 
-			el.type  = this.name === "checkbox" ? "checkbox" : "radio";
-			el.id    = this.name + "-" + varId;
-			el.value = this.args[1];
+			el.type    = this.name === "checkbox" ? "checkbox" : "radio";
+			el.id      = this.name + "-" + varId;
+			el.name    = this.name + "-" + varId;
+			el.value   = this.args[1];
+			el.checked = (this.args.length > 2 && this.args[2] === "checked");
 			$(el)
 				.change(function () {
 					state.active.variables[varName] = this.value;
