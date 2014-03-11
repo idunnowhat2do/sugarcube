@@ -152,6 +152,10 @@ History.prototype.init = function ()
 History.prototype.display = function (title, link, render)
 {
 	DEBUG("[<History>.display()]");
+
+	// reset the system temp/scratch object
+	systemp = {};
+
 	// n.b. the title parameter can either be a passage title (string) or passage ID (number), so
 	//      after loading the passage, always refer to passage.title and never the title parameter
 	var passage = tale.get(title);

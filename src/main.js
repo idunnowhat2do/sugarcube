@@ -46,6 +46,8 @@ var modes =		// SugarCube History class modes
 	, sessionHistory : 3
 };
 
+var systemp = {};	// SugarCube system temporary/scratch object (internal use only)
+
 var sysconfig =	// SugarCube system config (internal use only)
 {
 	// HistoryPRNG properties
