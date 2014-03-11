@@ -1097,7 +1097,16 @@ function addStandardMacros()
 				, el      = document.createElement("input");
 
 			el.type    = this.name === "checkbox" ? "checkbox" : "radio";
-			el.id      = this.name + "-" + varId;
+			if (this.name === "checkbox")
+			{
+				el.id  = this.name + "-" + varId;
+			}
+			else
+			{
+				if (!systemp.hasOwnProperty("radiobutton")) { systemp["radiobutton"] = {}; }
+				if (!systemp["radiobutton"].hasOwnProperty(varId)) { systemp["radiobutton"][varId] = 0; }
+				el.id  = this.name + "-" + varId + "-" + systemp["radiobutton"][varId]++;
+			}
 			el.name    = this.name + "-" + varId;
 			el.value   = this.args[1];
 			el.checked = (this.args.length > 2 && this.args[2] === "checked");
