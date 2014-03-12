@@ -549,7 +549,7 @@ function visited(title)
 	if (arguments.length === 0) { title = state.active.title; }
 
 	var count = 0;
-	for (var i = 0; i < state.history.length; i++)
+	for (var i = 0; i < state.length; i++)
 	{
 		if (state.history[i].title === title) { count++; }
 	}
@@ -564,7 +564,7 @@ function visitedTags(/* variadic */)
 	if (arguments.length === 0) { return 0; }
 
 	var count = 0;
-	for (var i = 0; i < state.history.length; i++)
+	for (var i = 0; i < state.length; i++)
 	{
 		var tags = tale.get(state.history[i].title).tags;
 

@@ -366,14 +366,13 @@ function addStandardMacros()
 					ctext = this.args.shift();
 				}
 
-				var histLen = (config.historyMode !== modes.sessionHistory) ? state.length : state.active.sidx + 1;
 				if (this.args[0] === "go")
 				{
 					if (isNaN(this.args[1]) || this.args[1] < 1)
 					{
 						return this.error('the argument after "go" must be a whole number greater than zero');
 					}
-					steps = (this.args[1] < histLen) ? this.args[1] : histLen - 1;
+					steps = (this.args[1] < state.length) ? this.args[1] : state.length - 1;
 					pname = state.peek(steps).title;
 					ltext += " (go " + steps + ")";
 				}
@@ -394,11 +393,11 @@ function addStandardMacros()
 					}
 					else
 					{
-						for (var i = histLen - 1; i >= 0; i--)
+						for (var i = state.length - 1; i >= 0; i--)
 						{
 							if (state.history[i].title === this.args[1])
 							{
-								steps = (histLen - 1) - i;
+								steps = (state.length - 1) - i;
 								pname = this.args[1];
 								ltext += ' (to "' + pname + '")';
 								break;

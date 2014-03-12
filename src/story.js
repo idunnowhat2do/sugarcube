@@ -27,13 +27,13 @@ History.prototype =
 	get top ()     { return (this.history.length !== 0) ? this.history[this.history.length - 1] : null; },
 	get bottom ()  { return (this.history.length !== 0) ? this.history[0] : null; },
 	get isEmpty () { return this.history.length === 0; },
-	get length ()  { return this.history.length; }
+	get length ()  { return (config.historyMode !== modes.sessionHistory) ? this.history.length : this.active.sidx + 1; }
 };
 
 /*
 History.prototype.clone = function (at)
 {
-	if (this.history.length === 0) { return null; }
+	if (this.isEmpty) { return null; }
 	at = 1 + (at ? Math.abs(at) : 0);
 	if (at > this.history.length) { return null; }
 
@@ -48,19 +48,19 @@ History.prototype.clone = function (at)
 
 History.prototype.index = function (idx)
 {
-	if (this.history.length === 0) { return null; }
-	if (idx < 0 || idx >= this.history.length) { return null; }
+	if (this.isEmpty) { return null; }
+	if (idx < 0 || idx >= this.length) { return null; }
 
 	return this.history[idx];
 };
 
 History.prototype.peek = function (at)
 {
-	if (this.history.length === 0) { return null; }
+	if (this.isEmpty) { return null; }
 	at = 1 + (at ? Math.abs(at) : 0);
-	if (at > this.history.length) { return null; }
+	if (at > this.length) { return null; }
 
-	return this.history[this.history.length - at];
+	return this.history[this.length - at];
 };
 
 History.prototype.push = function (/* variadic */)
@@ -81,11 +81,11 @@ History.prototype.push = function (/* variadic */)
 
 History.prototype.pop = function (num)
 {
-	if (this.history.length === 0) { return []; }
+	if (this.isEmpty) { return []; }
 	num = num ? Math.abs(num) : 1;
 	//if (num > this.history.length) { return []; }
 
-	return (num == 1) ? this.history.pop() : this.history.splice(this.history.length - num, num);
+	return (num === 1) ? this.history.pop() : this.history.splice(this.history.length - num, num);
 };
 
 History.prototype.activate = function (state)
@@ -99,7 +99,7 @@ History.prototype.activate = function (state)
 	}
 	else
 	{
-		if (this.history.length === 0) { return null; }
+		if (this.isEmpty) { return null; }
 		if (state < 0 || state >= this.history.length) { return null; }
 		this.active = clone(this.history[state], true);
 	}

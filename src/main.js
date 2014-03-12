@@ -998,7 +998,7 @@ var UISystem =
 			.empty()
 			.addClass("rewind");
 
-		for (var i = 0, len = state.history.length - 1; i < len; i++)
+		for (var i = 0, len = state.length - 1; i < len; i++)
 		{
 			var passage = tale.get(state.history[i].title);
 			if (passage && passage.tags.indexOf("bookmark") !== -1)
@@ -1031,7 +1031,7 @@ var UISystem =
 
 							// stack ids are out of sync, pop our stack until
 							// we're back in sync with the window.history
-							state.pop(state.history.length - (p + 1));
+							state.pop(state.length - (p + 1));
 
 							// activate the current top
 							state.activate(state.top);
