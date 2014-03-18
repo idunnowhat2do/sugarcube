@@ -662,7 +662,7 @@ History.unmarshal = function (stateObj)
 	switch (config.historyMode)
 	{
 	case modes.windowHistory:
-		// fallthrough
+		/* FALL-THROUGH */
 	case modes.sessionHistory:
 		// necessary?
 		document.title = tale.title;

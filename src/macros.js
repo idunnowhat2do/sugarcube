@@ -1080,7 +1080,7 @@ function addStandardMacros()
 	 * <<checkbox>> & <<radiobutton>>
 	 */
 	macros.add(["checkbox", "radiobutton"], {
-		version: { major: 2, minor: 0, revision: 0 },
+		version: { major: 3, minor: 0, revision: 0 },
 		handler: function ()
 		{
 			if (this.args.length < 2)
@@ -1093,25 +1093,30 @@ function addStandardMacros()
 
 			var   varName = this.args[0].replace("$", "")
 				, varId   = Util.slugify(varName)
+				, oldVal  = state.active.variables[varName]
 				, el      = document.createElement("input");
 
-			el.type    = this.name === "checkbox" ? "checkbox" : "radio";
+			el.type = this.name === "checkbox" ? "checkbox" : "radio";
 			if (this.name === "checkbox")
 			{
-				el.id  = this.name + "-" + varId;
+				el.id = this.name + "-" + varId;
 			}
 			else
 			{
 				if (!systemp.hasOwnProperty("radiobutton")) { systemp["radiobutton"] = {}; }
 				if (!systemp["radiobutton"].hasOwnProperty(varId)) { systemp["radiobutton"][varId] = 0; }
-				el.id  = this.name + "-" + varId + "-" + systemp["radiobutton"][varId]++;
+				el.id = this.name + "-" + varId + "-" + systemp["radiobutton"][varId]++;
 			}
-			el.name    = this.name + "-" + varId;
-			el.value   = this.args[1];
-			el.checked = (this.args.length > 2 && this.args[2] === "checked");
+			el.name  = this.name + "-" + varId;
+			el.value = this.args[1];
+			if (this.args.length > 2 && this.args[2] === "checked")
+			{
+				el.checked = true;
+				state.active.variables[varName] = el.value;
+			}
 			$(el)
 				.change(function () {
-					state.active.variables[varName] = this.value;
+					state.active.variables[varName] = this.checked ? this.value : oldVal;
 				});
 			this.output.appendChild(el);
 		}

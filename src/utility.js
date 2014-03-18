@@ -788,7 +788,7 @@ KeyValueStore.prototype.setItem = function (sKey, sValue)
 		switch (this.name)
 		{
 		case "cookie":
-			// fallthrough
+			/* FALL-THROUGH */
 		case "localStorage":
 			cookie.push("expires=Tue, 19 Jan 2038 03:14:07 GMT");
 			break;
