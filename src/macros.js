@@ -1077,46 +1077,84 @@ function addStandardMacros()
 	});
 
 	/**
-	 * <<checkbox>> & <<radiobutton>>
+	 * <<checkbox>>
 	 */
-	macros.add(["checkbox", "radiobutton"], {
-		version: { major: 3, minor: 0, revision: 0 },
+	macros.add("checkbox", {
+		version: { major: 4, minor: 0, revision: 0 },
+		handler: function ()
+		{
+			if (this.args.length < 3)
+			{
+				var errors = [];
+				if (this.args.length < 1) { errors.push("$variable name"); }
+				if (this.args.length < 2) { errors.push("unchecked value"); }
+				if (this.args.length < 3) { errors.push("checked value"); }
+				return this.error("no " + errors.join(" or ") + " specified");
+			}
+
+			var   varName      = this.args[0].replace("$", "")
+				, varId        = Util.slugify(varName)
+				, uncheckValue = this.args[1]
+				, checkValue   = this.args[2]
+				, el           = document.createElement("input");
+
+			el.type  = "checkbox";
+			el.id    = this.name + "-" + varId;
+			el.name  = this.name + "-" + varId;
+			if (this.args.length > 3 && this.args[3] === "checked")
+			{
+				el.checked = true;
+				state.active.variables[varName] = checkValue;
+			}
+			else
+			{
+				state.active.variables[varName] = uncheckValue;
+			}
+			$(el)
+				.change(function () {
+					state.active.variables[varName] = this.checked ? checkValue : uncheckValue;
+				});
+			this.output.appendChild(el);
+		}
+	});
+
+	/**
+	 * <<radiobutton>>
+	 */
+	macros.add("radiobutton", {
+		version: { major: 4, minor: 0, revision: 0 },
 		handler: function ()
 		{
 			if (this.args.length < 2)
 			{
 				var errors = [];
 				if (this.args.length < 1) { errors.push("$variable name"); }
-				if (this.args.length < 2) { errors.push("value"); }
+				if (this.args.length < 2) { errors.push("checked value"); }
 				return this.error("no " + errors.join(" or ") + " specified");
 			}
 
-			var   varName = this.args[0].replace("$", "")
-				, varId   = Util.slugify(varName)
-				, oldVal  = state.active.variables[varName]
-				, el      = document.createElement("input");
+			var   varName    = this.args[0].replace("$", "")
+				, varId      = Util.slugify(varName)
+				, checkValue = this.args[1]
+				, el         = document.createElement("input");
 
-			el.type = this.name === "checkbox" ? "checkbox" : "radio";
-			if (this.name === "checkbox")
-			{
-				el.id = this.name + "-" + varId;
-			}
-			else
-			{
-				if (!systemp.hasOwnProperty("radiobutton")) { systemp["radiobutton"] = {}; }
-				if (!systemp["radiobutton"].hasOwnProperty(varId)) { systemp["radiobutton"][varId] = 0; }
-				el.id = this.name + "-" + varId + "-" + systemp["radiobutton"][varId]++;
-			}
+			if (!systemp.hasOwnProperty("radiobutton")) { systemp["radiobutton"] = {}; }
+			if (!systemp["radiobutton"].hasOwnProperty(varId)) { systemp["radiobutton"][varId] = 0; }
+
+			el.type  = "radio";
+			el.id    = this.name + "-" + varId + "-" + systemp["radiobutton"][varId]++;
 			el.name  = this.name + "-" + varId;
-			el.value = this.args[1];
 			if (this.args.length > 2 && this.args[2] === "checked")
 			{
 				el.checked = true;
-				state.active.variables[varName] = el.value;
+				state.active.variables[varName] = checkValue;
 			}
 			$(el)
 				.change(function () {
-					state.active.variables[varName] = this.checked ? this.value : oldVal;
+					if (this.checked)
+					{
+						state.active.variables[varName] = checkValue;
+					}
 				});
 			this.output.appendChild(el);
 		}
