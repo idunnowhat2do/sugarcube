@@ -146,19 +146,20 @@ function Wikifier(place, source)
 	this.source    = source;
 	this.output    = place;
 	this.nextMatch = 0;
+	this.nobr      = [];
 	this.formatter = formatter;	// formatter comes from the top-level scope of the module
 
 	this.subWikify(this.output);
 }
 
-Wikifier.prototype.subWikify = function (output, terminator)
+Wikifier.prototype.subWikify = function (output, terminator, terminatorIgnoreCase)
 {
 	// Temporarily replace the output pointer
 	var oldOutput = this.output;
 	this.output = output;
 
 	// Prepare the terminator RegExp
-	var terminatorRegExp = terminator ? new RegExp("(" + terminator + ")", "gm") : null;
+	var terminatorRegExp = terminator ? new RegExp("(" + terminator + ")", terminatorIgnoreCase ? "gim" : "gm") : null;
 
 	var formatterMatch, terminatorMatch;
 	do
@@ -1471,7 +1472,10 @@ Wikifier.formatters =
 	match: "\\n|<br ?/?>",
 	handler: function (w)
 	{
-		insertElement(w.output, "br");
+		if (w.nobr.length === 0 || !w.nobr[0])
+		{
+			insertElement(w.output, "br");
+		}
 	}
 },
 
@@ -1493,17 +1497,20 @@ Wikifier.formatters =
 
 {	// n.b. This formatter MUST come after any formatter which handles HTML tag-like constructs (e.g. html & rawText)
 	name: "htmlTag",
-	match: "<\\w+(?:\\s+[^\\u0000-\\u001F\\u007F-\\u009F\\s\"'>\\/=]+(?:\\s*=\\s*(?:\"[^\"]+\"|'[^']+'|[^\\s\"'=<>`]+))?)*\\s*\\/?>",
+	match: "<\\w+(?:\\s+[^\\u0000-\\u001F\\u007F-\\u009F\\s\"'>\\/=]+(?:\\s*=\\s*(?:\"[^\"]*?\"|'[^']*?'|[^\\s\"'=<>`]+))?)*\\s*\\/?>",
 	tagPattern: "<(\\w+)",
 	voidElements: [ "area", "base", "br", "col", "embed", "hr", "img", "input", "keygen", "link", "menuitem", "meta", "param", "source", "track", "wbr" ],
+	nobrElements: [ "colgroup", "datalist", "dl", "figure", "ol", "optgroup", "select", "table", "tbody", "tfoot", "thead", "tr", "ul" ],
 	handler: function (w)
 	{
 		var   tagMatch = new RegExp(this.tagPattern).exec(w.matchText)
-			, tagName  = tagMatch && tagMatch[1];
+			, tag      = tagMatch && tagMatch[1]
+			, tagName  = tag && tag.toLowerCase();
 
-		if (tagName)	// && ["html", "nowiki"].indexOf(tagName.toLowerCase()) === -1)
+		if (tagName)	// && ["html", "nowiki"].indexOf(tagName) === -1)
 		{
-			var   isVoid = this.voidElements.indexOf(tagName.toLowerCase()) !== -1
+			var   isVoid = this.voidElements.indexOf(tagName) !== -1
+				, isNobr = this.nobrElements.indexOf(tagName) !== -1
 				, terminator
 				, terminatorRegExp
 				, terminatorMatch;
@@ -1511,7 +1518,7 @@ Wikifier.formatters =
 			if (!isVoid)
 			{
 				terminator = "<\\/" + tagName + "\\s*>";
-				terminatorRegExp = new RegExp(terminator, "gm");
+				terminatorRegExp = new RegExp(terminator, "gim");	// ignore case during match
 				terminatorRegExp.lastIndex = w.matchStart;
 				terminatorMatch = terminatorRegExp.exec(w.source);
 			}
@@ -1523,15 +1530,34 @@ Wikifier.formatters =
 				{
 					el = el.firstChild;
 				}
+
 				if (terminatorMatch)
 				{
-					w.subWikify(el, terminator);
+					if (isNobr)
+					{
+						w.nobr.unshift(true);
+					}
+					else if (w.nobr.length !== 0)
+					{
+						w.nobr.unshift(false);
+					}
+					try
+					{
+						w.subWikify(el, terminator, true);	// ignore case during match
+					}
+					finally
+					{
+						if (w.nobr.length !== 0)
+						{
+							w.nobr.shift();
+						}
+					}
 				}
 				w.output.appendChild(el);
 			}
 			else
 			{
-				throwError(w.output, 'HTML tag "' + tagName + '" is not closed');
+				throwError(w.output, 'HTML tag "' + tag + '" is not closed');
 			}
 		}
 	}
