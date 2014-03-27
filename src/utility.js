@@ -605,7 +605,17 @@ function tags(/* variadic */)
 /**
  * Vanilla-header compatibility shims
  */
-function either(/* variadic */) { return Array.random(arguments); }
+function either(/* variadic */)
+{
+	if (arguments.length === 0) { return; }
+
+	var list = [];
+	for (var i = 0; i < arguments.length; i++)
+	{
+		list = list.concat(arguments[i]);
+	}
+	return list.random();
+}
 function visitedTag(/* variadic */) { return visitedTags.apply(null, arguments); }
 
 
