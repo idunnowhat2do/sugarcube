@@ -415,7 +415,7 @@ History.prototype.save = function ()
 		for (var i = 0; i < this.history.length; i++)
 		{
 			var passage = tale.get(this.history[i].title);
-			if (passage && typeof passage.id !== "undefined")	// 0 is a valid value for passage.id, so typeof it is
+			if (passage && typeof passage.id !== "undefined")	// 0 is a valid ID, so typeof it is
 			{
 				order += passage.id.toString(36) + ".";
 			}

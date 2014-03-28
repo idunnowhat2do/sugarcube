@@ -244,7 +244,7 @@ function insertPassageLink(place, passage, text, classNames)
 	var el = document.createElement("a");
 
 	// add attributes
-	if (typeof passage !== "undefined")	// 0 is a valid ID and name, so we have to type check
+	if (passage != null)	// use lazy equality on null check; 0 is a valid ID and name, so we cannot simply evaluate passage
 	{
 		el.setAttribute("data-passage", passage);
 		el.className = tale.has(passage) ? "link-internal" : "link-broken";
