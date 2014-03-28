@@ -1033,7 +1033,7 @@ function addStandardMacros()
 	 * <<textbox>>
 	 */
 	macros.add("textbox", {
-		version: { major: 2, minor: 1, revision: 0 },
+		version: { major: 3, minor: 0, revision: 0 },
 		handler: function ()
 		{
 			if (this.args.length < 2)
@@ -1044,10 +1044,16 @@ function addStandardMacros()
 				return this.error("no " + errors.join(" or ") + " specified");
 			}
 
-			var   varName = this.args[0].replace("$", "")
+			var   varName = this.args[0].trim()
 				, varId   = Util.slugify(varName)
 				, passage = this.args.length > 2 ? this.args[2] : undefined
 				, el      = document.createElement("input");
+
+			// legacy error
+			if (varName[0] !== "$")
+			{
+				return this.error('$variable name "' + varName + '" is missing its sigil ($)');
+			}
 
 			el.type  = "text";
 			el.id    = "textbox-" + varId;
@@ -1058,7 +1064,7 @@ function addStandardMacros()
 			}
 			$(el)
 				.change(function () {
-					state.active.variables[varName] = this.value;
+					Wikifier.setValue(varName, this.value);
 				})
 				.keypress(function (evt) {
 					// fire a change event if Return/Enter is pressed (mostly for IE)
@@ -1080,7 +1086,7 @@ function addStandardMacros()
 	 * <<checkbox>>
 	 */
 	macros.add("checkbox", {
-		version: { major: 4, minor: 0, revision: 0 },
+		version: { major: 5, minor: 0, revision: 0 },
 		handler: function ()
 		{
 			if (this.args.length < 3)
@@ -1092,11 +1098,17 @@ function addStandardMacros()
 				return this.error("no " + errors.join(" or ") + " specified");
 			}
 
-			var   varName      = this.args[0].replace("$", "")
+			var   varName      = this.args[0].trim()
 				, varId        = Util.slugify(varName)
 				, uncheckValue = this.args[1]
 				, checkValue   = this.args[2]
 				, el           = document.createElement("input");
+
+			// legacy error
+			if (varName[0] !== "$")
+			{
+				return this.error('$variable name "' + varName + '" is missing its sigil ($)');
+			}
 
 			el.type  = "checkbox";
 			el.id    = this.name + "-" + varId;
@@ -1104,15 +1116,15 @@ function addStandardMacros()
 			if (this.args.length > 3 && this.args[3] === "checked")
 			{
 				el.checked = true;
-				state.active.variables[varName] = checkValue;
+				Wikifier.setValue(varName, checkValue);
 			}
 			else
 			{
-				state.active.variables[varName] = uncheckValue;
+				Wikifier.setValue(varName, uncheckValue);
 			}
 			$(el)
 				.change(function () {
-					state.active.variables[varName] = this.checked ? checkValue : uncheckValue;
+					Wikifier.setValue(varName, this.checked ? checkValue : uncheckValue);
 				});
 			this.output.appendChild(el);
 		}
@@ -1122,7 +1134,7 @@ function addStandardMacros()
 	 * <<radiobutton>>
 	 */
 	macros.add("radiobutton", {
-		version: { major: 4, minor: 0, revision: 0 },
+		version: { major: 5, minor: 0, revision: 0 },
 		handler: function ()
 		{
 			if (this.args.length < 2)
@@ -1133,10 +1145,16 @@ function addStandardMacros()
 				return this.error("no " + errors.join(" or ") + " specified");
 			}
 
-			var   varName    = this.args[0].replace("$", "")
+			var   varName    = this.args[0].trim()
 				, varId      = Util.slugify(varName)
 				, checkValue = this.args[1]
 				, el         = document.createElement("input");
+
+			// legacy error
+			if (varName[0] !== "$")
+			{
+				return this.error('$variable name "' + varName + '" is missing its sigil ($)');
+			}
 
 			if (!systemp.hasOwnProperty("radiobutton")) { systemp["radiobutton"] = {}; }
 			if (!systemp["radiobutton"].hasOwnProperty(varId)) { systemp["radiobutton"][varId] = 0; }
@@ -1147,13 +1165,13 @@ function addStandardMacros()
 			if (this.args.length > 2 && this.args[2] === "checked")
 			{
 				el.checked = true;
-				state.active.variables[varName] = checkValue;
+				Wikifier.setValue(varName, checkValue);
 			}
 			$(el)
 				.change(function () {
 					if (this.checked)
 					{
-						state.active.variables[varName] = checkValue;
+						Wikifier.setValue(varName, checkValue);
 					}
 				});
 			this.output.appendChild(el);
