@@ -467,7 +467,7 @@ Wikifier.wikifyEval = function (text)
 Wikifier.createInternalLink = function (place, passage, text, callback)
 {
 	var el = document.createElement("a");
-	if (passage != null)	// use lazy equality on null check; 0 is a valid ID and name, so we cannot simply evaluate passage
+	if (passage != null)	// use lazy equality; 0 is a valid ID and name, so we cannot simply evaluate passage
 	{
 		el.setAttribute("data-passage", passage);
 		el.className = tale.has(passage) ? "link-internal" : "link-broken";
@@ -480,7 +480,7 @@ Wikifier.createInternalLink = function (place, passage, text, callback)
 	{
 		place.appendChild(el);
 	}
-	if (passage != null)	// use lazy equality on null check; 0 is a valid ID and name, so we cannot simply evaluate passage
+	if (passage != null)	// use lazy equality; 0 is a valid ID and name, so we cannot simply evaluate passage
 	{
 		$(el).click(function () {
 			if (typeof callback === "function") { callback(); }

@@ -430,7 +430,7 @@ var SaveSystem =
 
 		return SaveSystem.unmarshal(saves.autosave);
 	},
-	saveAuto: function (title)
+	saveAuto: function (title, metadata)
 	{
 		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed())
 		{
@@ -443,6 +443,7 @@ var SaveSystem =
 		saves.autosave = SaveSystem.marshal();
 		saves.autosave.title = title || tale.get(state.active.title).excerpt();
 		saves.autosave.date = Date.now();
+		if (metadata != null) { saves.autosave.metadata = metadata; }	// use lazy equality
 
 		return storage.setItem("saves", saves);
 	},
@@ -503,7 +504,7 @@ var SaveSystem =
 
 		return SaveSystem.unmarshal(saves.slots[slot]);
 	},
-	save: function (slot, title)
+	save: function (slot, title, metadata)
 	{
 		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed())
 		{
@@ -519,6 +520,7 @@ var SaveSystem =
 		saves.slots[slot] = SaveSystem.marshal();
 		saves.slots[slot].title = title || tale.get(state.active.title).excerpt();
 		saves.slots[slot].date = Date.now();
+		if (metadata != null) { saves.slots[slot].metadata = metadata; }	// use lazy equality
 
 		return storage.setItem("saves", saves);
 	},
