@@ -314,7 +314,7 @@ History.prototype.display = function (title, link, render)
 		window.scroll(0, 0);
 	}
 
-	// execute the PassageDone passage
+	// execute the PassageDone passage and update the non-passage page elements, if enabled
 	if (render !== "offscreen")
 	{
 		if (tale.has("PassageDone"))
@@ -328,12 +328,10 @@ History.prototype.display = function (title, link, render)
 				technicalAlert("PassageDone", e.message);
 			}
 		}
-	}
-
-	// update the non-passage page elements, if enabled
-	if (config.updatePageElements)
-	{
-		UISystem.setPageElements();
+		if (config.updatePageElements)
+		{
+			UISystem.setPageElements();
+		}
 	}
 
 	// handle autosaves
