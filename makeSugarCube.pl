@@ -7,7 +7,7 @@
 #
 #     Author   :  Thomas Michael Edwards <tmedwards@motoslave.net>
 #     Copyright:  Copyright © 2013–2014 Thomas Michael Edwards. All rights reserved.
-#     Version  :  r21, 2014-03-04
+#     Version  :  r22, 2014-04-06
 #
 ################################################################################
 
@@ -38,8 +38,8 @@ my %CONFIG		=
 	  'build'     => '.build'
 	, 'templates' =>
 		{
-			  'src/header-1.3.tpl' => 'dist/1.3/header.html'
-			, 'src/header-1.4.tpl' => 'dist/1.4/header.html'
+			  'src/header-1.3.tpl' => 'dist/1.3/sugarcube/header.html'
+			, 'src/header-1.4.tpl' => 'dist/1.4/sugarcube/header.html'
 		}
 	, 'js.core'   => [ 'src/polyfills.js', 'src/utility.js', 'src/main.js', 'src/story.js', 'src/wikifier.js', 'src/macros.js' ]
 	, 'js.debug'  => [ 'src/debug.js' ]
