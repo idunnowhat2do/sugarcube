@@ -778,11 +778,21 @@ KeyValueStore.prototype.setItem = function (sKey, sValue)
 
 	if (this.store)
 	{
+		//----------------------------------------------------------------------
+		// EXPERIMENTAL COMPRESSION
+		//----------------------------------------------------------------------
+		try
+		{
+			sValue = "\u0000~" + LZString.compressToUTF16(sValue);
+		}
+		catch (e) { /* noop */ }
+		//----------------------------------------------------------------------
+
 		try
 		{
 			this.store.setItem(sKey, sValue);
 		}
-		catch(e)
+		catch (e)
 		{
 			if (e == QUOTA_EXCEEDED_ERR)
 			{
@@ -793,6 +803,16 @@ KeyValueStore.prototype.setItem = function (sKey, sValue)
 	}
 	else
 	{
+		//----------------------------------------------------------------------
+		// EXPERIMENTAL COMPRESSION
+		//----------------------------------------------------------------------
+		try
+		{
+			sValue = "\u0000~" + LZString.compressToBase64(sValue);
+		}
+		catch (e) { /* noop */ }
+		//----------------------------------------------------------------------
+
 		var cookie = [ escape(sKey) + "=" + escape(sValue) ];
 		// no expiry means a session cookie
 		switch (this.name)
@@ -831,10 +851,24 @@ KeyValueStore.prototype.getItem = function (sKey)
 
 	if (this.store)
 	{
-		if (this.store.getItem(sKey))
+		//----------------------------------------------------------------------
+		// EXPERIMENTAL COMPRESSION
+		//----------------------------------------------------------------------
+		var sValue = this.store.getItem(sKey);
+		if (sValue != null)	// use lazy equality
 		{
-			return JSON.parse(this.store.getItem(sKey));
+			if (sValue.slice(0, 2) === "\u0000~")
+			{
+				DEBUG("    > loading LZ-compressed value");
+				return JSON.parse(LZString.decompressFromUTF16(sValue.slice(2)));
+			}
+			else
+			{
+				DEBUG("    > loading uncompressed value");
+				return JSON.parse(sValue);
+			}
 		}
+		//----------------------------------------------------------------------
 	}
 	else
 	{
@@ -845,7 +879,21 @@ KeyValueStore.prototype.getItem = function (sKey)
 			var bits = cookies[i].split("=");
 			if (bits[0].trim() === sKey)
 			{
-				return JSON.parse(unescape(bits[1]));
+				//--------------------------------------------------------------
+				// EXPERIMENTAL COMPRESSION
+				//--------------------------------------------------------------
+				var sValue = unescape(bits[1]);
+				if (sValue.slice(0, 2) === "\u0000~")
+				{
+					DEBUG("    > loading LZ-compressed value");
+					return JSON.parse(LZString.decompressFromBase64(sValue.slice(2)));
+				}
+				else
+				{
+					DEBUG("    > loading uncompressed value");
+					return JSON.parse(sValue);
+				}
+				//--------------------------------------------------------------
 			}
 		}
 	}
