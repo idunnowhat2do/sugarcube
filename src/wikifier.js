@@ -18,25 +18,25 @@ String.prototype.readMacroParams = function ()
 
 	while ((match = re.exec(this)) !== null)
 	{
-		var n;
+		var arg;
 
 		// Double quoted
-		if (match[1]) { n = match[1]; }
+		if (match[1]) { arg = match[1]; }
 
 		// Single quoted
-		else if (match[2]) { n = match[2]; }
+		else if (match[2]) { arg = match[2]; }
 
 		// Empty quotes
-		else if (match[3]) { n = ""; }
+		else if (match[3]) { arg = ""; }
 
 		// Double square-bracketed
 		else if (match[4])
 		{
-			n = match[4];
+			arg = match[4];
 
 			// Convert to an object
 			var   linkRe    = new RegExp(Wikifier.textPrimitives.linkPattern)
-				, linkMatch = linkRe.exec(n)
+				, linkMatch = linkRe.exec(arg)
 				, linkObj   = {};
 			if (linkMatch !== null)
 			{	// 1=(text), 2=(~), 3=link, 4=(set)
@@ -47,23 +47,48 @@ String.prototype.readMacroParams = function ()
 				linkObj.setFn      = linkMatch[4]
 					? function (ex) { return function () { macros.eval(ex, null, null); }; }(Wikifier.parse(linkMatch[4]))
 					: null;
-				n = linkObj;
+				arg = linkObj;
 			}
 		}
 
 		// Barewords
 		else if (match[5])
 		{
-			n = match[5];
+			arg = match[5];
 
 			// $variable, so substitute its value
-			if (/^\$\w+/.test(n))
+			if (/^\$\w+/.test(arg))
 			{
-				n = Wikifier.getValue(n);
+				arg = Wikifier.getValue(arg);
 			}
 
+			// Object or Array literal, so try to evaluate it
+			// n.b. Authors really shouldn't be passing object/array literals as arguments.  If they want to pass a
+			//      complex type, store it in a variable and pass that instead.
+			else if (/^(?:\{.*\}|\[.*\])$/.test(arg))
+			{
+				try
+				{
+					arg = eval("(function(){return (" + Wikifier.parse(arg) + ");}())");
+				}
+				catch (e)
+				{
+					throw new Error('unable to parse macro argument "' + arg + '"; ' + e.message);
+				}
+			}
+
+			// Null literal, so convert it into null
+			else if (arg === "null") { arg = null; }
+
+			// Undefined literal, so convert it into undefined
+			else if (arg === "undefined") { arg = undefined; }
+
+			// Boolean literal, so convert it into a boolean
+			else if (arg === "true") { arg = true; }
+			else if (arg === "false") { arg = false; }
+
 			// Numeric literal, so convert it into a number
-			else if (Util.isNumeric(n))
+			else if (!isNaN(parseFloat(arg)) && isFinite(arg))
 			{
 				// n.b. Octal literals are not handled correctly by Number() (e.g. Number("077") yields 77, not 63).
 				//      We could use eval("077") instead, which does correctly yield 63, however, it's probably far
@@ -72,33 +97,11 @@ String.prototype.readMacroParams = function ()
 				//
 				//      Besides, octal literals are browser extensions, which aren't part of the ECMAScript standard,
 				//      and are considered deprecated in most (all?) browsers anyway.
-				n = Number(n);
+				arg = Number(arg);
 			}
-
-			// Boolean literal, so convert it into a boolean
-			else if (Util.isBoolean(n))
-			{
-				n = (n === "true") ? true : false;
-			}
-
-			// Null literal, so convert it into null
-			else if (n === "null")
-			{
-				n = null;
-			}
-
-			// Undefined literal, so convert it into undefined
-			else if (n === "undefined")
-			{
-				n = undefined;
-			}
-
-			// Object/Array literals are too complex to worry about automatically converting and so are left as-is.
-			// Authors really shouldn't be passing object/array literals as arguments anyway.  If they want to pass
-			// a complex type, store it in a variable and pass that instead.
 		}
 
-		params.push(n);
+		params.push(arg);
 	}
 
 	return params;
@@ -1492,6 +1495,17 @@ Wikifier.formatters =
 			insertElement(w.output, "span", null, null, lookaheadMatch[1]);
 			w.nextMatch = this.lookaheadRegExp.lastIndex;
 		}
+	}
+},
+
+{
+	name: "htmlCharacterReference",
+	match: "(?:(?:&#?[a-zA-Z0-9]{2,8};|.)(?:&#?(?:x0*(?:3[0-6][0-9a-fA-F]|1D[c-fC-F][0-9a-fA-F]|20[d-fD-F][0-9a-fA-F]|FE2[0-9a-fA-F])|0*(?:76[89]|7[7-9][0-9]|8[0-7][0-9]|761[6-9]|76[2-7][0-9]|84[0-3][0-9]|844[0-7]|6505[6-9]|6506[0-9]|6507[0-1]));)+|&#?[a-zA-Z0-9]{2,8};)",
+	handler: function(w)
+	{
+		var el = document.createElement("div");
+		el.innerHTML = w.matchText;
+		insertText(w.output, el.textContent);
 	}
 },
 
