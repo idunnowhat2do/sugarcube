@@ -27,6 +27,8 @@ window.onerror = function (mesg, url, lineno) { technicalAlert(null, mesg); };
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
+window.SugarCube = {};	// will contain exported identifiers, also allows script passages to detect if they're running in SugarCube
+
 var version =
 {
 	  title      : "SugarCube"
