@@ -7,7 +7,7 @@
 #
 #     Author   :  Thomas Michael Edwards <tmedwards@motoslave.net>
 #     Copyright:  Copyright © 2013–2014 Thomas Michael Edwards. All rights reserved.
-#     Version  :  r22, 2014-04-06
+#     Version  :  r23, 2014-04-11
 #
 ################################################################################
 
@@ -24,6 +24,7 @@ use warnings;
 use utf8;
 use File::Basename qw(fileparse);
 use File::Path qw(make_path);
+use File::Copy qw(copy);
 use Getopt::Long qw(:config no_getopt_compat no_gnu_compat no_ignore_case);	#see: http://perldoc.perl.org/Getopt/Long.html
 use POSIX qw(strftime);
 
@@ -44,6 +45,10 @@ my %CONFIG		=
 	, 'js.core'   => [ 'src/polyfills.js', 'src/utility.js', 'src/main.js', 'src/story.js', 'src/wikifier.js', 'src/macros.js' ]
 	, 'js.debug'  => [ 'src/debug.js' ]
 	, 'css'       => 'src/styles.css'
+	, 'copy'      =>
+		{
+			'src/sugarcube.py' => 'dist/1.4/sugarcube/sugarcube.py'
+		}
 );
 
 # prototypes
@@ -193,6 +198,19 @@ foreach my $tplname (keys $CONFIG{'templates'})
 		or die("error: cannot open output file (\"$outfile\") for writing\n");
 	print $outfh $template;
 	close($outfh);
+}
+
+# process the files simply needing copied into the distribution
+foreach my $srcfile (keys $CONFIG{'copy'})
+{
+	my $dstfile = $CONFIG{'copy'}{$srcfile};
+	my $outdir;
+	($_, $outdir, $_) = fileparse($dstfile);
+
+	# copy the file
+	make_path($outdir) if (!-d $outdir);
+	copy($srcfile, $dstfile)
+		or die("error: cannot copy source file (\"$srcfile\") to destination (\"$dstfile\")\n");
 }
 
 
