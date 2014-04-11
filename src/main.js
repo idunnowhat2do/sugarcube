@@ -258,7 +258,8 @@ $(document).ready(function ()
 	// lastly, export identifiers for debugging purposes
 	window.SugarCube =
 	{
-		  config  : config
+		  version : version
+		, config  : config
 		, setup   : setup
 		, macros  : macros
 		, tale    : tale
