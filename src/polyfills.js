@@ -138,6 +138,45 @@ if (!Array.prototype.map)
 }
 
 /**
+ * Returns a value from the array, if an element in the array satisfies the provided testing function, otherwise undefined is returned.
+ */
+if (!Array.prototype.find)
+{
+	Object.defineProperty(Array.prototype, "find", {
+		enumerable   : false,
+		configurable : true,
+		writable     : true,
+		value        : function (predicate) {
+			if (this == null)
+			{
+				throw new TypeError("Array.prototype.find called on null or undefined");
+			}
+			if (typeof predicate !== "function")
+			{
+				throw new TypeError("predicate must be a function");
+			}
+
+			var   list    = Object(this)
+				, length  = list.length >>> 0
+				, thisArg = arguments[1]
+				, value;
+			for (var i = 0; i < length; i++)
+			{
+				if (i in list)
+				{
+					value = list[i];
+					if (predicate.call(thisArg, value, i, list))
+					{
+						return value;
+					}
+				}
+			}
+			return undefined;
+		}
+	});
+}
+
+/**
  * Tests whether some element in the array passes the test implemented by the provided function.
  */
 if (!Array.prototype.some)
