@@ -783,7 +783,7 @@ KeyValueStore.prototype.setItem = function (sKey, sValue)
 		//----------------------------------------------------------------------
 		try
 		{
-			sValue = "\u0000~" + LZString.compressToUTF16(sValue);
+			sValue = "#~" + LZString.compressToUTF16(sValue);
 		}
 		catch (e) { /* noop */ }
 		//----------------------------------------------------------------------
@@ -808,7 +808,7 @@ KeyValueStore.prototype.setItem = function (sKey, sValue)
 		//----------------------------------------------------------------------
 		try
 		{
-			sValue = "\u0000~" + LZString.compressToBase64(sValue);
+			sValue = "#~" + LZString.compressToBase64(sValue);
 		}
 		catch (e) { /* noop */ }
 		//----------------------------------------------------------------------
@@ -857,14 +857,14 @@ KeyValueStore.prototype.getItem = function (sKey)
 		var sValue = this.store.getItem(sKey);
 		if (sValue != null)	// use lazy equality
 		{
-			if (sValue.slice(0, 2) === "\u0000~")
+			if (sValue.slice(0, 2) === "#~")
 			{
-				DEBUG("    > loading LZ-compressed value");
+				DEBUG("    > loading LZ-compressed value for: " + sKey);
 				return JSON.parse(LZString.decompressFromUTF16(sValue.slice(2)));
 			}
 			else
 			{
-				DEBUG("    > loading uncompressed value");
+				DEBUG("    > loading uncompressed value for: " + sKey);
 				return JSON.parse(sValue);
 			}
 		}
@@ -883,14 +883,14 @@ KeyValueStore.prototype.getItem = function (sKey)
 				// EXPERIMENTAL COMPRESSION
 				//--------------------------------------------------------------
 				var sValue = unescape(bits[1]);
-				if (sValue.slice(0, 2) === "\u0000~")
+				if (sValue.slice(0, 2) === "#~")
 				{
-					DEBUG("    > loading LZ-compressed value");
+					DEBUG("    > loading LZ-compressed value for: " + sKey);
 					return JSON.parse(LZString.decompressFromBase64(sValue.slice(2)));
 				}
 				else
 				{
-					DEBUG("    > loading uncompressed value");
+					DEBUG("    > loading uncompressed value for: " + sKey);
 					return JSON.parse(sValue);
 				}
 				//--------------------------------------------------------------
