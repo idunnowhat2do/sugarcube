@@ -219,6 +219,17 @@ if (!Array.isArray)
 }
 
 /**
+ * Returns the integral part of a number by removing any fractional digits, it does not round
+ */
+if (!Math.trunc)
+{
+	Math.trunc = function (num)
+	{
+		return (num < 0) ? Math.ceil(num) : Math.floor(num);
+	};
+}
+
+/**
  * Returns a copy of the base string with 'count' characters replaced with 'replacement', starting at 'start'
  */
 if (!String.prototype.splice)
