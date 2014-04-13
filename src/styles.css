@@ -51,6 +51,7 @@ button
 button:hover { background-color: #58e; border: 1px solid #7af; }
 button:active { background-color: #f70; border: 1px solid #f92; }
 .error { margin: 0 12px 0 3px; padding: 3px 5px; color: #000; background-color: red; font-weight: bold; }
+.error[title] { cursor: help; }
 .highlight, .marked { color: yellow; font-weight: bold; font-style: italic; }
 .transition-in { opacity: 0; }
 
