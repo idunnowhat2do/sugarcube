@@ -697,10 +697,15 @@ function addStandardMacros()
 	 * <<print>>
 	 */
 	macros.add("print", {
-		version: { major: 2, minor: 0, revision: 0 },
+		version: { major: 2, minor: 1, revision: 0 },
 		skipArgs: true,
 		handler: function ()
 		{
+			if (this.args.full.length === 0)
+			{
+				return this.error("no expression specified");
+			}
+
 			try
 			{
 				var result = eval(this.args.full);
@@ -757,7 +762,7 @@ function addStandardMacros()
 	 * <<if>>
 	 */
 	macros.add("if", {
-		version: { major: 3, minor: 0, revision: 1 },
+		version: { major: 3, minor: 1, revision: 0 },
 		skipArgs: true,
 		tags: [ "elseif", "else" ],
 		handler: function ()
@@ -766,9 +771,17 @@ function addStandardMacros()
 			{
 				for (var i = 0, len = this.payload.length; i < len; i++)
 				{
-					if (this.payload[i].name === "else" && this.payload[i].arguments.length !== 0)
+					if (this.payload[i].name !== "else" && this.payload[i].arguments.length === 0)
 					{
-						throw new Error("<<else>> does not accept an expression (perhaps you meant to use <<elseif>> instead), invalid: " + this.payload[i].arguments);
+						return this.error("no conditional expression specified for <<" + this.payload[i].name + ">> clause" + (i > 0 ? " (#" + i + ")" : ""));
+					}
+					else if (this.payload[i].name === "else" && this.payload[i].arguments.length !== 0)
+					{
+						if (/^\s*if\b/i.test(this.payload[i].arguments))
+						{
+							return this.error('whitespace is not allowed between the "else" and "if" in <<elseif>> clause' + (i > 0 ? " (#" + i + ")" : ""));
+						}
+						return this.error("<<else>> does not accept a conditional expression (perhaps you meant to use <<elseif>> instead), invalid: " + this.payload[i].arguments);
 					}
 					if (this.payload[i].name === "else" || !!eval(Wikifier.parse(this.payload[i].arguments)))
 					{
@@ -792,10 +805,15 @@ function addStandardMacros()
 	 * <<set>>
 	 */
 	macros.add("set", {
-		version: { major: 3, minor: 0, revision: 0 },
+		version: { major: 3, minor: 1, revision: 0 },
 		skipArgs: true,
 		handler: function ()
 		{
+			if (this.args.full.length === 0)
+			{
+				return this.error("no expression specified");
+			}
+
 			macros.eval(this.args.full, this.output, this.name);
 		}
 	});
@@ -808,10 +826,15 @@ function addStandardMacros()
 	 * <<unset>>
 	 */
 	macros.add("unset", {
-		version: { major: 2, minor: 0, revision: 0 },
+		version: { major: 2, minor: 1, revision: 0 },
 		skipArgs: true,
 		handler: function ()
 		{
+			if (this.args.full.length === 0)
+			{
+				return this.error("no $variable list specified");
+			}
+
 			var   expression = this.args.full
 				, re         = /state\.active\.variables\.(\w+)/g
 				, match;
@@ -832,10 +855,15 @@ function addStandardMacros()
 	 * <<remember>>
 	 */
 	macros.add("remember", {
-		version: { major: 3, minor: 0, revision: 0 },
+		version: { major: 3, minor: 1, revision: 0 },
 		skipArgs: true,
 		handler: function ()
 		{
+			if (this.args.full.length === 0)
+			{
+				return this.error("no expression specified");
+			}
+
 			var expression = this.args.full;
 			if (macros.eval(expression, this.output, this.name))
 			{
@@ -872,10 +900,15 @@ function addStandardMacros()
 	 * <<forget>>
 	 */
 	macros.add("forget", {
-		version: { major: 1, minor: 0, revision: 0 },
+		version: { major: 1, minor: 1, revision: 0 },
 		skipArgs: true,
 		handler: function ()
 		{
+			if (this.args.full.length === 0)
+			{
+				return this.error("no $variable list specified");
+			}
+
 			var   expression = this.args.full
 				, re         = /state\.active\.variables\.(\w+)/g
 				, match
@@ -1033,7 +1066,7 @@ function addStandardMacros()
 	 * <<textbox>>
 	 */
 	macros.add("textbox", {
-		version: { major: 3, minor: 0, revision: 0 },
+		version: { major: 4, minor: 0, revision: 0 },
 		handler: function ()
 		{
 			if (this.args.length < 2)
@@ -1044,10 +1077,11 @@ function addStandardMacros()
 				return this.error("no " + errors.join(" or ") + " specified");
 			}
 
-			var   varName = this.args[0].trim()
-				, varId   = Util.slugify(varName)
-				, passage = this.args.length > 2 ? this.args[2] : undefined
-				, el      = document.createElement("input");
+			var   varName      = this.args[0].trim()
+				, varId        = Util.slugify(varName)
+				, defaultValue = this.args[1]
+				, passage      = this.args.length > 2 ? this.args[2] : undefined
+				, el           = document.createElement("input");
 
 			// legacy error
 			if (varName[0] !== "$")
@@ -1058,10 +1092,8 @@ function addStandardMacros()
 			el.type  = "text";
 			el.id    = "textbox-" + varId;
 			el.name  = "textbox-" + varId;
-			if (typeof this.args[1] !== "undefined")
-			{
-				el.value = this.args[1];
-			}
+			el.value = defaultValue;
+			Wikifier.setValue(varName, defaultValue);
 			$(el)
 				.change(function () {
 					Wikifier.setValue(varName, this.value);
