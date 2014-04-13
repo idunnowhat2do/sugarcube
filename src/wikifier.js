@@ -1069,12 +1069,13 @@ Wikifier.formatters =
 	context: null,	// last execution context object (top-level macros, hierarchically, have a null context)
 	handler: function (w)
 	{
-		this.lookaheadRegExp.lastIndex = w.matchStart;
+		var matchStart = this.lookaheadRegExp.lastIndex = w.matchStart;
 		if (this.parseTag(w))
 		{
 			// if parseBody() is called below, it will change the current working
 			// values, so we must cache them now
-			var   macroName   = this.working.name
+			var   nextMatch   = w.nextMatch
+				, macroName   = this.working.name
 				, handlerName = this.working.handlerName
 				, macroArgs   = this.working.arguments;
 			try
@@ -1101,7 +1102,9 @@ Wikifier.formatters =
 						payload = this.parseBody(w, macro.tags);
 						if (!payload)
 						{
-							return throwError(w.output, "cannot find a closing tag for macro <<" + macroName + ">>");
+							w.nextMatch = nextMatch;	// parseBody() changes this during processing, so we reset it here
+							return throwError(w.output, "cannot find a closing tag for macro <<" + macroName + ">>"
+								, w.source.slice(matchStart, w.nextMatch) + "\u2026");
 						}
 					}
 					if (typeof macro[handlerName] === "function")
@@ -1147,7 +1150,7 @@ Wikifier.formatters =
 											}
 										, "error": function (message)
 											{
-												throwError(this.output, "<<" + this.name + ">>: " + message);
+												throwError(this.output, "<<" + this.name + ">>: " + message, w.source.slice(matchStart, w.nextMatch));
 												return false;
 											}
 									};
@@ -1179,23 +1182,25 @@ Wikifier.formatters =
 					}
 					else
 					{
-						return throwError(w.output, "macro <<" + macroName + '>> property "' + handlerName + '" '
-							+ (macro.hasOwnProperty(handlerName) ? "is not a function" : "does not exist"));
+						return throwError(w.output, "macro <<" + macroName + '>> handler function "' + handlerName + '" '
+							+ (macro.hasOwnProperty(handlerName) ? "is not a function" : "does not exist"), w.source.slice(matchStart, w.nextMatch));
 					}
 				}
 				else if (macros.tags.hasOwnProperty(macroName))
 				{
 					return throwError(w.output, "child tag <<" + macroName + ">> was found outside of a call to its parent macro"
-						+ (macros.tags[macroName].length === 1 ? '' : 's') + " <<" + macros.tags[macroName].join(">>, <<") + ">>");
+						+ (macros.tags[macroName].length === 1 ? '' : 's') + " <<" + macros.tags[macroName].join(">>, <<") + ">>"
+						, w.source.slice(matchStart, w.nextMatch));
 				}
 				else
 				{
-					return throwError(w.output, "macro <<" + macroName + ">> does not exist");
+					return throwError(w.output, "macro <<" + macroName + ">> does not exist", w.source.slice(matchStart, w.nextMatch));
 				}
 			}
 			catch (e)
 			{
-				return throwError(w.output, "cannot execute " + ((macro && macro.isWidget) ? "widget" : "macro") + " <<" + macroName + ">>: " + e.message);
+				return throwError(w.output, "cannot execute " + ((macro && macro.isWidget) ? "widget" : "macro") + " <<" + macroName + ">>: " + e.message
+					, w.source.slice(matchStart, w.nextMatch));
 			}
 			finally
 			{
@@ -1571,7 +1576,7 @@ Wikifier.formatters =
 			}
 			else
 			{
-				throwError(w.output, 'HTML tag "' + tag + '" is not closed');
+				throwError(w.output, 'HTML tag "' + tag + '" is not closed', w.matchText + "\u2026");
 			}
 		}
 	}
