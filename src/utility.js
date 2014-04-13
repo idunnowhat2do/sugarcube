@@ -205,7 +205,7 @@ function deepCopy(orig)
 /**
  * Returns the new DOM element, optionally appending it to the passed DOM element (if any)
  */
-function insertElement(place, type, id, classNames, text)
+function insertElement(place, type, id, classNames, text, title)
 {
 	var el = document.createElement(type);
 
@@ -217,6 +217,10 @@ function insertElement(place, type, id, classNames, text)
 	if (classNames)
 	{
 		el.className = classNames;
+	}
+	if (title)
+	{
+		el.title = title;
 	}
 
 	// add content
@@ -371,9 +375,9 @@ function addStyle(css)
 /**
  * Appends an error message to the passed DOM element
  */
-function throwError(place, message)
+function throwError(place, message, title)
 {
-	insertElement(place, "span", null, "error", "Error: " + message);
+	insertElement(place, "span", null, "error", "Error: " + message, title);
 	return false;
 }
 
