@@ -817,10 +817,6 @@ function addStandardMacros()
 			macros.eval(this.args.full, this.output, this.name);
 		}
 	});
-	/*
-	// for "macros.set.run()" legacy compatibility only
-	macros["set"] = { run: function (expression, output, name) { return macros.eval(expression, output, name); } };
-	*/
 
 	/**
 	 * <<unset>>
@@ -1081,7 +1077,8 @@ function addStandardMacros()
 				, varId        = Util.slugify(varName)
 				, defaultValue = this.args[1]
 				, passage      = this.args.length > 2 ? this.args[2] : undefined
-				, el           = document.createElement("input");
+				, el           = document.createElement("input")
+				, enterKeyUsed = false;
 
 			// legacy error
 			if (varName[0] !== "$")
@@ -1096,14 +1093,19 @@ function addStandardMacros()
 			Wikifier.setValue(varName, defaultValue);
 			$(el)
 				.change(function () {
-					Wikifier.setValue(varName, this.value);
+					// set the $variable upon change, only if Return/Enter was not pressed
+					if (!enterKeyUsed)
+					{
+						Wikifier.setValue(varName, this.value);
+					}
 				})
 				.keypress(function (evt) {
-					// fire a change event if Return/Enter is pressed (mostly for IE)
+					// set the $variable and, optionally, forward to another passage if Return/Enter is pressed
 					if (evt.which === 13)
 					{
 						evt.preventDefault();
-						$(this).change();
+						enterKeyUsed = true;
+						Wikifier.setValue(varName, this.value);
 						if (typeof passage !== "undefined")
 						{
 							state.display(passage, this);
