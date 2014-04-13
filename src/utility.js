@@ -546,6 +546,26 @@ function randomFloat(min, max)
 }
 
 /**
+ * Returns a new array containing the tags of the passage(s)
+ */
+function tags(/* variadic */)
+{
+	if (arguments.length === 0)
+	{
+		return tale.get(state.active.title).tags.slice(0);
+	}
+	else
+	{
+		var tags = [];
+		for (var i = 0; i < arguments.length; i++)
+		{
+			tags = tags.concat(tale.get(arguments[i]).tags);
+		}
+		return tags;
+	}
+}
+
+/**
  * Returns an integer count of how many times the passage exists within the story history
  */
 function visited(title)
@@ -587,26 +607,6 @@ function visitedTags(/* variadic */)
 }
 
 /**
- * Returns a new array containing the tags of the passage(s)
- */
-function tags(/* variadic */)
-{
-	if (arguments.length === 0)
-	{
-		return tale.get(state.active.title).tags.slice(0);
-	}
-	else
-	{
-		var tags = [];
-		for (var i = 0; i < arguments.length; i++)
-		{
-			tags = tags.concat(tale.get(arguments[i]).tags);
-		}
-		return tags;
-	}
-}
-
-/**
  * Vanilla-header compatibility shims
  */
 function either(/* variadic */)
@@ -621,6 +621,8 @@ function either(/* variadic */)
 	return list.random();
 }
 function visitedTag(/* variadic */) { return visitedTags.apply(null, arguments); }
+function turns() { return state.length; }
+function passage() { return state.active.title; }
 
 
 /***********************************************************************************************************************
