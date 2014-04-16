@@ -667,6 +667,7 @@ function either(/* variadic */)
 function visitedTag(/* variadic */) { return visitedTags.apply(null, arguments); }
 function turns() { return state.length; }
 function passage() { return state.active.title; }
+function previous() { return (state.length > 1) ? state.peek(1).title : ""; }
 
 
 /***********************************************************************************************************************
