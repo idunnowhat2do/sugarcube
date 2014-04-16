@@ -105,6 +105,50 @@ String.prototype.readBracketedList = function ()
 	return names;
 };
 
+/**
+ * Returns a formatted string, after replacing each format item in the given format string with the text equivalent of the corresponding argument's value
+ */
+if (!String.format)
+{
+	Object.defineProperty(String, "format", {
+		enumerable   : false,
+		configurable : true,
+		writable     : true,
+		value        : function (format)
+		{
+			function padString(str, align, pad)
+			{
+				if (!align) { return str; }
+				var plen = Math.abs(align) - str.length;
+				if (plen < 1) { return str; }
+				var padding = Array(plen + 1).join(pad);
+				return (align < 0)
+					? str + padding
+					: padding + str;
+			}
+
+			if (arguments.length < 2)
+			{
+				return (arguments.length === 0) ? "" : format;
+			}
+
+			var args = (arguments.length === 2 && Array.isArray(arguments[1]))
+				? arguments[1].slice(0)
+				: Array.prototype.slice.call(arguments, 1);
+
+			return format.replace(/{(\d+)(?:,([+-]?\d+))?}/g, function (match, index, align) {
+				if (args[index] == null) { return ""; }	// use lazy equality
+				return padString((typeof args[index] === "object")
+						? JSON.stringify(args[index])
+						: args[index]
+					, (!align) ? 0 : parseInt(align)
+					, " "
+				);
+			});
+		}
+	});
+}
+
 
 /***********************************************************************************************************************
 ** [Function Library]
