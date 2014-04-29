@@ -11,8 +11,8 @@
  */
 String.prototype.readMacroParams = function ()
 {
-	// Groups: 1=double quoted | 2=single quoted | 3=empty quotes | 4=double square-bracketed | 5=barewords
-	var   re     = new RegExp(Wikifier.textPrimitives.macroArgPattern, "gm")
+	// Groups: 1=double quoted | 2=single quoted | 3=back quoted | 4=empty quotes | 5=double square-bracketed | 6=barewords
+	var   re     = new RegExp(Wikifier.textPrimitives.macroArg, "gm")
 		, match
 		, params = [];
 
@@ -26,16 +26,23 @@ String.prototype.readMacroParams = function ()
 		// Single quoted
 		else if (match[2]) { arg = match[2]; }
 
+		// Back quoted
+		else if (match[3])
+		{
+			// Evaluate the expression (this might throw, but that's okay)
+			arg = eval(Wikifier.parse(match[3]));
+		}
+
 		// Empty quotes
-		else if (match[3]) { arg = ""; }
+		else if (match[4]) { arg = ""; }
 
 		// Double square-bracketed
-		else if (match[4])
+		else if (match[5])
 		{
-			arg = match[4];
+			arg = match[5];
 
 			// Convert to an object
-			var   linkRe    = new RegExp(Wikifier.textPrimitives.linkPattern)
+			var   linkRe    = new RegExp(Wikifier.textPrimitives.link)
 				, linkMatch = linkRe.exec(arg)
 				, linkObj   = {};
 			if (linkMatch !== null)
@@ -52,9 +59,9 @@ String.prototype.readMacroParams = function ()
 		}
 
 		// Barewords
-		else if (match[5])
+		else if (match[6])
 		{
-			arg = match[5];
+			arg = match[6];
 
 			// $variable, so substitute its value
 			if (/^\$\w+/.test(arg))
@@ -64,7 +71,7 @@ String.prototype.readMacroParams = function ()
 
 			// Object or Array literal, so try to evaluate it
 			// n.b. Authors really shouldn't be passing object/array literals as arguments.  If they want to pass a
-			//      complex type, store it in a variable and pass that instead.
+			//      complex type, either store it in a variable and pass that instead or use the back quote syntax.
 			else if (/^(?:\{.*\}|\[.*\])$/.test(arg))
 			{
 				try
@@ -510,7 +517,7 @@ Wikifier.createExternalLink = function (place, url, text)
 /**
  * Setup the basic text primitives (regular expressions)
  */
-if (!((new RegExp("[\u0150\u0170]","g")).test("\u0150")))
+if (!((new RegExp("[\u0150\u0170]", "g")).test("\u0150")))
 {
 	Wikifier.textPrimitives =
 	{
@@ -520,7 +527,7 @@ if (!((new RegExp("[\u0150\u0170]","g")).test("\u0150")))
 		, anyLetter       : "[A-Za-z0-9_\\-\u00c0-\u00de\u00df-\u00ff]"
 		, anyLetterStrict : "[A-Za-z0-9\u00c0-\u00de\u00df-\u00ff]"
 		*/
-		anyLetter: "[A-Za-z0-9_\\-\u00c0-\u00de\u00df-\u00ff]"
+		anyLetter : "[A-Za-z0-9_\\-\u00c0-\u00de\u00df-\u00ff]"
 	};
 }
 else
@@ -533,18 +540,26 @@ else
 		, anyLetter       : "[A-Za-z0-9_\\-\u00c0-\u00de\u00df-\u00ff\u0150\u0170\u0151\u0171]"
 		, anyLetterStrict : "[A-Za-z0-9\u00c0-\u00de\u00df-\u00ff\u0150\u0170\u0151\u0171]"
 		*/
-		anyLetter: "[A-Za-z0-9_\\-\u00c0-\u00de\u00df-\u00ff\u0150\u0170\u0151\u0171]"
+		anyLetter : "[A-Za-z0-9_\\-\u00c0-\u00de\u00df-\u00ff\u0150\u0170\u0151\u0171]"
 	};
 }
-Wikifier.textPrimitives.urlPattern      = "(?:file|https?|mailto|ftp|javascript|irc|news|data):[^\\s'\"]+(?:/|\\b)";
-Wikifier.textPrimitives.linkPattern     = "\\[\\[\\s*(?:(.+?)\\s*\\|\\s*)?(~)?(.+?)\\s*\\](?:\\[\\s*(.+?)\\s*\\])?\\]";	// 1=(text), 2=(~), 3=link, 4=(set)
-Wikifier.textPrimitives.imagePattern    = "\\[([<]?)([>]?)[Ii][Mm][Gg]\\[\\s*(?:(.+?)\\s*\\|\\s*)?([^\\|]+?)\\s*\\](?:\\[\\s*(~)?(.+?)\\s*\\])?(?:\\[\\s*(.+?)\\s*\\])?\\]";	// 1=(left), 2=(right), 3=(title), 4=source, 5=(~), 6=(link), 7=(set)
-Wikifier.textPrimitives.macroArgPattern = "(?:" + [
-		  "(?:\"((?:(?:\\\\\")|[^\"])+)\")" // 1=double quoted
-		, "(?:'((?:(?:\\\\')|[^'])+)')"     // 2=single quoted
-		, "((?:\"\")|(?:''))"               // 3=empty quotes
-		, "(?:(\\[\\[(?:\\s|\\S)*?\\]\\]))" // 4=double square-bracketed
-		, "([^\"'\\s]\\S*)"                 // 5=barewords
+Wikifier.textPrimitives.emptyQuotes     = "((?:\"\")|(?:'')|(?:``))";
+Wikifier.textPrimitives.doubleQuoted    = '(?:"((?:(?:\\\\")|[^"])+)")';
+Wikifier.textPrimitives.singleQuoted    = "(?:'((?:(?:\\\\')|[^'])+)')";
+Wikifier.textPrimitives.backQuoted      = "(?:`((?:(?:\\\\`)|[^`])+)`)";
+Wikifier.textPrimitives.doubleBracketed = "(?:(\\[\\[(?:\\s|\\S)*?\\]\\]))";
+Wikifier.textPrimitives.barewords       = "([^\"'`\\s]\\S*)";
+
+Wikifier.textPrimitives.url      = "(?:file|https?|mailto|ftp|javascript|irc|news|data):[^\\s'\"]+(?:/|\\b)";
+Wikifier.textPrimitives.link     = "\\[\\[\\s*(?:(.+?)\\s*\\|\\s*)?(~)?(.+?)\\s*\\](?:\\[\\s*(.+?)\\s*\\])?\\]";	// 1=(text), 2=(~), 3=link, 4=(set)
+Wikifier.textPrimitives.image    = "\\[([<]?)([>]?)[Ii][Mm][Gg]\\[\\s*(?:(.+?)\\s*\\|\\s*)?([^\\|]+?)\\s*\\](?:\\[\\s*(~)?(.+?)\\s*\\])?(?:\\[\\s*(.+?)\\s*\\])?\\]";	// 1=(left), 2=(right), 3=(title), 4=source, 5=(~), 6=(link), 7=(set)
+Wikifier.textPrimitives.macroArg = "(?:" + [
+		  Wikifier.textPrimitives.doubleQuoted    // 1=double quoted
+		, Wikifier.textPrimitives.singleQuoted    // 2=single quoted
+		, Wikifier.textPrimitives.backQuoted      // 3=back quoted
+		, Wikifier.textPrimitives.emptyQuotes     // 4=empty quotes
+		, Wikifier.textPrimitives.doubleBracketed // 5=double square-bracketed
+		, Wikifier.textPrimitives.barewords       // 6=barewords
 	].join("|") + ")";
 
 /**
@@ -604,14 +619,6 @@ Wikifier.formatterHelpers =
 		var lookaheadMatch = lookaheadRegExp.exec(w.source);
 		if (lookaheadMatch && lookaheadMatch.index === w.matchStart)
 		{
-			/* [FIXME] I doubt this is necessary anymore, remove it later if no one complains
-			var text = lookaheadMatch[1];
-			if (config.browser.isIE && config.browser.ieVersion < 10)
-			{
-				text = text.replace(/\n/g, "\r");
-			}
-			insertElement(w.output, "pre", null, null, text);
-			*/
 			insertElement(w.output, "pre", null, null, lookaheadMatch[1]);
 			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 		}
@@ -620,7 +627,7 @@ Wikifier.formatterHelpers =
 	{
 		if (tale.has(link)) { return false; }
 
-		var urlRegExp = new RegExp("^" + Wikifier.textPrimitives.urlPattern, "gim");
+		var urlRegExp = new RegExp("^" + Wikifier.textPrimitives.url, "gim");
 		if (urlRegExp.test(link) || link.search(/[\.\/\\#]/) !== -1)
 		{
 			return true;
@@ -935,24 +942,6 @@ Wikifier.formatters =
 	handler: Wikifier.formatterHelpers.monospacedByLineHelper
 },
 
-// [FIXME] These aren't really used in the headers, remove them later if no one complains
-//{
-//	name: "monospacedByLineForPlugin",
-//	match: "^//\\{\\{\\{\\n",
-//	lookahead: "^//\\{\\{\\{\\n\\n*((?:^[^\\n]*\\n)+?)(\\n*^//\\}\\}\\}$\\n?)",
-//	handler: Wikifier.formatterHelpers.monospacedByLineHelper
-//},
-//
-//{
-//	name: "wikifyCommentForPlugin",
-//	match: "^/\\*\\*\\*\\n",
-//	terminator: "^\\*\\*\\*/\\n",
-//	handler: function (w)
-//	{
-//		w.subWikify(w.output, this.terminator);
-//	}
-//},
-
 {
 	name: "prettyLink",
 	match: "\\[\\[",
@@ -963,7 +952,7 @@ Wikifier.formatters =
 		var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
 		if (lookaheadMatch && lookaheadMatch.index === w.matchStart)
 		{
-			var   re    = new RegExp("^" + Wikifier.textPrimitives.linkPattern + "$")
+			var   re    = new RegExp("^" + Wikifier.textPrimitives.link + "$")
 				, match = re.exec(lookaheadMatch[0]);
 			if (match !== null)
 			{	// 1=(text), 2=(~), 3=link, 4=(set)
@@ -989,7 +978,7 @@ Wikifier.formatters =
 
 {
 	name: "urlLink",
-	match: Wikifier.textPrimitives.urlPattern,
+	match: Wikifier.textPrimitives.url,
 	handler: function (w)
 	{
 		var el = Wikifier.createExternalLink(w.output, w.matchText);
@@ -1007,7 +996,7 @@ Wikifier.formatters =
 		var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
 		if (lookaheadMatch && lookaheadMatch.index === w.matchStart)
 		{
-			var   re    = new RegExp("^" + Wikifier.textPrimitives.imagePattern + "$")
+			var   re    = new RegExp("^" + Wikifier.textPrimitives.image + "$")
 				, match = re.exec(lookaheadMatch[0]);
 			if (match !== null)
 			{	// 1=(left), 2=(right), 3=(title), 4=source, 5=(~), 6=(link), 7=(set)
@@ -1040,6 +1029,7 @@ Wikifier.formatters =
 					var passage = tale.get(source);
 					if (passage.tags.indexOf("Twine.image") !== -1)
 					{
+						el.setAttribute("data-passage", passage.title);
 						source = passage.text;
 					}
 				}
@@ -1548,6 +1538,45 @@ Wikifier.formatters =
 				while (el.firstChild)
 				{
 					el = el.firstChild;
+				}
+
+				switch (el.tagName.toUpperCase())
+				{
+				case "A":
+					if (el.hasAttribute("passage"))
+					{
+						var passage = String(el.getAttribute("passage")).trim();
+						if (passage !== "")
+						{
+							el.setAttribute("data-passage", passage);
+							el.classList.add(tale.has(passage) ? "link-internal" : "link-broken");
+							$(el).click(function () { state.display(passage, el); });
+						}
+						el.removeAttribute("passage");
+					}
+					break;
+				case "IMG":
+					if (el.hasAttribute("passage"))
+					{
+						var passage = String(el.getAttribute("passage")).trim();
+						if (passage !== "")
+						{
+							var source;
+							// check for Twine 1.4 Base64 image passage transclusion
+							if (tale.has(passage))
+							{
+								passage = tale.get(passage);
+								if (passage.tags.indexOf("Twine.image") !== -1)
+								{
+									el.setAttribute("data-passage", passage.title);
+									source = passage.text;
+								}
+							}
+							el.src = source;
+						}
+						el.removeAttribute("passage");
+					}
+					break;
 				}
 
 				if (terminatorMatch)
