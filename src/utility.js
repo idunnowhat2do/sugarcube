@@ -127,14 +127,13 @@ if (!String.format)
 					: padding + str;
 			}
 
-			if (arguments.length < 2)
-			{
-				return (arguments.length === 0) ? "" : format;
-			}
+			if (arguments.length < 2) { return (arguments.length === 0) ? "" : format; }
 
 			var args = (arguments.length === 2 && Array.isArray(arguments[1]))
 				? arguments[1].slice(0)
 				: Array.prototype.slice.call(arguments, 1);
+
+			if (args.length === 0) { return format; }
 
 			return format.replace(/{(\d+)(?:,([+-]?\d+))?}/g, function (match, index, align) {
 				if (args[index] == null) { return ""; }	// use lazy equality
@@ -375,7 +374,7 @@ function addStyle(css)
 
 	// check for Twine 1.4 Base64 image passage transclusion
 	var   matchRe = new RegExp(formatter.byName["image"].lookaheadRegExp.source, "gm")
-		, parseRe = new RegExp(Wikifier.textPrimitives.imagePattern);
+		, parseRe = new RegExp(Wikifier.textPrimitives.image);
 	if (matchRe.test(css))
 	{
 		css = css.replace
