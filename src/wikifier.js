@@ -11,7 +11,7 @@
  */
 String.prototype.readMacroParams = function ()
 {
-	// Groups: 1=double quoted | 2=single quoted | 3=back quoted | 4=empty quotes | 5=double square-bracketed | 6=barewords
+	// Groups: 1=double quoted | 2=single quoted | 3=empty quotes | 4=double square-bracketed | 5=barewords
 	var   re     = new RegExp(Wikifier.textPrimitives.macroArg, "gm")
 		, match
 		, params = [];
@@ -26,20 +26,13 @@ String.prototype.readMacroParams = function ()
 		// Single quoted
 		else if (match[2]) { arg = match[2]; }
 
-		// Back quoted
-		else if (match[3])
-		{
-			// Evaluate the expression (this might throw, but that's okay)
-			arg = eval(Wikifier.parse(match[3]));
-		}
-
 		// Empty quotes
-		else if (match[4]) { arg = ""; }
+		else if (match[3]) { arg = ""; }
 
 		// Double square-bracketed
-		else if (match[5])
+		else if (match[4])
 		{
-			arg = match[5];
+			arg = match[4];
 
 			// Convert to an object
 			var   linkRe    = new RegExp(Wikifier.textPrimitives.link)
@@ -59,9 +52,9 @@ String.prototype.readMacroParams = function ()
 		}
 
 		// Barewords
-		else if (match[6])
+		else if (match[5])
 		{
-			arg = match[6];
+			arg = match[5];
 
 			// $variable, so substitute its value
 			if (/^\$\w+/.test(arg))
@@ -71,7 +64,7 @@ String.prototype.readMacroParams = function ()
 
 			// Object or Array literal, so try to evaluate it
 			// n.b. Authors really shouldn't be passing object/array literals as arguments.  If they want to pass a
-			//      complex type, either store it in a variable and pass that instead or use the back quote syntax.
+			//      complex type, store it in a variable and pass that instead.
 			else if (/^(?:\{.*\}|\[.*\])$/.test(arg))
 			{
 				try
@@ -543,10 +536,9 @@ else
 		anyLetter : "[A-Za-z0-9_\\-\u00c0-\u00de\u00df-\u00ff\u0150\u0170\u0151\u0171]"
 	};
 }
-Wikifier.textPrimitives.emptyQuotes     = "((?:\"\")|(?:'')|(?:``))";
+Wikifier.textPrimitives.emptyQuotes     = "((?:\"\")|(?:''))";
 Wikifier.textPrimitives.doubleQuoted    = '(?:"((?:(?:\\\\")|[^"])+)")';
 Wikifier.textPrimitives.singleQuoted    = "(?:'((?:(?:\\\\')|[^'])+)')";
-Wikifier.textPrimitives.backQuoted      = "(?:`((?:(?:\\\\`)|[^`])+)`)";
 Wikifier.textPrimitives.doubleBracketed = "(?:(\\[\\[(?:\\s|\\S)*?\\]\\]))";
 Wikifier.textPrimitives.barewords       = "([^\"'`\\s]\\S*)";
 
@@ -556,10 +548,9 @@ Wikifier.textPrimitives.image    = "\\[([<]?)([>]?)[Ii][Mm][Gg]\\[\\s*(?:(.+?)\\
 Wikifier.textPrimitives.macroArg = "(?:" + [
 		  Wikifier.textPrimitives.doubleQuoted    // 1=double quoted
 		, Wikifier.textPrimitives.singleQuoted    // 2=single quoted
-		, Wikifier.textPrimitives.backQuoted      // 3=back quoted
-		, Wikifier.textPrimitives.emptyQuotes     // 4=empty quotes
-		, Wikifier.textPrimitives.doubleBracketed // 5=double square-bracketed
-		, Wikifier.textPrimitives.barewords       // 6=barewords
+		, Wikifier.textPrimitives.emptyQuotes     // 3=empty quotes
+		, Wikifier.textPrimitives.doubleBracketed // 4=double square-bracketed
+		, Wikifier.textPrimitives.barewords       // 5=barewords
 	].join("|") + ")";
 
 /**
