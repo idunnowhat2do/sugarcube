@@ -136,13 +136,11 @@ if (!String.format)
 			if (args.length === 0) { return format; }
 
 			return format.replace(/{(\d+)(?:,([+-]?\d+))?}/g, function (match, index, align) {
-				if (args[index] == null) { return ""; }	// use lazy equality
-				return padString((typeof args[index] === "object")
-						? JSON.stringify(args[index])
-						: args[index]
-					, (!align) ? 0 : parseInt(align)
-					, " "
-				);
+				var retval = args[index];
+				if (retval == null) { return ""; }	// use lazy equality
+				while (typeof retval === "function") { retval = retval(); }
+				if (typeof retval === "object") { retval = JSON.stringify(retval); }
+				return padString(retval, (!align) ? 0 : parseInt(align), " ");
 			});
 		}
 	});
