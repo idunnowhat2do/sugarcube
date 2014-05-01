@@ -1540,27 +1540,18 @@ Wikifier.formatters =
 					el = el.firstChild;
 				}
 
-				switch (el.tagName.toUpperCase())
+				if (el.hasAttribute("data-passage"))
 				{
-				case "A":
-					if (el.hasAttribute("passage"))
+					var passage = String(el.getAttribute("data-passage")).trim();
+					if (passage !== "")
 					{
-						var passage = String(el.getAttribute("passage")).trim();
-						if (passage !== "")
+						switch (el.tagName.toUpperCase())
 						{
-							el.setAttribute("data-passage", passage);
+						case "A":
 							el.classList.add(tale.has(passage) ? "link-internal" : "link-broken");
 							$(el).click(function () { state.display(passage, el); });
-						}
-						el.removeAttribute("passage");
-					}
-					break;
-				case "IMG":
-					if (el.hasAttribute("passage"))
-					{
-						var passage = String(el.getAttribute("passage")).trim();
-						if (passage !== "")
-						{
+							break;
+						case "IMG":
 							var source;
 							// check for Twine 1.4 Base64 image passage transclusion
 							if (tale.has(passage))
@@ -1568,15 +1559,13 @@ Wikifier.formatters =
 								passage = tale.get(passage);
 								if (passage.tags.indexOf("Twine.image") !== -1)
 								{
-									el.setAttribute("data-passage", passage.title);
 									source = passage.text;
 								}
 							}
 							el.src = source;
+							break;
 						}
-						el.removeAttribute("passage");
 					}
-					break;
 				}
 
 				if (terminatorMatch)
