@@ -62,6 +62,19 @@ String.prototype.readMacroParams = function ()
 				arg = Wikifier.getValue(arg);
 			}
 
+			// options or setup object, so try to evaluate it
+			else if (/^(?:options|setup)[\.\[]/.test(arg))
+			{
+				try
+				{
+					arg = eval(Wikifier.parse(arg));
+				}
+				catch (e)
+				{
+					throw new Error('unable to parse macro argument "' + arg + '"; ' + e.message);
+				}
+			}
+
 			// Object or Array literal, so try to evaluate it
 			// n.b. Authors really shouldn't be passing object/array literals as arguments.  If they want to pass a
 			//      complex type, store it in a variable and pass that instead.
@@ -69,7 +82,8 @@ String.prototype.readMacroParams = function ()
 			{
 				try
 				{
-					arg = eval("(function(){return (" + Wikifier.parse(arg) + ");}())");
+					// the parens are to protect object literals from being confused with block statements
+					arg = eval("(" + Wikifier.parse(arg) + ")");
 				}
 				catch (e)
 				{
