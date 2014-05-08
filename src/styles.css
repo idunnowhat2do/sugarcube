@@ -17,8 +17,8 @@ body { margin: 3.5em 15% 5% 3.5em; color: #fff; background-color: #111; font-fam
 a { cursor: pointer; color: #46d; }
 a:hover { color: #79f; }
 a:active { color: #f70; }
-a.link-internal, a.link-external, a.link-back, a.link-return { font-weight: bold; text-decoration: none; }
-a.link-internal:hover, a.link-external:hover, a.link-back:hover, a.link-return:hover { text-decoration: underline; }
+a.link-internal, a.link-external { font-weight: bold; text-decoration: none; }
+a.link-internal:hover, a.link-external:hover { text-decoration: underline; }
 a.link-broken { padding: 3px; color: #000; background-color: red; font-weight: bold; text-decoration: none; }
 input, textarea { color: #fff; background-color: #444; border: 1px solid #fff; }
 input[type="text"], textarea { min-width: 16em; }

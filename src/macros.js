@@ -330,7 +330,7 @@ function addStandardMacros()
 	 * <<back>> & <<return>>
 	 */
 	macros.add(["back", "return"], {
-		version: { major: 4, minor: 1, revision: 0 },
+		version: { major: 4, minor: 2, revision: 0 },
 		handler: function ()
 		{
 			var   steps = 1
@@ -429,6 +429,7 @@ function addStandardMacros()
 			}
 
 			el = document.createElement("a");
+			el.classList.add("link-internal");
 			el.classList.add("link-" + this.name);
 			if (steps > 0)
 			{
@@ -1221,7 +1222,6 @@ function addStandardMacros()
 	 */
 	macros.add(["addclass", "toggleclass"], {
 		version: { major: 2, minor: 0, revision: 0 },
-		protect: true,
 		handler: function ()
 		{
 			if (this.args.length < 2)
