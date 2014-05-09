@@ -1547,30 +1547,7 @@ Wikifier.formatters =
 
 				if (el.hasAttribute("data-passage"))
 				{
-					var passage = String(el.getAttribute("data-passage")).trim();
-					if (passage !== "")
-					{
-						switch (el.tagName.toUpperCase())
-						{
-						case "A":
-							el.classList.add(tale.has(passage) ? "link-internal" : "link-broken");
-							$(el).click(function () { state.display(passage, el); });
-							break;
-						case "IMG":
-							var source;
-							// check for Twine 1.4 Base64 image passage transclusion
-							if (tale.has(passage))
-							{
-								passage = tale.get(passage);
-								if (passage.tags.indexOf("Twine.image") !== -1)
-								{
-									source = passage.text;
-								}
-							}
-							el.src = source;
-							break;
-						}
-					}
+					this.processDataAttributes(el);
 				}
 
 				if (terminatorMatch)
@@ -1600,6 +1577,55 @@ Wikifier.formatters =
 			else
 			{
 				throwError(w.output, 'HTML tag "' + tag + '" is not closed', w.matchText + "\u2026");
+			}
+		}
+	},
+	processDataAttributes: function (el)
+	{
+		var passage = el.getAttribute("data-passage");
+		if (passage == null) { return; }
+
+		passage = ((typeof passage !== "string") ? String(passage) : passage).trim();
+		if (/^\$\w+/.test(passage))
+		{
+			passage = Wikifier.getValue(passage);
+			el.setAttribute("data-passage", passage);
+		}
+		if (passage !== "")
+		{
+			switch (el.tagName.toUpperCase())
+			{
+			case "A":    /* FALL-THROUGH */
+			case "AREA":
+				var   setter   = el.getAttribute("data-setter")
+					, callback;
+				if (setter != null)
+				{
+					setter = ((typeof setter !== "string") ? String(setter) : setter).trim();
+					if (setter !== "")
+					{
+						callback = function (ex) { return function () { macros.eval(ex, null, null); }; }(Wikifier.parse(setter));
+					}
+				}
+				el.classList.add(tale.has(passage) ? "link-internal" : "link-broken");
+				$(el).click(function () {
+					if (typeof callback === "function") { callback(); }
+					state.display(passage, el);
+				});
+				break;
+			case "IMG":
+				var source;
+				// check for Twine 1.4 Base64 image passage transclusion
+				if (tale.has(passage))
+				{
+					passage = tale.get(passage);
+					if (passage.tags.indexOf("Twine.image") !== -1)
+					{
+						source = passage.text;
+					}
+				}
+				el.src = source;
+				break;
 			}
 		}
 	}
