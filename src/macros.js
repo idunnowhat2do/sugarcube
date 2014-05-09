@@ -1289,7 +1289,7 @@ function addStandardMacros()
 	 * <<append>>, <<prepend>>, & <<replace>>
 	 */
 	macros.add(["append", "prepend", "replace"], {
-		version: { major: 2, minor: 0, revision: 0 },
+		version: { major: 2, minor: 0, revision: 1 },
 		tags: null,
 		handler: function ()
 		{
@@ -1305,10 +1305,6 @@ function addStandardMacros()
 				return this.error('no elements matched the selector "' + this.args[0] + '"');
 			}
 
-			if (this.name === "replace")
-			{
-				targets.empty();
-			}
 			if (this.payload[0].contents !== "")
 			{
 				var frag = document.createDocumentFragment();
@@ -1316,6 +1312,7 @@ function addStandardMacros()
 				switch (this.name)
 				{
 				case "replace":
+					targets.empty();
 					/* FALL-THROUGH */
 				case "append":
 					targets.append(frag);
