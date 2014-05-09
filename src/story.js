@@ -149,9 +149,13 @@ History.prototype.init = function ()
 	}
 };
 
-History.prototype.display = function (title, link, render)
+History.prototype.display = function (title, link, option)
 {
 	DEBUG("[<History>.display()]");
+
+	// process option
+	var   updateDisplay = (option === "offscreen" || option === "silently" || option === "quietly" || option === false) ? false : true
+		, updateHistory = (option === "back" || option === "stateless") ? false : true;
 
 	// reset the system temp/scratch object
 	systemp = {};
@@ -181,7 +185,7 @@ History.prototype.display = function (title, link, render)
 	}
 
 	// create a fresh entry in the history
-	if (render !== "back")
+	if (updateHistory)
 	{
 		if (!this.isEmpty)
 		{
@@ -205,7 +209,7 @@ History.prototype.display = function (title, link, render)
 		}
 		this.activate(this.top);
 	}
-	if (config.historyMode !== modes.hashTag && (render !== "back" || config.disableHistoryControls))
+	if (config.historyMode !== modes.hashTag && (updateHistory || config.disableHistoryControls))
 	{
 		DEBUG("    > typeof window.history.state: " + typeof window.history.state);
 		var stateObj;
@@ -237,7 +241,7 @@ History.prototype.display = function (title, link, render)
 	}
 
 	// clear <body> classes and execute the PassageReady passage
-	if (render !== "offscreen")
+	if (updateDisplay)
 	{
 		if (document.body.className)
 		{
@@ -259,7 +263,7 @@ History.prototype.display = function (title, link, render)
 	// add it to the page
 	var el = passage.render();
 	el.style.visibility = "visible";
-	if (render !== "offscreen")
+	if (updateDisplay)
 	{
 		var   passages = document.getElementById("passages")
 			, outgoing = passages.querySelector(".passage");
@@ -315,7 +319,7 @@ History.prototype.display = function (title, link, render)
 	}
 
 	// execute the PassageDone passage and update the non-passage page elements, if enabled
-	if (render !== "offscreen")
+	if (updateDisplay)
 	{
 		if (tale.has("PassageDone"))
 		{
