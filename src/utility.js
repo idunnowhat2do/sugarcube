@@ -476,6 +476,7 @@ function fade(el, options)
 
 /**
  * Scrolls the browser window to ensure that a DOM element is in view
+ *   n.b. Unused in SugarCube, only included for compatibility
  */
 function scrollWindowTo(el)
 {
