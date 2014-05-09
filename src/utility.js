@@ -478,12 +478,12 @@ function fade(el, options)
  * Scrolls the browser window to ensure that a DOM element is in view
  *   n.b. Unused in SugarCube, only included for compatibility
  */
-function scrollWindowTo(el)
+function scrollWindowTo(el, increment)
 {
 	function tick()
 	{
-		progress += 0.1;
-		window.scrollTo(0, start + direction * (distance * Math.easeInOut(progress)));
+		progress += increment;
+		window.scroll(0, start + direction * (distance * Math.easeInOut(progress)));
 		if (progress >= 1)
 		{
 			window.clearInterval(intervalId);
@@ -527,6 +527,27 @@ function scrollWindowTo(el)
 			{
 				return posTop;
 			}
+		}
+	}
+
+	// normalize increment
+	if (increment == null)	// use lazy equality
+	{
+		increment = 0.1;
+	}
+	else
+	{
+		if (typeof increment !== "number")
+		{
+			increment = Number(increment);
+		}
+		if (isNaN(increment) || increment < 0)
+		{
+			increment = 0.1;
+		}
+		else if (increment > 1)
+		{
+			increment = 1;
 		}
 	}
 
