@@ -960,7 +960,7 @@ function addStandardMacros()
 	 * Interactive
 	 **************************************************************************/
 	/**
-	 * <<click>>
+	 * <<click>> & <<button>>
 	 */
 	macros.add(["click", "button"], {
 		version: { major: 4, minor: 1, revision: 0 },
