@@ -9,7 +9,7 @@ function History()
 {
 	DEBUG("[History()]");
 	DEBUG("    > mode: " + (config.historyMode === modes.hashTag ? "hashTag" : (config.historyMode === modes.windowHistory ? "windowHistory" : "sessionHistory")));
-	if (window.history.state) { if (config.historyMode === modes.windowHistory) { DEBUG("    > window.history.state: " + window.history.state.length); } else if (config.historyMode === modes.sessionHistory) { DEBUG("    > window.history.state: " + window.history.state.sidx + "/" + window.history.state.suid); } } else { DEBUG("    > window.history.state: " + window.history.state); }
+	if (History.getWindowState()) { if (config.historyMode === modes.windowHistory) { DEBUG("    > History.getWindowState(): " + History.getWindowState().length); } else if (config.historyMode === modes.sessionHistory) { DEBUG("    > History.getWindowState(): " + History.getWindowState().sidx + "/" + History.getWindowState().suid); } } else { DEBUG("    > History.getWindowState(): " + History.getWindowState()); }
 
 	// currently active/displayed state
 	this.active = { init: true, variables: {} };	// allows macro initialization to set variables at startup
@@ -169,8 +169,8 @@ History.prototype.display = function (title, link, option)
 	{
 		if (config.historyMode === modes.sessionHistory)
 		{
-			DEBUG("    [SH]> state.active.init && !state.isEmpty; activating: " + (window.history.state !== null ? "window.history.state.sidx" : "state.top"));
-			this.activate(window.history.state !== null ? window.history.state.sidx : this.top);
+			DEBUG("    [SH]> state.active.init && !state.isEmpty; activating: " + (History.hasWindowState() ? "History.getWindowState().sidx" : "state.top"));
+			this.activate(History.hasWindowState() ? History.getWindowState().sidx : this.top);	// use lazy equality
 		}
 		else if (config.historyMode === modes.windowHistory)
 		{
@@ -193,12 +193,12 @@ History.prototype.display = function (title, link, option)
 			{
 				this.pop();
 			}
-			else if (config.historyMode === modes.sessionHistory && window.history.state.sidx < this.top.sidx)
+			else if (config.historyMode === modes.sessionHistory && History.getWindowState().sidx < this.top.sidx)
 			{
-				DEBUG("    > stacks out of sync; popping " + (this.top.sidx - window.history.state.sidx) + " states to equalize");
+				DEBUG("    > stacks out of sync; popping " + (this.top.sidx - History.getWindowState().sidx) + " states to equalize");
 				// stack IDs are out of sync, pop our stack until we're back in
 				// sync with the window.history
-				this.pop(this.top.sidx - window.history.state.sidx);
+				this.pop(this.top.sidx - History.getWindowState().sidx);
 			}
 		}
 
@@ -211,7 +211,7 @@ History.prototype.display = function (title, link, option)
 	}
 	if (config.historyMode !== modes.hashTag && (updateHistory || config.disableHistoryControls))
 	{
-		DEBUG("    > typeof window.history.state: " + typeof window.history.state);
+		DEBUG("    > typeof History.getWindowState(): " + typeof History.getWindowState());
 		var stateObj;
 		if (config.historyMode === modes.windowHistory)
 		{
@@ -226,13 +226,13 @@ History.prototype.display = function (title, link, option)
 			stateObj = { suid: this.suid, sidx: this.active.sidx };
 		}
 
-		if (window.history.state === null || config.disableHistoryControls)
+		if (!History.hasWindowState() || config.disableHistoryControls)
 		{
-			window.history.replaceState(stateObj, document.title);
+			History.replaceWindowState(stateObj, document.title);
 		}
 		else
 		{
-			window.history.pushState(stateObj, document.title);
+			History.addWindowState(stateObj, document.title);
 		}
 	}
 	if (config.historyMode === modes.hashTag || config.historyMode === modes.sessionHistory)
@@ -370,7 +370,7 @@ History.prototype.restart = function ()
 	DEBUG("[<History>.restart()]");
 	if (config.historyMode === modes.windowHistory)
 	{
-		window.history.pushState(null, document.title);	// yes, null
+		History.addWindowState(null, document.title);	// yes, null
 		window.location.reload();
 	}
 	else if (config.historyMode === modes.sessionHistory)
@@ -436,13 +436,13 @@ History.prototype.restore = function (suid)
 	if (config.historyMode === modes.windowHistory)
 	{
 		DEBUG("    > typeof window.history: "+ typeof window.history);
-		DEBUG("    > typeof window.history.state: "+ typeof window.history.state);
-		if (window.history.state !== null)
+		DEBUG("    > typeof History.getWindowState(): "+ typeof History.getWindowState());
+		if (History.hasWindowState())
 		{
-			this.history = window.history.state.history;
-			if (this.hasOwnProperty("prng") && window.history.state.hasOwnProperty("rseed"))
+			this.history = History.getWindowState().history;
+			if (this.hasOwnProperty("prng") && History.getWindowState().hasOwnProperty("rseed"))
 			{
-				this.prng.seed = window.history.state.rseed;
+				this.prng.seed = History.getWindowState().rseed;
 			}
 		}
 		if (!this.isEmpty && tale.has(this.top.title))
@@ -459,7 +459,7 @@ History.prototype.restore = function (suid)
 		}
 		else
 		{
-			if (window.history.state !== null && session.hasItem("activeHistory"))
+			if (History.hasWindowState() && session.hasItem("activeHistory"))
 			{
 				this.suid = session.getItem("activeHistory");
 			}
@@ -476,10 +476,10 @@ History.prototype.restore = function (suid)
 			{
 				this.prng.seed = stateObj.rseed;
 			}
-			DEBUG("    > window.history.state.sidx: " + window.history.state.sidx);
-			if (tale.has(this.history[window.history.state.sidx].title))
+			DEBUG("    > History.getWindowState().sidx: " + History.getWindowState().sidx);
+			if (tale.has(this.history[History.getWindowState().sidx].title))
 			{
-				this.display(this.history[window.history.state.sidx].title, null, "back");
+				this.display(this.history[History.getWindowState().sidx].title, null, "back");
 				return true;
 			}
 		}
@@ -521,6 +521,28 @@ History.prototype.restore = function (suid)
 		}
 	}
 	return false;
+};
+
+History.addWindowState = function (obj, title, url)
+{
+	window.history.pushState(LZString.compressToUTF16(Util.serialize(obj)), title, url);
+};
+
+History.replaceWindowState = function (obj, title, url)
+{
+	window.history.replaceState(LZString.compressToUTF16(Util.serialize(obj)), title, url);
+};
+
+History.hasWindowState = function ()
+{
+	return window.history.state != null;	// use lazy equality
+};
+
+History.getWindowState = function ()
+{
+	return (window.history.state != null)	// use lazy equality
+		? Util.deserialize(LZString.decompressFromUTF16(window.history.state))
+		: null;
 };
 
 History.hashChangeHandler = function (evt)
@@ -694,13 +716,13 @@ History.unmarshal = function (stateObj)
 			{
 				if (config.historyMode === modes.windowHistory)
 				{
-					window.history.pushState(state.history, document.title);
-					//DEBUG("        > window.history.state: " + i + " (" + window.history.state[i].title + ")");
+					History.addWindowState(state.history, document.title);
+					//DEBUG("        > History.getWindowState(): " + i + " (" + History.getWindowState()[i].title + ")");
 				}
 				else
 				{
-					window.history.pushState({ sidx: state.history[i].sidx, suid: state.suid }, document.title);
-					//DEBUG("        > window.history.state: " + window.history.state.sidx + "/" + window.history.state.suid);
+					History.addWindowState({ sidx: state.history[i].sidx, suid: state.suid }, document.title);
+					//DEBUG("        > History.getWindowState(): " + History.getWindowState().sidx + "/" + History.getWindowState().suid);
 				}
 			}
 		}
