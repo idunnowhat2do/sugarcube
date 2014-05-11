@@ -695,16 +695,17 @@ History.unmarshal = function (stateObj)
 	{
 		throw new Error("State object is missing required data.");
 	}
-	if (stateObj.mode !== config.historyMode)
-	{
-		throw new Error("State object is from the wrong history mode.");
-	}
 
 	switch (config.historyMode)
 	{
 	case modes.windowHistory:
 		/* FALL-THROUGH */
 	case modes.sessionHistory:
+		if (stateObj.mode !== modes.windowHistory && stateObj.mode !== modes.sessionHistory)
+		{
+			throw new Error("State object is from an incompatible history mode.");
+		}
+
 		// necessary?
 		document.title = tale.title;
 
@@ -757,6 +758,11 @@ History.unmarshal = function (stateObj)
 		break;
 
 	case modes.hashTag:
+		if (stateObj.mode !== modes.hashTag)
+		{
+			throw new Error("State object is from an incompatible history mode.");
+		}
+
 		if (!config.disableHistoryControls)
 		{
 			window.location.hash = stateObj.history;
