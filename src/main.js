@@ -258,14 +258,17 @@ $(document).ready(function ()
 	// lastly, export identifiers for debugging purposes
 	window.SugarCube =
 	{
-		  version : version
-		, config  : config
-		, setup   : setup
-		, macros  : macros
-		, tale    : tale
-		, state   : state
-		, storage : storage
-		, session : session
+		  version    : version
+		, config     : config
+		, setup      : setup
+		, macros     : macros
+		, tale       : tale
+		, state      : state
+		, storage    : storage
+		, session    : session
+		, Util       : Util
+		, History    : History
+		, SaveSystem : SaveSystem
 	};
 });
 
