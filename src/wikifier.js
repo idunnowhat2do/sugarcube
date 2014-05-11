@@ -161,12 +161,17 @@ function WikiFormatter(formatters)
 function Wikifier(place, source)
 {
 	this.source    = source;
-	this.output    = place;
+	this.output    = (place != null) ? place : document.createElement("div");	// use lazy equality
 	this.nextMatch = 0;
 	this.nobr      = [];
 	this.formatter = formatter;	// formatter comes from the top-level scope of the module
 
 	this.subWikify(this.output);
+
+	if (place == null && typeof this.output["remove"] === "function")
+	{
+		this.output.remove();
+	}
 }
 
 Wikifier.prototype.subWikify = function (output, terminator, terminatorIgnoreCase)
