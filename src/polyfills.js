@@ -53,92 +53,147 @@ if (("history" in window) && ("pushState" in window.history) && !("state" in win
 }
 
 /**
- * Returns the first index at which a given element can be found in the array, or -1 if it is not present.
+ * Returns the first index at which an element can be found within the array, or -1 if it is not present
  */
 if (!Array.prototype.indexOf)
 {
-	Array.prototype.indexOf = function (item, from)
-	{
-		"use strict";
-
-		if (this == null) { throw new TypeError(); }
-
-		if (!from) { from = 0; }
-
-		for (var i = from, len = this.length; i < len; i++)
-		{
-			if (this[i] === item)
+	Object.defineProperty(Array.prototype, "indexOf", {
+		enumerable   : false,
+		configurable : true,
+		writable     : true,
+		value        : function (needle, from) {
+			"use strict";
+			if (this == null)
 			{
-				return i;
+				throw new TypeError("Array.prototype.indexOf called on null or undefined");
 			}
+
+			var   list   = Object(this)
+				, length = list.length >>> 0;
+
+			from = +from || 0;
+			if (!isFinite(from))
+			{
+				from = 0;
+			}
+			if (from < 0)
+			{
+				from += length;
+				if (from < 0)
+				{
+					from = 0;
+				}
+			}
+
+			for (/* empty*/; from < length; from++)
+			{
+				if (list[from] === needle)
+				{
+					return from;
+				}
+			}
+			return -1;
 		}
-		return -1;
-	};
+	});
 }
 
 /**
- * Creates a new array with all elements that pass the test implemented by the provided function.
+ * Returns whether an element may be found within the array, returning true or false as appropriate
+ */
+if (!Array.prototype.contains)
+{
+	Object.defineProperty(Array.prototype, "contains", {
+		enumerable   : false,
+		configurable : true,
+		writable     : true,
+		value        : function (/* needle */) {
+			"use strict";
+			return Array.prototype.indexOf.apply(this, arguments) !== -1;
+		}
+	});
+}
+
+/**
+ * Creates a new array with all elements that pass the test implemented by the provided function
  */
 if (!Array.prototype.filter)
 {
-	Array.prototype.filter = function (fun /*, thisp*/)
-	{
-		"use strict";
-
-		if (this == null || typeof fun !== "function") { throw new TypeError(); }
-
-		var   t     = Object(this)
-			, len   = t.length >>> 0
-			, res   = []
-			, thisp = arguments[1];
-
-		for (var i = 0; i < len; i++)
-		{
-			if (i in t)
+	Object.defineProperty(Array.prototype, "filter", {
+		enumerable   : false,
+		configurable : true,
+		writable     : true,
+		value        : function (filterFn /* , thisp */) {
+			"use strict";
+			if (this == null)
 			{
-				var val = t[i];	// in case fun mutates this
-				if (fun.call(thisp, val, i, t))
+				throw new TypeError("Array.prototype.filter called on null or undefined");
+			}
+			if (typeof filterFn !== "function")
+			{
+				throw new TypeError("Array.prototype.filter callback parameter must be a function");
+			}
+
+			var   list   = Object(this)
+				, length = list.length >>> 0
+				, res    = []
+				, thisp  = arguments[1];
+
+			for (var i = 0; i < length; i++)
+			{
+				if (i in list)
 				{
-					res.push(val);
+					var val = list[i];
+					if (filterFn.call(thisp, val, i, list))
+					{
+						res.push(val);
+					}
 				}
 			}
+			return res;
 		}
-
-		return res;
-	};
+	});
 }
 
 /**
- * Creates a new array with the results of calling a provided function on every element in this array.
+ * Creates a new array with the results of calling a provided function on every element in this array
  */
 if (!Array.prototype.map)
 {
-	Array.prototype.map = function (fun /*, thisp */)
-	{
-		"use strict";
-
-		if (this == null || typeof fun !== "function") { throw new TypeError(); }
-
-		var   t     = Object(this)
-			, len   = t.length >>> 0
-			, res   = new Array(len)
-			, thisp = arguments[1];
-
-		for (var i = 0; i < len; i++)
-		{
-			if (i in t)
+	Object.defineProperty(Array.prototype, "map", {
+		enumerable   : false,
+		configurable : true,
+		writable     : true,
+		value        : function (callback /* , thisp */) {
+			"use strict";
+			if (this == null)
 			{
-				var val = t[i];	// in case fun mutates this
-				res[i] = fun.call(thisp, val, i, t);
+				throw new TypeError("Array.prototype.map called on null or undefined");
 			}
-		}
+			if (typeof callback !== "function")
+			{
+				throw new TypeError("Array.prototype.map callback parameter must be a function");
+			}
 
-		return res;
-	};
+			var   list   = Object(this)
+				, length = list.length >>> 0
+				, res    = new Array(length)
+				, thisp  = arguments[1];
+
+			for (var i = 0; i < length; i++)
+			{
+				if (i in list)
+				{
+					var val = list[i];
+					res[i] = callback.call(thisp, val, i, list);
+				}
+			}
+			return res;
+		}
+	});
 }
 
 /**
- * Returns a value from the array, if an element in the array satisfies the provided testing function, otherwise undefined is returned.
+ * Returns a value from the array, if an element in the array satisfies the provided testing function, otherwise undefined is returned
  */
 if (!Array.prototype.find)
 {
@@ -146,28 +201,29 @@ if (!Array.prototype.find)
 		enumerable   : false,
 		configurable : true,
 		writable     : true,
-		value        : function (predicate) {
+		value        : function (callback /* , thisp */) {
+			"use strict";
 			if (this == null)
 			{
 				throw new TypeError("Array.prototype.find called on null or undefined");
 			}
-			if (typeof predicate !== "function")
+			if (typeof callback !== "function")
 			{
-				throw new TypeError("predicate must be a function");
+				throw new TypeError("Array.prototype.find callback parameter must be a function");
 			}
 
-			var   list    = Object(this)
-				, length  = list.length >>> 0
-				, thisArg = arguments[1]
-				, value;
+			var   list   = Object(this)
+				, length = list.length >>> 0
+				, thisp  = arguments[1];
+
 			for (var i = 0; i < length; i++)
 			{
 				if (i in list)
 				{
-					value = list[i];
-					if (predicate.call(thisArg, value, i, list))
+					var val = list[i];
+					if (callback.call(thisp, val, i, list))
 					{
-						return value;
+						return val;
 					}
 				}
 			}
@@ -177,34 +233,43 @@ if (!Array.prototype.find)
 }
 
 /**
- * Tests whether some element in the array passes the test implemented by the provided function.
+ * Tests whether some element in the array passes the test implemented by the provided function
  */
 if (!Array.prototype.some)
 {
-	Array.prototype.some = function(fun /*, thisp */)
-	{
-		"use strict";
-
-		if (this == null || typeof fun !== "function") { throw new TypeError(); }
-
-		var   t     = Object(this)
-			, len   = t.length >>> 0
-			, thisp = arguments[1];
-
-		for (var i = 0; i < len; i++)
-		{
-			if (i in t)
+	Object.defineProperty(Array.prototype, "some", {
+		enumerable   : false,
+		configurable : true,
+		writable     : true,
+		value        : function (callback /*, thisp */) {
+			"use strict";
+			if (this == null)
 			{
-				var val = t[i];	// in case fun mutates this
-				if (fun.call(thisp, val, i, t))
+				throw new TypeError("Array.prototype.some called on null or undefined");
+			}
+			if (typeof callback !== "function")
+			{
+				throw new TypeError("Array.prototype.some callback parameter must be a function");
+			}
+
+			var   list   = Object(this)
+				, length = list.length >>> 0
+				, thisp  = arguments[1];
+
+			for (var i = 0; i < length; i++)
+			{
+				if (i in list)
 				{
-					return true;
+					var val = list[i];
+					if (callback.call(thisp, val, i, list))
+					{
+						return true;
+					}
 				}
 			}
+			return false;
 		}
-
-		return false;
-	};
+	});
 }
 
 /**
@@ -212,10 +277,15 @@ if (!Array.prototype.some)
  */
 if (!Array.isArray)
 {
-	Array.isArray = function (obj)
-	{
-		return Object.prototype.toString.call(obj) === "[object Array]";
-	};
+	Object.defineProperty(Array, "isArray", {
+		enumerable   : false,
+		configurable : true,
+		writable     : true,
+		value        : function (obj) {
+			"use strict";
+			return Object.prototype.toString.call(obj) === "[object Array]";
+		}
+	});
 }
 
 /**
@@ -223,10 +293,31 @@ if (!Array.isArray)
  */
 if (!Math.trunc)
 {
-	Math.trunc = function (num)
-	{
-		return (num < 0) ? Math.ceil(num) : Math.floor(num);
-	};
+	Object.defineProperty(Math, "trunc", {
+		enumerable   : false,
+		configurable : true,
+		writable     : true,
+		value        : function (num) {
+			"use strict";
+			return (num < 0) ? Math.ceil(num) : Math.floor(num);
+		}
+	});
+}
+
+/**
+ * Returns whether one string may be found within another string, returning true or false as appropriate
+ */
+if (!String.prototype.contains)
+{
+	Object.defineProperty(String.prototype, "contains", {
+		enumerable   : false,
+		configurable : true,
+		writable     : true,
+		value        : function (/* needle */) {
+			"use strict";
+			return String.prototype.indexOf.apply(this, arguments) !== -1;
+		}
+	});
 }
 
 /**
@@ -234,33 +325,64 @@ if (!Math.trunc)
  */
 if (!String.prototype.splice)
 {
-	String.prototype.splice = function(start, count, replacement)
-	{
-		"use strict";
+	Object.defineProperty(String.prototype, "splice", {
+		enumerable   : false,
+		configurable : true,
+		writable     : true,
+		value        : function (start, count, replacement) {
+			"use strict";
+			//var charArray = this.split("");
+			//Array.prototype.splice.apply(charArray, arguments);
+			//return charArray.join("");
 
-		if (this == null) { throw new TypeError(); }
+			if (this == null)
+			{
+				throw new TypeError("String.prototype.splice called on null or undefined");
+			}
 
-		if (this.length === 0) { return ""; }
+			var length = this.length >>> 0;
 
-		if (typeof start === "undefined") { start = 0; }
-		else if (start >= this.length) { return this; }
+			if (length === 0)
+			{
+				return "";
+			}
 
-		if (typeof count === "undefined") { count = 0; }
-		else if (count < 0) { count = Math.abs(count); }
+			start = +start || 0;
+			if (!isFinite(start))
+			{
+				start = 0;
+			}
+			else if (start < 0)
+			{
+				start += length;
+				if (start < 0)
+				{
+					start = 0;
+				}
+			}
+			if (start > length)
+			{
+				start = length;
+			}
 
-		var res = this.slice(0, start);
+			count = +count || 0;
+			if (!isFinite(count) || count < 0)
+			{
+				count = 0;
+			}
 
-		if (typeof replacement !== "undefined")
-		{
-			res += replacement;
+			var res = this.slice(0, start);
+			if (typeof replacement !== "undefined")
+			{
+				res += replacement;
+			}
+			if ((start + count) < length)
+			{
+				res += this.slice(start + count);
+			}
+			return res;
 		}
-		if (start >= 0 || (start + count) < 0)
-		{
-			res += this.slice(start + count);
-		}
-
-		return res;
-	};
+	});
 }
 
 /**
@@ -268,11 +390,16 @@ if (!String.prototype.splice)
  */
 if (!String.prototype.trim)
 {
-	String.prototype.trim = function ()
-	{
-		//return this.replace(/^\s+/, "").replace(/\s+$/, "");
-		return this.replace(/^\s+|\s+$/g, "");
-	};
+	Object.defineProperty(String.prototype, "trim", {
+		enumerable   : false,
+		configurable : true,
+		writable     : true,
+		value        : function () {
+			"use strict";
+			//return this.replace(/^\s+/, "").replace(/\s+$/, "");
+			return this.replace(/^\s+|\s+$/g, "");
+		}
+	});
 }
 
 /**
@@ -280,10 +407,15 @@ if (!String.prototype.trim)
  */
 if (!String.prototype.ltrim)
 {
-	String.prototype.ltrim = function ()
-	{
-		return this.replace(/^\s+/, "");
-	};
+	Object.defineProperty(String.prototype, "ltrim", {
+		enumerable   : false,
+		configurable : true,
+		writable     : true,
+		value        : function () {
+			"use strict";
+			return this.replace(/^\s+/, "");
+		}
+	});
 }
 
 /**
@@ -291,31 +423,50 @@ if (!String.prototype.ltrim)
  */
 if (!String.prototype.rtrim)
 {
-	String.prototype.rtrim = function ()
-	{
-		return this.replace(/\s+$/, "");
-	};
+	Object.defineProperty(String.prototype, "rtrim", {
+		enumerable   : false,
+		configurable : true,
+		writable     : true,
+		value        : function () {
+			"use strict";
+			return this.replace(/\s+$/, "");
+		}
+	});
 }
 
 /**
  * If Object.create isn't already defined, we just do the simple shim, without the second argument, since that's all we need here
  */
-if (!Object.create)
+if (!Object.create || typeof Object.create !== "function")
 {
-	Object.create = (function ()
-	{
-		function F(){}
+	Object.defineProperty(Object, "create", {
+		enumerable   : false,
+		configurable : true,
+		writable     : true,
+		value        : (function () {
+			function F(){}
 
-		return function (o)
-		{
-			if (arguments.length !== 1)
+			return function (proto)
 			{
-				throw new Error("Object.create (polyfill) implementation only accepts one parameter.");
-			}
-			F.prototype = o;
-			return new F();
-		};
-	}());
+				"use strict";
+				if (arguments.length !== 1)
+				{
+					throw new Error("Polyfill Object.create implementation only accepts one parameter");
+				}
+				if (proto == null)
+				{
+					throw new TypeError("Object.create proto parameter is null or undefined");
+				}
+				if (typeof proto !== "object")
+				{
+					throw new TypeError("Object.create proto parameter must be an object");
+				}
+
+				F.prototype = proto;
+				return new F();
+			};
+		}())
+	});
 }
 
 
