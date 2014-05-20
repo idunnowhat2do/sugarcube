@@ -27,7 +27,7 @@ History.prototype =
 	get top ()     { return (this.history.length !== 0) ? this.history[this.history.length - 1] : null; },
 	get bottom ()  { return (this.history.length !== 0) ? this.history[0] : null; },
 	get isEmpty () { return this.history.length === 0; },
-	get length ()  { return (config.historyMode !== modes.sessionHistory) ? this.history.length : this.active.sidx + 1; }
+	get length ()  { return (config.historyMode === modes.sessionHistory) ? this.active.sidx + 1 : this.history.length; }
 };
 
 /*
@@ -135,13 +135,13 @@ History.prototype.init = function ()
 	//        nothing from being wrapped in the jQuery Event object and it would
 	//        complicate either the handlers, by having to deal with it, or the
 	//        jQuery Event object, if we pushed the properties we need onto it
-	if (config.historyMode === modes.windowHistory)
-	{
-		window.addEventListener("popstate", History.popStateHandler_windowHistory, false);
-	}
-	else if (config.historyMode === modes.sessionHistory)
+	if (config.historyMode === modes.sessionHistory)
 	{
 		window.addEventListener("popstate", History.popStateHandler_sessionHistory, false);
+	}
+	else if (config.historyMode === modes.windowHistory)
+	{
+		window.addEventListener("popstate", History.popStateHandler_windowHistory, false);
 	}
 	else
 	{
@@ -154,15 +154,18 @@ History.prototype.display = function (title, link, option)
 	DEBUG("[<History>.display()]");
 
 	// process option
-	var   updateDisplay = (option === "offscreen" || option === "silently" || option === "quietly" || option === false) ? false : true
-		, updateHistory = (option === "back" || option === "stateless") ? false : true;
+	var   updateDisplay = (option === "hidden" || option === "offscreen" || option === "quietly" || option === false) ? false : true
+		, updateHistory = (option === "replace" || option === "back") ? false : true;
 
 	// reset the system temp/scratch object
 	systemp = {};
 
 	// n.b. the title parameter can either be a passage title (string) or passage ID (number), so
 	//      after loading the passage, always refer to passage.title and never the title parameter
-	var passage = tale.get(title);
+	var   passage     = tale.get(title)
+		, windowTitle = (config.displayPassageTitles && passage.title !== "Start")
+				? tale.title + ": " + passage.title
+				: tale.title;
 
 	// ensure that this.active is set if we have history
 	if (this.active.init && !this.isEmpty)
@@ -209,33 +212,30 @@ History.prototype.display = function (title, link, option)
 		}
 		this.activate(this.top);
 	}
-	if (config.historyMode !== modes.hashTag && (updateHistory || config.disableHistoryControls))
+	if ((updateHistory || config.disableHistoryControls) && config.historyMode !== modes.hashTag)
 	{
 		DEBUG("    > typeof History.getWindowState(): " + typeof History.getWindowState());
 		var stateObj;
-		if (config.historyMode === modes.windowHistory)
+		switch (config.historyMode)
 		{
+		case modes.sessionHistory:
+			stateObj = { suid: this.suid, sidx: this.active.sidx };
+			break;
+		case modes.windowHistory:
 			stateObj = { history: this.history };
 			if (this.hasOwnProperty("prng"))
 			{
 				stateObj.rseed = this.prng.seed;
 			}
-		}
-		else if (config.historyMode === modes.sessionHistory)
-		{
-			stateObj = { suid: this.suid, sidx: this.active.sidx };
+			break;
 		}
 
-		if (!History.hasWindowState() || config.disableHistoryControls)
-		{
-			History.replaceWindowState(stateObj, document.title);
-		}
-		else
-		{
-			History.addWindowState(stateObj, document.title);
-		}
+		History[(!History.hasWindowState() || config.disableHistoryControls)
+			? "replaceWindowState"
+			: "addWindowState"
+		](stateObj, windowTitle);
 	}
-	if (config.historyMode === modes.hashTag || config.historyMode === modes.sessionHistory)
+	if (config.historyMode !== modes.windowHistory)
 	{
 		this.save();
 	}
@@ -300,12 +300,12 @@ History.prototype.display = function (title, link, option)
 		passages.appendChild(el);
 		setTimeout(function () { el.classList.remove("transition-in"); }, 1);
 
-		if (config.displayPassageTitles && passage.title !== "Start")
-		{
-			document.title = tale.title + ": " + passage.title;
-		}
 		if (config.historyMode === modes.hashTag)
 		{
+			if (config.displayPassageTitles && passage.title !== "Start")
+			{
+				document.title = windowTitle;
+			}
 			if (!config.disableHistoryControls)
 			{
 				window.location.hash = this.hash = this.active.hash;
@@ -315,6 +315,7 @@ History.prototype.display = function (title, link, option)
 				session.setItem("activeHash", this.hash = this.active.hash);
 			}
 		}
+
 		window.scroll(0, 0);
 	}
 
@@ -348,7 +349,7 @@ History.prototype.display = function (title, link, option)
 				SaveSystem.saveAuto();
 			}
 		}
-		else if (passage.tags.indexOf(config.saves.autosave) !== -1)
+		else if (passage.tags.contains(config.saves.autosave))
 		{
 			SaveSystem.saveAuto();
 		}
@@ -368,14 +369,14 @@ History.prototype.regenerateSuid = function ()
 History.prototype.restart = function ()
 {
 	DEBUG("[<History>.restart()]");
-	if (config.historyMode === modes.windowHistory)
-	{
-		History.addWindowState(null, document.title); // using null here is deliberate
-		window.location.reload();
-	}
-	else if (config.historyMode === modes.sessionHistory)
+	if (config.historyMode === modes.sessionHistory)
 	{
 		session.removeItem("activeHistory");
+		window.location.reload();
+	}
+	else if (config.historyMode === modes.windowHistory)
+	{
+		History.addWindowState(null, tale.title); // using null here is deliberate
 		window.location.reload();
 	}
 	else
@@ -395,9 +396,9 @@ History.prototype.restart = function ()
 History.prototype.save = function ()
 {
 	DEBUG("[<History>.save()]");
-	DEBUG("    > this.suid: " + this.suid);
 	if (config.historyMode === modes.sessionHistory)
 	{
+		DEBUG("    > this.suid: " + this.suid);
 		var stateObj = { history: this.history };
 		if (this.hasOwnProperty("prng"))
 		{
@@ -433,25 +434,7 @@ History.prototype.save = function ()
 History.prototype.restore = function (suid)
 {
 	DEBUG("[<History>.restore()]");
-	if (config.historyMode === modes.windowHistory)
-	{
-		DEBUG("    > typeof window.history: "+ typeof window.history);
-		DEBUG("    > typeof History.getWindowState(): "+ typeof History.getWindowState());
-		if (History.hasWindowState())
-		{
-			this.history = History.getWindowState().history;
-			if (this.hasOwnProperty("prng") && History.getWindowState().hasOwnProperty("rseed"))
-			{
-				this.prng.seed = History.getWindowState().rseed;
-			}
-		}
-		if (!this.isEmpty && tale.has(this.top.title))
-		{
-			this.display(this.top.title, null, "back");
-			return true;
-		}
-	}
-	else if (config.historyMode === modes.sessionHistory)
+	if (config.historyMode === modes.sessionHistory)
 	{
 		if (suid)
 		{
@@ -470,21 +453,41 @@ History.prototype.restore = function (suid)
 		}
 		if (this.suid && session.hasItem("history." + this.suid))
 		{
-			var stateObj = session.getItem("history." + this.suid);
+			var   stateObj = session.getItem("history." + this.suid)
+				, sidx     = History.getWindowState().sidx;
+			DEBUG("    > History.getWindowState().sidx: " + sidx);
+
 			this.history = stateObj.history;
 			if (this.hasOwnProperty("prng") && stateObj.hasOwnProperty("rseed"))
 			{
 				this.prng.seed = stateObj.rseed;
 			}
-			DEBUG("    > History.getWindowState().sidx: " + History.getWindowState().sidx);
-			if (tale.has(this.history[History.getWindowState().sidx].title))
+			if (tale.has(this.history[sidx].title))
 			{
-				this.display(this.history[History.getWindowState().sidx].title, null, "back");
+				this.display(this.history[sidx].title, null, "replace");
 				return true;
 			}
 		}
 	}
-	else if (config.historyMode === modes.hashTag)
+	else if (config.historyMode === modes.windowHistory)
+	{
+		DEBUG("    > typeof window.history: "+ typeof window.history);
+		DEBUG("    > typeof History.getWindowState(): "+ typeof History.getWindowState());
+		if (History.hasWindowState())
+		{
+			this.history = History.getWindowState().history;
+			if (this.hasOwnProperty("prng") && History.getWindowState().hasOwnProperty("rseed"))
+			{
+				this.prng.seed = History.getWindowState().rseed;
+			}
+		}
+		if (!this.isEmpty && tale.has(this.top.title))
+		{
+			this.display(this.top.title, null, "replace");
+			return true;
+		}
+	}
+	else
 	{
 		var order;
 		if (session.hasItem("activeHash"))
@@ -509,7 +512,7 @@ History.prototype.restore = function (suid)
 
 					DEBUG("    > id: " + id + " (" + order[i] + ")");
 
-					this.display(id, null, (i === end) ? null : "offscreen");
+					this.display(id, null, (i === end) ? null : "hidden");
 				}
 
 				return true;
@@ -555,9 +558,56 @@ History.getWindowState = function (obj)
 	return (obj.state != null) ? History.deserializeWindowState(obj.state) : null; // use lazy equality
 };
 
+History.popStateHandler_sessionHistory = function (evt)
+{
+	DEBUG("[History.popStateHandler_sessionHistory()]");
+	DEBUG(!History.hasWindowState(evt), "    > evt.state: null; no-op");
+
+	// no-op if state is null
+	if (!History.hasWindowState(evt)) { return; }
+
+	var windowState = History.getWindowState(evt);
+
+	// update the history stack if necessary
+	if (windowState.suid !== state.suid)
+	{
+		DEBUG("    > state from previous history detected, swapping in history");
+		state.save();
+		state.restore(windowState.suid);
+	}
+
+	state.display(state.activate(windowState.sidx).title, null, "replace");
+};
+
+History.popStateHandler_windowHistory = function (evt)
+{
+	DEBUG("[History.popStateHandler_windowHistory()]");
+	DEBUG(!History.hasWindowState(evt), "    > evt.state: null; no-op");
+
+	// no-op if state is null
+	if (!History.hasWindowState(evt)) { return; }
+
+	var windowState = History.getWindowState(evt);
+
+	// throw error if state has no history or history is empty
+	if (!windowState.hasOwnProperty("history") || windowState.history.length === 0)
+	{
+		throw new Error("Window state has no history or history is empty.");
+	}
+
+	state.history = windowState.history;
+	if (state.hasOwnProperty("prng") && windowState.hasOwnProperty("rseed"))
+	{
+		state.prng.seed = windowState.rseed;
+	}
+	state.display(state.activate(state.top).title, null, "replace");
+};
+
 History.hashChangeHandler = function (evt)
 {
 	DEBUG("[History.hashChangeHandler()]");
+	DEBUG(window.location.hash === state.hash, "    > noop (window.location.hash === state.hash)");
+	DEBUG(window.location.hash !== state.hash, "    > differ, process hash (window.location.hash !== state.hash)");
 
 	if (window.location.hash !== state.hash)
 	{
@@ -596,51 +646,6 @@ History.hashChangeHandler = function (evt)
 	}
 };
 
-History.popStateHandler_windowHistory = function (evt)
-{
-	DEBUG("[History.popStateHandler_windowHistory()]");
-	DEBUG(!History.hasWindowState(evt), "    > evt.state: null; no-op");
-
-	// no-op if state is null
-	if (!History.hasWindowState(evt)) { return; }
-
-	var windowState = History.getWindowState(evt);
-
-	// throw error if state has no history or history is empty
-	if (!windowState.hasOwnProperty("history") || windowState.history.length === 0)
-	{
-		throw new Error("Window state has no history or history is empty.");
-	}
-
-	state.history = windowState.history;
-	if (state.hasOwnProperty("prng") && windowState.hasOwnProperty("rseed"))
-	{
-		state.prng.seed = windowState.rseed;
-	}
-	state.display(state.activate(state.top).title, null, "back");
-};
-
-History.popStateHandler_sessionHistory = function (evt)
-{
-	DEBUG("[History.popStateHandler_sessionHistory()]");
-	DEBUG(!History.hasWindowState(evt), "    > evt.state: null; no-op");
-
-	// no-op if state is null
-	if (!History.hasWindowState(evt)) { return; }
-
-	var windowState = History.getWindowState(evt);
-
-	// update the history stack if necessary
-	if (windowState.suid !== state.suid)
-	{
-		DEBUG("    > state from previous history detected, swapping in history");
-		state.save();
-		state.restore(windowState.suid);
-	}
-
-	state.display(state.activate(windowState.sidx).title, null, "back");
-};
-
 History.initPRNG = function (seed, useEntropy)
 {
 	DEBUG("[History.initPRNG()]");
@@ -673,11 +678,11 @@ History.marshal = function ()
 	}
 	switch (config.historyMode)
 	{
-	case modes.windowHistory:
-		stateObj.history = clone(state.history, true);
-		break;
 	case modes.sessionHistory:
 		stateObj.history = clone(state.history.slice(0, state.active.sidx + 1), true);
+		break;
+	case modes.windowHistory:
+		stateObj.history = clone(state.history, true);
 		break;
 	case modes.hashTag:
 		stateObj.history = state.active.hash;
@@ -695,17 +700,16 @@ History.unmarshal = function (stateObj)
 	{
 		throw new Error("State object is missing required data.");
 	}
+	if (stateObj.mode !== config.historyMode)
+	{
+		throw new Error("State object is from an incompatible history mode.");
+	}
 
 	switch (config.historyMode)
 	{
 	case modes.windowHistory:
 		/* FALL-THROUGH */
 	case modes.sessionHistory:
-		if (stateObj.mode !== modes.windowHistory && stateObj.mode !== modes.sessionHistory)
-		{
-			throw new Error("State object is from an incompatible history mode.");
-		}
-
 		// necessary?
 		document.title = tale.title;
 
@@ -736,17 +740,18 @@ History.unmarshal = function (stateObj)
 					, windowTitle = (config.displayPassageTitles && state.history[i].title !== "Start")
 						? tale.title + ": " + state.history[i].title
 						: tale.title;
-				if (config.historyMode === modes.windowHistory)
+				switch (config.historyMode)
 				{
+				case modes.sessionHistory:
+					windowState = { suid: state.suid, sidx: state.history[i].sidx };
+					break;
+				case modes.windowHistory:
 					windowState = { history: state.history };
 					if (state.hasOwnProperty("prng"))
 					{
 						windowState.rseed = state.prng.seed;
 					}
-				}
-				else
-				{
-					windowState = { suid: state.suid, sidx: state.history[i].sidx };
+					break;
 				}
 				History.addWindowState(windowState, windowTitle);
 			}
@@ -754,15 +759,10 @@ History.unmarshal = function (stateObj)
 
 		// activate the current top and display the passage
 		state.activate(state.top);
-		state.display(state.active.title, null, "back");
+		state.display(state.active.title, null, "replace");
 		break;
 
 	case modes.hashTag:
-		if (stateObj.mode !== modes.hashTag)
-		{
-			throw new Error("State object is from an incompatible history mode.");
-		}
-
 		if (!config.disableHistoryControls)
 		{
 			window.location.hash = stateObj.history;
@@ -854,12 +854,12 @@ Passage.prototype.processText = function ()
 {
 	var res = this.text;
 
-	if (this.tags.indexOf("nobr") !== -1)
+	if (this.tags.contains("nobr"))
 	{
 		res = res.replace(/\n/g, " ");
 	}
 	// check for Twine 1.4 Base64 image passage transclusion
-	if (this.tags.indexOf("Twine.image") !== -1)
+	if (this.tags.contains("Twine.image"))
 	{
 		res = "[img[" + res + "]]";
 	}

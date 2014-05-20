@@ -387,7 +387,7 @@ function addStyle(css)
 						if (source.slice(0, 5) !== "data:" && tale.has(source))
 						{
 							var passage = tale.get(source);
-							if (passage.tags.indexOf("Twine.image") !== -1)
+							if (passage.tags.contains("Twine.image"))
 							{
 								source = passage.text;
 							}
@@ -661,7 +661,7 @@ function visitedTags(/* variadic */)
 
 			for (var j = 0; j < arguments.length; j++)
 			{
-				if (tags.indexOf(arguments[j]) !== -1) { found++; }
+				if (tags.contains(arguments[j])) { found++; }
 			}
 			if (found === arguments.length) { count++; }
 		}
@@ -770,11 +770,11 @@ var Util =
 	{
 		return JSON.parse(obj, function (key, value) {
 			//if (typeof value === "string" && /^#reviveSrc=/.test(value))
+			// magic number 11 is "#reviveSrc=".length
 			if (typeof value === "string" && value.slice(0, 11) === "#reviveSrc=")
 			{
 				try
 				{
-					// magic number 11 is "#reviveSrc=".length
 					value = eval(value.slice(11));
 				}
 				catch (e)
@@ -890,15 +890,11 @@ KeyValueStore.prototype.setItem = function (sKey, sValue)
 
 	if (this.store)
 	{
-		//----------------------------------------------------------------------
-		// EXPERIMENTAL COMPRESSION
-		//----------------------------------------------------------------------
 		try
 		{
 			sValue = "#~" + LZString.compressToUTF16(sValue);
 		}
 		catch (e) { /* noop */ }
-		//----------------------------------------------------------------------
 
 		try
 		{
@@ -915,15 +911,11 @@ KeyValueStore.prototype.setItem = function (sKey, sValue)
 	}
 	else
 	{
-		//----------------------------------------------------------------------
-		// EXPERIMENTAL COMPRESSION
-		//----------------------------------------------------------------------
 		try
 		{
 			sValue = "#~" + LZString.compressToBase64(sValue);
 		}
 		catch (e) { /* noop */ }
-		//----------------------------------------------------------------------
 
 		var cookie = [ escape(sKey) + "=" + escape(sValue) ];
 		// no expiry means a session cookie
@@ -963,9 +955,6 @@ KeyValueStore.prototype.getItem = function (sKey)
 
 	if (this.store)
 	{
-		//----------------------------------------------------------------------
-		// EXPERIMENTAL COMPRESSION
-		//----------------------------------------------------------------------
 		var sValue = this.store.getItem(sKey);
 		if (sValue != null)	// use lazy equality
 		{
@@ -980,7 +969,6 @@ KeyValueStore.prototype.getItem = function (sKey)
 				return Util.deserialize(sValue);
 			}
 		}
-		//----------------------------------------------------------------------
 	}
 	else
 	{
@@ -991,9 +979,6 @@ KeyValueStore.prototype.getItem = function (sKey)
 			var bits = cookies[i].split("=");
 			if (bits[0].trim() === sKey)
 			{
-				//--------------------------------------------------------------
-				// EXPERIMENTAL COMPRESSION
-				//--------------------------------------------------------------
 				var sValue = unescape(bits[1]);
 				if (sValue.slice(0, 2) === "#~")
 				{
@@ -1005,7 +990,6 @@ KeyValueStore.prototype.getItem = function (sKey)
 					DEBUG("    > loading uncompressed value for: " + sKey);
 					return Util.deserialize(sValue);
 				}
-				//--------------------------------------------------------------
 			}
 		}
 	}

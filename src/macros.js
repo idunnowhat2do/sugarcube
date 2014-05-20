@@ -174,7 +174,7 @@ function Macros()
 				}
 				if (this.tags.hasOwnProperty(tag))
 				{
-					if (this.tags[tag].indexOf(parent) === -1)
+					if (!this.tags[tag].contains(parent))
 					{
 						this.tags[tag].push(parent);
 						this.tags[tag].sort();
@@ -456,7 +456,7 @@ function addStandardMacros()
 								// activate the new top since we popped the stack
 								state.activate(state.top);
 								// display the passage
-								state.display(pname, el, "back");
+								state.display(pname, el, "replace");
 							};
 						}
 						else

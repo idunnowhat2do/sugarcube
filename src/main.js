@@ -108,24 +108,24 @@ config.errors =
 };
 config.browser =
 {
-	  isGecko      : (navigator && navigator.product === "Gecko" && config.userAgent.search(/webkit|trident/) === -1)
-	, isIE         : (config.userAgent.search(/msie|trident/) !== -1 && config.userAgent.indexOf("opera") === -1)
+	  isGecko      : (navigator && navigator.product === "Gecko" && !/webkit|trident/.test(config.userAgent))
+	, isIE         : (/msie|trident/.test(config.userAgent) && !config.userAgent.contains("opera"))
 	, ieVersion    : (function () { var ieVer = /(?:msie\s+|rv:)(\d{1,2}\.\d)/.exec(config.userAgent); return ieVer ? +ieVer[1] : 0; }())
 	// opera <= 12: "opera/9.80 (windows nt 6.1; wow64) presto/2.12.388 version/12.16"
 	// opera >= 15: "mozilla/5.0 (windows nt 6.1; wow64) applewebkit/537.36 (khtml, like gecko) chrome/28.0.1500.52 safari/537.36 opr/15.0.1147.130"
-	, isOpera      : (config.userAgent.indexOf("opera") !== -1) || (config.userAgent.indexOf(" opr/") !== -1)
+	, isOpera      : (config.userAgent.contains("opera")) || (config.userAgent.contains(" opr/"))
 	, operaVersion : (function () { var re = new RegExp((/applewebkit|chrome/.test(config.userAgent) ? "opr" : "version") + "\\/(\\d{1,2}\\.\\d+)"), oprVer = re.exec(config.userAgent); return oprVer ? +oprVer[1] : 0; }())
 	, isMobile     :
 		{
 			  any        : function () { return (config.browser.isMobile.Android || config.browser.isMobile.BlackBerry || config.browser.isMobile.iOS || config.browser.isMobile.Windows); }
-			, Android    : (config.userAgent.search(/android/) !== -1)
-			, BlackBerry : (config.userAgent.search(/blackberry/) !== -1)
-			, iOS        : (config.userAgent.search(/ip(?:hone|ad|od)/) !== -1)
-			, Windows    : (config.userAgent.search(/iemobile/) !== -1)
+			, Android    : (/android/.test(config.userAgent))
+			, BlackBerry : (/blackberry/.test(config.userAgent))
+			, iOS        : (/ip(?:hone|ad|od)/.test(config.userAgent))
+			, Windows    : (/iemobile/.test(config.userAgent))
 		}
 };
 // adjust these based on the specific browser used
-config.historyMode = (config.hasPushState ? (config.browser.isGecko ? modes.sessionHistory : modes.windowHistory) : modes.hashTag);
+config.historyMode = (config.hasPushState ? (config.browser.isIE && !config.hasSessionStorage ? modes.windowHistory : modes.sessionHistory) : modes.hashTag);
 config.hasFileAPI = config.hasFileAPI && !config.browser.isMobile.any() && (!config.browser.isOpera || config.browser.operaVersion >= 15);
  
 var   formatter = null	// Wikifier formatters
@@ -557,10 +557,10 @@ var SaveSystem =
 			return;
 		}
 
-		var   saveName = tale.domId + ".json"
-			, saveObj  = JSON.stringify(SaveSystem.marshal());
+		var   saveName = tale.domId + ".save"
+			, saveObj  = LZString.compressToBase64(Util.serialize(SaveSystem.marshal()));
 
-		saveAs(new Blob([saveObj], { type: "application/json;charset=UTF-8" }), saveName);
+		saveAs(new Blob([saveObj], { type: "text/plain;charset=UTF-8" }), saveName);
 	},
 	importSave: function (event)
 	{
@@ -580,12 +580,11 @@ var SaveSystem =
 				var saveObj;
 				try
 				{
-					saveObj = JSON.parse(evt.target.result);
+					saveObj = (/\.json$/i.test(file.name) || /^\{/.test(evt.target.result))
+						? JSON.parse(evt.target.result)
+						: Util.deserialize(LZString.decompressFromBase64(evt.target.result));
 				}
-				catch (evt)
-				{
-					// noop, the unmarshal() method will handle the error
-				}
+				catch (e) { /* noop, the unmarshal() method will handle the error */ }
 				SaveSystem.unmarshal(saveObj);
 			};
 		}(file));
@@ -1009,46 +1008,14 @@ var UISystem =
 		for (var i = 0, len = state.length - 1; i < len; i++)
 		{
 			var passage = tale.get(state.history[i].title);
-			if (passage && passage.tags.indexOf("bookmark") !== -1)
+			if (passage && passage.tags.contains("bookmark"))
 			{
 				var el = document.createElement("div");
 				el.classList.add("ui-close");
 				$(el).click(function ()
 				{
 					var p = i;
-					if (config.historyMode === modes.windowHistory)
-					{
-						return function ()
-						{
-							DEBUG("[rewind:click() @windowHistory]");
-
-							// necessary?
-							document.title = tale.title;
-
-							// push the history states in order
-							if (!config.disableHistoryControls)
-							{
-								for (var i = 0, end = p; i <= end; i++)
-								{
-									DEBUG("    > pushing: " + i + " (" + state.history[i].title + ")");
-
-									// load the state into the window history
-									window.history.pushState(state.history.slice(0, i + 1), document.title);
-								}
-							}
-
-							// stack ids are out of sync, pop our stack until
-							// we're back in sync with the window.history
-							state.pop(state.length - (p + 1));
-
-							// activate the current top
-							state.activate(state.top);
-
-							// display the passage
-							state.display(state.active.title, null, "back");
-						};
-					}
-					else if (config.historyMode === modes.sessionHistory)
+					if (config.historyMode === modes.sessionHistory)
 					{
 						return function ()
 						{
@@ -1066,7 +1033,12 @@ var UISystem =
 								DEBUG("    > pushing: " + p + " (" + state.history[p].title + ")");
 
 								// load the state into the window history
-								window.history.replaceState({ sidx: state.history[p].sidx, suid: state.suid }, document.title);
+								History.replaceWindowState(
+									  { suid: state.suid, sidx: state.history[p].sidx }
+									, (config.displayPassageTitles && state.history[p].title !== "Start")
+										? tale.title + ": " + state.history[p].title
+										: tale.title
+								);
 							}
 							else
 							{
@@ -1075,7 +1047,12 @@ var UISystem =
 									DEBUG("    > pushing: " + i + " (" + state.history[i].title + ")");
 
 									// load the state into the window history
-									window.history.pushState({ sidx: state.history[i].sidx, suid: state.suid }, document.title);
+									History.addWindowState(
+										  { suid: state.suid, sidx: state.history[i].sidx }
+										, (config.displayPassageTitles && state.history[i].title !== "Start")
+											? tale.title + ": " + state.history[i].title
+											: tale.title
+									);
 								}
 							}
 
@@ -1091,7 +1068,49 @@ var UISystem =
 							state.activate(state.top);
 
 							// display the passage
-							state.display(state.active.title, null, "back");
+							state.display(state.active.title, null, "replace");
+						};
+					}
+					else if (config.historyMode === modes.windowHistory)
+					{
+						return function ()
+						{
+							DEBUG("[rewind:click() @windowHistory]");
+
+							// necessary?
+							document.title = tale.title;
+
+							// push the history states in order
+							if (!config.disableHistoryControls)
+							{
+								for (var i = 0, end = p; i <= end; i++)
+								{
+									DEBUG("    > pushing: " + i + " (" + state.history[i].title + ")");
+
+									// load the state into the window history
+									var stateObj = { history: state.history.slice(0, i + 1) };
+									if (state.hasOwnProperty("prng"))
+									{
+										stateObj.rseed = state.prng.seed;
+									}
+									History.addWindowState(
+										  stateObj
+										, (config.displayPassageTitles && state.history[i].title !== "Start")
+											? tale.title + ": " + state.history[i].title
+											: tale.title
+									);
+								}
+							}
+
+							// stack ids are out of sync, pop our stack until
+							// we're back in sync with the window.history
+							state.pop(state.length - (p + 1));
+
+							// activate the current top
+							state.activate(state.top);
+
+							// display the passage
+							state.display(state.active.title, null, "replace");
 						};
 					}
 					else

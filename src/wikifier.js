@@ -638,7 +638,7 @@ Wikifier.formatterHelpers =
 		if (tale.has(link)) { return false; }
 
 		var urlRegExp = new RegExp("^" + Wikifier.textPrimitives.url, "gim");
-		if (urlRegExp.test(link) || link.search(/[\.\/\\#]/) !== -1)
+		if (urlRegExp.test(link) || /[\.\/\\#]/.test(link))
 		{
 			return true;
 		}
@@ -1037,7 +1037,7 @@ Wikifier.formatters =
 				if (source.slice(0, 5) !== "data:" && tale.has(source))
 				{
 					var passage = tale.get(source);
-					if (passage.tags.indexOf("Twine.image") !== -1)
+					if (passage.tags.contains("Twine.image"))
 					{
 						el.setAttribute("data-passage", passage.title);
 						source = passage.text;
@@ -1526,10 +1526,10 @@ Wikifier.formatters =
 			, tag      = tagMatch && tagMatch[1]
 			, tagName  = tag && tag.toLowerCase();
 
-		if (tagName)	// && ["html", "nowiki"].indexOf(tagName) === -1)
+		if (tagName)	// && ["html", "nowiki"].contains(tagName))
 		{
-			var   isVoid = this.voidElements.indexOf(tagName) !== -1
-				, isNobr = this.nobrElements.indexOf(tagName) !== -1
+			var   isVoid = this.voidElements.contains(tagName)
+				, isNobr = this.nobrElements.contains(tagName)
 				, terminator
 				, terminatorRegExp
 				, terminatorMatch;
@@ -1624,7 +1624,7 @@ Wikifier.formatters =
 				if (tale.has(passage))
 				{
 					passage = tale.get(passage);
-					if (passage.tags.indexOf("Twine.image") !== -1)
+					if (passage.tags.contains("Twine.image"))
 					{
 						source = passage.text;
 					}

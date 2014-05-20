@@ -155,44 +155,6 @@ if (!Array.prototype.filter)
 }
 
 /**
- * Creates a new array with the results of calling a provided function on every element in this array
- */
-if (!Array.prototype.map)
-{
-	Object.defineProperty(Array.prototype, "map", {
-		enumerable   : false,
-		configurable : true,
-		writable     : true,
-		value        : function (callback /* , thisp */) {
-			"use strict";
-			if (this == null)
-			{
-				throw new TypeError("Array.prototype.map called on null or undefined");
-			}
-			if (typeof callback !== "function")
-			{
-				throw new TypeError("Array.prototype.map callback parameter must be a function");
-			}
-
-			var   list   = Object(this)
-				, length = list.length >>> 0
-				, res    = new Array(length)
-				, thisp  = arguments[1];
-
-			for (var i = 0; i < length; i++)
-			{
-				if (i in list)
-				{
-					var val = list[i];
-					res[i] = callback.call(thisp, val, i, list);
-				}
-			}
-			return res;
-		}
-	});
-}
-
-/**
  * Returns a value from the array, if an element in the array satisfies the provided testing function, otherwise undefined is returned
  */
 if (!Array.prototype.find)
@@ -228,6 +190,44 @@ if (!Array.prototype.find)
 				}
 			}
 			return undefined;
+		}
+	});
+}
+
+/**
+ * Creates a new array with the results of calling a provided function on every element in this array
+ */
+if (!Array.prototype.map)
+{
+	Object.defineProperty(Array.prototype, "map", {
+		enumerable   : false,
+		configurable : true,
+		writable     : true,
+		value        : function (callback /* , thisp */) {
+			"use strict";
+			if (this == null)
+			{
+				throw new TypeError("Array.prototype.map called on null or undefined");
+			}
+			if (typeof callback !== "function")
+			{
+				throw new TypeError("Array.prototype.map callback parameter must be a function");
+			}
+
+			var   list   = Object(this)
+				, length = list.length >>> 0
+				, res    = new Array(length)
+				, thisp  = arguments[1];
+
+			for (var i = 0; i < length; i++)
+			{
+				if (i in list)
+				{
+					var val = list[i];
+					res[i] = callback.call(thisp, val, i, list);
+				}
+			}
+			return res;
 		}
 	});
 }
