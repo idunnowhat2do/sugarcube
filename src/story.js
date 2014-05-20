@@ -538,12 +538,28 @@ History.deserializeWindowState = function (obj)
 
 History.addWindowState = function (obj, title, url)
 {
-	window.history.pushState((obj != null) ? History.serializeWindowState(obj) : null, title, url);
+	// required by IE (if you pass undefined as the URL, IE will happily set it to that, so you must not pass it at all in that case)
+	if (url != null) // use lazy equality
+	{
+		window.history.pushState((obj != null) ? History.serializeWindowState(obj) : null, title, url);
+	}
+	else
+	{
+		window.history.pushState((obj != null) ? History.serializeWindowState(obj) : null, title);
+	}
 };
 
 History.replaceWindowState = function (obj, title, url)
 {
-	window.history.replaceState((obj != null) ? History.serializeWindowState(obj) : null, title, url);
+	// required by IE (if you pass undefined as the URL, IE will happily set it to that, so you must not pass it at all in that case)
+	if (url != null) // use lazy equality
+	{
+		window.history.replaceState((obj != null) ? History.serializeWindowState(obj) : null, title, url);
+	}
+	else
+	{
+		window.history.replaceState((obj != null) ? History.serializeWindowState(obj) : null, title);
+	}
 };
 
 History.hasWindowState = function (obj)
