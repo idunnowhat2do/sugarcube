@@ -125,7 +125,7 @@ config.browser =
 		}
 };
 // adjust these based on the specific browser used
-config.historyMode = (config.hasPushState ? modes.sessionHistory : modes.hashTag);
+config.historyMode = (config.hasPushState ? (config.browser.isGecko ? modes.sessionHistory : modes.windowHistory) : modes.hashTag);
 config.hasFileAPI = config.hasFileAPI && !config.browser.isMobile.any() && (!config.browser.isOpera || config.browser.operaVersion >= 15);
  
 var   formatter = null	// Wikifier formatters
@@ -240,12 +240,6 @@ $(document).ready(function ()
 		{
 			technicalAlert("StoryInit", e.message);
 		}
-	}
-
-	// force modes.windowHistory to modes.sessionHistory before initializing our state
-	if (config.historyMode === modes.windowHistory)
-	{
-		config.historyMode = modes.sessionHistory;
 	}
 
 	// finalize the config.disableHistoryControls setting before initializing our state
@@ -563,10 +557,10 @@ var SaveSystem =
 			return;
 		}
 
-		var   saveName = tale.domId + ".save"
-			, saveObj  = LZString.compressToBase64(Util.serialize(SaveSystem.marshal()));
+		var   saveName = tale.domId + ".json"
+			, saveObj  = JSON.stringify(SaveSystem.marshal());
 
-		saveAs(new Blob([saveObj], { type: "text/plain;charset=UTF-8" }), saveName);
+		saveAs(new Blob([saveObj], { type: "application/json;charset=UTF-8" }), saveName);
 	},
 	importSave: function (event)
 	{
@@ -586,11 +580,12 @@ var SaveSystem =
 				var saveObj;
 				try
 				{
-					saveObj = (/\.json$/i.test(file.name) || /^\{/.test(evt.target.result))
-						? JSON.parse(evt.target.result)
-						: Util.deserialize(LZString.decompressFromBase64(evt.target.result));
+					saveObj = JSON.parse(evt.target.result);
 				}
-				catch (e) { /* noop, the unmarshal() method will handle the error */ }
+				catch (evt)
+				{
+					// noop, the unmarshal() method will handle the error
+				}
 				SaveSystem.unmarshal(saveObj);
 			};
 		}(file));
@@ -1021,7 +1016,39 @@ var UISystem =
 				$(el).click(function ()
 				{
 					var p = i;
-					if (config.historyMode === modes.sessionHistory)
+					if (config.historyMode === modes.windowHistory)
+					{
+						return function ()
+						{
+							DEBUG("[rewind:click() @windowHistory]");
+
+							// necessary?
+							document.title = tale.title;
+
+							// push the history states in order
+							if (!config.disableHistoryControls)
+							{
+								for (var i = 0, end = p; i <= end; i++)
+								{
+									DEBUG("    > pushing: " + i + " (" + state.history[i].title + ")");
+
+									// load the state into the window history
+									window.history.pushState(state.history.slice(0, i + 1), document.title);
+								}
+							}
+
+							// stack ids are out of sync, pop our stack until
+							// we're back in sync with the window.history
+							state.pop(state.length - (p + 1));
+
+							// activate the current top
+							state.activate(state.top);
+
+							// display the passage
+							state.display(state.active.title, null, "back");
+						};
+					}
+					else if (config.historyMode === modes.sessionHistory)
 					{
 						return function ()
 						{
@@ -1039,12 +1066,7 @@ var UISystem =
 								DEBUG("    > pushing: " + p + " (" + state.history[p].title + ")");
 
 								// load the state into the window history
-								window.history.replaceState(
-									  { suid: state.suid, sidx: state.history[p].sidx }
-									, (config.displayPassageTitles && state.history[p].title !== "Start")
-										? tale.title + ": " + state.history[p].title
-										: tale.title
-								);
+								window.history.replaceState({ sidx: state.history[p].sidx, suid: state.suid }, document.title);
 							}
 							else
 							{
@@ -1053,12 +1075,7 @@ var UISystem =
 									DEBUG("    > pushing: " + i + " (" + state.history[i].title + ")");
 
 									// load the state into the window history
-									window.history.pushState(
-										  { suid: state.suid, sidx: state.history[i].sidx }
-										, (config.displayPassageTitles && state.history[i].title !== "Start")
-											? tale.title + ": " + state.history[i].title
-											: tale.title
-									);
+									window.history.pushState({ sidx: state.history[i].sidx, suid: state.suid }, document.title);
 								}
 							}
 

@@ -890,11 +890,15 @@ KeyValueStore.prototype.setItem = function (sKey, sValue)
 
 	if (this.store)
 	{
+		//----------------------------------------------------------------------
+		// EXPERIMENTAL COMPRESSION
+		//----------------------------------------------------------------------
 		try
 		{
 			sValue = "#~" + LZString.compressToUTF16(sValue);
 		}
 		catch (e) { /* noop */ }
+		//----------------------------------------------------------------------
 
 		try
 		{
@@ -911,11 +915,15 @@ KeyValueStore.prototype.setItem = function (sKey, sValue)
 	}
 	else
 	{
+		//----------------------------------------------------------------------
+		// EXPERIMENTAL COMPRESSION
+		//----------------------------------------------------------------------
 		try
 		{
 			sValue = "#~" + LZString.compressToBase64(sValue);
 		}
 		catch (e) { /* noop */ }
+		//----------------------------------------------------------------------
 
 		var cookie = [ escape(sKey) + "=" + escape(sValue) ];
 		// no expiry means a session cookie
@@ -955,6 +963,9 @@ KeyValueStore.prototype.getItem = function (sKey)
 
 	if (this.store)
 	{
+		//----------------------------------------------------------------------
+		// EXPERIMENTAL COMPRESSION
+		//----------------------------------------------------------------------
 		var sValue = this.store.getItem(sKey);
 		if (sValue != null)	// use lazy equality
 		{
@@ -969,6 +980,7 @@ KeyValueStore.prototype.getItem = function (sKey)
 				return Util.deserialize(sValue);
 			}
 		}
+		//----------------------------------------------------------------------
 	}
 	else
 	{
@@ -979,6 +991,9 @@ KeyValueStore.prototype.getItem = function (sKey)
 			var bits = cookies[i].split("=");
 			if (bits[0].trim() === sKey)
 			{
+				//--------------------------------------------------------------
+				// EXPERIMENTAL COMPRESSION
+				//--------------------------------------------------------------
 				var sValue = unescape(bits[1]);
 				if (sValue.slice(0, 2) === "#~")
 				{
@@ -990,6 +1005,7 @@ KeyValueStore.prototype.getItem = function (sKey)
 					DEBUG("    > loading uncompressed value for: " + sKey);
 					return Util.deserialize(sValue);
 				}
+				//--------------------------------------------------------------
 			}
 		}
 	}
