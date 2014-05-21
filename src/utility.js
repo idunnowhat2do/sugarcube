@@ -234,16 +234,6 @@ function clone(orig, deep)
 }
 
 /**
- * Returns a deep copy of the passed object
- *
- * (DEPRECATED): No longer used in SugarCube, since clone() was updated to be able to deep copy, kept only for compatibility
- */
-function deepCopy(orig)
-{
-	return clone(orig, true);
-}
-
-/**
  * Returns the new DOM element, optionally appending it to the passed DOM element (if any)
  */
 function insertElement(place, type, id, classNames, text, title)
@@ -262,41 +252,6 @@ function insertElement(place, type, id, classNames, text, title)
 	if (title)
 	{
 		el.title = title;
-	}
-
-	// add content
-	if (text)
-	{
-		insertText(el, text);
-	}
-
-	// append it to the given node
-	if (place)
-	{
-		place.appendChild(el);
-	}
-
-	return el;
-}
-
-/**
- * Returns the new <a> element, optionally appending it to the passed DOM element (if any)
- *
- * (DEPRECATED): No longer used in SugarCube, since Wikifier.createInternalLink() was updated to include both a link text and callback function parameter, kept only for compatibility
- */
-function insertPassageLink(place, passage, text, classNames)
-{
-	var el = document.createElement("a");
-
-	// add attributes
-	if (passage != null)	// use lazy equality; 0 is a valid ID and name, so we cannot simply evaluate passage
-	{
-		el.setAttribute("data-passage", passage);
-		el.className = tale.has(passage) ? "link-internal" : "link-broken";
-	}
-	if (classNames)
-	{
-		el.className += " " + classNames;
 	}
 
 	// add content
@@ -729,13 +684,31 @@ var Util =
 	},
 
 	/**
-	 * Returns the result of evaluating the passed expression, throwing if there were errors
+	 * Returns the evaluation of the passed expression, throwing if there were errors
 	 */
-	eval: function (expression)
+	evalExpression: function (expression)
 	{
 		"use strict";
 		// the parens are to protect object literals from being confused with block statements
 		return eval("(" + expression + ")");
+	},
+
+	/**
+	 * Returns whether the evaluation of the passed statements completed without thrown exceptions
+	 */
+	evalStatements: function (statements)
+	{
+		"use strict";
+		// the enclosing anonymous function is to isolate the passed code within its own scope
+		try
+		{
+			eval("(function(){" + statements + "}());");
+			return true;
+		}
+		catch (e)
+		{
+			return false;
+		}
 	},
 
 	/**
