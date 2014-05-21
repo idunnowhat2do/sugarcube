@@ -729,6 +729,16 @@ var Util =
 	},
 
 	/**
+	 * Returns the result of evaluating the passed expression, throwing if there were errors
+	 */
+	eval: function (expression)
+	{
+		"use strict";
+		// the parens are to protect object literals from being confused with block statements
+		return eval("(" + expression + ")");
+	},
+
+	/**
 	 * Returns a base64 encoding of the passed UTF-8 string
 	 */
 	utf8ToBase64: function (str)
@@ -930,7 +940,6 @@ KeyValueStore.prototype.setItem = function (sKey, sValue)
 		cookie.push("path=/");
 		try
 		{
-			DEBUG("    > setItem:cookie: " + cookie.join("; "));
 			document.cookie = cookie.join("; ");
 		}
 		catch (e)
