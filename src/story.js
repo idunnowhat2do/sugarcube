@@ -859,7 +859,8 @@ function Passage(title, el, order)
 	}
 	else
 	{
-		this.text      = "<html><span class=\"error\">Error: this passage does not exist</span></html>";
+		this.text      = String.format('<span class="error" title="{0}">Error: this passage does not exist: {0}</span>',
+							this.title.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"));
 		this.tags      = [];
 		this.classes   = [];
 		this.className = "";
@@ -1123,7 +1124,7 @@ Tale.prototype.has = function (key)
 {
 	if (typeof key === "string")
 	{
-		return this.passages[key] !== undefined && this.passages[key] !== null;
+		return this.passages[key] != null;	// use lazy equality
 	}
 	else if (typeof key === "number")
 	{
