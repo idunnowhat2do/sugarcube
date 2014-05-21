@@ -67,7 +67,7 @@ String.prototype.readMacroParams = function ()
 			{
 				try
 				{
-					arg = eval(Wikifier.parse(arg));
+					arg = Wikifier.eval(arg);
 				}
 				catch (e)
 				{
@@ -82,8 +82,7 @@ String.prototype.readMacroParams = function ()
 			{
 				try
 				{
-					// the parens are to protect object literals from being confused with block statements
-					arg = eval("(" + Wikifier.parse(arg) + ")");
+					arg = Wikifier.eval(arg);
 				}
 				catch (e)
 				{
@@ -282,7 +281,7 @@ Wikifier.prototype.rawArgs = function ()
  */
 Wikifier.prototype.fullArgs = function ()
 {
-	return Wikifier.parse(this.rawArgs());
+	return this.parse(this.rawArgs());
 };
 
 /**
@@ -361,7 +360,7 @@ Wikifier.parse = function (expression)
  */
 Wikifier.getValue = function (storyVar)
 {
-	var   pNames = Wikifier.parseStoryVariable(storyVar)
+	var   pNames = this.parseStoryVariable(storyVar)
 		, retVal = undefined;
 
 	if (pNames.length !== 0)
@@ -388,7 +387,7 @@ Wikifier.getValue = function (storyVar)
  */
 Wikifier.setValue = function (storyVar, newValue)
 {
-	var pNames = Wikifier.parseStoryVariable(storyVar);
+	var pNames = this.parseStoryVariable(storyVar);
 
 	if (pNames.length !== 0)
 	{
@@ -442,7 +441,7 @@ Wikifier.parseStoryVariable = function (varText)
 		else if (match[4]) { pNames.push(match[4]); }
 
 		// Square-bracketed property (embedded $variable)
-		else if (match[5]) { pNames.push(Wikifier.getValue(match[5])); }
+		else if (match[5]) { pNames.push(this.getValue(match[5])); }
 
 		// Square-bracketed property (numeric index)
 		else if (match[6]) { pNames.push(Number(match[6])); }
@@ -451,11 +450,19 @@ Wikifier.parseStoryVariable = function (varText)
 };
 
 /**
+ * Evaluate the passed Twine expression and return the result, throwing if there were errors
+ */
+Wikifier.eval = function (expression)
+{
+	return Util.eval(this.parse(expression));
+};
+
+/**
  * Wikify the passed text and discard the output, throwing if there were errors
  */
 Wikifier.wikifyEval = function (text)
 {
-	var errTrap = document.createElement("div");
+	var errTrap = document.createDocumentFragment();
 	try
 	{
 		new Wikifier(errTrap, text);
@@ -475,13 +482,10 @@ Wikifier.wikifyEval = function (text)
 	}
 	finally
 	{
+		// probably unnecessary, but let's be tidy
 		removeChildren(errTrap);	// remove any remaining children
-		if (typeof errTrap["remove"] === "function")
-		{
-			errTrap.remove();		// remove the trap itself
-		}
 	}
-}
+};
 
 /**
  * Create and return an internal link
@@ -643,6 +647,23 @@ Wikifier.formatterHelpers =
 			return true;
 		}
 		return false;
+	},
+	eval: function (text)
+	{
+		try
+		{
+			text = Wikifier.eval(text);
+		}
+		catch (e) { /* noop */ }
+		return text;
+	},
+	evalPassageId: function (passage)
+	{
+		if (passage != null && !tale.has(passage))	// use lazy equality; 0 is a valid ID and name, so we cannot simply evaluate passage
+		{
+			passage = this.eval(passage);
+		}
+		return passage;
 	}
 };
 
@@ -968,18 +989,33 @@ Wikifier.formatters =
 			{	// 1=(text), 2=(~), 3=link, 4=(set)
 				w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 
-				var   link  = /^\$\w+/.test(match[3]) ? Wikifier.getValue(match[3]) : match[3]
-					, text  = match[1] ? (/^\$\w+/.test(match[1]) ? Wikifier.getValue(match[1]) : match[1]) : link
+				var   el
+					, link  = Wikifier.formatterHelpers.evalPassageId(match[3])
 					, setFn = match[4]
 						? function (ex) { return function () { macros.eval(ex, null, null); }; }(Wikifier.parse(match[4]))
 						: null;
 				if (!match[2] && Wikifier.formatterHelpers.isExternalLink(link))
 				{
-					Wikifier.createExternalLink(w.output, link, text);
+					el = Wikifier.createExternalLink(w.output, link)
 				}
 				else
 				{
-					Wikifier.createInternalLink(w.output, link, text, setFn);
+					el = Wikifier.createInternalLink(w.output, link, null, setFn);
+				}
+				if (match[1])
+				{
+					if (/^\$\w+/.test(match[1]))
+					{
+						insertText(el, Wikifier.getValue(match[1]));
+					}
+					else
+					{
+						new Wikifier(el, match[1]);
+					}
+				}
+				else
+				{
+					insertText(el, link);
 				}
 			}
 		}
@@ -1017,10 +1053,9 @@ Wikifier.formatters =
 						? function (ex) { return function () { macros.eval(ex, null, null); }; }(Wikifier.parse(match[7]))
 						: null
 					, source;
-
 				if (match[6])
 				{
-					var link = /^\$\w+/.test(match[6]) ? Wikifier.getValue(match[6]) : match[6];
+					var link = Wikifier.formatterHelpers.evalPassageId(match[6]);
 					if (!match[5] && Wikifier.formatterHelpers.isExternalLink(link))
 					{
 						el = Wikifier.createExternalLink(el, link);
@@ -1032,7 +1067,7 @@ Wikifier.formatters =
 					el.classList.add("link-image");
 				}
 				el = insertElement(el, "img");
-				source = /^\$\w+/.test(match[4]) ? Wikifier.getValue(match[4]) : match[4];
+				source = Wikifier.formatterHelpers.evalPassageId(match[4]);
 				// check for Twine 1.4 Base64 image passage transclusion
 				if (source.slice(0, 5) !== "data:" && tale.has(source))
 				{
@@ -1046,7 +1081,7 @@ Wikifier.formatters =
 				el.src = source;
 				if (match[3])
 				{
-					el.title = /^\$\w+/.test(match[3]) ? Wikifier.getValue(match[3]) : match[3];
+					el.title = Wikifier.formatterHelpers.eval(match[3]);
 				}
 				if (match[1])
 				{
@@ -1083,19 +1118,6 @@ Wikifier.formatters =
 				var macro = macros.get(macroName);
 				if (macro)
 				{
-					/* legacy kludges */
-					if (macro.hasOwnProperty("excludeParams"))
-					{
-						macro["skipArgs"] = macro["excludeParams"];
-						delete macro["excludeParams"];
-					}
-					if (macro.hasOwnProperty("children") && !macro.hasOwnProperty("tags"))
-					{
-						macro["tags"] = macro["children"];
-						delete macro["children"];
-					}
-					/* /legacy kludges */
-
 					var payload = null;
 					if (macro.hasOwnProperty("tags"))
 					{
