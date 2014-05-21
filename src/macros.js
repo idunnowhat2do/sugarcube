@@ -144,16 +144,24 @@ function Macros()
 			if (!handler) { handler = "handler"; }
 			return (macro && macro.hasOwnProperty(handler) && typeof macro[handler] === "function") ? macro[handler] : null;
 		},
-		eval: function (expression, output, name)
+		evalStatements: function (statements, thisp)
 		{
+			"use strict";
 			try
 			{
-				eval("(function(){" + expression + "}());");
+				eval("(function(){" + statements + "}());");
 				return true;
 			}
 			catch (e)
 			{
-				return output ? throwError(output, "<<" + name + ">>: bad expression: " + e.message) : false;
+				if (thisp != null)	// use lazy equality
+				{
+					return thisp.error("bad expression: " + e.message);
+				}
+				else
+				{
+					throw new Error("bad expression: " + e.message);
+				}
 			}
 		},
 		registerTags: function (parent, bodyTags)
@@ -239,34 +247,20 @@ function Macros()
 	},
 	{
 		// data properties
-		  "tags":           { writable: false, enumerable: false, configurable: false }
-		, "definitions":    { writable: false, enumerable: false, configurable: false }
+		  "tags"           : { writable: false, enumerable: false, configurable: false }
+		, "definitions"    : { writable: false, enumerable: false, configurable: false }
 		// method properties
-		, "add":            { writable: false, enumerable: false, configurable: false }
-		, "remove":         { writable: false, enumerable: false, configurable: false }
-		, "has":            { writable: false, enumerable: false, configurable: false }
-		, "get":            { writable: false, enumerable: false, configurable: false }
-		, "getHandler":     { writable: false, enumerable: false, configurable: false }
-		, "eval":           { writable: false, enumerable: false, configurable: false }
-		, "registerTags":   { writable: false, enumerable: false, configurable: false }
-		, "unregisterTags": { writable: false, enumerable: false, configurable: false }
-		, "init":           { writable: false, enumerable: false, configurable: false }
-		, "lateInit":       { writable: false, enumerable: false, configurable: false }
+		, "add"            : { writable: false, enumerable: false, configurable: false }
+		, "remove"         : { writable: false, enumerable: false, configurable: false }
+		, "has"            : { writable: false, enumerable: false, configurable: false }
+		, "get"            : { writable: false, enumerable: false, configurable: false }
+		, "getHandler"     : { writable: false, enumerable: false, configurable: false }
+		, "evalStatements" : { writable: false, enumerable: false, configurable: false }
+		, "registerTags"   : { writable: false, enumerable: false, configurable: false }
+		, "unregisterTags" : { writable: false, enumerable: false, configurable: false }
+		, "init"           : { writable: false, enumerable: false, configurable: false }
+		, "lateInit"       : { writable: false, enumerable: false, configurable: false }
 	});
-}
-
-
-/***********************************************************************************************************************
-** [DEPRECATED Macro Utility Functions]
-***********************************************************************************************************************/
-function registerMacroTags(parent, bodyTags)
-{
-	return macros.registerTags(parent, bodyTags);
-}
-
-function evalMacroExpression(expression, place, macroName)
-{
-	return macros.eval(expression, place, macroName);
 }
 
 
@@ -707,7 +701,7 @@ function addStandardMacros()
 				return this.error('passage "' + passage + '" does not exist');
 			}
 
-			var   errTrap = document.createElement("div")
+			var   errTrap = document.createDocumentFragment()
 				, errList = [];
 
 			// wikify the passage
@@ -719,10 +713,6 @@ function addStandardMacros()
 				var fc = errTrap.firstChild;
 				if (fc.classList && fc.classList.contains("error")) { errList.push(fc.textContent); }
 				errTrap.removeChild(fc);
-			}
-			if (typeof errTrap["remove"] === "function")
-			{
-				errTrap.remove();	// remove the trap
 			}
 			if (errList.length > 0)
 			{
@@ -760,7 +750,7 @@ function addStandardMacros()
 
 			try
 			{
-				var result = eval(this.args.full);
+				var result = Util.evalExpression(this.args.full);
 				if (result != null && (typeof result !== "number" || !isNaN(result)))
 				{
 					new Wikifier(this.output, result.toString());
@@ -782,7 +772,7 @@ function addStandardMacros()
 		tags: null,
 		handler: function ()
 		{
-			var   errTrap = document.createElement("div")
+			var   errTrap = document.createDocumentFragment()
 				, errList = [];
 
 			// wikify the contents
@@ -794,10 +784,6 @@ function addStandardMacros()
 				var fc = errTrap.firstChild;
 				if (fc.classList && fc.classList.contains("error")) { errList.push(fc.textContent); }
 				errTrap.removeChild(fc);
-			}
-			if (typeof errTrap["remove"] === "function")
-			{
-				errTrap.remove();	// remove the trap
 			}
 			if (errList.length > 0)
 			{
@@ -814,7 +800,7 @@ function addStandardMacros()
 	 * <<if>>
 	 */
 	macros.add("if", {
-		version: { major: 3, minor: 1, revision: 0 },
+		version: { major: 3, minor: 1, revision: 1 },
 		skipArgs: true,
 		tags: [ "elseif", "else" ],
 		handler: function ()
@@ -835,7 +821,7 @@ function addStandardMacros()
 						}
 						return this.error("<<else>> does not accept a conditional expression (perhaps you meant to use <<elseif>> instead), invalid: " + this.payload[i].arguments);
 					}
-					if (this.payload[i].name === "else" || !!eval(Wikifier.parse(this.payload[i].arguments)))
+					if (this.payload[i].name === "else" || !!Wikifier.evalExpression(this.payload[i].arguments))
 					{
 						new Wikifier(this.output, this.payload[i].contents);
 						break;
@@ -866,7 +852,7 @@ function addStandardMacros()
 				return this.error("no expression specified");
 			}
 
-			macros.eval(this.args.full, this.output, this.name);
+			macros.evalStatements(this.args.full, this);
 		}
 	});
 
@@ -913,7 +899,7 @@ function addStandardMacros()
 			}
 
 			var expression = this.args.full;
-			if (macros.eval(expression, this.output, this.name))
+			if (macros.evalStatements(expression, this))
 			{
 				var   remember = storage.getItem("remember") || {}
 					, re       = /state\.active\.variables\.(\w+)/g
@@ -1002,7 +988,7 @@ function addStandardMacros()
 		tags: null,
 		handler: function ()
 		{
-			macros.eval(this.payload[0].contents.trim(), this.output, this.name);
+			macros.evalStatements(this.payload[0].contents.trim(), this);
 		}
 	});
 
@@ -1461,16 +1447,16 @@ function addStandardMacros()
 
 								// setup the error trapping variables
 								var   outFrag = document.createDocumentFragment()
-									, trapEl  = document.createElement("div")
+									, resFrag = document.createDocumentFragment()
 									, errList = [];
 
 								// wikify the widget contents
-								new Wikifier(trapEl, contents);
+								new Wikifier(resFrag, contents);
 
 								// carry over the output, unless there were errors
-								while (trapEl.hasChildNodes())
+								while (resFrag.hasChildNodes())
 								{
-									var fc = trapEl.firstChild;
+									var fc = resFrag.firstChild;
 									if (fc.classList && fc.classList.contains("error")) { errList.push(fc.textContent); }
 									outFrag.appendChild(fc);
 								}
@@ -1708,149 +1694,6 @@ function addStandardMacros()
 			if (!storage.removeItem("options"))
 			{
 				return this.error("unknown error, cannot update options store");
-			}
-		}
-	});
-
-
-	/***************************************************************************
-	** DEPRECATED Macros
-	***************************************************************************/
-	/**
-	 * <<bind>> (DEPRECATED)
-	 */
-	macros.add("bind", "click");	// add <<bind>> as an alias of <<click>>
-
-	/**
-	 * <<class>> (DEPRECATED)
-	 */
-	macros.add("class", {
-		version: { major: 2, minor: 2, revision: 0 },
-		tags: null,
-		handler: function ()
-		{
-			var   elName    = this.args[1] || "span"
-				, elClasses = this.args[0] || ""
-				, el        = insertElement(this.output, elName, null, elClasses);
-
-			new Wikifier(el, this.payload[0].contents);
-		}
-	});
-
-	/**
-	 * <<classupdate>> (DEPRECATED)
-	 */
-	macros.add("classupdate", {
-		version: { major: 1, minor: 0, revision: 0 },
-		handler: function ()
-		{
-			if (this.args.length < 3)
-			{
-				var errors = [];
-				if (this.args.length < 1) { errors.push("element ID"); }
-				if (this.args.length < 2) { errors.push("action"); }
-				if (this.args.length < 3) { errors.push("class names"); }
-				return this.error("no " + errors.join(" or ") + " specified");
-			}
-
-			var   targetEl = (this.args[0] === "body") ? document.body : document.getElementById(this.args[0])
-				, updType  = this.args[1]
-				, classes  = this.args[2].trim().split(/\s+/);
-
-			if (!targetEl)
-			{
-				return this.error('element with ID "' + this.args[0] + '" does not exist');
-			}
-			if (updType !== "add" && updType !== "remove" && updType !== "toggle")
-			{
-				return this.error('"' + updType + '" is not a valid action (add|remove|toggle)');
-			}
-
-			for (var i = 0; i < classes.length ; i++)
-			{
-				switch (updType)
-				{
-				case "add":
-					targetEl.classList.add(classes[i]);
-					break;
-				case "remove":
-					targetEl.classList.remove(classes[i]);
-					break;
-				case "toggle":
-					targetEl.classList.toggle(classes[i]);
-					break;
-				}
-			}
-		}
-	});
-
-	/**
-	 * <<id>> (DEPRECATED)
-	 */
-	macros.add("id", {
-		version: { major: 2, minor: 2, revision: 0 },
-		tags: null,
-		handler: function ()
-		{
-			var   elName = this.args[1] || "span"
-				, elId   = this.args[0] || ""
-				, el     = insertElement(this.output, elName, elId);
-
-			new Wikifier(el, this.payload[0].contents);
-		}
-	});
-
-	/**
-	 * <<runjs>> (DEPRECATED)
-	 */
-	macros.add("runjs", {
-		version: { major: 3, minor: 0, revision: 0 },
-		skipArgs: true,
-		handler: function ()
-		{
-			macros.eval(this.args.raw, this.output, this.name);
-		},
-	});
-
-	/**
-	 * <<update>> (DEPRECATED)
-	 */
-	macros.add("update", {
-		version: { major: 2, minor: 0, revision: 0 },
-		tags: null,
-		handler: function ()
-		{
-			if (this.args.length === 0)
-			{
-				return this.error("no element ID specified");
-			}
-
-			var   parentEl = document.getElementById(this.args[0])
-				, updType  = this.args[1];
-
-			if (!parentEl)
-			{
-				return this.error('element with ID "' + this.args[0] + '" does not exist');
-			}
-			if (updType && updType !== "append" && updType !== "prepend" && updType !== "replace")
-			{
-				return this.error('"' + updType + '" is not a valid action (append|prepend|replace)');
-			}
-
-			switch (updType)
-			{
-			case "prepend":
-				var frag = document.createDocumentFragment();
-				new Wikifier(frag, this.payload[0].contents);
-				parentEl.insertBefore(frag, parentEl.firstChild);
-				break;
-			case "append":
-				new Wikifier(parentEl, this.payload[0].contents);
-				break;
-			default:	// replace
-				removeChildren(parentEl);
-				new Wikifier(parentEl, this.payload[0].contents);
-				break;
 			}
 		}
 	});
