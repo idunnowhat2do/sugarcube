@@ -676,53 +676,6 @@ function addStandardMacros()
 	});
 
 	/**
-	 * <<load>>
-	 */
-	macros.add("load", {
-		version: { major: 1, minor: 0, revision: 0 },
-		handler: function ()
-		{
-			if (this.args.length === 0)
-			{
-				return this.error("no passage specified");
-			}
-
-			var passage;
-
-			if (typeof this.args[0] === "object")
-			{	// argument was in wiki link syntax
-				passage = this.args[0].link;
-			}
-			else
-			{	// argument was simply the passage name
-				passage = this.args[0];
-			}
-			if (!tale.has(passage))
-			{
-				return this.error('passage "' + passage + '" does not exist');
-			}
-
-			var   errTrap = document.createDocumentFragment()
-				, errList = [];
-
-			// wikify the passage
-			new Wikifier(errTrap, tale.get(passage).processText());
-
-			// discard the output, unless there were errors
-			while (errTrap.hasChildNodes())
-			{
-				var fc = errTrap.firstChild;
-				if (fc.classList && fc.classList.contains("error")) { errList.push(fc.textContent); }
-				errTrap.removeChild(fc);
-			}
-			if (errList.length > 0)
-			{
-				return this.error("error" + (errList.length === 1 ? "" : "s") + " within contents (" + errList.join('; ') + ")");
-			}
-		}
-	});
-
-	/**
 	 * <<nobr>>
 	 */
 	macros.add("nobr", {
