@@ -45,7 +45,7 @@ String.prototype.readMacroParams = function ()
 				linkObj.text       = linkMatch[1] ? (/^\$\w+/.test(linkMatch[1]) ? Wikifier.getValue(linkMatch[1]) : linkMatch[1]) : linkObj.link;
 				linkObj.isExternal = !linkMatch[2] && Wikifier.formatterHelpers.isExternalLink(linkObj.link);
 				linkObj.setFn      = linkMatch[4]
-					? function (ex) { return function () { macros.eval(ex, null, null); }; }(Wikifier.parse(linkMatch[4]))
+					? function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(linkMatch[4]))
 					: null;
 				arg = linkObj;
 			}
@@ -67,7 +67,7 @@ String.prototype.readMacroParams = function ()
 			{
 				try
 				{
-					arg = Wikifier.eval(arg);
+					arg = Wikifier.evalExpression(arg);
 				}
 				catch (e)
 				{
@@ -82,7 +82,7 @@ String.prototype.readMacroParams = function ()
 			{
 				try
 				{
-					arg = Wikifier.eval(arg);
+					arg = Wikifier.evalExpression(arg);
 				}
 				catch (e)
 				{
@@ -452,9 +452,17 @@ Wikifier.parseStoryVariable = function (varText)
 /**
  * Evaluate the passed Twine expression and return the result, throwing if there were errors
  */
-Wikifier.eval = function (expression)
+Wikifier.evalExpression = function (expression)
 {
-	return Util.eval(this.parse(expression));
+	return Util.evalExpression(this.parse(expression));
+};
+
+/**
+ * Evaluate the passed Twine statements and return the result, throwing if there were errors
+ */
+Wikifier.evalStatements = function (statements)
+{
+	return Util.evalStatements(this.parse(statements));
 };
 
 /**
@@ -648,11 +656,11 @@ Wikifier.formatterHelpers =
 		}
 		return false;
 	},
-	eval: function (text)
+	evalExpression: function (text)
 	{
 		try
 		{
-			text = Wikifier.eval(text);
+			text = Wikifier.evalExpression(text);
 		}
 		catch (e) { /* noop */ }
 		return text;
@@ -661,7 +669,7 @@ Wikifier.formatterHelpers =
 	{
 		if (passage != null && !tale.has(passage))	// use lazy equality; 0 is a valid ID and name, so we cannot simply evaluate passage
 		{
-			passage = this.eval(passage);
+			passage = this.evalExpression(passage);
 		}
 		return passage;
 	}
@@ -992,7 +1000,7 @@ Wikifier.formatters =
 				var   el
 					, link  = Wikifier.formatterHelpers.evalPassageId(match[3])
 					, setFn = match[4]
-						? function (ex) { return function () { macros.eval(ex, null, null); }; }(Wikifier.parse(match[4]))
+						? function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(match[4]))
 						: null;
 				if (!match[2] && Wikifier.formatterHelpers.isExternalLink(link))
 				{
@@ -1050,7 +1058,7 @@ Wikifier.formatters =
 
 				var   el     = w.output
 					, setFn  = match[7]
-						? function (ex) { return function () { macros.eval(ex, null, null); }; }(Wikifier.parse(match[7]))
+						? function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(match[7]))
 						: null
 					, source;
 				if (match[6])
@@ -1081,7 +1089,7 @@ Wikifier.formatters =
 				el.src = source;
 				if (match[3])
 				{
-					el.title = Wikifier.formatterHelpers.eval(match[3]);
+					el.title = Wikifier.formatterHelpers.evalExpression(match[3]);
 				}
 				if (match[1])
 				{
@@ -1631,7 +1639,7 @@ Wikifier.formatters =
 					setter = ((typeof setter !== "string") ? String(setter) : setter).trim();
 					if (setter !== "")
 					{
-						callback = function (ex) { return function () { macros.eval(ex, null, null); }; }(Wikifier.parse(setter));
+						callback = function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(setter));
 					}
 				}
 				el.classList.add(tale.has(passage) ? "link-internal" : "link-broken");
