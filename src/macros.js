@@ -149,6 +149,7 @@ function Macros()
 			"use strict";
 			try
 			{
+				var output = thisp.output;
 				eval("(function(){" + statements + "}());");
 				return true;
 			}
