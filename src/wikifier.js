@@ -3,142 +3,6 @@
 ***********************************************************************************************************************/
 
 /***********************************************************************************************************************
-** [Global Object/Prototype Extensions]
-***********************************************************************************************************************/
-/**
- * Returns an array of macro parameters, parsed from the string
- *   n.b. Used by the Wikifier
- */
-String.prototype.readMacroParams = function ()
-{
-	// Groups: 1=double quoted | 2=single quoted | 3=empty quotes | 4=double square-bracketed | 5=barewords
-	var   re     = new RegExp(Wikifier.textPrimitives.macroArg, "gm")
-		, match
-		, params = [];
-
-	while ((match = re.exec(this)) !== null)
-	{
-		var arg;
-
-		// Double quoted
-		if (match[1]) { arg = match[1]; }
-
-		// Single quoted
-		else if (match[2]) { arg = match[2]; }
-
-		// Empty quotes
-		else if (match[3]) { arg = ""; }
-
-		// Double square-bracketed
-		else if (match[4])
-		{
-			arg = match[4];
-
-			// Convert to an object
-			var   linkRe    = new RegExp(Wikifier.textPrimitives.link)
-				, linkMatch = linkRe.exec(arg)
-				, linkObj   = {};
-			if (linkMatch !== null)
-			{	// 1=(text), 2=(~), 3=link, 4=(set)
-				linkObj.count      = linkMatch[1] ? 2 : 1;
-				linkObj.link       = /^\$\w+/.test(linkMatch[3]) ? Wikifier.getValue(linkMatch[3]) : linkMatch[3];
-				linkObj.text       = linkMatch[1] ? (/^\$\w+/.test(linkMatch[1]) ? Wikifier.getValue(linkMatch[1]) : linkMatch[1]) : linkObj.link;
-				linkObj.isExternal = !linkMatch[2] && Wikifier.formatterHelpers.isExternalLink(linkObj.link);
-				linkObj.setFn      = linkMatch[4]
-					? function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(linkMatch[4]))
-					: null;
-				arg = linkObj;
-			}
-		}
-
-		// Barewords
-		else if (match[5])
-		{
-			arg = match[5];
-
-			// $variable, so substitute its value
-			if (/^\$\w+/.test(arg))
-			{
-				arg = Wikifier.getValue(arg);
-			}
-
-			// options or setup object, so try to evaluate it
-			else if (/^(?:options|setup)[\.\[]/.test(arg))
-			{
-				try
-				{
-					arg = Wikifier.evalExpression(arg);
-				}
-				catch (e)
-				{
-					throw new Error('unable to parse macro argument "' + arg + '"; ' + e.message);
-				}
-			}
-
-			// Object or Array literal, so try to evaluate it
-			// n.b. Authors really shouldn't be passing object/array literals as arguments.  If they want to pass a
-			//      complex type, store it in a variable and pass that instead.
-			else if (/^(?:\{.*\}|\[.*\])$/.test(arg))
-			{
-				try
-				{
-					arg = Wikifier.evalExpression(arg);
-				}
-				catch (e)
-				{
-					throw new Error('unable to parse macro argument "' + arg + '"; ' + e.message);
-				}
-			}
-
-			// Null literal, so convert it into null
-			else if (arg === "null") { arg = null; }
-
-			// Undefined literal, so convert it into undefined
-			else if (arg === "undefined") { arg = undefined; }
-
-			// Boolean literal, so convert it into a boolean
-			else if (arg === "true") { arg = true; }
-			else if (arg === "false") { arg = false; }
-
-			// Numeric literal, so convert it into a number
-			else if (!isNaN(parseFloat(arg)) && isFinite(arg))
-			{
-				// n.b. Octal literals are not handled correctly by Number() (e.g. Number("077") yields 77, not 63).
-				//      We could use eval("077") instead, which does correctly yield 63, however, it's probably far
-				//      more likely that the average Twine/Twee author would expect "077" to yield 77 rather than 63.
-				//      So, we cater to author expectation and use Number().
-				//
-				//      Besides, octal literals are browser extensions, which aren't part of the ECMAScript standard,
-				//      and are considered deprecated in most (all?) browsers anyway.
-				arg = Number(arg);
-			}
-		}
-
-		params.push(arg);
-	}
-
-	return params;
-};
-
-/**
- * Returns a DOM property name for a CSS property, parsed from the string
- *   n.b. Used by the Wikifier
- */
-String.prototype.unDash = function ()
-{
-	var t, s = this.split("-");
-	if (s.length > 1)
-	{
-		for (t = 1; t < s.length; t++)
-		{
-			s[t] = s[t].substr(0,1).toUpperCase() + s[t].substr(1);
-		}
-	}
-	return s.join("");
-};
-
-
-/***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
 function WikiFormatter(formatters)
@@ -505,6 +369,10 @@ Wikifier.createInternalLink = function (place, passage, text, callback)
 	{
 		el.setAttribute("data-passage", passage);
 		el.className = tale.has(passage) ? "link-internal" : "link-broken";
+		$(el).click(function () {
+			if (typeof callback === "function") { callback(); }
+			state.display(passage, el);
+		});
 	}
 	if (text)
 	{
@@ -513,13 +381,6 @@ Wikifier.createInternalLink = function (place, passage, text, callback)
 	if (place)
 	{
 		place.appendChild(el);
-	}
-	if (passage != null)	// use lazy equality; 0 is a valid ID and name, so we cannot simply evaluate passage
-	{
-		$(el).click(function () {
-			if (typeof callback === "function") { callback(); }
-			state.display(passage, el);
-		});
 	}
 	return el;
 };
@@ -530,11 +391,11 @@ Wikifier.createInternalLink = function (place, passage, text, callback)
 Wikifier.createExternalLink = function (place, url, text)
 {
 	var el = insertElement(place, "a", null, "link-external", text);
-	if (url)
+	el.target = "_blank";
+	if (url != null)	// use lazy equality
 	{
 		el.href = url;
 	}
-	el.target = "_blank";
 	return el;
 };
 
@@ -599,7 +460,6 @@ Wikifier.formatterHelpers =
 		var styles = [];
 		var lookahead = "(?:(" + Wikifier.textPrimitives.anyLetter + "+)\\(([^\\)\\|\\n]+)(?:\\):))|(?:(" + Wikifier.textPrimitives.anyLetter + "+):([^;\\|\\n]+);)";
 		var lookaheadRegExp = new RegExp(lookahead, "gm");
-		var hadStyle = false;
 		do
 		{
 			lookaheadRegExp.lastIndex = w.nextMatch;
@@ -608,15 +468,14 @@ Wikifier.formatterHelpers =
 			if (gotMatch)
 			{
 				var s, v;
-				hadStyle = true;
 				if (lookaheadMatch[1])
 				{
-					s = lookaheadMatch[1].unDash();
+					s = this.cssToDOMPropertyName(lookaheadMatch[1]);
 					v = lookaheadMatch[2];
 				}
 				else
 				{
-					s = lookaheadMatch[3].unDash();
+					s = this.cssToDOMPropertyName(lookaheadMatch[3]);
 					v = lookaheadMatch[4];
 				}
 				switch (s)
@@ -644,6 +503,21 @@ Wikifier.formatterHelpers =
 			insertElement(w.output, "pre", null, null, lookaheadMatch[1]);
 			w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 		}
+	},
+	cssToDOMPropertyName: function (propertyName)
+	{
+		/**
+		 * Returns a DOM property name for a CSS property, parsed from the string
+		 */
+		var parts = propertyName.split("-");
+		if (parts.length > 1)
+		{
+			for (var i = 1; i < parts.length; i++)
+			{
+				parts[i] = parts[i].substr(0, 1).toUpperCase() + parts[i].substr(1);
+			}
+		}
+		return parts.join("");
 	},
 	isExternalLink: function(link)
 	{
@@ -997,34 +871,20 @@ Wikifier.formatters =
 			{	// 1=(text), 2=(~), 3=link, 4=(set)
 				w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 
-				var   el
-					, link  = Wikifier.formatterHelpers.evalPassageId(match[3])
+				var   link  = Wikifier.formatterHelpers.evalPassageId(match[3])
+					, text  = match[1] ? Wikifier.formatterHelpers.evalExpression(match[1]) : link
 					, setFn = match[4]
 						? function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(match[4]))
 						: null;
 				if (!match[2] && Wikifier.formatterHelpers.isExternalLink(link))
 				{
-					el = Wikifier.createExternalLink(w.output, link)
+					Wikifier.createExternalLink(w.output, link, text)
 				}
 				else
 				{
-					el = Wikifier.createInternalLink(w.output, link, null, setFn);
+					Wikifier.createInternalLink(w.output, link, text, setFn);
 				}
-				if (match[1])
-				{
-					if (/^\$\w+/.test(match[1]))
-					{
-						insertText(el, Wikifier.getValue(match[1]));
-					}
-					else
-					{
-						new Wikifier(el, match[1]);
-					}
-				}
-				else
-				{
-					insertText(el, link);
-				}
+
 			}
 		}
 	}
@@ -1139,7 +999,7 @@ Wikifier.formatters =
 					}
 					if (typeof macro[handlerName] === "function")
 					{
-						var args = (!macro.hasOwnProperty("skipArgs") || !macro["skipArgs"]) ? macroArgs.readMacroParams() : [];
+						var args = (!macro.hasOwnProperty("skipArgs") || !macro["skipArgs"]) ? this.parseArgs(macroArgs) : [];
 
 						// new-style macros
 						if (macro.hasOwnProperty("_USE_MACROS_API"))
@@ -1340,6 +1200,116 @@ Wikifier.formatters =
 			return payload;
 		}
 		return null;
+	},
+	parseArgs: function (str)
+	{
+		// Groups: 1=double quoted | 2=single quoted | 3=empty quotes | 4=double square-bracketed | 5=barewords
+		var   re    = new RegExp(Wikifier.textPrimitives.macroArg, "gm")
+			, match
+			, args  = [];
+
+		while ((match = re.exec(str)) !== null)
+		{
+			var arg;
+
+			// Double quoted
+			if (match[1]) { arg = match[1]; }
+
+			// Single quoted
+			else if (match[2]) { arg = match[2]; }
+
+			// Empty quotes
+			else if (match[3]) { arg = ""; }
+
+			// Double square-bracketed
+			else if (match[4])
+			{
+				arg = match[4];
+
+				// Convert to an object
+				var   linkRe    = new RegExp(Wikifier.textPrimitives.link)
+					, linkMatch = linkRe.exec(arg)
+					, linkObj   = {};
+				if (linkMatch !== null)
+				{	// 1=(text), 2=(~), 3=link, 4=(set)
+					linkObj.count      = linkMatch[1] ? 2 : 1;
+					linkObj.link       = Wikifier.formatterHelpers.evalPassageId(linkMatch[3]);
+					linkObj.text       = linkMatch[1] ? Wikifier.formatterHelpers.evalExpression(linkMatch[1]) : linkObj.link;
+					linkObj.isExternal = !linkMatch[2] && Wikifier.formatterHelpers.isExternalLink(linkObj.link);
+					linkObj.setFn      = linkMatch[4]
+						? function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(linkMatch[4]))
+						: null;
+					arg = linkObj;
+				}
+			}
+
+			// Barewords
+			else if (match[5])
+			{
+				arg = match[5];
+
+				// $variable, so substitute its value
+				if (/^\$\w+/.test(arg))
+				{
+					arg = Wikifier.getValue(arg);
+				}
+
+				// options or setup object, so try to evaluate it
+				else if (/^(?:options|setup)[\.\[]/.test(arg))
+				{
+					try
+					{
+						arg = Wikifier.evalExpression(arg);
+					}
+					catch (e)
+					{
+						throw new Error('unable to parse macro argument "' + arg + '"; ' + e.message);
+					}
+				}
+
+				// Object or Array literal, so try to evaluate it
+				// n.b. Authors really shouldn't be passing object/array literals as arguments.  If they want to pass a
+				//      complex type, store it in a variable and pass that instead.
+				else if (/^(?:\{.*\}|\[.*\])$/.test(arg))
+				{
+					try
+					{
+						arg = Wikifier.evalExpression(arg);
+					}
+					catch (e)
+					{
+						throw new Error('unable to parse macro argument "' + arg + '"; ' + e.message);
+					}
+				}
+
+				// Null literal, so convert it into null
+				else if (arg === "null") { arg = null; }
+
+				// Undefined literal, so convert it into undefined
+				else if (arg === "undefined") { arg = undefined; }
+
+				// Boolean literal, so convert it into a boolean
+				else if (arg === "true") { arg = true; }
+				else if (arg === "false") { arg = false; }
+
+				// Numeric literal, so convert it into a number
+				else if (!isNaN(parseFloat(arg)) && isFinite(arg))
+				{
+					// n.b. Octal literals are not handled correctly by Number() (e.g. Number("077") yields 77, not 63).
+					//      We could use eval("077") instead, which does correctly yield 63, however, it's probably far
+					//      more likely that the average Twine/Twee author would expect "077" to yield 77 rather than 63.
+					//      So, we cater to author expectation and use Number().
+					//
+					//      Besides, octal literals are browser extensions, which aren't part of the ECMAScript standard,
+					//      and are considered deprecated in most (all?) browsers anyway.
+					arg = Number(arg);
+				}
+			}
+
+			args.push(arg);
+		}
+
+		return args;
 	}
 },
 
