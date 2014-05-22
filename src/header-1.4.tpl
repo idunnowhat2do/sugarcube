@@ -105,7 +105,7 @@ testPlay = "START_AT";
 		</nav>
 		<footer>
 			<p id="credits">This story was created with <a href="http://twinery.org/" target="_blank">Twine</a> and is powered by <a href="http://www.motoslave.net/sugarcube/" target="_blank">SugarCube</a>, which is based on <a href="http://tiddlywiki.com/" target="_blank">TiddlyWiki</a></p>
-			<p id="version">SugarCube (&#x03b2;-[($BUILD$)])</p>
+			<p id="version">SugarCube (r[($BUILD$)])</p>
 		</footer>
 	</div>
 
