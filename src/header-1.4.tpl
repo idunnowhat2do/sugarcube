@@ -111,6 +111,6 @@ testPlay = "START_AT";
 
 	<div role="main" id="passages"><noscript>Please enable JavaScript to play this story!</noscript></div>
 
-	<div id="store-area" data-size="STORY_SIZE">"STORY"</div>
+	<div id="store-area" data-size="STORY_SIZE" hidden>"STORY"</div>
 </body>
 </html>

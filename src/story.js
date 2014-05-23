@@ -582,6 +582,9 @@ History.popStateHandler_sessionHistory = function (evt)
 	// no-op if state is null
 	if (!History.hasWindowState(evt)) { return; }
 
+	// close any open UI dialog
+	if (UISystem.isOpen()) { UISystem.close(); }
+
 	var windowState = History.getWindowState(evt);
 
 	// update the history stack if necessary
@@ -602,6 +605,9 @@ History.popStateHandler_windowHistory = function (evt)
 
 	// no-op if state is null
 	if (!History.hasWindowState(evt)) { return; }
+
+	// close any open UI dialog
+	if (UISystem.isOpen()) { UISystem.close(); }
 
 	var windowState = History.getWindowState(evt);
 

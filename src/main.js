@@ -1203,6 +1203,10 @@ var UISystem =
 		// show the dialog
 		UISystem.show(options, closeFunc);
 	},
+	isOpen: function ()
+	{
+		return document.body.classList.contains("ui-open");
+	},
 	addClickHandler: function (target, options, startFunc, doneFunc, closeFunc)
 	{
 		$(target).click(function (evt) {

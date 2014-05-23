@@ -41,12 +41,6 @@ button
 	-webkit-transition-duration: 200ms;
 	-moz-transition-duration: 200ms;
 	transition-duration: 200ms;
-	-webkit-user-select: none;
-	-khtml-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
-	-o-user-select: none;
-	user-select: none;
 }
 button:hover { background-color: #58e; border: 1px solid #7af; }
 button:active { background-color: #f70; border: 1px solid #f92; }
@@ -121,11 +115,12 @@ body.ui-open { overflow: hidden; }
 	font-size: 111%;
 	margin: 0;
 	padding: 2px;
-	color: #c00;
-	background-color: #333;
-	border: 1px solid #c00;
+	color: #fff;
+	background-color: #36c;
+	border: 1px solid #fff;
 }
-#ui-body-close:hover, #ui-body-close:active { color: #f00; border: 1px solid #f00; }
+#ui-body-close:hover { background-color: #58e; }
+#ui-body-close:active { background-color: #f70; }
 #ui-body
 {
 	display: none;
@@ -199,12 +194,6 @@ body.ui-open { overflow: hidden; }
 #ui-body.rewind div, #ui-body.share div, #ui-body.share a
 {
 	padding: 0.15em 0.75em;
-	-webkit-user-select: none;
-	-khtml-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
-	-o-user-select: none;
-	user-select: none;
 }
 #ui-body.rewind div:nth-child(even), #ui-body.share div:nth-child(even), #ui-body.share a:nth-child(even)
 {
@@ -264,12 +253,6 @@ body.ui-open { overflow: hidden; }
 	-webkit-transition-duration: 200ms;
 	-moz-transition-duration: 200ms;
 	transition-duration: 200ms;
-	-webkit-user-select: none;
-	-khtml-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
-	-o-user-select: none;
-	user-select: none;
 	white-space: nowrap;
 }
 #ui-body.options a[id|="option-input"]:hover
@@ -300,6 +283,17 @@ body.ui-open { overflow: hidden; }
 .passage table { margin: 0.8em 1.0em; border-collapse: collapse; font-size: 100%; }
 .passage th, .passage td, .passage tr, .passage caption { padding: 3px; }
 .passage hr { height: 1px; border: none; background-color: #fff; }
+
+/* Stop text selection on UI widgets */
+button, #ui-body-close, #ui-body.rewind div, #ui-body.share div, #ui-body.share a, #ui-body.options a[id|="option-input"]
+{
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+	user-select: none;
+}
 
 /* Basic mobile device styling */
 @media screen and (max-width: 768px)
