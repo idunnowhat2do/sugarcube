@@ -74,7 +74,7 @@ button:active { background-color: #f70; border: 1px solid #f92; }
 
 [data-icon], a.link-back:before, a.link-return:after, a.link-external:after,
 #menu-saves a:before, #menu-rewind a:before, #menu-restart a:before, #menu-options a:before, #menu-share a:before,
-#ui-body.options a[id|="option-input"]:before, #ui-body.options a[id|="option-input"].enabled:before
+#ui-body-close, #ui-body.options a[id|="option-input"]:before, #ui-body.options a[id|="option-input"].enabled:before
 {
 	font-family: 'icomoon-sugarcube';
 	speak: none;
@@ -112,6 +112,20 @@ body.ui-open { overflow: hidden; }
 	width: 100%;
 	background-color: #000;
 }
+#ui-body-close
+{
+	display: none;
+	z-index: 1200;
+	opacity: 1;
+	position: fixed;
+	font-size: 111%;
+	margin: 0;
+	padding: 2px;
+	color: #c00;
+	background-color: #333;
+	border: 1px solid #c00;
+}
+#ui-body-close:hover, #ui-body-close:active { color: #f00; border: 1px solid #f00; }
 #ui-body
 {
 	display: none;
@@ -181,7 +195,7 @@ body.ui-open { overflow: hidden; }
 #saves-import-file { margin: 0 6px 6px; }
 
 /* Rewind & Share menu styling */
-#ui-body.share a { display: block; color: #fff; font-weight: normal; text-decoration: none; }
+#ui-body.share > a { display: block; color: #fff; font-weight: normal; text-decoration: none; }
 #ui-body.rewind div, #ui-body.share div, #ui-body.share a
 {
 	padding: 0.15em 0.75em;

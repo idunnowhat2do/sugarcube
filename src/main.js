@@ -660,12 +660,21 @@ var SaveSystem =
 ***********************************************************************************************************************/
 var UISystem =
 {
+	_overlay: null,
+	_body: null,
+	_bodyClose: null,
 	init: function ()
 	{
 		DEBUG("[UISystem.init()]");
 
 		var   html   = $(document.documentElement)
 			, target;
+
+		// add UI dialog elements to <body>
+		UISystem._overlay = insertElement(document.body, "div", "ui-overlay", "ui-close");
+		UISystem._body = insertElement(document.body, "div", "ui-body");
+		UISystem._bodyClose = insertElement(document.body, "a", "ui-body-close", "ui-close");
+		insertText(UISystem._bodyClose, "\ue002");
 
 		// setup for the non-passage page elements
 		if (tale.has("StoryCaption"))
@@ -678,10 +687,6 @@ var UISystem =
 		}
 		setPageElement("story-title", "StoryTitle", tale.title);
 		UISystem.setPageElements();
-
-		// add menu containers to <body>
-		insertElement(document.body, "div", "ui-overlay");
-		insertElement(document.body, "div", "ui-body");
 
 		// setup Saves menu
 		UISystem.addClickHandler("#menu-saves", null, function () { UISystem.buildSaves(); });
@@ -940,7 +945,7 @@ var UISystem =
 
 		DEBUG("[UISystem.buildSaves()]");
 
-		var   dialog  = document.getElementById("ui-body")
+		var   dialog  = UISystem._body
 			, list
 			, btnBar
 			, savesOK = SaveSystem.OK();
@@ -998,7 +1003,7 @@ var UISystem =
 	{
 		DEBUG("[UISystem.buildRewind()]");
 
-		var   dialog   = document.getElementById("ui-body")
+		var   dialog   = UISystem._body
 			, hasItems = false;
 
 		$(dialog)
@@ -1145,7 +1150,7 @@ var UISystem =
 	{
 		DEBUG("[UISystem.buildRestart()]");
 
-		var dialog = document.getElementById("ui-body");
+		var dialog = UISystem._body;
 
 		$(dialog)
 			.empty()
@@ -1163,7 +1168,7 @@ var UISystem =
 	{
 		DEBUG("[UISystem.buildOptions()]");
 
-		var dialog = document.getElementById("ui-body");
+		var dialog = UISystem._body;
 
 		$(dialog)
 			.empty()
@@ -1176,7 +1181,7 @@ var UISystem =
 	{
 		DEBUG("[UISystem.buildShare()]");
 
-		var dialog = document.getElementById("ui-body");
+		var dialog = UISystem._body;
 
 		$(dialog)
 			.empty()
@@ -1188,7 +1193,7 @@ var UISystem =
 	},
 	alert: function (message, options, closeFunc)
 	{
-		var dialog = document.getElementById("ui-body");
+		var dialog = UISystem._body;
 
 		$(dialog)
 			.empty()
@@ -1223,8 +1228,8 @@ var UISystem =
 			.on("click.uisystem-close", ".ui-close", closeFunc, UISystem.close);
 
 		// display the overlay
-		$("#ui-overlay")
-			.addClass("ui-close")
+		$(UISystem._overlay)
+			//.addClass("ui-close")
 			.css({
 				  display: "block"
 				, opacity: 0
@@ -1232,9 +1237,13 @@ var UISystem =
 			.fadeTo(200, options.opacity);
 
 		// display the dialog
-		$("#ui-body")
-			.css($.extend({ display: "block", opacity: 0 }, UISystem.calcPositionalProperties(options.top)))
+		var position = UISystem.calcPositionalProperties(options.top);
+		$(UISystem._body)
+			.css($.extend({ display: "block", opacity: 0 }, position.dialog))
 			.fadeTo(200, 1);
+		$(UISystem._bodyClose)
+			.css($.extend({ display: "block", opacity: 0 }, position.closer))
+			.fadeTo(180, 1);
 
 		// add the UI resize handler
 		$(window)
@@ -1245,7 +1254,7 @@ var UISystem =
 		// pretty much reverse the actions taken in UISystem.show()
 		$(window)
 			.off("resize.uisystem");
-		$("#ui-body")
+		$(UISystem._body)
 			.css({
 				  display: "none"
 				, opacity: 0
@@ -1256,8 +1265,15 @@ var UISystem =
 			})
 			.removeClass()
 			.empty();	// .empty() here will break static menus
+		$(UISystem._bodyClose)
+			.css({
+				  display: "none"
+				, opacity: 0
+				, right:   ""
+				, top:     ""
+			});
 		/*
-		$("#ui-overlay")
+		$(UISystem._overlay)
 			.css({
 				  "display": "none"
 				, "opacity": 0
@@ -1265,9 +1281,9 @@ var UISystem =
 			.fadeOut(200)
 			.removeClass();
 		*/
-		$("#ui-overlay")
-			.fadeOut(200)
-			.removeClass();
+		$(UISystem._overlay)
+			.fadeOut(200);
+			//.removeClass();
 		$(document.body)
 			.off("click.uisystem-close")
 			.removeClass("ui-open");
@@ -1280,52 +1296,69 @@ var UISystem =
 	},
 	resizeHandler: function (evt)
 	{
-		var   dialog = $("#ui-body")
+		var   dialog = $(UISystem._body)
+			, closer = $(UISystem._bodyClose)
 			, topPos = (evt && typeof evt.data !== "undefined") ? evt.data : 50;
 
 		if (dialog.css("display") === "block")
 		{
 			// stow the dialog and unset its positional properties (this is important!)
 			dialog.css({ display: "none", left: "", right: "", top: "", bottom: "" });
+			closer.css({ display: "none", right: "", top: "" });
 
 			// restore the dialog with its new positional properties
-			dialog.css($.extend({ display: "block" }, UISystem.calcPositionalProperties(topPos)));
+			var position = UISystem.calcPositionalProperties(options.top);
+			dialog.css($.extend({ display: "block" }, position.dialog));
+			closer.css($.extend({ display: "block" }, position.closer));
 		}
 	},
 	calcPositionalProperties: function (topPos)
 	{
 		if (typeof topPos === "undefined") { topPos = 50; }
 
-		var   parent      = $(window)
-			, dialog      = $("#ui-body")
-			, dialogStyle = { left: "", right: "", top: "", bottom: "" }
-			, horzSpace   = parent.width() - dialog.outerWidth(true)
-			, vertSpace   = parent.height() - dialog.outerHeight(true);
+		var   parent    = $(window)
+			, dialog    = $(UISystem._body)
+			, dialogPos = { left: "", right: "", top: "", bottom: "" }
+			, closer    = $(UISystem._bodyClose)
+			, closerPos = { right: "", top: "" }
+			, horzSpace = parent.width() - dialog.outerWidth(true)
+			, vertSpace = parent.height() - dialog.outerHeight(true);
 
 		if (horzSpace <= 20)
 		{
-			dialogStyle.left = dialogStyle.right = "10px";
+			dialogPos.left = dialogPos.right = 10;
 		}
 		else
 		{
-			dialogStyle.left = dialogStyle.right = ~~(horzSpace / 2) + "px";
+			dialogPos.left = dialogPos.right = ~~(horzSpace / 2);
 		}
 		if (vertSpace <= 20)
 		{
-			dialogStyle.top = dialogStyle.bottom = "10px";
+			dialogPos.top = dialogPos.bottom = 10;
 		}
 		else
 		{
 			if ((vertSpace / 2) > topPos)
 			{
-				dialogStyle.top = topPos + "px";
+				dialogPos.top = topPos;
 			}
 			else
 			{
-				dialogStyle.top = dialogStyle.bottom = ~~(vertSpace / 2) + "px";
+				dialogPos.top = dialogPos.bottom = ~~(vertSpace / 2);
 			}
 		}
-		return dialogStyle;
+
+		closerPos.right = (dialogPos.right - ~~(closer.outerWidth(true) * 0.6)) + "px";
+		closerPos.top = (dialogPos.top - ~~(closer.outerHeight(true) * 0.6)) + "px";
+		for (var p in dialogPos)
+		{
+			if (dialogPos[p] !== "")
+			{
+				dialogPos[p] += "px";
+			}
+		}
+
+		return { dialog: dialogPos, closer: closerPos };
 	}
 };
 
