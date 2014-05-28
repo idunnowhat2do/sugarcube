@@ -1040,7 +1040,7 @@ var UISystem =
 								// load the state into the window history
 								History.replaceWindowState(
 									  { suid: state.suid, sidx: state.history[p].sidx }
-									, (config.displayPassageTitles && state.history[p].title !== "Start")
+									, (config.displayPassageTitles && state.history[p].title !== config.startPassage)
 										? tale.title + ": " + state.history[p].title
 										: tale.title
 								);
@@ -1054,19 +1054,20 @@ var UISystem =
 									// load the state into the window history
 									History.addWindowState(
 										  { suid: state.suid, sidx: state.history[i].sidx }
-										, (config.displayPassageTitles && state.history[i].title !== "Start")
+										, (config.displayPassageTitles && state.history[i].title !== config.startPassage)
 											? tale.title + ": " + state.history[i].title
 											: tale.title
 									);
 								}
 							}
 
-							if (window.history.state.sidx < state.top.sidx)
+							var windowState = History.getWindowState();
+							if (windowState.sidx < state.top.sidx)
 							{
-								DEBUG("    > stacks out of sync; popping " + (state.top.sidx - window.history.state.sidx) + " states to equalize");
+								DEBUG("    > stacks out of sync; popping " + (state.top.sidx - windowState.sidx) + " states to equalize");
 								// stack ids are out of sync, pop our stack until
 								// we're back in sync with the window.history
-								state.pop(state.top.sidx - window.history.state.sidx);
+								state.pop(state.top.sidx - windowState.sidx);
 							}
 
 							// activate the current top
@@ -1100,7 +1101,7 @@ var UISystem =
 									}
 									History.addWindowState(
 										  stateObj
-										, (config.displayPassageTitles && state.history[i].title !== "Start")
+										, (config.displayPassageTitles && state.history[i].title !== config.startPassage)
 											? tale.title + ": " + state.history[i].title
 											: tale.title
 									);
@@ -1328,17 +1329,17 @@ var UISystem =
 			, horzSpace = parent.width() - dialog.outerWidth(true)
 			, vertSpace = parent.height() - dialog.outerHeight(true);
 
-		if (horzSpace <= 20)
+		if (horzSpace <= 32)
 		{
-			dialogPos.left = dialogPos.right = 10;
+			dialogPos.left = dialogPos.right = 16;
 		}
 		else
 		{
 			dialogPos.left = dialogPos.right = ~~(horzSpace / 2);
 		}
-		if (vertSpace <= 20)
+		if (vertSpace <= 32)
 		{
-			dialogPos.top = dialogPos.bottom = 10;
+			dialogPos.top = dialogPos.bottom = 16;
 		}
 		else
 		{
@@ -1352,8 +1353,8 @@ var UISystem =
 			}
 		}
 
-		closerPos.right = (dialogPos.right - ~~(closer.outerWidth(true) * 0.6)) + "px";
-		closerPos.top = (dialogPos.top - ~~(closer.outerHeight(true) * 0.6)) + "px";
+		closerPos.right = (dialogPos.right - closer.outerWidth(true) + 6) + "px";
+		closerPos.top = (dialogPos.top - closer.outerHeight(true) + 6) + "px";
 		for (var p in dialogPos)
 		{
 			if (dialogPos[p] !== "")
