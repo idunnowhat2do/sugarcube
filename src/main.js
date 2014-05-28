@@ -662,7 +662,7 @@ var UISystem =
 {
 	_overlay: null,
 	_body: null,
-	_bodyClose: null,
+	_closer: null,
 	init: function ()
 	{
 		DEBUG("[UISystem.init()]");
@@ -673,8 +673,8 @@ var UISystem =
 		// add UI dialog elements to <body>
 		UISystem._overlay = insertElement(document.body, "div", "ui-overlay", "ui-close");
 		UISystem._body = insertElement(document.body, "div", "ui-body");
-		UISystem._bodyClose = insertElement(document.body, "a", "ui-body-close", "ui-close");
-		insertText(UISystem._bodyClose, "\ue002");
+		UISystem._closer = insertElement(document.body, "a", "ui-body-close", "ui-close");
+		insertText(UISystem._closer, "\ue002");
 
 		// setup for the non-passage page elements
 		if (tale.has("StoryCaption"))
@@ -1235,10 +1235,7 @@ var UISystem =
 		// display the overlay
 		$(UISystem._overlay)
 			//.addClass("ui-close")
-			.css({
-				  display: "block"
-				, opacity: 0
-			})
+			.css({ display: "block", opacity: 0 })
 			.fadeTo(200, options.opacity);
 
 		// display the dialog
@@ -1246,9 +1243,9 @@ var UISystem =
 		$(UISystem._body)
 			.css($.extend({ display: "block", opacity: 0 }, position.dialog))
 			.fadeTo(200, 1);
-		$(UISystem._bodyClose)
+		$(UISystem._closer)
 			.css($.extend({ display: "block", opacity: 0 }, position.closer))
-			.fadeTo(180, 1);
+			.fadeTo(50, 1);
 
 		// add the UI resize handler
 		$(window)
@@ -1261,27 +1258,27 @@ var UISystem =
 			.off("resize.uisystem");
 		$(UISystem._body)
 			.css({
-				  display: "none"
-				, opacity: 0
-				, left:    ""
-				, right:   ""
-				, top:     ""
-				, bottom:  ""
+				  display : "none"
+				, opacity : 0
+				, left    : ""
+				, right   : ""
+				, top     : ""
+				, bottom  : ""
 			})
 			.removeClass()
 			.empty();	// .empty() here will break static menus
-		$(UISystem._bodyClose)
+		$(UISystem._closer)
 			.css({
-				  display: "none"
-				, opacity: 0
-				, right:   ""
-				, top:     ""
+				  display : "none"
+				, opacity : 0
+				, right   : ""
+				, top     : ""
 			});
 		/*
 		$(UISystem._overlay)
 			.css({
-				  "display": "none"
-				, "opacity": 0
+				  display : "none"
+				, opacity : 0
 			})
 			.fadeOut(200)
 			.removeClass();
@@ -1302,7 +1299,7 @@ var UISystem =
 	resizeHandler: function (evt)
 	{
 		var   dialog = $(UISystem._body)
-			, closer = $(UISystem._bodyClose)
+			, closer = $(UISystem._closer)
 			, topPos = (evt && typeof evt.data !== "undefined") ? evt.data : 50;
 
 		if (dialog.css("display") === "block")
@@ -1324,7 +1321,7 @@ var UISystem =
 		var   parent    = $(window)
 			, dialog    = $(UISystem._body)
 			, dialogPos = { left: "", right: "", top: "", bottom: "" }
-			, closer    = $(UISystem._bodyClose)
+			, closer    = $(UISystem._closer)
 			, closerPos = { right: "", top: "" }
 			, horzSpace = parent.width() - dialog.outerWidth(true)
 			, vertSpace = parent.height() - dialog.outerHeight(true);
