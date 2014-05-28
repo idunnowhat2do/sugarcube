@@ -342,16 +342,26 @@ History.prototype.display = function (title, link, option)
 	// handle autosaves
 	if (typeof config.saves.autosave !== "undefined")
 	{
-		if (typeof config.saves.autosave === "boolean")
+		switch (typeof config.saves.autosave)
 		{
+		case "boolean":
 			if (config.saves.autosave)
 			{
 				SaveSystem.saveAuto();
 			}
-		}
-		else if (passage.tags.contains(config.saves.autosave))
-		{
-			SaveSystem.saveAuto();
+			break;
+		case "string":
+			if (passage.tags.contains(config.saves.autosave))
+			{
+				SaveSystem.saveAuto();
+			}
+			break;
+		case "object":
+			if (Array.isArray(config.saves.autosave) && passage.tags.some(function (v) { return config.saves.autosave.contains(v); }))
+			{
+				SaveSystem.saveAuto();
+			}
+			break;
 		}
 	}
 
