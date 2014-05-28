@@ -163,7 +163,7 @@ History.prototype.display = function (title, link, option)
 	// n.b. the title parameter can either be a passage title (string) or passage ID (number), so
 	//      after loading the passage, always refer to passage.title and never the title parameter
 	var   passage     = tale.get(title)
-		, windowTitle = (config.displayPassageTitles && passage.title !== "Start")
+		, windowTitle = (config.displayPassageTitles && passage.title !== config.startPassage)
 				? tale.title + ": " + passage.title
 				: tale.title;
 
@@ -302,7 +302,7 @@ History.prototype.display = function (title, link, option)
 
 		if (config.historyMode === modes.hashTag)
 		{
-			if (config.displayPassageTitles && passage.title !== "Start")
+			if (config.displayPassageTitles && passage.title !== config.startPassage)
 			{
 				document.title = windowTitle;
 			}
@@ -769,7 +769,7 @@ History.unmarshal = function (stateObj)
 			if (!config.disableHistoryControls)
 			{
 				var   windowState
-					, windowTitle = (config.displayPassageTitles && state.history[i].title !== "Start")
+					, windowTitle = (config.displayPassageTitles && state.history[i].title !== config.startPassage)
 						? tale.title + ": " + state.history[i].title
 						: tale.title;
 				switch (config.historyMode)
