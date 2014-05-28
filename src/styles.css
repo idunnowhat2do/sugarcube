@@ -42,16 +42,19 @@ button
 	-moz-transition-duration: 200ms;
 	transition-duration: 200ms;
 }
-button:hover { background-color: #58e; border: 1px solid #7af; }
-button:active { background-color: #f70; border: 1px solid #f92; }
+button:hover { background-color: #58e; border-color: #7af; }
+button:active { background-color: #f70; border-color: #f92; }
 .error { margin: 0 12px 0 3px; padding: 3px 5px; color: #000; background-color: red; font-weight: bold; }
 .error[title] { cursor: help; }
 .highlight, .marked { color: yellow; font-weight: bold; font-style: italic; }
 .transition-in { opacity: 0; }
 
-#store-area { display: none; }
+#store-area { display: none; z-index: 0; }
 
-#ui-bar { position: fixed; top: 3.5em; left: 3.5em; width: 14.5em; margin: 0; padding: 0 1.5em 0 0; border-right: 1px solid #fff; }
+/* FULL SIDEBAR PROTOTYPE
+#ui-bar { position: fixed; z-index: 50; top: 0; left: 0; width: 14.5em; height: 100%; margin: 0; padding: 3.5em 1.5em 0 3.5em; background-color: #111; border-right: 1px solid #fff; }
+*/
+#ui-bar { position: fixed; z-index: 50; top: 3.5em; left: 3.5em; width: 14.5em; margin: 0; padding: 0 1.5em 0 0; border-right: 1px solid #fff; }
 #ui-bar header, #ui-bar nav, #ui-bar footer { text-align: right; }
 #ui-bar header, #ui-bar nav { font-weight: bold; }
 #ui-bar nav, #ui-bar footer { margin-top: 3em; }
@@ -109,18 +112,29 @@ body.ui-open { overflow: hidden; }
 #ui-body-close
 {
 	display: none;
-	z-index: 1200;
+	z-index: 1110;
 	opacity: 1;
 	position: fixed;
+	cursor: pointer;
 	font-size: 111%;
 	margin: 0;
-	padding: 2px;
+	padding: 3px 4px;
+	font-weight: normal;
 	color: #fff;
 	background-color: #36c;
-	border: 1px solid #fff;
+	border: 1px solid #58e;
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+	text-decoration: none;
+	text-shadow: 1px 1px rgba(0, 0, 0, 0.4);
+	-webkit-transition-duration: 200ms;
+	-moz-transition-duration: 200ms;
+	transition-duration: 200ms;
+	white-space: nowrap;
 }
-#ui-body-close:hover { background-color: #58e; }
-#ui-body-close:active { background-color: #f70; }
+#ui-body-close:hover { background-color: #58e; border-color: #7af; }
+#ui-body-close:active { background-color: #f70; border-color: #f92; }
 #ui-body
 {
 	display: none;
@@ -258,26 +272,26 @@ body.ui-open { overflow: hidden; }
 #ui-body.options a[id|="option-input"]:hover
 {
 	background-color: #58e;
-	border: 1px solid #7af;
-	text-decoration: none;
+	border-color: #7af;
 }
 #ui-body.options a[id|="option-input"].enabled
 {
 	background-color: #292;
-	border: 1px solid #4b4;
-	text-decoration: none;
+	border-color: #4b4;
 }
 #ui-body.options a[id|="option-input"].enabled:hover
 {
 	background-color: #4b4;
-	border: 1px solid #6d6;
-	text-decoration: none;
+	border-color: #6d6;
 }
 #ui-body.options a[id|="option-input"]:before { content: "\e002\00a0\00a0"; }
 #ui-body.options a[id|="option-input"].enabled:before { content: "\e003\00a0\00a0"; }
 
 /* Passages area styling */
-#passages { margin-left: 16em; padding-left: 1.5em; border-left: 1px solid #fff; }
+/* FULL SIDEBAR PROTOTYPE
+#passages { z-index: 10; margin-left: 16em; padding-left: 1.5em; }
+*/
+#passages { z-index: 10; margin-left: 16em; padding-left: 1.5em; border-left: 1px solid #fff; }
 .passage { line-height: 1.75; margin-bottom: 2em; text-align: left; transition: opacity 400ms ease-in; -webkit-transition: opacity 400ms ease-in; }
 .passage ul, .passage ol { margin-left: 0.5em; padding-left: 1.5em; }
 .passage table { margin: 0.8em 1.0em; border-collapse: collapse; font-size: 100%; }
@@ -300,6 +314,9 @@ button, #ui-body-close, #ui-body.rewind div, #ui-body.share div, #ui-body.share 
 {
 	body { margin: 3.5%; }
 
+	/* FULL SIDEBAR PROTOTYPE
+	#ui-bar { position: relative; top: 0; left: 0; width: 100%; margin: 0; padding: 0; background-color: transparent; border-right: none; border-bottom: 1px solid #fff; }
+	*/
 	#ui-bar { position: relative; top: 0; left: 0; width: 100%; margin: 0; padding: 0; border-right: none; border-bottom: 1px solid #fff; }
 	#ui-bar header, #ui-bar #story-caption, #ui-bar footer { text-align: left; width: 60%; }
 	#ui-bar nav { position: absolute; top: 0; right: 0; margin: 0; }
