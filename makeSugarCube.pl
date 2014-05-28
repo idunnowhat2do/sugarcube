@@ -7,7 +7,7 @@
 #
 #     Author   :  Thomas Michael Edwards <tmedwards@motoslave.net>
 #     Copyright:  Copyright © 2013–2014 Thomas Michael Edwards. All rights reserved.
-#     Version  :  r24, 2014-05-21
+#     Version  :  r25, 2014-05-27
 #
 ################################################################################
 
@@ -156,9 +156,9 @@ if ($opt_minify)
 
 	# Closure Compiler post-processing
 	$pipeout =~ tr/\r\n//d;
-	$pipeout =~ s/evalStatements:function\(\w+,(\w+)\){try{/$&var output=$1.output;/;
+	$pipeout =~ s/evalStatements:function\(\w+,(\w+)\){try{/$&var thisp=$1;/;
 	die("error: unable to patch macros.evalStatements() [Closure Compiler kludge]\n")
-		if ($pipeout !~ m/evalStatements:function\(\w+,(\w+)\){try{var output=\1.output;/);
+		if ($pipeout !~ m/evalStatements:function\(\w+,(\w+)\){try{var thisp=\1;/);
 
 	$scripts = $pipeout;
 }

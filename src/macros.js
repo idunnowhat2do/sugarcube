@@ -149,20 +149,23 @@ function Macros()
 			"use strict";
 			try
 			{
-				var output = thisp.output;
-				eval("(function(){" + statements + "}());");
+				if (thisp == null)	// use lazy equality
+				{
+					eval('var output = document.createElement("div");(function(){' + statements + '}());');
+				}
+				else
+				{
+					eval("var output = thisp.output;(function(){" + statements + "}).call(thisp);");
+				}
 				return true;
 			}
 			catch (e)
 			{
-				if (thisp != null)	// use lazy equality
+				if (thisp == null)	// use lazy equality
 				{
-					return thisp.error("bad expression: " + e.message);
+					throw e;
 				}
-				else
-				{
-					throw new Error("bad expression: " + e.message);
-				}
+				return thisp.error("bad expression: " + e.message);
 			}
 		},
 		registerTags: function (parent, bodyTags)
