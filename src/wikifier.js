@@ -69,7 +69,7 @@ Wikifier.prototype.subWikify = function (output, terminator, terminatorIgnoreCas
 			// Restore the output pointer and exit
 			this.output = oldOutput;
 			return;
-		} else if (formatterMatch) {	// formatter match
+		} else if (formatterMatch) {  // formatter match
 			// Output any text before the match
 			if (formatterMatch.index > this.nextMatch) {
 				this.outputText(this.output, this.nextMatch, formatterMatch.index);
@@ -86,7 +86,7 @@ Wikifier.prototype.subWikify = function (output, terminator, terminatorIgnoreCas
 			for (var i = 1; i < formatterMatch.length; i++) {
 				if (formatterMatch[i]) {
 					matchingFormatter = i - 1;
-					break;	// stop once we've found the matching formatter
+					break;  // stop once we've found the matching formatter
 				}
 			}
 
@@ -381,8 +381,8 @@ Wikifier.textPrimitives.doubleBracketed = "(?:(\\[\\[(?:\\s|\\S)*?\\]\\]))";
 Wikifier.textPrimitives.barewords       = "([^\"'`\\s]\\S*)";
 
 Wikifier.textPrimitives.url      = "(?:file|https?|mailto|ftp|javascript|irc|news|data):[^\\s'\"]+(?:/|\\b)";
-Wikifier.textPrimitives.link     = "\\[\\[\\s*(?:(.+?)\\s*\\|\\s*)?(~)?(.+?)\\s*\\](?:\\[\\s*(.+?)\\s*\\])?\\]";	// 1=(text), 2=(~), 3=link, 4=(set)
-Wikifier.textPrimitives.image    = "\\[([<]?)([>]?)[Ii][Mm][Gg]\\[\\s*(?:(.+?)\\s*\\|\\s*)?([^\\|]+?)\\s*\\](?:\\[\\s*(~)?(.+?)\\s*\\])?(?:\\[\\s*(.+?)\\s*\\])?\\]";	// 1=(left), 2=(right), 3=(title), 4=source, 5=(~), 6=(link), 7=(set)
+Wikifier.textPrimitives.link     = "\\[\\[\\s*(?:(.+?)\\s*\\|\\s*)?(~)?(.+?)\\s*\\](?:\\[\\s*(.+?)\\s*\\])?\\]";  // 1=(text), 2=(~), 3=link, 4=(set)
+Wikifier.textPrimitives.image    = "\\[([<]?)([>]?)[Ii][Mm][Gg]\\[\\s*(?:(.+?)\\s*\\|\\s*)?([^\\|]+?)\\s*\\](?:\\[\\s*(~)?(.+?)\\s*\\])?(?:\\[\\s*(.+?)\\s*\\])?\\]";  // 1=(left), 2=(right), 3=(title), 4=source, 5=(~), 6=(link), 7=(set)
 Wikifier.textPrimitives.macroArg = "(?:" + [
 		Wikifier.textPrimitives.doubleQuoted,    // 1=double quoted
 		Wikifier.textPrimitives.singleQuoted,    // 2=single quoted
@@ -487,7 +487,7 @@ Wikifier.formatterHelpers = {
  * Setup the wiki formatters
  */
 Wikifier.formatters =
-[	// Begin formatters
+[  // Begin formatters
 
 {
 	name: "table",
@@ -738,7 +738,8 @@ Wikifier.formatters =
 		if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
 			var re    = new RegExp("^" + Wikifier.textPrimitives.link + "$"),
 				match = re.exec(lookaheadMatch[0]);
-			if (match !== null) {	// 1=(text), 2=(~), 3=link, 4=(set)
+			if (match !== null) {
+				// 1=(text), 2=(~), 3=link, 4=(set)
 				w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 
 				var link  = Wikifier.formatterHelpers.evalPassageId(match[3]),
@@ -776,7 +777,8 @@ Wikifier.formatters =
 		if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
 			var re    = new RegExp("^" + Wikifier.textPrimitives.image + "$"),
 				match = re.exec(lookaheadMatch[0]);
-			if (match !== null) {	// 1=(left), 2=(right), 3=(title), 4=source, 5=(~), 6=(link), 7=(set)
+			if (match !== null) {
+				// 1=(left), 2=(right), 3=(title), 4=source, 5=(~), 6=(link), 7=(set)
 				w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 
 				var el     = w.output,
@@ -821,7 +823,7 @@ Wikifier.formatters =
 	name: "macro",
 	match: "<<",
 	lookaheadRegExp: /<<([^>\s]+)(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|[^>]|(?:>(?!>)))*)>>/gm,
-	working: { name: "", handlerName: "", arguments: "", index: 0 },	// the working parse object
+	working: { name: "", handlerName: "", arguments: "", index: 0 },  // the working parse object
 	context: null,  // last execution context object (top-level macros, hierarchically, have a null context)
 	handler: function (w) {
 		var matchStart = this.lookaheadRegExp.lastIndex = w.matchStart;
@@ -900,7 +902,7 @@ Wikifier.formatters =
 						}
 						// old-style macros
 						else {
-							w._macroRawArgs = macroArgs;	// cache the raw arguments for use by Wikifier.rawArgs() & Wikifier.fullArgs()
+							w._macroRawArgs = macroArgs;  // cache the raw arguments for use by Wikifier.rawArgs() & Wikifier.fullArgs()
 							macro[handlerName](w.output, macroName, args, w, payload);
 							w._macroRawArgs = "";
 						}
@@ -1245,7 +1247,7 @@ Wikifier.formatters =
 
 {
 	name: "lineContinuation",
-	match: "\\\\[\\s\\u00a0\\u2028\\u2029]*?(?:\\n|$)",	// Unicode space-character escapes required for IE < 11 (maybe < 10?)
+	match: "\\\\[\\s\\u00a0\\u2028\\u2029]*?(?:\\n|$)",  // Unicode space-character escapes required for IE < 11 (maybe < 10?)
 	handler: function (w) {
 		w.nextMatch = w.matchStart + w.matchLength;
 	}
@@ -1285,7 +1287,7 @@ Wikifier.formatters =
 	}
 },
 
-{	// n.b. This formatter MUST come after any formatter which handles HTML tag-like constructs (e.g. html & rawText)
+{   // n.b. This formatter MUST come after any formatter which handles HTML tag-like constructs (e.g. html & rawText)
 	name: "htmlTag",
 	match: "<\\w+(?:\\s+[^\\u0000-\\u001F\\u007F-\\u009F\\s\"'>\\/=]+(?:\\s*=\\s*(?:\"[^\"]*?\"|'[^']*?'|[^\\s\"'=<>`]+))?)*\\s*\\/?>",
 	tagPattern: "<(\\w+)",
@@ -1306,7 +1308,7 @@ Wikifier.formatters =
 
 			if (!isVoid) {
 				terminator = "<\\/" + tagName + "\\s*>";
-				terminatorRegExp = new RegExp(terminator, "gim");	// ignore case during match
+				terminatorRegExp = new RegExp(terminator, "gim");  // ignore case during match
 				terminatorRegExp.lastIndex = w.matchStart;
 				terminatorMatch = terminatorRegExp.exec(w.source);
 			}
@@ -1328,7 +1330,7 @@ Wikifier.formatters =
 						w.nobr.unshift(false);
 					}
 					try {
-						w.subWikify(el, terminator, true);	// ignore case during match
+						w.subWikify(el, terminator, true);  // ignore case during match
 					} finally {
 						if (w.nobr.length !== 0) {
 							w.nobr.shift();
@@ -1384,7 +1386,7 @@ Wikifier.formatters =
 	}
 }
 
-];	// End formatters
+];  // End formatters
 
 
 /***********************************************************************************************************************

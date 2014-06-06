@@ -5,29 +5,31 @@
 /***********************************************************************************************************************
 ** [Error Handling Setup]
 ***********************************************************************************************************************/
-function technicalError(what, where, mesg) {
-	var errMesg = "Apologies! There is a technical problem with this " + what + ". You may be able to continue, but some parts may not work properly.";
+function technicalError(where, mesg) {
+	var errMesg = "Apologies! A technical problem has occurred. You may be able to continue, but some parts may not work properly.";
 	// use lazy equality on these null checks
-	if (where != null || mesg != null) { errMesg += "\n\nError"; }
-	if (where != null) { errMesg += " [" + where + "]"; }
-	if (where != null || mesg != null) { errMesg += ": "; }
-	if (mesg != null) { errMesg += mesg.replace(/^Error:\s+/, ""); }
+	if (where != null || mesg != null) {
+		errMesg += "\n\nError";
+		if (where != null) { errMesg += " [" + where + "]"; }
+		errMesg += ": ";
+		if (mesg != null) { errMesg += mesg.replace(/^Error:\s+/, ""); }
+	}
 	return errMesg;
 }
 
 function technicalAlert(where, mesg) {
-	window.alert(technicalError((config && config.errorName) || "page", where, mesg));
+	window.alert(technicalError(where, mesg));
 }
 
-window.onerror = function (mesg, url, lineno) {
-	technicalAlert(null, mesg);
+window.onerror = function (mesg, url, lineNum, colNum, error) {
+	technicalAlert(null, mesg + ((error && error.stack) ? "\n\nStack Trace:\n" + error.stack : ""));
 };
 
 
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-window.SugarCube = {};	// will contain exported identifiers, also allows script passages to detect if they're running in SugarCube ("SugarCube" in window)
+window.SugarCube = {};  // will contain exported identifiers, also allows scripts to detect if they're running in SugarCube ("SugarCube" in window)
 
 var version = Object.freeze({
 	title      : "SugarCube",
@@ -73,8 +75,8 @@ var config = {
 	// the try/catch and length property access here is required due to a monumentally stupid
 	// Firefox bug [ #748620; https://bugzilla.mozilla.org/show_bug.cgi?id=748620 ]
 	// the try/catch is also required due to the iOS browser core throwing on setItem() calls when in private mode
-	hasLocalStorage   : (("localStorage" in window) && (function (wls) { try { if (wls != null && wls.length >= 0) { var tkey = "SugarCube_storage_test"; wls.setItem(tkey, true); wls.removeItem(tkey); return true; } return false; } catch (e) { return false; } }(window.localStorage))),	// use lazy equality on null check
-	hasSessionStorage : (("sessionStorage" in window) && (function (wss) { try { if (wss != null && wss.length >= 0) { var tkey = "SugarCube_storage_test"; wss.setItem(tkey, true); wss.removeItem(tkey); return true; } return false; } catch (e) { return false; } }(window.sessionStorage))),	// use lazy equality on null check
+	hasLocalStorage   : (("localStorage" in window) && (function (wls) { try { if (wls != null && wls.length >= 0) { var tkey = "SugarCube_storage_test"; wls.setItem(tkey, true); wls.removeItem(tkey); return true; } return false; } catch (e) { return false; } }(window.localStorage))),  // use lazy equality on null check
+	hasSessionStorage : (("sessionStorage" in window) && (function (wss) { try { if (wss != null && wss.length >= 0) { var tkey = "SugarCube_storage_test"; wss.setItem(tkey, true); wss.removeItem(tkey); return true; } return false; } catch (e) { return false; } }(window.sessionStorage))),  // use lazy equality on null check
 	hasFileAPI        : (("File" in window) && ("FileReader" in window) && ("Blob" in window)),
 
 	// basic browser detection
@@ -135,32 +137,25 @@ config.browser = {
 // adjust these based on the specific browser used
 config.historyMode = (config.hasPushState ? ((config.browser.isIE || config.browser.isMobile.iOS) && !config.hasSessionStorage ? Modes.WindowHistory : Modes.SessionHistory) : Modes.HashTag);
 config.hasFileAPI = config.hasFileAPI && !config.browser.isMobile.any() && (!config.browser.isOpera || config.browser.operaVersion >= 15);
- 
-var formatter = null,	// Wikifier formatters
-	macros    = {},		// macros manager
-	tale      = {},		// story manager
-	state     = {},		// history manager
-	storage   = {},		// persistant storage manager
-	session   = {},		// session manager
-	options   = {},		// options variable store
-	setup     = {};		// author setup variable store
 
-var testPlay,			// Twine 1.4+ "Test Play From Here" feature variable
-	prerender  = {},	// Twine 1.4+ pre-render task callbacks
-	postrender = {};	// Twine 1.4+ post-render task callbacks
+var formatter = null,  // Wikifier formatters
+	macros    = {},    // macros manager
+	tale      = {},    // story manager
+	state     = {},    // history manager
+	storage   = {},    // persistant storage manager
+	session   = {},    // session manager
+	options   = {},    // options variable store
+	setup     = {};    // author setup variable store
+
+var testPlay,          // Twine 1.4+ "Test Play From Here" feature variable
+	prerender  = {},   // Twine 1.4+ pre-render task callbacks
+	postrender = {};   // Twine 1.4+ post-render task callbacks
 
 /**
  * Main function, entry point for story startup
  */
 $(document).ready(function () {
 	DEBUG("[main()]");
-
-	if (!document.head || !document.querySelector || !document.addEventListener || !window.JSON || !Object.freeze) {
-
-		$(document.documentElement).removeClass("loading");
-		$("#passages").empty().append("<h1>" + config.errors.upgradeBrowser + "</h1>");
-		return;
-	}
 
 	/**
 	 * WARNING!
@@ -175,7 +170,7 @@ $(document).ready(function () {
 	macros    = new Macros();
 	addStandardMacros();
 
-	// instantiate the story, state, storage, and session objects
+	// instantiate the tale, state, storage, and session objects
 	tale    = new Tale();
 	state   = new History();
 	storage = new KeyValueStore("localStorage", tale.domId);
@@ -184,7 +179,7 @@ $(document).ready(function () {
 	// set the default saves ID
 	config.saves.id = tale.domId;
 
-	// setup for story stylesheets & scripts (order: stylesheets, scripts, widgets)
+	// setup for story stylesheets, scripts, and widgets (in that order)
 	var styles = tale.lookup("tags", "stylesheet");
 	for (var i = 0; i < styles.length; i++) {
 		addStyle(styles[i].text);
@@ -240,7 +235,7 @@ $(document).ready(function () {
 	}
 
 	// initialize our state
-	state.init();	// this could take a while, so do it late
+	state.init();  // this could take a while, so do it late
 
 	// call macros' "late" init functions
 	macros.lateInit();
@@ -258,7 +253,8 @@ $(document).ready(function () {
 		state      : state,
 		Util       : Util,
 		History    : History,
-		SaveSystem : SaveSystem
+		SaveSystem : SaveSystem,
+		UISystem   : UISystem
 	};
 });
 
@@ -410,7 +406,7 @@ var SaveSystem = {
 		saves.autosave = SaveSystem.marshal();
 		saves.autosave.title = title || tale.get(state.active.title).excerpt();
 		saves.autosave.date = Date.now();
-		if (metadata != null) { saves.autosave.metadata = metadata; }	// use lazy equality
+		if (metadata != null) { saves.autosave.metadata = metadata; }  // use lazy equality
 
 		return storage.setItem("saves", saves);
 	},
@@ -479,7 +475,7 @@ var SaveSystem = {
 		saves.slots[slot] = SaveSystem.marshal();
 		saves.slots[slot].title = title || tale.get(state.active.title).excerpt();
 		saves.slots[slot].date = Date.now();
-		if (metadata != null) { saves.slots[slot].metadata = metadata; }	// use lazy equality
+		if (metadata != null) { saves.slots[slot].metadata = metadata; }  // use lazy equality
 
 		return storage.setItem("saves", saves);
 	},
@@ -746,7 +742,7 @@ var UISystem = {
 					tdDeleBtn.innerHTML = "Delete";
 					$(tdDeleBtn).click(function () {
 						SaveSystem.deleteAuto();
-						UISystem.buildSaves();	// rebuild the saves menu
+						UISystem.buildSaves();  // rebuild the saves menu
 					});
 					tdDele.appendChild(tdDeleBtn);
 				} else {
@@ -788,7 +784,7 @@ var UISystem = {
 
 					tdDeleBtn = createButton("delete", null, "Delete", i, function (i) {
 						SaveSystem.delete(i);
-						UISystem.buildSaves();	// rebuild the saves menu
+						UISystem.buildSaves();  // rebuild the saves menu
 					});
 					tdDele.appendChild(tdDeleBtn);
 				} else {
@@ -872,7 +868,7 @@ var UISystem = {
 			if (savesOK) {
 				list.appendChild(createActionItem("purge", null, "Purge Save Slots", function (evt) {
 					SaveSystem.purge();
-					UISystem.buildSaves();	// rebuild the saves menu
+					UISystem.buildSaves();  // rebuild the saves menu
 				}));
 			}
 			btnBar.appendChild(list);
@@ -1072,7 +1068,7 @@ var UISystem = {
 	},
 	addClickHandler: function (target, options, startFunc, doneFunc, closeFunc) {
 		$(target).click(function (evt) {
-			evt.preventDefault();	// does not prevent bound events, only default actions (e.g. href links)
+			evt.preventDefault();  // does not prevent bound events, only default actions (e.g. href links)
 
 			// call the start function
 			if (typeof startFunc === "function") { startFunc(evt); }
@@ -1125,7 +1121,7 @@ var UISystem = {
 				bottom  : ""
 			})
 			.removeClass()
-			.empty();	// .empty() here will break static menus
+			.empty();  // .empty() here will break static menus
 		$(UISystem._closer)
 			.css({
 				display : "none",
@@ -1163,7 +1159,7 @@ var UISystem = {
 			closer.css({ display: "none", right: "", top: "" });
 
 			// restore the dialog with its new positional properties
-			var position = UISystem.calcPositionalProperties(options.top);
+			var position = UISystem.calcPositionalProperties(topPos);
 			dialog.css($.extend({ display: "block" }, position.dialog));
 			closer.css($.extend({ display: "block" }, position.closer));
 		}

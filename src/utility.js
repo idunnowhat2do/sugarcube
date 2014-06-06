@@ -105,7 +105,7 @@ Object.defineProperty(String.prototype, "readBracketedList", {
 	writable     : true,
 	value        : function () {
 		// RegExp groups: Double-square-bracket quoted | Unquoted
-		var pattern = "(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^\"'\\s]\\S*)",	//"(?:\\[\\[([^\\]]+)\\]\\])|([^\\s$]+)"
+		var pattern = "(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^\"'\\s]\\S*)",  //"(?:\\[\\[([^\\]]+)\\]\\])|([^\\s$]+)"
 			re      = new RegExp(pattern, "gm"),
 			names   = [];
 		do {
@@ -153,7 +153,7 @@ if (!String.format) {
 
 			return format.replace(/{(\d+)(?:,([+-]?\d+))?}/g, function (match, index, align) {
 				var retval = args[index];
-				if (retval == null) { return ""; }	// use lazy equality
+				if (retval == null) { return ""; }  // use lazy equality
 				while (typeof retval === "function") { retval = retval(); }
 				if (typeof retval === "object") { retval = JSON.stringify(retval); }
 				return padString(retval, (!align) ? 0 : parseInt(align), " ");
@@ -201,7 +201,7 @@ function clone(orig, deep) {
 		var proto = (typeof Object.getPrototypeOf === "function" ? Object.getPrototypeOf(orig) : orig.__proto__);
 		dup = proto
 			? Object.create(proto)
-			: orig.constructor.prototype;	// this should only be reached by very old browsers
+			: orig.constructor.prototype;  // this should only be reached by very old browsers
 	}
 	if (deep) {
 		for (var property in orig) {

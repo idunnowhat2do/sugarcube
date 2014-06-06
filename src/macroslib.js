@@ -99,7 +99,7 @@ function addStandardMacros() {
 					if (!tale.has(this.args[1])) {
 						return this.error('the "' + this.args[1] + '" passage does not exist');
 					}
-					if (this.name === "return") {  // || config.disableHistoryTracking)	// allow <<back>> to work like <<return>> when config.disableHistoryTracking is enabled
+					if (this.name === "return") {  // || config.disableHistoryTracking)  // allow <<back>> to work like <<return>> when config.disableHistoryTracking is enabled
 						pname = this.args[1];
 						ltext += ' (to "' + pname + '")';
 					} else {
@@ -138,9 +138,9 @@ function addStandardMacros() {
 						if (config.historyMode === Modes.HashTag || config.disableHistoryControls) {
 							return function () {
 								// pop the history stack
-								//     n.b. (steps > 0) is correct, since SugarCube's history stack does not store "dirty"
-								//          (i.e. post-rendered/executed) states; in most other headers, something like
-								//          (steps >= 0) would probably be necessary
+								//   n.b. (steps > 0) is correct, since SugarCube's history stack does not store "dirty"
+								//        (i.e. post-rendered/executed) states; in most other headers, something like
+								//        (steps >= 0) would probably be necessary
 								while (steps > 0) {
 									if (!state.isEmpty) {
 										state.pop();
@@ -621,7 +621,7 @@ function addStandardMacros() {
 	/**
 	 * <<run>>
 	 */
-	macros.add("run", "set");	// add <<run>> as an alias of <<set>>
+	macros.add("run", "set");  // add <<run>> as an alias of <<set>>
 
 	/**
 	 * <<script>>

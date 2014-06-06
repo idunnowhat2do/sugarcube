@@ -25,14 +25,14 @@ function Macros() {
 					name.forEach(function (n) { this.add(n, def, deep); }, this);
 					return;
 				}
-		
+
 				if (this.has(name)) {
 					throw new Error("cannot clobber existing macro <<" + name + ">>");
 				} else if (this.tags.hasOwnProperty(name)) {
 					throw new Error("cannot clobber child tag <<" + name + ">> of parent macro"
 						+ (this.tags[name].length === 1 ? '' : 's') + " <<" + this.tags[name].join(">>, <<") + ">>");
 				}
-		
+
 				try {
 					if (typeof def === "object") {
 						// add the macro definition
@@ -46,7 +46,7 @@ function Macros() {
 						}
 					}
 					Object.defineProperty(this.definitions, name, { writable: false });
-		
+
 					/* legacy kludges */
 					this.definitions[name]["_USE_MACROS_API"] = true;
 					/* /legacy kludges */
@@ -57,7 +57,7 @@ function Macros() {
 						throw new Error("unknown error when attempting to add macro <<" + name + ">>: [" + e.name + "] " + e.message);
 					}
 				}
-		
+
 				// tags post-processing
 				if (this.definitions[name].hasOwnProperty("tags")) {
 					if (this.definitions[name].tags == null) {
@@ -77,13 +77,13 @@ function Macros() {
 					name.forEach(function (n) { this.remove(n); }, this);
 					return;
 				}
-	
+
 				if (this.definitions.hasOwnProperty(name)) {
 					// tags pre-processing
 					if (this.definitions[name].hasOwnProperty("tags")) {
 						this.unregisterTags(name);
 					}
-	
+
 					try {
 						// remove the macro definition
 						Object.defineProperty(this.definitions, name, { writable: true });
@@ -106,7 +106,7 @@ function Macros() {
 		get: {
 			value: function (name) {
 				var macro = null;
-	
+
 				if (this.definitions.hasOwnProperty(name) && typeof this.definitions[name]["handler"] === "function") {
 					macro = this.definitions[name];
 				} else if (this.hasOwnProperty(name) && typeof this[name]["handler"] === "function") {
@@ -119,7 +119,7 @@ function Macros() {
 		getHandler: {
 			value: function (name, handler) {
 				var macro = this.get(name);
-	
+
 				if (!handler) { handler = "handler"; }
 				return (macro && macro.hasOwnProperty(handler) && typeof macro[handler] === "function") ? macro[handler] : null;
 			}
@@ -129,14 +129,14 @@ function Macros() {
 			value: function (statements, thisp) {
 				"use strict";
 				try {
-					if (thisp == null) {	// use lazy equality
+					if (thisp == null) {  // use lazy equality
 						eval('var output = document.createElement("div");(function(){' + statements + '}());');
 					} else {
 						eval("var output = thisp.output;(function(){" + statements + "}.call(thisp));");
 					}
 					return true;
 				} catch (e) {
-					if (thisp == null) {	// use lazy equality
+					if (thisp == null) {  // use lazy equality
 						throw e;
 					}
 					return thisp.error("bad expression: " + e.message);
@@ -147,12 +147,12 @@ function Macros() {
 		registerTags: {
 			value: function (parent, bodyTags) {
 				if (!parent) { throw new Error("no parent specified"); }
-	
+
 				if (!Array.isArray(bodyTags)) { bodyTags = []; }
-	
-				var endTags = [ "/" + parent, "end" + parent ],	// automatically create the closing tags
+
+				var endTags = [ "/" + parent, "end" + parent ],  // automatically create the closing tags
 					allTags = [].concat(endTags, bodyTags);
-	
+
 				for (var i = 0; i < allTags.length; i++) {
 					var tag = allTags[i];
 					if (this.definitions.hasOwnProperty(tag)) {
@@ -173,7 +173,7 @@ function Macros() {
 		unregisterTags: {
 			value: function (parent) {
 				if (!parent) { throw new Error("no parent specified"); }
-	
+
 				for (var tag in this.tags) {
 					var i = this.tags[tag].indexOf(parent);
 					if (i !== -1) {

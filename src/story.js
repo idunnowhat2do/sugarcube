@@ -5,19 +5,22 @@
 /***********************************************************************************************************************
 ** [History]
 ***********************************************************************************************************************/
-function History() {
+function History(instanceName) {
 	DEBUG("[History()]");
 	DEBUG("    > mode: " + (config.historyMode === Modes.HashTag ? "hashTag" : (config.historyMode === Modes.WindowHistory ? "windowHistory" : "sessionHistory")));
 	if (History.getWindowState()) { if (config.historyMode === Modes.WindowHistory) { DEBUG("    > History.getWindowState(): " + History.getWindowState().length); } else if (config.historyMode === Modes.SessionHistory) { DEBUG("    > History.getWindowState(): " + History.getWindowState().sidx + "/" + History.getWindowState().suid); } } else { DEBUG("    > History.getWindowState(): " + History.getWindowState()); }
 
 	// currently active/displayed state
-	this.active = { init: true, variables: {} };	// allows macro initialization to set variables at startup
+	this.active = { init: true, variables: {} };  // allows macro initialization to set variables at startup
 
 	// history state stack
 	//     hashTag        [{ title: null, variables: {} }]
 	//     windowHistory  [{ title: null, variables: {} }]
 	//     sessionHistory [{ title: null, variables: {}, sidx: null }]
 	this.history = [];
+
+	// update instance reference in SugarCube global object
+	window.SugarCube[instanceName || "state"] = this;
 }
 
 // setup some getters
@@ -58,7 +61,7 @@ History.prototype.peek = function (at) {
 };
 
 History.prototype.push = function (/* variadic */) {
-	if (arguments.length === 0) { return; }	// maybe throw?
+	if (arguments.length === 0) { return; }  // maybe throw?
 
 	for (var i = 0; i < arguments.length; i++) {
 		var state = arguments[i];
@@ -79,8 +82,8 @@ History.prototype.pop = function (num) {
 };
 
 History.prototype.activate = function (state) {
-	if (arguments.length === 0) { return; }	// maybe throw?
-	if (state == null) { throw new Error("State activation attempted with null/undefined."); }	// use lazy equality
+	if (arguments.length === 0) { return; }  // maybe throw?
+	if (state == null) { throw new Error("State activation attempted with null/undefined."); }  // use lazy equality
 
 	if (typeof state === "object") {
 		this.active = clone(state, true);
@@ -147,7 +150,7 @@ History.prototype.display = function (title, link, option) {
 	if (this.active.init && !this.isEmpty) {
 		if (config.historyMode === Modes.SessionHistory) {
 			DEBUG("    [SH]> state.active.init && !state.isEmpty; activating: " + (History.hasWindowState() ? "History.getWindowState().sidx" : "state.top"));
-			this.activate(History.hasWindowState() ? History.getWindowState().sidx : this.top);	// use lazy equality
+			this.activate(History.hasWindowState() ? History.getWindowState().sidx : this.top);  // use lazy equality
 		} else if (config.historyMode === Modes.WindowHistory) {
 			DEBUG("    [WH]> state.active.init && !state.isEmpty; activating: state.top");
 			this.activate(this.top);
@@ -236,7 +239,7 @@ History.prototype.display = function (title, link, option) {
 			} else {
 				setTimeout(function () {
 					if (outgoing.parentNode) { outgoing.parentNode.removeChild(outgoing); }
-				}, config.passageTransitionOut);	// in milliseconds
+				}, config.passageTransitionOut);  // in milliseconds
 			}
 		} else {
 			removeChildren(passages);
@@ -514,7 +517,7 @@ History.hashChangeHandler = function (evt) {
 
 			// reset the history, making a copy of the <<remember>> variables
 			var remember = storage.getItem("remember");
-			window.SugarCube.state = state = new History();
+			state = new History();
 			if (remember !== null) { state.active.variables = clone(remember, true); }
 			if (runtime.flags.HistoryPRNG.isEnabled) { History.initPRNG(); }
 
@@ -594,8 +597,8 @@ History.unmarshal = function (stateObj) {
 		// necessary?
 		document.title = tale.title;
 
-		// start a new state history (do not call init()!)
-		window.SugarCube.state = state = new History();  // this is deliberate
+		// reset the history
+		state = new History();
 		if (runtime.flags.HistoryPRNG.isEnabled) {
 			History.initPRNG(stateObj.hasOwnProperty("rseed") ? stateObj.rseed : null);
 		}
@@ -661,7 +664,7 @@ function Passage(title, el, order) {
 		this.textExcerpt = Passage.getExcerptFromText(this.text);
 		this.tags        = el.hasAttribute("tags") ? el.getAttribute("tags").trim() : "";
 		if (this.tags) {
-			this.tags      = this.tags.split(/\s+/);	// readBracketedList();
+			this.tags      = this.tags.split(/\s+/);  // readBracketedList();
 			this.classes   = [];
 			this.className = "";
 
@@ -822,15 +825,15 @@ Passage.getExcerptFromNode = function (node, count) {
 
 		for (var i = 0, len = nodes.length; i < len; i++) {
 			switch (nodes[i].nodeType) {
-			case 1:	// element nodes
+			case 1:  // element nodes
 				if (nodes[i].style.display !== "none") {
-					output += " ";	// out here to handle void nodes, in addition to child bearing nodes
+					output += " ";  // out here to handle void nodes, in addition to child bearing nodes
 					if (nodes[i].hasChildNodes()) {
 						output += getTextFromNode(nodes[i]);
 					}
 				}
 				break;
-			case 3:	// text nodes
+			case 3:  // text nodes
 				output += nodes[i].textContent;
 				break;
 			default:
@@ -893,7 +896,7 @@ Passage.mergeClassNames = function (/* variadic */) {
 /***********************************************************************************************************************
 ** [Tale]
 ***********************************************************************************************************************/
-function Tale() {
+function Tale(instanceName) {
 	DEBUG("[Tale()]");
 
 	this.passages = {};
@@ -919,6 +922,8 @@ function Tale() {
 		this.setTitle("Untitled Story");
 	}
 
+	// update instance reference in SugarCube global object
+	window.SugarCube[instanceName || "tale"] = this;
 }
 
 Tale.prototype.setTitle = function (title) {
@@ -949,7 +954,7 @@ Tale.prototype.get = function (key) {
 			}
 		}
 	}
-	return;	//FIXME: should this return null instead of undefined?
+	return;  //FIXME: should this return null instead of undefined?
 };
 
 Tale.prototype.lookup = function (key, value, sortKey) {
