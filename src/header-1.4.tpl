@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html class="init-no-js">
 <head>
 <meta charset="UTF-8" />
 <title>SugarCube</title>
@@ -18,7 +18,9 @@ Game Build Info:
 
 -->
 <script type="text/javascript">
-document.documentElement.className = "loading";
+/* console fixup & loader screen init */
+(function(){"use strict";if(!("console"in window&&typeof window.console.log!=="function")){window.console={};window.console.debug=window.console.info=window.console.warn=window.console.error=window.console.log=function(){};}}());
+(function(){"use strict";document.documentElement.className=(!document.head||!document.querySelector||!document.addEventListener||!window.JSON||!Object.freeze)?"init-lacking":"init-loading";}());
 </script>
 <script type="text/javascript">
 /*! jQuery v2.1.0 | (c) 2005, 2014 jQuery Foundation, Inc. | jquery.org/license */
@@ -83,7 +85,11 @@ testPlay = "START_AT";
 <style type="text/css">[($STYLES$)]</style>
 </head>
 <body id="body">
-	<div id="loading-screen"><p>Initializing.  Please wait&hellip;<br /><progress></progress></p></div>
+	<div id="init-screen">
+		<p id="init-no-js"><noscript>Apologies! JavaScript is required. Please enable it to continue.</noscript></p>
+		<p id="init-lacking">Apologies! Your web browser lacks required capabilities. Please consider upgrading it or switching to a more modern web browser.</p>
+		<p id="init-loading">Initializing.  Please wait&hellip;<br /><progress></progress></p>
+	</div>
 	<div id="ui-bar">
 		<header id="title">
 			<div id="story-banner"></div>
@@ -109,7 +115,7 @@ testPlay = "START_AT";
 		</footer>
 	</div>
 
-	<div role="main" id="passages"><noscript>Please enable JavaScript to play this story!</noscript></div>
+	<div role="main" id="passages"></div>
 
 	<div id="store-area" data-size="STORY_SIZE" hidden>"STORY"</div>
 </body>

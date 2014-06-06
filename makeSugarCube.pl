@@ -7,7 +7,7 @@
 #
 #     Author   :  Thomas Michael Edwards <tmedwards@motoslave.net>
 #     Copyright:  Copyright © 2013–2014 Thomas Michael Edwards. All rights reserved.
-#     Version  :  r25, 2014-05-27
+#     Version  :  r27, 2014-06-06
 #
 ################################################################################
 
@@ -42,7 +42,7 @@ my %CONFIG		=
 			  'src/header-1.3.tpl' => 'dist/1.3/sugarcube/header.html'
 			, 'src/header-1.4.tpl' => 'dist/1.4/sugarcube/header.html'
 		}
-	, 'js.core'   => [ 'src/polyfills.js', 'src/utility.js', 'src/main.js', 'src/story.js', 'src/wikifier.js', 'src/macros.js' ]
+	, 'js.core'   => [ 'src/polyfills.js', 'src/utility.js', 'src/main.js', 'src/story.js', 'src/wikifier.js', 'src/macros.js' , 'src/macroslib.js' ]
 	, 'js.debug'  => [ 'src/debug.js' ]
 	, 'css'       => 'src/styles.css'
 	, 'copy'      =>
@@ -156,9 +156,9 @@ if ($opt_minify)
 
 	# Closure Compiler post-processing
 	$pipeout =~ tr/\r\n//d;
-	$pipeout =~ s/evalStatements:function\(\w+,(\w+)\){try{/$&var thisp=$1;/;
+	$pipeout =~ s/,evalStatements:\{value:function\(\w+,(\w+)\){try{/$&var thisp=$1;/;
 	die("error: unable to patch macros.evalStatements() [Closure Compiler kludge]\n")
-		if ($pipeout !~ m/evalStatements:function\(\w+,(\w+)\){try{var thisp=\1;/);
+		if ($pipeout !~ m/,evalStatements:\{value:function\(\w+,(\w+)\){try{var thisp=\1;/);
 
 	$scripts = $pipeout;
 }

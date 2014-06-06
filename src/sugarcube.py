@@ -15,34 +15,32 @@ class Header (header.Header):
 	def nestedMacros(self):
 		return [
 				# standard macros
-				  'if'
-				, 'silently'
-				, 'nobr'
-				, 'script'
-				, 'click'
-				, 'button'
-				, 'append'
-				, 'prepend'
-				, 'replace'
-				, 'widget'
-				, 'optiontoggle'
-				, 'optionlist'
+				'if',
+				'for',
+				'silently',
+				'nobr',
+				'script',
+				'click',
+				'button',
+				'append',
+				'prepend',
+				'replace',
+				'widget',
+				'optiontoggle',
+				'optionlist'
 				# deprecated macros
-				, 'bind'
-				, 'class'
-				, 'id'
-				, 'update'
+				# (none, yay)
 			]
 
 	def passageTitleColor(self, passage):
 		additionalSpecialPassages = [
-				  'MenuOptions'
-				, 'MenuShare'
-				, 'MenuStory'
-				, 'PassageDone'
-				, 'PassageReady'
-				, 'StoryBanner'
-				, 'StoryCaption'
+				'MenuOptions',
+				'MenuShare',
+				'MenuStory',
+				'PassageDone',
+				'PassageReady',
+				'StoryBanner',
+				'StoryCaption'
 			]
 		if passage.isStylesheet():
 			return ((111, 49, 83), (234, 123, 184))

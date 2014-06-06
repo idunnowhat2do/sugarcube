@@ -5,21 +5,15 @@
 /***********************************************************************************************************************
 ** [Debugging Tools]
 ***********************************************************************************************************************/
-function DEBUG(/* variadic */)
-{
+function DEBUG(/* variadic */) {
 	if (arguments.length === 0) { return; }
 
 	var i = (arguments.length === 1) ? 0 : 1;
-	if (i === 0 || !!arguments[0])
-	{
-		for (/* empty */; i < arguments.length; i++)
-		{
-			if (typeof arguments[i].toString === "function")
-			{
+	if (i === 0 || !!arguments[0]) {
+		for (/* empty */; i < arguments.length; i++) {
+			if (typeof arguments[i].toString === "function") {
 				console.log(arguments[i].toString());
-			}
-			else
-			{
+			} else {
 				console.log(JSON.stringify(arguments[i]));
 			}
 		}
