@@ -83,7 +83,7 @@ History.prototype.pop = function (num) {
 
 History.prototype.activate = function (state) {
 	if (arguments.length === 0) { return; }  // maybe throw?
-	if (state == null) { throw new Error("State activation attempted with null/undefined."); }  // use lazy equality
+	if (state == null) { throw new Error("state activation attempted with null/undefined"); }  // use lazy equality
 
 	if (typeof state === "object") {
 		this.active = clone(state, true);
@@ -496,7 +496,7 @@ History.popStateHandler_windowHistory = function (evt) {
 
 	// throw error if state has no history or history is empty
 	if (!windowState.hasOwnProperty("history") || windowState.history.length === 0) {
-		throw new Error("Window state has no history or history is empty.");
+		throw new Error("window state has no history or history is empty");
 	}
 
 	state.history = windowState.history;
@@ -525,7 +525,7 @@ History.hashChangeHandler = function (evt) {
 				el.style.visibility = "hidden";
 				removeChildren(el);
 				if (!state.restore()) {
-					technicalAlert(null, "The passage you had previously visited could not be found.");
+					technicalAlert(null, "the passage you had previously visited could not be found.");
 				}
 				el.style.visibility = "visible";
 			} else {
@@ -584,10 +584,10 @@ History.unmarshal = function (stateObj) {
 	DEBUG("[History.unmarshal()]");
 
 	if (!stateObj || !stateObj.hasOwnProperty("mode") || !stateObj.hasOwnProperty("history")) {
-		throw new Error("State object is missing required data.");
+		throw new Error("state object is missing required data");
 	}
 	if (stateObj.mode !== config.historyMode) {
-		throw new Error("State object is from an incompatible history mode.");
+		throw new Error("state object is from an incompatible history mode");
 	}
 
 	switch (config.historyMode) {

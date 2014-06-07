@@ -93,8 +93,6 @@ Wikifier.prototype.subWikify = function (output, terminator, terminatorIgnoreCas
 			// Call the formatter
 			if (matchingFormatter !== -1) {
 				this.formatter.formatters[matchingFormatter].handler(this);
-				//DEBUG(runtime.temp.break != null, "[<Wikifier>.subWikify()] break: " + runtime.temp.break + ', matchText: "' + this.source.slice(this.matchStart, this.nextMatch) + '"');
-				//if (runtime.temp.break != null) { this.output.appendChild(document.createTextNode("<Wikifier>.subWikify(<<break>>)")); }
 				if (runtime.temp.break != null) { break; }  // use lazy equality
 			}
 		}
@@ -186,7 +184,9 @@ Wikifier.parse = function (expression) {
 				token = "is not";
 			}
 
-			if (map[token]) {
+			// n.b. do not simply use "map[token]", otherwise tokens that match
+			//      basic object properties will break the world (e.g. "toString")
+			if (map.hasOwnProperty(token)) {
 				expression = expression.splice(
 					match.index,   // starting index
 					token.length,  // replace how many
@@ -1064,7 +1064,7 @@ Wikifier.formatters =
 					try {
 						arg = Wikifier.evalExpression(arg);
 					} catch (e) {
-						throw new Error('unable to parse macro argument "' + arg + '"; ' + e.message);
+						throw new Error('unable to parse macro argument "' + arg + '": ' + e.message);
 					}
 				} else if (/^(?:\{.*\}|\[.*\])$/.test(arg)) {
 					// Object or Array literal, so try to evaluate it
@@ -1073,7 +1073,7 @@ Wikifier.formatters =
 					try {
 						arg = Wikifier.evalExpression(arg);
 					} catch (e) {
-						throw new Error('unable to parse macro argument "' + arg + '"; ' + e.message);
+						throw new Error('unable to parse macro argument "' + arg + '": ' + e.message);
 					}
 				} else if (arg === "null") {
 					// Null literal, so convert it into null

@@ -129,17 +129,15 @@ function Macros() {
 			value: function (statements, thisp) {
 				"use strict";
 				try {
-					if (thisp == null) {  // use lazy equality
-						eval('var output = document.createElement("div");(function(){' + statements + '}());');
-					} else {
-						eval("var output = thisp.output;(function(){" + statements + "}.call(thisp));");
-					}
+					eval((thisp == null)  /* use lazy equality */
+						? 'var output = document.createElement("div");(function(){' + statements + '}());'
+						: "var output = thisp.output;(function(){" + statements + "}.call(thisp));");
 					return true;
 				} catch (e) {
 					if (thisp == null) {  // use lazy equality
 						throw e;
 					}
-					return thisp.error("bad expression: " + e.message);
+					return thisp.error("bad evaluation: " + e.message);
 				}
 			}
 		},

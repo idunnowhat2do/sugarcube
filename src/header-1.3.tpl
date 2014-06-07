@@ -6,13 +6,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <!--
 
-SugarCube (build: [($BUILD$)]): A free (gratis and libre) header for Twine/Twee, based on TiddlyWiki.
-Copyright (c) 2013-2014 Thomas Michael Edwards.
+SugarCube (build: {{_BUILD_}}): A free (gratis and libre) header for Twine/Twee, based on TiddlyWiki.
+Copyright © 2013-2014 Thomas Michael Edwards.
 
 -->
 <script type="text/javascript">
-/* console fixup & loader screen init */
-(function(){"use strict";if(!("console"in window&&typeof window.console.log!=="function")){window.console={};window.console.debug=window.console.info=window.console.warn=window.console.error=window.console.log=function(){};}}());
+/* init screen routing */
 (function(){"use strict";document.documentElement.className=(!document.head||!document.querySelector||!document.addEventListener||!window.JSON||!Object.freeze)?"init-lacking":"init-loading";}());
 </script>
 <script type="text/javascript">
@@ -71,10 +70,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 (function(){
 "use strict";
-[($SCRIPTS$)]
+{{_SCRIPTS_}}
 }());
 </script>
-<style type="text/css">[($STYLES$)]</style>
+<style type="text/css">{{_STYLES_}}</style>
 </head>
 <body id="body">
 	<div id="init-screen">
@@ -103,7 +102,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		</nav>
 		<footer>
 			<p id="credits">This story was created with <a href="http://twinery.org/" target="_blank">Twine</a> and is powered by <a href="http://www.motoslave.net/sugarcube/" target="_blank">SugarCube</a>, which is based on <a href="http://tiddlywiki.com/" target="_blank">TiddlyWiki</a></p>
-			<p id="version">SugarCube (r[($BUILD$)])</p>
+			<p id="version">SugarCube (r{{_BUILD_}})</p>
 		</footer>
 	</div>
 

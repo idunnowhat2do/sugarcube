@@ -193,6 +193,7 @@ function clone(orig, deep) {
 	// If we've reached here, we have a regular object, array, or function
 	//   n.b This does NOT preserve ES5 property attributes like 'writable', 'enumerable', etc.
 	//       That could be achieved by using Object.getOwnPropertyNames and Object.defineProperty
+	/*
 	var dup;
 	// Ensure the returned object has the same prototype as the original
 	if (Array.isArray(orig)) {
@@ -203,6 +204,9 @@ function clone(orig, deep) {
 			? Object.create(proto)
 			: orig.constructor.prototype;  // this should only be reached by very old browsers
 	}
+	*/
+	var proto = (typeof Object.getPrototypeOf === "function") ? Object.getPrototypeOf(orig) : orig.__proto__,
+		dup   = proto ? Object.create(proto) : orig.constructor.prototype;  // the latter case should only be reached by very old browsers
 	if (deep) {
 		for (var property in orig) {
 			dup[property] = clone(orig[property], true);
@@ -459,7 +463,7 @@ function scrollWindowTo(el, increment) {
  */
 function getRandom(/* min, max */) { return random.apply(null, arguments); }
 function random(min, max) {
-	if (arguments.length === 0) { throw new Error("random(): insufficient arguments"); }
+	if (arguments.length === 0) { throw new Error("random called with insufficient arguments"); }
 	if (arguments.length === 1) {
 		max = min;
 		min = 0;
@@ -478,7 +482,7 @@ function random(min, max) {
  */
 function getRandomArbitrary(/* min, max */) { return randomFloat.apply(null, arguments); }
 function randomFloat(min, max) {
-	if (arguments.length === 0) { throw new Error("randomFloat(): insufficient arguments"); }
+	if (arguments.length === 0) { throw new Error("randomFloat called with insufficient arguments"); }
 	if (arguments.length === 1) {
 		max = min;
 		min = 0.0;
@@ -572,7 +576,22 @@ var Util = {
 	 * Returns whether the passed value is numeric
 	 */
 	isNumeric: function (obj) {
-		return typeof obj === "number" || (!isNaN(parseFloat(obj)) && isFinite(obj));
+		switch (typeof obj) {
+		case "boolean":
+			/* FALL-THROUGH */
+		case "object":
+			return false;
+		case "string":
+			obj = Number(obj);
+			break;
+		}
+		return isFinite(obj) && !isNaN(obj);
+		/*
+		if (typeof obj === "string") {
+			obj = Number(obj);
+		}
+		return (typeof obj === "number") ? isFinite(obj) && !isNaN(obj) : false;
+		*/
 	},
 
 	/**
@@ -614,20 +633,6 @@ var Util = {
 		} catch (e) {
 			return false;
 		}
-	},
-
-	/**
-	 * Returns a base64 encoding of the passed UTF-8 string
-	 */
-	utf8ToBase64: function (str) {
-		return window.btoa(unescape(encodeURIComponent(str)));
-	},
-
-	/**
-	 * Returns a UTF-8 string from the passed base64 encoding
-	 */
-	base64ToUtf8: function (str) {
-		return decodeURIComponent(escape(window.atob(str)));
 	},
 
 	/**
@@ -696,7 +701,7 @@ function SeedablePRNG(seed, useEntropy) {
 
 SeedablePRNG.marshal = function (prng) {
 	if (!prng || !prng.hasOwnProperty("seed") || !prng.hasOwnProperty("count")) {
-		throw new Error("PRNG is missing required data.");
+		throw new Error("PRNG is missing required data");
 	}
 
 	return { seed: prng.seed, count: prng.count };
@@ -704,7 +709,7 @@ SeedablePRNG.marshal = function (prng) {
 
 SeedablePRNG.unmarshal = function (prngObj) {
 	if (!prngObj || !prngObj.hasOwnProperty("seed") || !prngObj.hasOwnProperty("count")) {
-		throw new Error("PRNG object is missing required data.");
+		throw new Error("PRNG object is missing required data");
 	}
 
 	// create a new PRNG using the original seed
@@ -724,22 +729,22 @@ function KeyValueStore(storeName, storePrefix) {
 	this.store = null;
 	switch (storeName) {
 	case "cookie":
-		this.name  = "cookie";
+		this.name = "cookie";
 		break;
 	case "localStorage":
-		this.name  = storeName;
+		this.name = storeName;
 		if (config.hasLocalStorage) {
 			this.store = window.localStorage;
 		}
 		break;
 	case "sessionStorage":
-		this.name  = storeName;
+		this.name = storeName;
 		if (config.hasSessionStorage) {
 			this.store = window.sessionStorage;
 		}
 		break;
 	default:
-		throw new Error("Unknown storage type.");
+		throw new Error("unknown storage type");
 		break;
 	}
 	this.prefix = storePrefix + ".";
@@ -761,9 +766,17 @@ KeyValueStore.prototype.setItem = function (sKey, sValue) {
 		try {
 			this.store.setItem(sKey, sValue);
 		} catch (e) {
-			if (e == QUOTA_EXCEEDED_ERR) {
-				technicalAlert(null, "Unable to store key; " + this.name + " quota exceeded");
-			}
+			/*
+			 * Ideally, we could simply do something either like:
+			 *     e.code === 22
+			 * Or, preferably, like this:
+			 *     e.code === DOMException.QUOTA_EXCEEDED_ERR
+			 * However, both of those are browser convention, not part of the standard,
+			 * and are not supported in all browsers.  So, we have to resort to pattern
+			 * matching the damn name.
+			 */
+			technicalAlert(null, "unable to store key; "
+				+ (/quota_?(?:exceeded|reached)/i.test(e.name) ? this.name + " quota exceeded" : "unknown error"), e);
 			return false;
 		}
 	} else {
@@ -784,11 +797,11 @@ KeyValueStore.prototype.setItem = function (sKey, sValue) {
 		try {
 			document.cookie = cookie.join("; ");
 		} catch (e) {
-			technicalAlert(null, "Unable to store key; cookie error: " + e.message);
+			technicalAlert(null, "unable to store key; cookie error: " + e.message, e);
 			return false;
 		}
 		if (!this.hasItem(oKey)) {
-			technicalAlert(null, "Unable to store key; unknown cookie error");
+			technicalAlert(null, "unable to store key; unknown cookie error");
 			return false;
 		}
 	}

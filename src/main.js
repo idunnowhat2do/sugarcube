@@ -5,24 +5,24 @@
 /***********************************************************************************************************************
 ** [Error Handling Setup]
 ***********************************************************************************************************************/
-function technicalError(where, mesg) {
+function technicalAlert(where, mesg, error) {
 	var errMesg = "Apologies! A technical problem has occurred. You may be able to continue, but some parts may not work properly.";
 	// use lazy equality on these null checks
 	if (where != null || mesg != null) {
 		errMesg += "\n\nError";
-		if (where != null) { errMesg += " [" + where + "]"; }
-		errMesg += ": ";
-		if (mesg != null) { errMesg += mesg.replace(/^Error:\s+/, ""); }
+		if (where != null) {
+			errMesg += " [" + where + "]";
+		}
+		errMesg += ": " + ((mesg != null) ? mesg.replace(/^Error:\s+/, "") : "unknown error") + ".";
+		if (error && error.stack) {
+			errMesg += "\n\nStack Trace:\n" + error.stack;
+		}
 	}
-	return errMesg;
-}
-
-function technicalAlert(where, mesg) {
-	window.alert(technicalError(where, mesg));
+	window.alert(errMesg);
 }
 
 window.onerror = function (mesg, url, lineNum, colNum, error) {
-	technicalAlert(null, mesg + ((error && error.stack) ? "\n\nStack Trace:\n" + error.stack : ""));
+	technicalAlert(null, mesg, error);
 };
 
 
@@ -36,8 +36,8 @@ var version = Object.freeze({
 	major      : 1,
 	minor      : 0,
 	revision   : 0,
-	build      : [($BUILD$)],
-	date       : new Date([($DATE$)]),
+	build      : {{_BUILD_}},
+	date       : new Date({{_DATE_}}),
 	extensions : {},
 	toString   : function() { return this.title + " " + this.major + "." + this.minor + "." + this.revision + "." + this.build + " (" + this.date.toLocaleDateString() + ")"; }
 });
@@ -556,9 +556,9 @@ var SaveSystem = {
 		try {
 			if (!saveObj || !saveObj.hasOwnProperty("id") || !saveObj.hasOwnProperty("state")) {
 				if (!saveObj || !saveObj.hasOwnProperty("mode") || !saveObj.hasOwnProperty("id") || !saveObj.hasOwnProperty("data")) {
-					throw new Error("Save is missing required data.  Either you've loaded a file which isn't a save, or the save has become corrupted.");
+					throw new Error("Save is missing required data.  Either you've loaded a file which isn't a save, or the save has become corrupted");
 				} else {
-					throw new Error("Old-style saves seen in SaveSystem.unmarshal().");
+					throw new Error("Old-style saves seen in SaveSystem.unmarshal()");
 				}
 			}
 
@@ -567,13 +567,13 @@ var SaveSystem = {
 			}
 
 			if (saveObj.id !== config.saves.id) {
-				throw new Error("Save is from the wrong " + config.errorName + ".");
+				throw new Error("Save is from the wrong " + config.errorName);
 			}
 
 			// restore the state
 			History.unmarshal(saveObj.state);
 		} catch (e) {
-			UISystem.alert(e.message + "\n\nAborting load.");
+			UISystem.alert(e.message + ".\n\nAborting load.");
 			return false;
 		}
 
