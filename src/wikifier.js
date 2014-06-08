@@ -179,9 +179,14 @@ Wikifier.parse = function (expression) {
 			} else if (token[0] === "$") {
 				// if the token starts with a "$", then it's a $variable, so just replace the sigil ("$")
 				token = "$";
-			} else if (token === "is" && expression.slice(match.index, match.index + 6) === "is not") {
+			} else if (token === "is") {
 				// if the token is "is", check to see if it's part of the "is not" operator
-				token = "is not";
+				var start = match.index + token.length,
+					part  = expression.slice(start);
+				if (/^\s+not\b/.test(part)) {
+					expression = expression.splice(start, part.search(/\S/), " ");
+					token = "is not";
+				}
 			}
 
 			// n.b. do not simply use "map[token]", otherwise tokens that match
