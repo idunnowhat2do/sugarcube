@@ -251,6 +251,7 @@ $(document).ready(function () {
 		macros     : macros,
 		tale       : tale,
 		state      : state,
+		Wikifier   : Wikifier,
 		Util       : Util,
 		History    : History,
 		SaveSystem : SaveSystem,

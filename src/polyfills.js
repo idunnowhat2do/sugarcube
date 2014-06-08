@@ -289,10 +289,6 @@ if (!String.prototype.splice) {
 		writable     : true,
 		value        : function (start, count, replacement) {
 			"use strict";
-			//var charArray = this.split("");
-			//Array.prototype.splice.apply(charArray, arguments);
-			//return charArray.join("");
-
 			if (this == null) {
 				throw new TypeError("String.prototype.splice called on null or undefined");
 			}
