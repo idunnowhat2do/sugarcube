@@ -472,7 +472,7 @@ Wikifier.formatterHelpers = {
 		var result;
 		try {
 			result = Wikifier.evalExpression(text);
-			if (evalExpressionBadResultRegExp.test(result)) {
+			if (this.evalExpressionBadResultRegExp.test(result)) {
 				result = text;
 			}
 		} catch (e) {
