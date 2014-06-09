@@ -37,7 +37,7 @@ History.prototype.clone = function (at) {
 	at = 1 + (at ? Math.abs(at) : 0);
 	if (at > this.history.length) { return null; }
 
-	var dup = clone(this.history[this.history.length - at], true);
+	var dup = clone(this.history[this.history.length - at]);
 	if (config.historyMode === Modes.SessionHistory) {
 		delete dup.sidx;
 	}
@@ -86,11 +86,11 @@ History.prototype.activate = function (state) {
 	if (state == null) { throw new Error("state activation attempted with null/undefined"); }  // use lazy equality
 
 	if (typeof state === "object") {
-		this.active = clone(state, true);
+		this.active = clone(state);
 	} else {
 		if (this.isEmpty) { return null; }
 		if (state < 0 || state >= this.history.length) { return null; }
-		this.active = clone(this.history[state], true);
+		this.active = clone(this.history[state]);
 	}
 	if (this.prng) {
 		this.prng = SeedablePRNG.unmarshal({
@@ -173,7 +173,7 @@ History.prototype.display = function (title, link, option) {
 			}
 		}
 
-		this.push({ title: passage.title, variables: clone(this.active.variables, true) });
+		this.push({ title: passage.title, variables: clone(this.active.variables) });
 		if (this.prng) {
 			this.top.rcount = this.prng.count;
 		}
@@ -518,7 +518,7 @@ History.hashChangeHandler = function (evt) {
 			// reset the history, making a copy of the <<remember>> variables
 			var remember = storage.getItem("remember");
 			state = new History();
-			if (remember !== null) { state.active.variables = clone(remember, true); }
+			if (remember !== null) { state.active.variables = clone(remember); }
 			if (runtime.flags.HistoryPRNG.isEnabled) { History.initPRNG(); }
 
 			if (!config.disableHistoryControls) {
@@ -567,10 +567,10 @@ History.marshal = function () {
 	}
 	switch (config.historyMode) {
 	case Modes.SessionHistory:
-		stateObj.history = clone(state.history.slice(0, state.active.sidx + 1), true);
+		stateObj.history = clone(state.history.slice(0, state.active.sidx + 1));
 		break;
 	case Modes.WindowHistory:
-		stateObj.history = clone(state.history, true);
+		stateObj.history = clone(state.history);
 		break;
 	case Modes.HashTag:
 		stateObj.history = state.active.hash;
@@ -610,7 +610,7 @@ History.unmarshal = function (stateObj) {
 		// restore the history states in order
 		for (var i = 0, len = stateObj.history.length; i < len; i++) {
 			// load the state from the save
-			state.history.push(clone(stateObj.history[i], true));
+			state.history.push(clone(stateObj.history[i]));
 
 			DEBUG("    > loading: " + i + " (" + state.history[i].title + ")");
 

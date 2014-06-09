@@ -36,11 +36,11 @@ function Macros() {
 				try {
 					if (typeof def === "object") {
 						// add the macro definition
-						this.definitions[name] = deep ? clone(def, true) : def;
+						this.definitions[name] = deep ? clone(def) : def;
 					} else {
 						// add the macro alias
 						if (this.has(def)) {
-							this.definitions[name] = deep ? clone(this.definitions[def], true) : this.definitions[def];
+							this.definitions[name] = deep ? clone(this.definitions[def]) : this.definitions[def];
 						} else {
 							throw new Error("cannot create alias of nonexistent macro <<" + def + ">>");
 						}

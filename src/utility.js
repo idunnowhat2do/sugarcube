@@ -169,7 +169,7 @@ if (!String.format) {
 /**
  * Returns a copy of the passed object (shallow by default, but deep if specified)
  */
-function clone(orig, deep) {
+function clone(orig) {
 	if (orig == null || typeof orig !== "object") {  // use lazy equality on null check
 		return orig;
 	}
@@ -193,28 +193,19 @@ function clone(orig, deep) {
 	// If we've reached here, we have a regular object, array, or function
 	//   n.b This does NOT preserve ES5 property attributes like 'writable', 'enumerable', etc.
 	//       That could be achieved by using Object.getOwnPropertyNames and Object.defineProperty
-	/*
-	var dup;
+	var okeys = Object.keys(orig),
+		dup;
 	// Ensure the returned object has the same prototype as the original
 	if (Array.isArray(orig)) {
+		// Array object case; this must be done separate from the general case or the prototype will be wrong
 		dup = [];
 	} else {
-		var proto = (typeof Object.getPrototypeOf === "function" ? Object.getPrototypeOf(orig) : orig.__proto__);
-		dup = proto
-			? Object.create(proto)
-			: orig.constructor.prototype;  // this should only be reached by very old browsers
+		// General, non-array, object case
+		var proto = (typeof Object.getPrototypeOf === "function") ? Object.getPrototypeOf(orig) : orig.__proto__;
+		dup = proto ? Object.create(proto) : orig.constructor.prototype;  // the latter case should only be reached by very old browsers
 	}
-	*/
-	var proto = (typeof Object.getPrototypeOf === "function") ? Object.getPrototypeOf(orig) : orig.__proto__,
-		dup   = proto ? Object.create(proto) : orig.constructor.prototype;  // the latter case should only be reached by very old browsers
-	if (deep) {
-		for (var property in orig) {
-			dup[property] = clone(orig[property], true);
-		}
-	} else {
-		for (var property in orig) {
-			dup[property] = orig[property];
-		}
+	for (var i = 0, len = okeys.length; i < len; i++) {
+		dup[okeys[i]] = clone(orig[okeys[i]]);
 	}
 	return dup;
 }
