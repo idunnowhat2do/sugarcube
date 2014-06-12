@@ -1,10 +1,8 @@
-<span id="top"></span>
 # SugarCube #
 [SugarCube](http://www.motoslave.net/sugarcube/ "http://www.motoslave.net/sugarcube/") is a free (gratis and libre) header for [Twine/Twee](http://twinery.org/ "http://twinery.org/"), based on [TiddlyWiki](http://tiddlywiki.com/ "http://tiddlywiki.com/").
 
 Downloads and documentation can be found at [SugarCube's website](http://www.motoslave.net/sugarcube/ "http://www.motoslave.net/sugarcube/").
 
-<span id="features"></span>
 ## Feature Highlights ##
 - Semantic HTML5 (for the most part, anyway).
 - The ability to easily save your progress, at any point, and revisit it at any time.
@@ -14,15 +12,13 @@ Downloads and documentation can be found at [SugarCube's website](http://www.mot
 - Embeds the [jQuery library](http://jquery.com/ "http://jquery.com/") (2.x series) and the [seedrandom.js library](https://github.com/davidbau/seedrandom "https://github.com/davidbau/seedrandom").
 - And more….  See the documentation at [SugarCube's website](http://www.motoslave.net/sugarcube/ "http://www.motoslave.net/sugarcube/") for more information.
 
-<span id="requirements"></span>
 ## Requirements ##
 SugarCube's sole requirement is a modern web browser, and by *modern* I mean one released within the last several years (you do not need the absolute latest and greatest shiny).
 
 **Caveat for Internet Explorer:** SugarCube only supports  IE9+.  So, users of Windows XP (who are limited to IE8) will not be able to play/view stories built with SugarCube with their version of IE.  They would either have to use a different browser or upgrade to a less obsolescent version of Windows (Microsoft ended public support for Windows XP in April, 2014).
 
-<span id="building"></span>
 ## Building SugarCube ##
-If you want to build SugarCube from scratch, rather than grabbing one of the pre-built packages of of its website, then these instruction are for you.
+If you want to build SugarCube from scratch, rather than grabbing one of the pre-built packages of of its website, then these instructions are for you.
 
 SugarCube uses Node.js as its build system, so the first thing you need to do is to install it if you don't already have it.
 
@@ -41,4 +37,3 @@ If you're running this from a UNIX-style shell, simply running `build.js` should
 If there were no errors, the header will, by default, be output to the `dist` directory.  Congratulations!
 
 
-<br>
