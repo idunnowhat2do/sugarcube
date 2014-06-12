@@ -130,8 +130,8 @@ function Macros() {
 				"use strict";
 				try {
 					eval((thisp == null)  /* use lazy equality */
-						? 'var output = document.createElement("div");(function(){' + statements + '}());'
-						: "var output = thisp.output;(function(){" + statements + "}.call(thisp));");
+						? 'var output = document.createElement("div");(function(){' + statements + '\n}());'
+						: "var output = thisp.output;(function(){" + statements + "\n}.call(thisp));");
 					return true;
 				} catch (e) {
 					if (thisp == null) {  // use lazy equality

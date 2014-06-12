@@ -167,7 +167,7 @@ if (!String.format) {
 ** [Function Library]
 ***********************************************************************************************************************/
 /**
- * Returns a copy of the passed object (shallow by default, but deep if specified)
+ * Returns a deep copy of the passed object
  */
 function clone(orig) {
 	if (orig == null || typeof orig !== "object") {  // use lazy equality on null check
@@ -619,11 +619,99 @@ var Util = {
 		"use strict";
 		// the enclosing anonymous function is to isolate the passed code within its own scope
 		try {
-			eval("(function(){" + statements + "}());");
+			eval("(function(){" + statements + "\n}());");
 			return true;
 		} catch (e) {
 			return false;
 		}
+	},
+
+	/**
+	 * Returns a patch object containing the differences between the original and the destination objects
+	 */
+	diff: function (orig, dest) /* diff object */ {
+		var keys = [].concat(Object.keys(orig), Object.keys(dest)),
+			diff = {};
+		for (var i = 0, len = keys.length; i < len; i++) {
+			var p  = keys[i],
+				ep = (p[0] === "-") ? "-" + p : p;
+			if (orig.hasOwnProperty(p)) {
+				if (typeof orig[p] === typeof dest[p]) {
+					if (orig[p] === null || typeof orig[p] !== "object") {
+						if (orig[p] !== dest[p]) {
+							diff[ep] = dest[p];
+						}
+					} else {
+						var recurse = Util.diff(orig[p], dest[p]);
+						if (Object.keys(recurse).length !== 0) {
+							diff[ep] = recurse;
+						}
+					}
+				} else {
+					if (dest.hasOwnProperty(p)) {
+						diff[ep] = clone(dest[p]);
+					} else {
+						var rmp;
+						if (Array.isArray(orig)) {
+							rmp = "-i";
+							var np = +p;
+							if (!diff.hasOwnProperty(rmp)) {
+								diff[rmp] = { b: np, e: np };
+							}
+							if (np < diff[rmp].b) {
+								diff[rmp].b = np;
+							}
+							if (np > diff[rmp].e) {
+								diff[rmp].e = np;
+							}
+						} else {
+							rmp = "-p";
+							if (!diff.hasOwnProperty(rmp)) {
+								diff[rmp] = [];
+							}
+							diff[rmp].push(p);
+						}
+					}
+				}
+			} else {  // key belongs to dest
+				if (dest[p] === null || typeof dest[p] !== "object") {
+					diff[ep] = dest[p];
+				} else {
+					diff[ep] = clone(dest[p]);
+				}
+			}
+		}
+		return diff;
+	},
+
+	/**
+	 * Returns an object resulting from updating the original object with the difference object
+	 */
+	patch: function (orig, diff) /* patched object */ {
+		var keys    = Object.keys(diff),
+			patched = clone(orig);
+		for (var i = 0, klen = keys.length; i < klen; i++) {
+			var p = keys[i];
+			if (p === "-p") {
+				for (var j = 0, dlen = diff[p].length; j < dlen; j++) {
+					delete patched[diff[p][j]];
+				}
+			} else if (p === "-i") {
+				patched.splice(diff[p].b, diff[p].e - diff[p].b + 1);
+			} else {
+				var ep = (p[0] === "-") ? p.slice(1) : p;
+				if (diff[p] === null || typeof diff[p] !== "object") {
+					patched[ep] = diff[p];
+				} else {
+					if (patched.hasOwnProperty(ep)) {
+						patched[ep] = Util.patch(patched[ep], diff[p]);
+					} else {
+						patched[ep] = Util.patch({}, diff[p]);
+					}
+				}
+			}
+		}
+		return patched;
 	},
 
 	/**
@@ -808,10 +896,10 @@ KeyValueStore.prototype.getItem = function (sKey) {
 		var sValue = this.store.getItem(sKey);
 		if (sValue != null) {  // use lazy equality
 			if (sValue.slice(0, 2) === "#~") {
-				DEBUG("    > loading LZ-compressed value for: " + sKey);
+				if (DEBUG) { console.log("    > loading LZ-compressed value for: " + sKey); }
 				return Util.deserialize(LZString.decompressFromUTF16(sValue.slice(2)));
 			} else {
-				DEBUG("    > loading uncompressed value for: " + sKey);
+				if (DEBUG) { console.log("    > loading uncompressed value for: " + sKey); }
 				return Util.deserialize(sValue);
 			}
 		}
@@ -823,10 +911,10 @@ KeyValueStore.prototype.getItem = function (sKey) {
 			if (bits[0].trim() === sKey) {
 				var sValue = unescape(bits[1]);
 				if (sValue.slice(0, 2) === "#~") {
-					DEBUG("    > loading LZ-compressed value for: " + sKey);
+					if (DEBUG) { console.log("    > loading LZ-compressed value for: " + sKey); }
 					return Util.deserialize(LZString.decompressFromBase64(sValue.slice(2)));
 				} else {
-					DEBUG("    > loading uncompressed value for: " + sKey);
+					if (DEBUG) { console.log("    > loading uncompressed value for: " + sKey); }
 					return Util.deserialize(sValue);
 				}
 			}
@@ -851,7 +939,7 @@ KeyValueStore.prototype.removeItem = function (sKey) {
 KeyValueStore.prototype.removeMatchingItems = function (sKey) {
 	if (!sKey) { return false; }
 
-	DEBUG("[<KeyValueStore>.removeMatchingItems()]");
+	if (DEBUG) { console.log("[<KeyValueStore>.removeMatchingItems()]"); }
 
 	var matched = [];
 	var keyRegexp = new RegExp(("^" + this.prefix + sKey).replace(/\./g, "\\.") + ".*");
@@ -874,7 +962,7 @@ KeyValueStore.prototype.removeMatchingItems = function (sKey) {
 		}
 	}
 	for (var i = 0; i < matched.length; i++) {
-		DEBUG("    > removing key: " + matched[i]);
+		if (DEBUG) { console.log("    > removing key: " + matched[i]); }
 		this.removeItem(matched[i]);
 	}
 	return true;

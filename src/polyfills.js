@@ -19,7 +19,6 @@
  * Adds support for window.history.state to browsers which lack it (notably some versions of Safari/iOS)
  */
 if (("history" in window) && ("pushState" in window.history) && !("state" in window.history)) {
-	DEBUG("[Polyfill: window.history.state]");
 	(function (origPush, origReplace) {
 		// initialize window.history.state to null
 		window.history.state = null;
@@ -39,7 +38,6 @@ if (("history" in window) && ("pushState" in window.history) && !("state" in win
 		// the appropriate value, and make the handler initiate capture so that
 		// it will be called before any other popstate handlers
 		window.addEventListener("popstate", function (evt) {
-			DEBUG("[Polyfill: window.history.state -> popstate handler]");
 			window.history.state = evt.state;
 		}, true);
 	})(window.history.pushState, window.history.replaceState);

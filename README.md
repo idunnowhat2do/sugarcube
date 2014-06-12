@@ -1,27 +1,44 @@
+<span id="top"></span>
 # SugarCube #
 [SugarCube](http://www.motoslave.net/sugarcube/ "http://www.motoslave.net/sugarcube/") is a free (gratis and libre) header for [Twine/Twee](http://twinery.org/ "http://twinery.org/"), based on [TiddlyWiki](http://tiddlywiki.com/ "http://tiddlywiki.com/").
 
 Downloads and documentation can be found at [SugarCube's website](http://www.motoslave.net/sugarcube/ "http://www.motoslave.net/sugarcube/").
 
+<span id="features"></span>
 ## Feature Highlights ##
-
 - Semantic HTML5 (for the most part, anyway).
-- Two primary modes of operation: History mode, which is the default, and Hash Tag mode.
-    - **History mode:** Works with the browser's history, so no more ever growing hash tag (fragment ID), and has fully persistent state within a story, even over page reloads.  (n.b. There are actually two, functionally equivalent, History modes: Window History mode, for most browsers, and Session History mode, especially for Firefox.)
-    - **Hash Tag mode:** The traditional Twine/Twee header mode, which is included largely for compatibility, but authors can choose to force its use over the Window/Session History modes if they desire.
 - The ability to easily save your progress, at any point, and revisit it at any time.
-- A completely author configurable Share menu, via the `MenuShare` passage.
-- Persistent end-user options, via the `options` variable, the `MenuOptions` passage, and the options macros.
-- Twine/Twee tags as classes, on the active passage's container element and the page's `<body>` element, for styling.
-- Widget macros.  Widgets allow you to create macros by using the standard macros and wiki text that you use normally within your story, so all Twine/Twee authors can now create simple macros regardless of technical aptitude.
-- Supports ending a line with the backslash (`\`) as a line continuation character.  This is mostly useful for controlling whitespace when you want to wrap lines for readability, but not generate extra whitespace upon display, and the `<<silently>>` macro isn't an option because you need to generate output.
-- Supports inserting HTML directly into passage text, without needing to use the `<html>` formatter (though it still works too).
-- Supports the current set of TiddlyWiki markup (e.g. adds `<nowiki>…</nowiki>` & table caption markup).
-- Supports the use of $variables in both the wiki link and image markup syntaxes (e.g. `[[$goThere]]` & `[img[$someImgSrc]]`).
-- Extends both the wiki link and image link markup syntaxes to allow setting $variables, exactly like `<<set>>`, upon clicking the link (e.g. `[[Take the red pill|Took pill][$pill = "red"]]`).
-- Embeds the jQuery library (2.x series) and the seedrandom.js library.
+- Persistent end-user options, via the [`options` variable](#reserved-names-variables "see: options"), the [`MenuOptions` passage](#reserved-names-passages "see: MenuOptions"), and the [options macros](#macrocat-options "see: options macros").
+- Supports most Twine 1.4+ features (e.g. [embedded image passages](#wiki-syntax-extensions-image-passage "see: Image Passage Syntax for [img[]]")).
+- Supports most of the current set of TiddlyWiki markup (e.g. adds `<nowiki>…</nowiki>` & table caption markup).
+- Embeds the [jQuery library](http://jquery.com/ "http://jquery.com/") (2.x series) and the [seedrandom.js library](https://github.com/davidbau/seedrandom "https://github.com/davidbau/seedrandom").
+- And more….  See the documentation at [SugarCube's website](http://www.motoslave.net/sugarcube/ "http://www.motoslave.net/sugarcube/") for more information.
 
+<span id="requirements"></span>
 ## Requirements ##
 SugarCube's sole requirement is a modern web browser, and by *modern* I mean one released within the last several years (you do not need the absolute latest and greatest shiny).
 
-**Caveat for Internet Explorer:** SugarCube only supports  IE9+.  So, users of Windows XP (who are limited to IE8) will not be able to play/view stories built with SugarCube with their version of IE.  They would either have to use a different browser or upgrade to a less obsolescent version of Windows (Microsoft will end support for Windows XP on April 8, 2014).
+**Caveat for Internet Explorer:** SugarCube only supports  IE9+.  So, users of Windows XP (who are limited to IE8) will not be able to play/view stories built with SugarCube with their version of IE.  They would either have to use a different browser or upgrade to a less obsolescent version of Windows (Microsoft ended public support for Windows XP in April, 2014).
+
+<span id="building"></span>
+## Building SugarCube ##
+If you want to build SugarCube from scratch, rather than grabbing one of the pre-built packages of of its website, then these instruction are for you.
+
+SugarCube uses Node.js as its build system, so the first thing you need to do is to install it if you don't already have it.
+
+- [Node.js website (http://nodejs.org/)](http://nodejs.org/ "http://nodejs.org/")
+
+After downloading and installing Node.js, change to the root of the `sugarcube` project directory.  You'll now need to download and install dependencies required by the build script, `build.js`, which you do by running the following command:
+
+>     npm install
+
+Dependencies will be installed to the root of the `sugarcube` project directory, nothing will be installed elsewhere on your computer.  Assuming that completes with no errors, run the following command to build the header:
+
+>     node build.js
+
+If you're running this from a UNIX-style shell, simply running `build.js` should also work as it's shebanged.
+
+If there were no errors, the header will, by default, be output to the `dist` directory.  Congratulations!
+
+
+<br>

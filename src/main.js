@@ -36,8 +36,8 @@ var version = Object.freeze({
 	major      : 1,
 	minor      : 0,
 	revision   : 0,
-	build      : {{_BUILD_}},
-	date       : new Date({{_DATE_}}),
+	build      : "{{BUILD_ID}}",
+	date       : new Date("{{BUILD_DATE}}"),
 	extensions : {},
 	toString   : function() { return this.title + " " + this.major + "." + this.minor + "." + this.revision + "." + this.build + " (" + this.date.toLocaleDateString() + ")"; }
 });
@@ -155,7 +155,7 @@ var testPlay,          // Twine 1.4+ "Test Play From Here" feature variable
  * Main function, entry point for story startup
  */
 $(document).ready(function () {
-	DEBUG("[main()]");
+	if (DEBUG) { console.log("[main()]"); }
 
 	/**
 	 * WARNING!
@@ -284,7 +284,7 @@ var SaveSystem = {
 		}
 		/* /legacy kludges */
 
-		DEBUG("[SaveSystem.init()]");
+		if (DEBUG) { console.log("[SaveSystem.init()]"); }
 
 		if (config.saves.slots < 0) { config.saves.slots = 0; }
 		if (storage.store === null) { return false; }
@@ -496,7 +496,7 @@ var SaveSystem = {
 		return SaveSystem.init();
 	},
 	exportSave: function () {
-		DEBUG("[SaveSystem.exportSave()]");
+		if (DEBUG) { console.log("[SaveSystem.exportSave()]"); }
 
 		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed()) {
 			UISystem.alert(config.errors.savesNotAllowed);
@@ -509,7 +509,7 @@ var SaveSystem = {
 		saveAs(new Blob([saveObj], { type: "text/plain;charset=UTF-8" }), saveName);
 	},
 	importSave: function (event) {
-		DEBUG("[SaveSystem.importSave()]");
+		if (DEBUG) { console.log("[SaveSystem.importSave()]"); }
 
 		var file   = event.target.files[0],
 			reader = new FileReader();
@@ -517,7 +517,7 @@ var SaveSystem = {
 		// capture the file information once the load is finished
 		$(reader).load(function(file) {
 			return function(evt) {
-				DEBUG('    > loaded: ' + escape(file.name) + '; payload: ' + evt.target.result);
+				if (DEBUG) { console.log('    > loaded: ' + escape(file.name) + '; payload: ' + evt.target.result); }
 
 				if (!evt.target.result) { return; }
 
@@ -535,7 +535,7 @@ var SaveSystem = {
 		reader.readAsText(file);
 	},
 	marshal: function () {
-		DEBUG("[SaveSystem.marshal()]");
+		if (DEBUG) { console.log("[SaveSystem.marshal()]"); }
 
 		var saveObj = {
 			id:    config.saves.id,
@@ -552,7 +552,7 @@ var SaveSystem = {
 		return saveObj;
 	},
 	unmarshal: function (saveObj) {
-		DEBUG("[SaveSystem.unmarshal()]");
+		if (DEBUG) { console.log("[SaveSystem.unmarshal()]"); }
 
 		try {
 			if (!saveObj || !saveObj.hasOwnProperty("id") || !saveObj.hasOwnProperty("state")) {
@@ -591,7 +591,7 @@ var UISystem = {
 	_body: null,
 	_closer: null,
 	init: function () {
-		DEBUG("[UISystem.init()]");
+		if (DEBUG) { console.log("[UISystem.init()]"); }
 
 		var html   = $(document.documentElement),
 			target;
@@ -650,23 +650,23 @@ var UISystem = {
 			html.removeClass("init-loading");
 		}
 		document.addEventListener("readystatechange", function () {
-			DEBUG("**** document.readyState: " + document.readyState + "  (on: readystatechange)");
+			if (DEBUG) { console.log("**** document.readyState: " + document.readyState + "  (on: readystatechange)"); }
 			// readyState can be: "loading", "interactive", or "complete"
 			if (document.readyState === "complete") {
-				DEBUG('---- removing class "init-loading" (in ' + config.loadDelay + 'ms)');
+				if (DEBUG) { console.log('---- removing class "init-loading" (in ' + config.loadDelay + 'ms)'); }
 				if (config.loadDelay > 0) {
 					setTimeout(function () { html.removeClass("init-loading"); }, config.loadDelay);
 				} else {
 					html.removeClass("init-loading");
 				}
 			} else {
-				DEBUG('++++ adding class "init-loading"');
+				if (DEBUG) { console.log('++++ adding class "init-loading"'); }
 				html.addClass("init-loading");
 			}
 		}, false);
 	},
 	setPageElements: function () {
-		DEBUG("[UISystem.setPageElements()]");
+		if (DEBUG) { console.log("[UISystem.setPageElements()]"); }
 		// setup for the non-passage page elements
 		setPageElement("story-banner",   "StoryBanner");
 		setPageElement("story-subtitle", "StorySubtitle");
@@ -832,7 +832,7 @@ var UISystem = {
 			return el;
 		}
 
-		DEBUG("[UISystem.buildSaves()]");
+		if (DEBUG) { console.log("[UISystem.buildSaves()]"); }
 
 		var dialog  = UISystem._body,
 			list,
@@ -881,7 +881,7 @@ var UISystem = {
 		}
 	},
 	buildRewind: function () {
-		DEBUG("[UISystem.buildRewind()]");
+		if (DEBUG) { console.log("[UISystem.buildRewind()]"); }
 
 		var dialog   = UISystem._body,
 			hasItems = false;
@@ -899,7 +899,7 @@ var UISystem = {
 					var p = i;
 					if (config.historyMode === Modes.SessionHistory) {
 						return function () {
-							DEBUG("[rewind:click() @sessionHistory]");
+							if (DEBUG) { console.log("[rewind:click() @sessionHistory]"); }
 
 							// necessary?
 							document.title = tale.title;
@@ -909,7 +909,7 @@ var UISystem = {
 
 							// push the history states in order
 							if (config.disableHistoryControls) {
-								DEBUG("    > pushing: " + p + " (" + state.history[p].title + ")");
+								if (DEBUG) { console.log("    > pushing: " + p + " (" + state.history[p].title + ")"); }
 
 								// load the state into the window history
 								History.replaceWindowState(
@@ -920,7 +920,7 @@ var UISystem = {
 								);
 							} else {
 								for (var i = 0, end = p; i <= end; i++) {
-									DEBUG("    > pushing: " + i + " (" + state.history[i].title + ")");
+									if (DEBUG) { console.log("    > pushing: " + i + " (" + state.history[i].title + ")"); }
 
 									// load the state into the window history
 									History.addWindowState(
@@ -934,7 +934,7 @@ var UISystem = {
 
 							var windowState = History.getWindowState();
 							if (windowState.sidx < state.top.sidx) {
-								DEBUG("    > stacks out of sync; popping " + (state.top.sidx - windowState.sidx) + " states to equalize");
+								if (DEBUG) { console.log("    > stacks out of sync; popping " + (state.top.sidx - windowState.sidx) + " states to equalize"); }
 								// stack ids are out of sync, pop our stack until
 								// we're back in sync with the window.history
 								state.pop(state.top.sidx - windowState.sidx);
@@ -948,7 +948,7 @@ var UISystem = {
 						};
 					} else if (config.historyMode === Modes.WindowHistory) {
 						return function () {
-							DEBUG("[rewind:click() @windowHistory]");
+							if (DEBUG) { console.log("[rewind:click() @windowHistory]"); }
 
 							// necessary?
 							document.title = tale.title;
@@ -956,7 +956,7 @@ var UISystem = {
 							// push the history states in order
 							if (!config.disableHistoryControls) {
 								for (var i = 0, end = p; i <= end; i++) {
-									DEBUG("    > pushing: " + i + " (" + state.history[i].title + ")");
+									if (DEBUG) { console.log("    > pushing: " + i + " (" + state.history[i].title + ")"); }
 
 									// load the state into the window history
 									var stateObj = { history: state.history.slice(0, i + 1) };
@@ -1005,7 +1005,7 @@ var UISystem = {
 		}
 	},
 	buildRestart: function () {
-		DEBUG("[UISystem.buildRestart()]");
+		if (DEBUG) { console.log("[UISystem.buildRestart()]"); }
 
 		var dialog = UISystem._body;
 
@@ -1022,7 +1022,7 @@ var UISystem = {
 		return true;
 	},
 	buildOptions: function () {
-		DEBUG("[UISystem.buildOptions()]");
+		if (DEBUG) { console.log("[UISystem.buildOptions()]"); }
 
 		var dialog = UISystem._body;
 
@@ -1034,7 +1034,7 @@ var UISystem = {
 		return true;
 	},
 	buildShare: function () {
-		DEBUG("[UISystem.buildShare()]");
+		if (DEBUG) { console.log("[UISystem.buildShare()]"); }
 
 		var dialog = UISystem._body;
 

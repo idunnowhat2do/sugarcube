@@ -631,7 +631,7 @@ function addStandardMacros() {
 		skipArgs: true,
 		tags: null,
 		handler: function () {
-			macros.evalStatements(this.payload[0].contents.trim(), this);
+			macros.evalStatements(this.payload[0].contents, this);
 		}
 	});
 
