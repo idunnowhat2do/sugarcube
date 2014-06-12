@@ -22,7 +22,7 @@ If you want to build SugarCube from scratch, rather than grabbing one of the pre
 
 SugarCube uses Node.js as its build system, so the first thing you need to do is to install it if you don't already have it.
 
-- [Node.js website (http://nodejs.org/)](http://nodejs.org/ "http://nodejs.org/")
+- [Node.js website: `http://nodejs.org/`](http://nodejs.org/ "http://nodejs.org/")
 
 After downloading and installing Node.js, change to the root of the `sugarcube` project directory.  You'll now need to download and install dependencies required by the build script, `build.js`, which you do by running the following command:
 

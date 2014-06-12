@@ -76,7 +76,6 @@ function writeFileContents(filename, data) {
 function concatFiles(filenames) {
 	var _os    = require("os"),
 		output = filenames.map(function (filename) {
-			//log('[' + filename + ']');
 			return readFileContents(_path.normalize(filename));
 		});
 	return output.join("\n");  // we only use UNIX-style line termination
@@ -119,7 +118,7 @@ function compileCSS(filenames) {
 var _fs     = require("fs"),
 	_path   = require("path"),
 	_opt    = require('node-getopt').create([
-		['d', 'debug',      'Keep debugging code; implies -u.'],
+		['d', 'debug',      'Keep debugging code; gated by DEBUG symbol.'],
 		['u', 'unminified', 'Suppress minification stages.'],
 		['h', 'help',       'Print this help, then exit.']
 	])
