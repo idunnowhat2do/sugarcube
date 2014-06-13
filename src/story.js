@@ -8,11 +8,12 @@
 function History(instanceName) {
 	if (DEBUG) {
 		console.log("[History()]");
-		console.log("    > mode: " + (config.historyMode === Modes.HashTag ? "hashTag" : (config.historyMode === Modes.WindowHistory ? "windowHistory" : "sessionHistory")));
+		console.log("    > mode: " + (config.historyMode === HistoryMode.Hash ? "hashTag" : (config.historyMode === HistoryMode.Window ? "windowHistory" : "sessionHistory")));
 		if (History.getWindowState()) {
-			if (config.historyMode === Modes.WindowHistory) {
-				console.log("    > History.getWindowState(): " + History.getWindowState().length);
-			} else if (config.historyMode === Modes.SessionHistory) {
+			if (config.historyMode === HistoryMode.Window) {
+				//console.log("    > History.getWindowState(): " + History.getWindowState().history.length);
+				console.log("    > History.getWindowState(): " + History.getWindowState().dhist.length);
+			} else if (config.historyMode === HistoryMode.Session) {
 				console.log("    > History.getWindowState(): " + History.getWindowState().sidx + "/" + History.getWindowState().suid);
 			}
 		} else {
@@ -38,7 +39,7 @@ History.prototype = {
 	get top ()     { return (this.history.length !== 0) ? this.history[this.history.length - 1] : null; },
 	get bottom ()  { return (this.history.length !== 0) ? this.history[0] : null; },
 	get isEmpty () { return this.history.length === 0; },
-	get length ()  { return (config.historyMode === Modes.SessionHistory) ? this.active.sidx + 1 : this.history.length; }
+	get length ()  { return (config.historyMode === HistoryMode.Session) ? this.active.sidx + 1 : this.history.length; }
 };
 
 /*
@@ -48,7 +49,7 @@ History.prototype.clone = function (at) {
 	if (at > this.history.length) { return null; }
 
 	var dup = clone(this.history[this.history.length - at]);
-	if (config.historyMode === Modes.SessionHistory) {
+	if (config.historyMode === HistoryMode.Session) {
 		delete dup.sidx;
 	}
 	return dup;
@@ -96,7 +97,7 @@ History.prototype.push = function (/* variadic */) {
 
 	for (var i = 0; i < arguments.length; i++) {
 		var state = arguments[i];
-		if (config.historyMode === Modes.SessionHistory) {
+		if (config.historyMode === HistoryMode.Session) {
 			state.sidx = this.history.length;
 		}
 		this.history.push(state);
@@ -151,9 +152,9 @@ History.prototype.init = function () {
 	//        nothing from being wrapped in the jQuery Event object and it would
 	//        complicate either the handlers, by having to deal with it, or the
 	//        jQuery Event object, if we pushed the properties we need onto it
-	if (config.historyMode === Modes.SessionHistory) {
+	if (config.historyMode === HistoryMode.Session) {
 		window.addEventListener("popstate", History.popStateHandler_sessionHistory, false);
-	} else if (config.historyMode === Modes.WindowHistory) {
+	} else if (config.historyMode === HistoryMode.Window) {
 		window.addEventListener("popstate", History.popStateHandler_windowHistory, false);
 	} else {
 		window.addEventListener("hashchange", History.hashChangeHandler, false);
@@ -179,10 +180,10 @@ History.prototype.display = function (title, link, option) {
 
 	// ensure that this.active is set if we have history
 	if (this.active.init && !this.isEmpty) {
-		if (config.historyMode === Modes.SessionHistory) {
+		if (config.historyMode === HistoryMode.Session) {
 			if (DEBUG) { console.log("    [SH]> state.active.init && !state.isEmpty; activating: " + (History.hasWindowState() ? "History.getWindowState().sidx" : "state.top")); }
 			this.activate(History.hasWindowState() ? History.getWindowState().sidx : this.top);  // use lazy equality
-		} else if (config.historyMode === Modes.WindowHistory) {
+		} else if (config.historyMode === HistoryMode.Window) {
 			if (DEBUG) { console.log("    [WH]> state.active.init && !state.isEmpty; activating: state.top"); }
 			this.activate(this.top);
 		} else {
@@ -196,7 +197,7 @@ History.prototype.display = function (title, link, option) {
 		if (!this.isEmpty) {
 			if (config.disableHistoryTracking) {
 				this.pop();
-			} else if (config.historyMode === Modes.SessionHistory && History.getWindowState().sidx < this.top.sidx) {
+			} else if (config.historyMode === HistoryMode.Session && History.getWindowState().sidx < this.top.sidx) {
 				if (DEBUG) { console.log("    > stacks out of sync; popping " + (this.top.sidx - History.getWindowState().sidx) + " states to equalize"); }
 				// stack IDs are out of sync, pop our stack until we're back in
 				// sync with the window.history
@@ -210,15 +211,16 @@ History.prototype.display = function (title, link, option) {
 		}
 		this.activate(this.top);
 	}
-	if ((updateHistory || config.disableHistoryControls) && config.historyMode !== Modes.HashTag) {
+	if ((updateHistory || config.disableHistoryControls) && config.historyMode !== HistoryMode.Hash) {
 		if (DEBUG) { console.log("    > typeof History.getWindowState(): " + typeof History.getWindowState()); }
 		var stateObj;
 		switch (config.historyMode) {
-		case Modes.SessionHistory:
+		case HistoryMode.Session:
 			stateObj = { suid: this.suid, sidx: this.active.sidx };
 			break;
-		case Modes.WindowHistory:
-			stateObj = { history: this.history };
+		case HistoryMode.Window:
+			//stateObj = { history: this.history };
+			stateObj = { dhist: this.diffHistory() };
 			if (this.hasOwnProperty("prng")) {
 				stateObj.rseed = this.prng.seed;
 			}
@@ -230,7 +232,7 @@ History.prototype.display = function (title, link, option) {
 			: "addWindowState"
 		](stateObj, windowTitle);
 	}
-	if (config.historyMode !== Modes.WindowHistory) {
+	if (config.historyMode !== HistoryMode.Window) {
 		this.save();
 	}
 
@@ -279,7 +281,7 @@ History.prototype.display = function (title, link, option) {
 		passages.appendChild(el);
 		setTimeout(function () { el.classList.remove("transition-in"); }, 1);
 
-		if (config.historyMode === Modes.HashTag) {
+		if (config.historyMode === HistoryMode.Hash) {
 			if (config.displayPassageTitles && passage.title !== config.startPassage) {
 				document.title = windowTitle;
 			}
@@ -340,10 +342,10 @@ History.prototype.regenerateSuid = function () {
 
 History.prototype.restart = function () {
 	if (DEBUG) { console.log("[<History>.restart()]"); }
-	if (config.historyMode === Modes.SessionHistory) {
+	if (config.historyMode === HistoryMode.Session) {
 		session.removeItem("activeHistory");
 		window.location.reload();
-	} else if (config.historyMode === Modes.WindowHistory) {
+	} else if (config.historyMode === HistoryMode.Window) {
 		History.addWindowState(null, tale.title); // using null here is deliberate
 		window.location.reload();
 	} else {
@@ -358,7 +360,7 @@ History.prototype.restart = function () {
 
 History.prototype.save = function () {
 	if (DEBUG) { console.log("[<History>.save()]"); }
-	if (config.historyMode === Modes.SessionHistory) {
+	if (config.historyMode === HistoryMode.Session) {
 		if (DEBUG) { console.log("    > this.suid: " + this.suid); }
 		var stateObj = { history: this.history };
 		if (this.hasOwnProperty("prng")) {
@@ -368,7 +370,7 @@ History.prototype.save = function () {
 			if (DEBUG) { console.log("    > activeHistory: " + this.suid); }
 			session.setItem("activeHistory", this.suid);
 		}
-	} else if (config.historyMode === Modes.HashTag) {
+	} else if (config.historyMode === HistoryMode.Hash) {
 		var order = "";
 
 		// encode our history
@@ -388,7 +390,7 @@ History.prototype.save = function () {
 
 History.prototype.restore = function (suid) {
 	if (DEBUG) { console.log("[<History>.restore()]"); }
-	if (config.historyMode === Modes.SessionHistory) {
+	if (config.historyMode === HistoryMode.Session) {
 		if (suid) {
 			this.suid = suid;
 		} else {
@@ -412,15 +414,17 @@ History.prototype.restore = function (suid) {
 				return true;
 			}
 		}
-	} else if (config.historyMode === Modes.WindowHistory) {
+	} else if (config.historyMode === HistoryMode.Window) {
 		if (DEBUG) {
 			console.log("    > typeof window.history: " + typeof window.history);
 			console.log("    > typeof History.getWindowState(): " + typeof History.getWindowState());
 		}
 		if (History.hasWindowState()) {
-			this.history = History.getWindowState().history;
-			if (this.hasOwnProperty("prng") && History.getWindowState().hasOwnProperty("rseed")) {
-				this.prng.seed = History.getWindowState().rseed;
+			var windowState = History.getWindowState();
+			//this.history = windowState.history;
+			this.patchHistory(windowState.dhist);
+			if (this.hasOwnProperty("prng") && windowState.hasOwnProperty("rseed")) {
+				this.prng.seed = windowState.rseed;
 			}
 		}
 		if (!this.isEmpty && tale.has(this.top.title)) {
@@ -532,11 +536,13 @@ History.popStateHandler_windowHistory = function (evt) {
 	var windowState = History.getWindowState(evt);
 
 	// throw error if state has no history or history is empty
-	if (!windowState.hasOwnProperty("history") || windowState.history.length === 0) {
+	//if (!windowState.hasOwnProperty("history") || windowState.history.length === 0) {
+	if (!windowState.hasOwnProperty("dhist") || windowState.dhist.length === 0) {
 		throw new Error("window state has no history or history is empty");
 	}
 
-	state.history = windowState.history;
+	//state.history = windowState.history;
+	state.patchHistory(windowState.dhist);
 	if (state.hasOwnProperty("prng") && windowState.hasOwnProperty("rseed")) {
 		state.prng.seed = windowState.rseed;
 	}
@@ -555,6 +561,9 @@ History.hashChangeHandler = function (evt) {
 
 	if (window.location.hash !== state.hash) {
 		if (window.location.hash !== "" && window.location.hash !== "#") {
+			// close any open UI dialog
+			if (UISystem.isOpen()) { UISystem.close(); }
+
 			var el = document.getElementById("passages");
 
 			// reset the history, making a copy of the <<remember>> variables
@@ -602,19 +611,20 @@ History.marshal = function () {
 	if (DEBUG) { console.log("[History.marshal()]"); }
 
 	var stateObj = {
-		mode: config.historyMode
+		mode : config.historyMode,
+		hver : 1
 	};
 	if (state.hasOwnProperty("prng")) {
 		stateObj.rseed = state.prng.seed;
 	}
 	switch (config.historyMode) {
-	case Modes.SessionHistory:
+	case HistoryMode.Session:
 		stateObj.history = clone(state.history.slice(0, state.active.sidx + 1));
 		break;
-	case Modes.WindowHistory:
+	case HistoryMode.Window:
 		stateObj.history = clone(state.history);
 		break;
-	case Modes.HashTag:
+	case HistoryMode.Hash:
 		stateObj.history = state.active.hash;
 		break;
 	}
@@ -633,9 +643,9 @@ History.unmarshal = function (stateObj) {
 	}
 
 	switch (config.historyMode) {
-	case Modes.WindowHistory:
+	case HistoryMode.Window:
 		/* FALL-THROUGH */
-	case Modes.SessionHistory:
+	case HistoryMode.Session:
 		// necessary?
 		document.title = tale.title;
 
@@ -644,12 +654,16 @@ History.unmarshal = function (stateObj) {
 		if (runtime.flags.HistoryPRNG.isEnabled) {
 			History.initPRNG(stateObj.hasOwnProperty("rseed") ? stateObj.rseed : null);
 		}
-		if (config.historyMode === Modes.SessionHistory) {
+		if (config.historyMode === HistoryMode.Session) {
 			state.regenerateSuid();
 			//if (DEBUG) { console.log("    > [History.unmarshal()] this.suid: " + state.suid); }
 		}
 
+		// load the state history from the save
+		//state.history = clone(stateObj.history);
+
 		// restore the history states in order
+		//for (var i = 0, len = state.history.length; i < len; i++) {
 		for (var i = 0, len = stateObj.history.length; i < len; i++) {
 			// load the state from the save
 			state.history.push(clone(stateObj.history[i]));
@@ -663,11 +677,12 @@ History.unmarshal = function (stateObj) {
 						? tale.title + ": " + state.history[i].title
 						: tale.title;
 				switch (config.historyMode) {
-				case Modes.SessionHistory:
+				case HistoryMode.Session:
 					windowState = { suid: state.suid, sidx: state.history[i].sidx };
 					break;
-				case Modes.WindowHistory:
-					windowState = { history: state.history };
+				case HistoryMode.Window:
+					//windowState = { history: state.history };
+					windowState = { dhist: state.diffHistory() };
 					if (state.hasOwnProperty("prng")) {
 						windowState.rseed = state.prng.seed;
 					}
@@ -682,7 +697,7 @@ History.unmarshal = function (stateObj) {
 		state.display(state.active.title, null, "replace");
 		break;
 
-	case Modes.HashTag:
+	case HistoryMode.Hash:
 		if (!config.disableHistoryControls) {
 			window.location.hash = stateObj.history;
 		} else {
@@ -736,7 +751,7 @@ function Passage(title, el, order) {
 						tagClasses = tagClasses.concat(el.className.split(/\s+/));
 					}
 					// sort and filter out non-uniques
-					tagClasses = tagClasses.sort().filter(function (val, i, aref) { return (i === 0 || aref[i-1] != val) ? true : false });
+					tagClasses = tagClasses.sort().filter(function (val, i, aref) { return (i === 0 || aref[i-1] !== val); });
 
 					this.classes   = tagClasses;
 					this.className = tagClasses.join(' ');
@@ -926,10 +941,7 @@ Passage.mergeClassNames = function (/* variadic */) {
 	}
 	if (classes.length > 0) {
 		// return a string of sorted, and unique, class names
-		return classes
-			.sort()
-			.filter(function (val, i, aref) { return (i == 0 || aref[i-1] != val) ? true : false })
-			.join(' ');
+		return classes.sort().filter(function (v, i, a) { return (i === 0 || a[i-1] !== v); }).join(' ');
 	}
 	return "";
 };

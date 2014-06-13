@@ -29,27 +29,29 @@ window.onerror = function (mesg, url, lineNum, colNum, error) {
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-window.SugarCube = {};  // will contain exported identifiers, also allows scripts to detect if they're running in SugarCube ("SugarCube" in window)
+window.SugarCube = {};  // will contain exported identifiers, also allows scripts to detect if they're running in SugarCube (e.g. "SugarCube" in window)
 
 var version = Object.freeze({
-	title      : "SugarCube",
-	major      : 1,
-	minor      : 0,
-	revision   : 0,
-	build      : "{{BUILD_ID}}",
-	date       : new Date("{{BUILD_DATE}}"),
-	extensions : {},
-	toString   : function() { return this.title + " " + this.major + "." + this.minor + "." + this.revision + "." + this.build + " (" + this.date.toLocaleDateString() + ")"; }
+	title    : "SugarCube",
+	major    : "{{BUILD_MAJOR}}",
+	minor    : "{{BUILD_MINOR}}",
+	patch    : "{{BUILD_PATCH}}",
+	build    : "{{BUILD_BUILD}}",
+	date     : new Date("{{BUILD_DATE}}"),
+	toString : function() { return this.title + " v" + this.major + "." + this.minor + "." + this.patch + "+" + this.build + " (" + this.date.toLocaleFormat() + ")"; },
+	/* legacy kludge */
+	extensions : {}
+	/* /legacy kludge */
 });
 
-// SugarCube History prototype modes
-var Modes = Object.freeze({
-	HashTag        : 1,
-	WindowHistory  : 2,
-	SessionHistory : 3
+// SugarCube History prototype mode enumeration
+var HistoryMode = Object.freeze({
+	Hash    : 1,
+	Window  : 2,
+	Session : 3
 });
 /* legacy kludge */
-var modes = Object.freeze({ hashTag: Modes.HashTag, windowHistory: Modes.WindowHistory, sessionHistory: Modes.SessionHistory });
+var modes = Object.freeze({ hashTag: HistoryMode.Hash, windowHistory: HistoryMode.Window, sessionHistory: HistoryMode.Session });
 /* /legacy kludge */
 
 // SugarCube runtime object (internal use only)
@@ -92,7 +94,7 @@ var config = {
 	// history option properties
 	disableHistoryControls : false,
 	disableHistoryTracking : false,
-	historyMode            : Modes.HashTag,
+	historyMode            : HistoryMode.Hash,
 
 	// macros option properties
 	macros: {
@@ -135,7 +137,7 @@ config.browser = {
 	}
 };
 // adjust these based on the specific browser used
-config.historyMode = (config.hasPushState ? ((config.browser.isIE || config.browser.isMobile.iOS) && !config.hasSessionStorage ? Modes.WindowHistory : Modes.SessionHistory) : Modes.HashTag);
+config.historyMode = (config.hasPushState ? ((config.browser.isIE || config.browser.isMobile.iOS) && !config.hasSessionStorage ? HistoryMode.Window : HistoryMode.Session) : HistoryMode.Hash);
 config.hasFileAPI = config.hasFileAPI && !config.browser.isMobile.any() && (!config.browser.isOpera || config.browser.operaVersion >= 15);
 
 var formatter = null,  // Wikifier formatters
@@ -538,8 +540,8 @@ var SaveSystem = {
 		if (DEBUG) { console.log("[SaveSystem.marshal()]"); }
 
 		var saveObj = {
-			id:    config.saves.id,
-			state: History.marshal()
+			id    : config.saves.id,
+			state : History.marshal()
 		};
 		if (config.saves.version) {
 			saveObj.version = config.saves.version;
@@ -557,9 +559,9 @@ var SaveSystem = {
 		try {
 			if (!saveObj || !saveObj.hasOwnProperty("id") || !saveObj.hasOwnProperty("state")) {
 				if (!saveObj || !saveObj.hasOwnProperty("mode") || !saveObj.hasOwnProperty("id") || !saveObj.hasOwnProperty("data")) {
-					throw new Error("Save is missing required data.  Either you've loaded a file which isn't a save, or the save has become corrupted");
+					throw new Error("save is missing required data.  Either you've loaded a file which isn't a save, or the save has become corrupted");
 				} else {
-					throw new Error("Old-style saves seen in SaveSystem.unmarshal()");
+					throw new Error("old-style saves seen in SaveSystem.unmarshal()");
 				}
 			}
 
@@ -568,13 +570,13 @@ var SaveSystem = {
 			}
 
 			if (saveObj.id !== config.saves.id) {
-				throw new Error("Save is from the wrong " + config.errorName);
+				throw new Error("save is from the wrong " + config.errorName);
 			}
 
 			// restore the state
 			History.unmarshal(saveObj.state);
 		} catch (e) {
-			UISystem.alert(e.message + ".\n\nAborting load.");
+			UISystem.alert(e.message[0].toUpperCase() + e.message.slice(1) + ".\n\nAborting load.");
 			return false;
 		}
 
@@ -897,7 +899,7 @@ var UISystem = {
 				el.classList.add("ui-close");
 				$(el).click(function () {
 					var p = i;
-					if (config.historyMode === Modes.SessionHistory) {
+					if (config.historyMode === HistoryMode.Session) {
 						return function () {
 							if (DEBUG) { console.log("[rewind:click() @sessionHistory]"); }
 
@@ -946,7 +948,7 @@ var UISystem = {
 							// display the passage
 							state.display(state.active.title, null, "replace");
 						};
-					} else if (config.historyMode === Modes.WindowHistory) {
+					} else if (config.historyMode === HistoryMode.Window) {
 						return function () {
 							if (DEBUG) { console.log("[rewind:click() @windowHistory]"); }
 

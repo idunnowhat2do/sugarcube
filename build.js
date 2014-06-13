@@ -4,7 +4,7 @@
  *   - Description : Node.js-hosted build script for SugarCube
  *   - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
  *   - Copyright   : Copyright © 2014 Thomas Michael Edwards. All rights reserved.
- *   - Version     : 1.0.0, 2014-06-11
+ *   - Version     : 1.0.2, 2014-06-13
  */
 "use strict";
 
@@ -15,7 +15,7 @@ var CONFIG = {
 	html : {
 		"src/header.tpl" : "dist/sugarcube/header.html"
 	},
-	js   : [ "src/polyfills.js", "src/utility.js", "src/main.js", "src/story.js", "src/wikifier.js", "src/macros.js" , "src/macroslib.js" ],
+	js   : [ "src/intrinsics.js", "src/utility.js", "src/main.js", "src/story.js", "src/wikifier.js", "src/macros.js" , "src/macroslib.js" ],
 	css  : [ "src/styles.css" ],
 	copy : {
 		"src/sugarcube.py" : "dist/sugarcube/sugarcube.py"
@@ -128,10 +128,19 @@ var _fs     = require("fs"),
 
 // build the project
 (function () {
-	var build = +readFileContents(".build") + 1,         // get the build number
-		date  = '"' + (new Date()).toISOString() + '"',  // get the build date
-		js    = compileJS(CONFIG.js),                    // combine and minify the JS
-		css   = compileCSS(CONFIG.css);                  // combine and minify the CSS
+	var version, jsSource, cssSource;
+
+	// get the base version info and set build metadata
+	version = require("./src/sugarcube.json");
+	version.build    = +readFileContents(".build") + 1;
+	version.date     = '"'+(new Date()).toISOString()+'"';
+	version.toString = function () { return this.major + "." + this.minor + "." + this.patch; };
+
+	// combine and minify the JS
+	jsSource = compileJS(CONFIG.js);
+
+	// combine and minify the CSS
+	cssSource = compileCSS(CONFIG.css);
 
 	// process the header templates and write the outfiles
 	for (var file in CONFIG.html) {
@@ -140,11 +149,17 @@ var _fs     = require("fs"),
 			output  = readFileContents(infile);  // load the header template
 		log('build "' + outfile + '"');
 
-		// process the replacement tokens (source tokens first!)
-		output = output.replace(/\"\{\{JS_SOURCE\}\}\"/g, js);
-		output = output.replace(/\"\{\{CSS_SOURCE\}\}\"/g, css);
-		output = output.replace(/\"\{\{BUILD_ID\}\}\"/g, build);
-		output = output.replace(/\"\{\{BUILD_DATE\}\}\"/g, date);
+		// process the source replacement tokens (first!)
+		output = output.replace(/\"\{\{JS_SOURCE\}\}\"/g, jsSource);
+		output = output.replace(/\"\{\{CSS_SOURCE\}\}\"/g, cssSource);
+
+		// process the build replacement tokens
+		output = output.replace(/\"\{\{BUILD_MAJOR\}\}\"/g, version.major);
+		output = output.replace(/\"\{\{BUILD_MINOR\}\}\"/g, version.minor);
+		output = output.replace(/\"\{\{BUILD_PATCH\}\}\"/g, version.patch);
+		output = output.replace(/\"\{\{BUILD_BUILD\}\}\"/g, version.build);
+		output = output.replace(/\"\{\{BUILD_DATE\}\}\"/g, version.date);
+		output = output.replace(/\"\{\{BUILD_VERSION\}\}\"/g, version);
 
 		// write the outfile
 		makePath(_path.dirname(outfile));
@@ -164,9 +179,9 @@ var _fs     = require("fs"),
 	}
 
 	// update the build ID
-	writeFileContents(".build", build);
+	writeFileContents(".build", version.build);
 }());
 
 // that's all folks!
-console.log('Build complete!  (check the "dist" directory for the header)');
+console.log('Build complete!  (check the "dist" directory)');
 

@@ -10,160 +10,6 @@ var saveAs=saveAs||navigator.msSaveBlob&&navigator.msSaveBlob.bind(navigator)||f
 
 
 /***********************************************************************************************************************
-** [Global Object/Prototype Extensions]
-***********************************************************************************************************************/
-/**
- * Returns a random value from the passed array in the range of lower and upper, if they are specified
- */
-Object.defineProperty(Array, "random", {
-	enumerable   : false,
-	configurable : true,
-	writable     : true,
-	value        : function (array, lower, upper) {
-		if (Array.isArray(array)) {
-			return array.random(lower, upper);
-		} else if (array.hasOwnProperty("length")) {
-			return Array.prototype.slice.call(array, 0).random(lower, upper);
-		}
-		return undefined;
-	}
-});
-
-/**
- * Returns a random value from the array in the range of lower and upper, if they are specified
- */
-Object.defineProperty(Array.prototype, "random", {
-	enumerable   : false,
-	configurable : true,
-	writable     : true,
-	value        : function (lower, upper) {
-		if (lower == null) {  // use lazy equality
-			lower = 0;
-		} else if (lower < 0) {
-			lower = 0;
-		} else if (lower >= this.length) {
-			lower = this.length - 1;
-		}
-		if (upper == null) {  // use lazy equality
-			upper = this.length - 1;
-		} else if (upper < 0) {
-			upper = 0;
-		} else if (upper >= this.length) {
-			upper = this.length - 1;
-		}
-		return this[random(lower, upper)];
-	}
-});
-
-/**
- * Returns the passed numerical clamped to the specified bounds
- */
-Object.defineProperty(Math, "clamp", {
-	enumerable   : false,
-	configurable : true,
-	writable     : true,
-	value        : function (num, min, max) {
-		num = Number(num);
-		return isNaN(num) ? NaN : num.clamp(min, max);
-	}
-});
-
-/**
- * Returns the number clamped to the specified bounds
- */
-Object.defineProperty(Number.prototype, "clamp", {
-	enumerable   : false,
-	configurable : true,
-	writable     : true,
-	value        : function (min, max) {
-		var num = Number(this);
-		if (num < min) { num = min; }
-		if (num > max) { num = max; }
-		return num;
-	}
-});
-
-/**
- * Returns a decimal number eased from 0 to 1
- */
-Object.defineProperty(Math, "easeInOut", {
-	enumerable   : false,
-	configurable : true,
-	writable     : true,
-	value        : function (num) {
-		return (1 - ((Math.cos(num * Math.PI) + 1) / 2));
-	}
-});
-
-/**
- * Returns an array of link titles, parsed from the string
- *   n.b. Unused in SugarCube, only included for compatibility
- */
-Object.defineProperty(String.prototype, "readBracketedList", {
-	enumerable   : false,
-	configurable : true,
-	writable     : true,
-	value        : function () {
-		// RegExp groups: Double-square-bracket quoted | Unquoted
-		var pattern = "(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^\"'\\s]\\S*)",  //"(?:\\[\\[([^\\]]+)\\]\\])|([^\\s$]+)"
-			re      = new RegExp(pattern, "gm"),
-			names   = [];
-		do {
-			var match = re.exec(this);
-			if (match) {
-				if (match[1]) {
-					// Double-square-bracket quoted
-					names.push(match[1]);
-				} else if (match[2]) {
-					// Unquoted
-					names.push(match[2]);
-				}
-			}
-		} while (match);
-		return names;
-	}
-});
-
-/**
- * Returns a formatted string, after replacing each format item in the given format string with the text equivalent of the corresponding argument's value
- */
-if (!String.format) {
-	Object.defineProperty(String, "format", {
-		enumerable   : false,
-		configurable : true,
-		writable     : true,
-		value        : function (format) {
-			function padString(str, align, pad) {
-				if (!align) { return str; }
-				var plen = Math.abs(align) - str.length;
-				if (plen < 1) { return str; }
-				var padding = Array(plen + 1).join(pad);
-				return (align < 0)
-					? str + padding
-					: padding + str;
-			}
-
-			if (arguments.length < 2) { return (arguments.length === 0) ? "" : format; }
-
-			var args = (arguments.length === 2 && Array.isArray(arguments[1]))
-				? arguments[1].slice(0)
-				: Array.prototype.slice.call(arguments, 1);
-
-			if (args.length === 0) { return format; }
-
-			return format.replace(/{(\d+)(?:,([+-]?\d+))?}/g, function (match, index, align) {
-				var retval = args[index];
-				if (retval == null) { return ""; }  // use lazy equality
-				while (typeof retval === "function") { retval = retval(); }
-				if (typeof retval === "object") { retval = JSON.stringify(retval); }
-				return padString(retval, (!align) ? 0 : parseInt(align), " ");
-			});
-		}
-	});
-}
-
-
-/***********************************************************************************************************************
 ** [Function Library]
 ***********************************************************************************************************************/
 /**
@@ -561,12 +407,12 @@ var Util = {
 	/**
 	 * Backup Math.random for system-level tasks, like generateUuid(), in case it's replaced later
 	 */
-	random: Math.random,
+	random : Math.random,
 
 	/**
 	 * Returns whether the passed value is numeric
 	 */
-	isNumeric: function (obj) {
+	isNumeric : function (obj) {
 		switch (typeof obj) {
 		case "boolean":
 			/* FALL-THROUGH */
@@ -588,14 +434,14 @@ var Util = {
 	/**
 	 * Returns whether the passed value is boolean-ish
 	 */
-	isBoolean: function (obj) {
+	isBoolean : function (obj) {
 		return typeof obj === "boolean" || (typeof obj === "string" && (obj === "true" || obj === "false"));
 	},
 
 	/**
 	 * Returns a lowercased and underscore encoded version of the passed string
 	 */
-	slugify: function (str) {
+	slugify : function (str) {
 		return str
 			.trim()
 			.replace(/[^\w\s\u2013\u2014-]+/g, '')
@@ -606,7 +452,7 @@ var Util = {
 	/**
 	 * Returns the evaluation of the passed expression, throwing if there were errors
 	 */
-	evalExpression: function (expression) {
+	evalExpression : function (expression) {
 		"use strict";
 		// the parens are to protect object literals from being confused with block statements
 		return eval("(" + expression + ")");
@@ -615,7 +461,7 @@ var Util = {
 	/**
 	 * Returns whether the evaluation of the passed statements completed without thrown exceptions
 	 */
-	evalStatements: function (statements) {
+	evalStatements : function (statements) {
 		"use strict";
 		// the enclosing anonymous function is to isolate the passed code within its own scope
 		try {
@@ -627,130 +473,145 @@ var Util = {
 	},
 
 	/**
+	 * Diff operations enumeration
+	 */
+	DiffOp : Object.freeze({
+		Delete      : 0,
+		SpliceArray : 1,
+		Copy        : 2,
+		CopyDate    : 3
+	}),
+
+	/**
 	 * Returns a patch object containing the differences between the original and the destination objects
 	 */
-	diff: function (orig, dest) /* diff object */ {
-		var keys = [].concat(Object.keys(orig), Object.keys(dest)),
-			diff = {};
-		for (var i = 0, len = keys.length; i < len; i++) {
-			var p  = keys[i],
-				ep = (p[0] === "-") ? "-" + p : p;
+	diff : function (orig, dest) /* diff object */ {
+		"use strict";
+		var keys    = [].concat(Object.keys(orig), Object.keys(dest))
+				        .sort().filter(function (v, i, a) { return (i === 0 || a[i-1] != v); }),
+			diff    = {},
+			isArray = Array.isArray(orig),
+			aOpRef;
+		for (var i = 0, klen = keys.length; i < klen; i++) {
+			var p     = keys[i],
+				origP = orig[p],
+				destP = dest[p];
 			if (orig.hasOwnProperty(p)) {
-				if (typeof orig[p] === typeof dest[p]) {
-					if (orig[p] === null || typeof orig[p] !== "object") {
-						if (orig[p] !== dest[p]) {
-							diff[ep] = dest[p];
-						}
-					} else {
-						var recurse = Util.diff(orig[p], dest[p]);
-						if (Object.keys(recurse).length !== 0) {
-							diff[ep] = recurse;
-						}
+				if (dest.hasOwnProperty(p)) {
+					// key exists in both
+					if (origP === destP) {
+						// values are exactly the same, so do nothing
+						continue;
 					}
-				} else {
-					if (dest.hasOwnProperty(p)) {
-						diff[ep] = clone(dest[p]);
-					} else {
-						var rmp;
-						if (Array.isArray(orig)) {
-							rmp = "-i";
-							var np = +p;
-							if (!diff.hasOwnProperty(rmp)) {
-								diff[rmp] = { b: np, e: np };
-							}
-							if (np < diff[rmp].b) {
-								diff[rmp].b = np;
-							}
-							if (np > diff[rmp].e) {
-								diff[rmp].e = np;
+					if (typeof origP === typeof destP) {
+						// values are of the same basic type
+						if (typeof origP === "function") {
+							// values are functions, which are problematic to test, so we simply copy
+							diff[p] = [ Util.DiffOp.Copy, clone(destP) ];
+						} else if (typeof origP !== "object" || origP === null) {
+							// values are scalars or null
+							diff[p] = [ Util.DiffOp.Copy, destP ];
+						} else if (Object.prototype.toString.call(origP) === Object.prototype.toString.call(destP)) {
+							// values are objects of the same prototype
+							if (origP instanceof Date) {
+								if ((+origP) !== (+destP)) {
+									diff[p] = [ Util.DiffOp.CopyDate, +destP ];
+								}
+							} else if (origP instanceof RegExp) {
+								if (origP.toString() !== destP.toString()) {
+									diff[p] = [ Util.DiffOp.Copy, clone(destP) ];
+								}
+							} else {
+								var recurse = Util.diff(origP, destP);
+								if (recurse !== null) {
+									diff[p] = recurse;
+								}
 							}
 						} else {
-							rmp = "-p";
-							if (!diff.hasOwnProperty(rmp)) {
-								diff[rmp] = [];
-							}
-							diff[rmp].push(p);
+							// values are objects of different prototypes
+							diff[p] = [ Util.DiffOp.Copy, clone(destP) ];
 						}
+					} else {
+						// values are of different types
+						diff[p] = [ Util.DiffOp.Copy, (typeof destP !== "object" || destP === null) ? destP : clone(destP) ];
+					}
+				} else {
+					// key only exists in orig
+					if (isArray && Util.isNumeric(p)) {
+						var np = +p;
+						if (!aOpRef) {
+							aOpRef = "";
+							do {
+								aOpRef += "~";
+							} while (keys.some(function (v) { return v === this.val; }, { val: aOpRef }));
+							diff[aOpRef] = [ Util.DiffOp.SpliceArray, np, np ];
+						}
+						if (np < diff[aOpRef][1]) {
+							diff[aOpRef][1] = np;
+						}
+						if (np > diff[aOpRef][2]) {
+							diff[aOpRef][2] = np;
+						}
+					} else {
+						diff[p] = Util.DiffOp.Delete;
 					}
 				}
-			} else {  // key belongs to dest
-				if (dest[p] === null || typeof dest[p] !== "object") {
-					diff[ep] = dest[p];
-				} else {
-					diff[ep] = clone(dest[p]);
-				}
+			} else {
+				// key only exists in dest
+				diff[p] = [ Util.DiffOp.Copy, (typeof destP !== "object" || destP === null) ? destP : clone(destP) ];
 			}
 		}
-		return diff;
+		return (Object.keys(diff).length !== 0) ? diff : null;
 	},
 
 	/**
 	 * Returns an object resulting from updating the original object with the difference object
 	 */
-	patch: function (orig, diff) /* patched object */ {
+	patch : function (orig, diff) /* patched object */ {
+		"use strict";
 		var keys    = Object.keys(diff),
 			patched = clone(orig);
 		for (var i = 0, klen = keys.length; i < klen; i++) {
-			var p = keys[i];
-			if (p === "-p") {
-				for (var j = 0, dlen = diff[p].length; j < dlen; j++) {
-					delete patched[diff[p][j]];
+			var p     = keys[i],
+				diffP = diff[p];
+			if (diffP === Util.DiffOp.Delete) {
+				delete patched[p];
+			} else if (Array.isArray(diffP)) {
+				switch (diffP[0]) {
+				case Util.DiffOp.SpliceArray:
+					patched.splice(diffP[1], 1 + (diffP[2] - diffP[1]));
+					break;
+				case Util.DiffOp.Copy:
+					patched[p] = clone(diffP[1]);
+					break;
+				case Util.DiffOp.CopyDate:
+					patched[p] = new Date(diffP[1]);
+					break;
 				}
-			} else if (p === "-i") {
-				patched.splice(diff[p].b, diff[p].e - diff[p].b + 1);
 			} else {
-				var ep = (p[0] === "-") ? p.slice(1) : p;
-				if (diff[p] === null || typeof diff[p] !== "object") {
-					patched[ep] = diff[p];
-				} else {
-					if (patched.hasOwnProperty(ep)) {
-						patched[ep] = Util.patch(patched[ep], diff[p]);
-					} else {
-						patched[ep] = Util.patch({}, diff[p]);
-					}
-				}
+				patched[p] = Util.patch(patched[p], diffP);
 			}
 		}
 		return patched;
 	},
 
 	/**
-	 * Returns a JSON-based serialization of the passed object
-	 *   n.b. Supports serialization of functions and some native objects
+	 * [DEPRECATED] Returns a JSON-based serialization of the passed object
+	 *   n.b. Just a legacy alias for JSON.stringify now, see 'intrinsics.js' for the new serialization code
 	 */
-	serialize: function (obj) {
-		return JSON.stringify(obj, function (key, value) {
-			if (value != null) {  // use lazy equality
-				if (typeof value === "function" || value instanceof RegExp) {
-					return "#reviveSrc=(" + value.toString() + ")";
-				}
-			}
-			return value;
-		});
-	},
+	serialize : JSON.stringify,
 
 	/**
-	 * Returns a copy of the original object from the passed JSON-based serialization
-	 *   n.b. Supports deserialization of functions and some native objects, if the notation was generated by the Util.serialize() static method
+	 * [DEPRECATED] Returns a copy of the original object from the passed JSON-based serialization
+	 *   n.b. Just a legacy alias for JSON.parse now, see 'intrinsics.js' for the new serialization code
 	 */
-	deserialize: function (obj) {
-		return JSON.parse(obj, function (key, value) {
-			//if (typeof value === "string" && /^#reviveSrc=/.test(value))
-			// magic number 11 is "#reviveSrc=".length
-			if (typeof value === "string" && value.slice(0, 11) === "#reviveSrc=") {
-				try {
-					value = eval(value.slice(11));
-				} catch (e) { /* noop; although, perhaps, it would be better to throw an error here */ }
-			}
-			return value;
-		});
-	},
+	deserialize : JSON.parse,
 
 	/**
 	 * Returns a v4 Universally Unique IDentifier (UUID), a.k.a. Globally Unique IDentifier (GUID)
 	 *     [RFC4122] http://www.ietf.org/rfc/rfc4122.txt
 	 */
-	generateUuid: function () {
+	generateUuid : function () {
 		// this uses a combination of Util.random() and Date().getTime() to harden itself
 		// against bad Math.random() generators and reduce the likelihood of a collision
 		var d = new Date().getTime();
@@ -795,7 +656,9 @@ SeedablePRNG.unmarshal = function (prngObj) {
 	var prng = new SeedablePRNG(prngObj.seed, false);
 
 	// pull values until the new PRNG is in sync with the original
-	for (var i = 0; i < prngObj.count; i++) { prng.random(); }
+	for (var i = 0; i < prngObj.count; i++) {
+		prng.random();
+	}
 
 	return prng;
 };
