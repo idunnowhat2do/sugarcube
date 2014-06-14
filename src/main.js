@@ -38,7 +38,10 @@ var version = Object.freeze({
 	patch    : "{{BUILD_PATCH}}",
 	build    : "{{BUILD_BUILD}}",
 	date     : new Date("{{BUILD_DATE}}"),
-	toString : function() { return this.title + " v" + this.major + "." + this.minor + "." + this.patch + "+" + this.build + " (" + this.date.toLocaleFormat() + ")"; },
+	toString : function() {
+		return this.title + " v" + this.major + "." + this.minor + "." + this.patch + "+" + this.build
+			+ " (" + this.date.toUTCString() + ")";
+	},
 	/* legacy kludge */
 	extensions : {}
 	/* /legacy kludge */
