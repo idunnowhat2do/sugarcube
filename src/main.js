@@ -31,21 +31,25 @@ window.onerror = function (mesg, url, lineNum, colNum, error) {
 ***********************************************************************************************************************/
 window.SugarCube = {};  // will contain exported identifiers, also allows scripts to detect if they're running in SugarCube (e.g. "SugarCube" in window)
 
-var version = Object.freeze({
+var version = {
 	title    : "SugarCube",
 	major    : "{{BUILD_MAJOR}}",
 	minor    : "{{BUILD_MINOR}}",
 	patch    : "{{BUILD_PATCH}}",
 	build    : "{{BUILD_BUILD}}",
 	date     : new Date("{{BUILD_DATE}}"),
-	toString : function() {
+	toShort  : function() { return this.title + " (v" + this.major + "." + this.minor + "." + this.patch + ")"; },
+	toLong   : function() {
 		return this.title + " v" + this.major + "." + this.minor + "." + this.patch + "+" + this.build
 			+ " (" + this.date.toUTCString() + ")";
 	},
+	toString : null,
 	/* legacy kludge */
 	extensions : {}
 	/* /legacy kludge */
-});
+};
+version.toString = version.toLong;
+version = Object.freeze(version);
 
 // SugarCube History prototype mode enumeration
 var HistoryMode = Object.freeze({
