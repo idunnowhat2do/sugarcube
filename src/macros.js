@@ -10,17 +10,17 @@ function Macros() {
 	//   n.b. we can't use Object.freeze() here because we still have to support old-style macros
 	return Object.defineProperties({}, {
 		// data properties
-		definitions: {
-			value: {}
+		definitions : {
+			value : {}
 		},
 
-		tags: {
-			value: {}
+		tags : {
+			value : {}
 		},
 
 		// method properties
-		add: {
-			value: function (name, def, deep) {
+		add : {
+			value : function (name, def, deep) {
 				if (Array.isArray(name)) {
 					name.forEach(function (n) { this.add(n, def, deep); }, this);
 					return;
@@ -45,7 +45,7 @@ function Macros() {
 							throw new Error("cannot create alias of nonexistent macro <<" + def + ">>");
 						}
 					}
-					Object.defineProperty(this.definitions, name, { writable: false });
+					Object.defineProperty(this.definitions, name, { writable : false });
 
 					/* legacy kludges */
 					this.definitions[name]["_USE_MACROS_API"] = true;
@@ -71,8 +71,8 @@ function Macros() {
 			}
 		},
 
-		remove: {
-			value: function (name) {
+		remove : {
+			value : function (name) {
 				if (Array.isArray(name)) {
 					name.forEach(function (n) { this.remove(n); }, this);
 					return;
@@ -86,7 +86,7 @@ function Macros() {
 
 					try {
 						// remove the macro definition
-						Object.defineProperty(this.definitions, name, { writable: true });
+						Object.defineProperty(this.definitions, name, { writable : true });
 						delete this.definitions[name];
 					} catch (e) {
 						throw new Error("unknown error removing macro <<" + name + ">>: " + e.message);
@@ -97,14 +97,14 @@ function Macros() {
 			}
 		},
 
-		has: {
-			value: function (name, searchTags) {
+		has : {
+			value : function (name, searchTags) {
 				return this.definitions.hasOwnProperty(name) || (searchTags && this.tags.hasOwnProperty(name));
 			}
 		},
 
-		get: {
-			value: function (name) {
+		get : {
+			value : function (name) {
 				var macro = null;
 
 				if (this.definitions.hasOwnProperty(name) && typeof this.definitions[name]["handler"] === "function") {
@@ -116,8 +116,8 @@ function Macros() {
 			}
 		},
 
-		getHandler: {
-			value: function (name, handler) {
+		getHandler : {
+			value : function (name, handler) {
 				var macro = this.get(name);
 
 				if (!handler) { handler = "handler"; }
@@ -125,8 +125,8 @@ function Macros() {
 			}
 		},
 
-		evalStatements: {
-			value: function (statements, thisp) {
+		evalStatements : {
+			value : function (statements, thisp) {
 				"use strict";
 				try {
 					eval((thisp == null)  /* use lazy equality */
@@ -142,8 +142,8 @@ function Macros() {
 			}
 		},
 
-		registerTags: {
-			value: function (parent, bodyTags) {
+		registerTags : {
+			value : function (parent, bodyTags) {
 				if (!parent) { throw new Error("no parent specified"); }
 
 				if (!Array.isArray(bodyTags)) { bodyTags = []; }
@@ -168,8 +168,8 @@ function Macros() {
 			}
 		},
 
-		unregisterTags: {
-			value: function (parent) {
+		unregisterTags : {
+			value : function (parent) {
 				if (!parent) { throw new Error("no parent specified"); }
 
 				for (var tag in this.tags) {
@@ -185,8 +185,8 @@ function Macros() {
 			}
 		},
 
-		init: {
-			value: function () {
+		init : {
+			value : function () {
 				for (var name in this.definitions) {
 					var fn = this.getHandler(name, "init");
 					if (fn) { fn.call(this.definitions[name], name); }
@@ -200,8 +200,8 @@ function Macros() {
 			}
 		},
 
-		lateInit: {
-			value: function () {
+		lateInit : {
+			value : function () {
 				for (var name in this.definitions) {
 					var fn = this.getHandler(name, "lateInit");
 					if (fn) { fn.call(this.definitions[name], name); }

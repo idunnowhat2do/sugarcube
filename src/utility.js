@@ -702,10 +702,7 @@ KeyValueStore.prototype.setItem = function (sKey, sValue) {
 
 	if (this.store) {
 		try {
-			sValue = "#~" + LZString.compressToUTF16(sValue);
-		} catch (e) { /* noop */ }
-
-		try {
+			sValue = LZString.compressToUTF16(sValue);
 			this.store.setItem(sKey, sValue);
 		} catch (e) {
 			/*
@@ -723,20 +720,17 @@ KeyValueStore.prototype.setItem = function (sKey, sValue) {
 		}
 	} else {
 		try {
-			sValue = "#~" + LZString.compressToBase64(sValue);
-		} catch (e) { /* noop */ }
-
-		var cookie = [ escape(sKey) + "=" + escape(sValue) ];
-		// no expiry means a session cookie
-		switch (this.name) {
-		case "cookie":
-			/* FALL-THROUGH */
-		case "localStorage":
-			cookie.push("expires=Tue, 19 Jan 2038 03:14:07 GMT");
-			break;
-		}
-		cookie.push("path=/");
-		try {
+			sValue = LZString.compressToBase64(sValue);
+			var cookie = [ escape(sKey) + "=" + escape(sValue) ];
+			// no expiry means a session cookie
+			switch (this.name) {
+			case "cookie":
+				/* FALL-THROUGH */
+			case "localStorage":
+				cookie.push("expires=Tue, 19 Jan 2038 03:14:07 GMT");
+				break;
+			}
+			cookie.push("path=/");
 			document.cookie = cookie.join("; ");
 		} catch (e) {
 			technicalAlert(null, "unable to store key; cookie error: " + e.message, e);
@@ -758,13 +752,13 @@ KeyValueStore.prototype.getItem = function (sKey) {
 	if (this.store) {
 		var sValue = this.store.getItem(sKey);
 		if (sValue != null) {  // use lazy equality
+			/* legacy */
 			if (sValue.slice(0, 2) === "#~") {
-				if (DEBUG) { console.log("    > loading LZ-compressed value for: " + sKey); }
-				return Util.deserialize(LZString.decompressFromUTF16(sValue.slice(2)));
-			} else {
-				if (DEBUG) { console.log("    > loading uncompressed value for: " + sKey); }
-				return Util.deserialize(sValue);
+				sValue = sValue.slice(2);
 			}
+			/* /legacy */
+			if (DEBUG) { console.log("    > loading lz-string-compressed value for: " + sKey); }
+			return Util.deserialize(LZString.decompressFromUTF16(sValue));
 		}
 	} else {
 		sKey = escape(sKey);
@@ -773,13 +767,13 @@ KeyValueStore.prototype.getItem = function (sKey) {
 			var bits = cookies[i].split("=");
 			if (bits[0].trim() === sKey) {
 				var sValue = unescape(bits[1]);
+				/* legacy */
 				if (sValue.slice(0, 2) === "#~") {
-					if (DEBUG) { console.log("    > loading LZ-compressed value for: " + sKey); }
-					return Util.deserialize(LZString.decompressFromBase64(sValue.slice(2)));
-				} else {
-					if (DEBUG) { console.log("    > loading uncompressed value for: " + sKey); }
-					return Util.deserialize(sValue);
+					sValue = sValue.slice(2);
 				}
+				/* /legacy */
+				if (DEBUG) { console.log("    > loading lz-string-compressed value for: " + sKey); }
+				return Util.deserialize(LZString.decompressFromBase64(sValue));
 			}
 		}
 	}
@@ -845,7 +839,7 @@ KeyValueStore.prototype.hasItem = function (sKey) {
 		var cookies = document.cookie.split(";");
 		for (var i = 0; i < cookies.length; i++) {
 			var bits = cookies[i].split("=");
-			if (bits[0].trim() == sKey) {
+			if (bits[0].trim() === sKey) {
 				return true;
 			}
 		}

@@ -13,8 +13,8 @@ function addStandardMacros() {
 	 * <<actions>>
 	 */
 	macros.add("actions", {
-		version: { major: 2, minor: 2, revision: 0 },
-		handler: function () {
+		version : { major : 2, minor : 2, patch : 0 },
+		handler : function () {
 			var list = insertElement(this.output, "ul");
 			list.classList.add(this.name);
 			if (!state.active.variables["#actions"]) {
@@ -55,8 +55,8 @@ function addStandardMacros() {
 	 * <<back>> & <<return>>
 	 */
 	macros.add(["back", "return"], {
-		version: { major: 4, minor: 2, revision: 0 },
-		handler: function () {
+		version : { major : 4, minor : 2, patch : 0 },
+		handler : function () {
 			var steps = 1,
 				pname,
 				ctext,
@@ -169,7 +169,7 @@ function addStandardMacros() {
 			insertText(el, ctext || this.self.dtext || ltext);
 			this.output.appendChild(el);
 		},
-		linktext: function () {
+		linktext : function () {
 			if (this.args.length === 0) {
 				delete this.self.dtext;
 			} else {
@@ -182,8 +182,8 @@ function addStandardMacros() {
 	 * <<choice>>
 	 */
 	macros.add("choice", {
-		version: { major: 4, minor: 0, revision: 0 },
-		handler: function () {
+		version : { major : 4, minor : 0, patch : 0 },
+		handler : function () {
 			if (this.args.length === 0) {
 				return this.error("no passage specified");
 			}
@@ -229,8 +229,8 @@ function addStandardMacros() {
 	 * <<link>>
 	 */
 	macros.add("link", {
-		version: { major: 3, minor: 4, revision: 0 },
-		handler: function () {
+		version : { major : 3, minor : 4, patch : 0 },
+		handler : function () {
 			if (this.args.length === 0) {
 				return this.error("no link location specified");
 			}
@@ -301,8 +301,8 @@ function addStandardMacros() {
 	 * <<display>>
 	 */
 	macros.add("display", {
-		version: { major: 3, minor: 1, revision: 0 },
-		handler: function () {
+		version : { major : 3, minor : 1, patch : 0 },
+		handler : function () {
 			if (this.args.length === 0) {
 				return this.error("no passage specified");
 			}
@@ -335,10 +335,10 @@ function addStandardMacros() {
 	 * <<nobr>>
 	 */
 	macros.add("nobr", {
-		version: { major: 1, minor: 1, revision: 0 },
-		skipArgs: true,
-		tags: null,
-		handler: function () {
+		version  : { major : 1, minor : 1, patch : 0 },
+		skipArgs : true,
+		tags     : null,
+		handler  : function () {
 			// wikify the contents, after removing all newlines
 			new Wikifier(this.output, this.payload[0].contents.replace(/\n/g, " "));
 		}
@@ -348,9 +348,9 @@ function addStandardMacros() {
 	 * <<print>>
 	 */
 	macros.add("print", {
-		version: { major: 2, minor: 1, revision: 0 },
-		skipArgs: true,
-		handler: function () {
+		version  : { major : 2, minor : 1, patch : 0 },
+		skipArgs : true,
+		handler  : function () {
 			if (this.args.full.length === 0) {
 				return this.error("no expression specified");
 			}
@@ -370,10 +370,10 @@ function addStandardMacros() {
 	 * <<silently>>
 	 */
 	macros.add("silently", {
-		version: { major: 4, minor: 0, revision: 0 },
-		skipArgs: true,
-		tags: null,
-		handler: function () {
+		version  : { major : 4, minor : 0, patch : 0 },
+		skipArgs : true,
+		tags     : null,
+		handler  : function () {
 			var errTrap = document.createDocumentFragment(),
 				errList = [];
 
@@ -400,10 +400,10 @@ function addStandardMacros() {
 	 * <<if>>
 	 */
 	macros.add("if", {
-		version: { major: 3, minor: 1, revision: 1 },
-		skipArgs: true,
-		tags: [ "elseif", "else" ],
-		handler: function () {
+		version  : { major : 3, minor : 1, patch : 1 },
+		skipArgs : true,
+		tags     : [ "elseif", "else" ],
+		handler  : function () {
 			try {
 				for (var i = 0, len = this.payload.length; i < len; i++) {
 					if (this.payload[i].name !== "else" && this.payload[i].arguments.length === 0) {
@@ -429,10 +429,10 @@ function addStandardMacros() {
 	 * <<for>>, <<break>>, & <<continue>>
 	 */
 	macros.add("for", {
-		version: { major: 1, minor: 0, revision: 0 },
-		skipArgs: true,
-		tags: null,
-		handler: function () {
+		version  : { major : 1, minor : 0, patch : 0 },
+		skipArgs : true,
+		tags     : null,
+		handler  : function () {
 			var init,
 				condition = this.args.full.trim(),
 				post,
@@ -488,9 +488,9 @@ function addStandardMacros() {
 		}
 	});
 	macros.add(["break", "continue"], {
-		version: { major: 1, minor: 0, revision: 0 },
-		skipArgs: true,
-		handler: function () {
+		version  : { major : 1, minor : 0, patch : 0 },
+		skipArgs : true,
+		handler  : function () {
 			if (this.contextHas(function (c) { return c.name === "for"; })) {
 				runtime.temp.break = (this.name === "continue") ? 1 : 2;
 			} else {
@@ -507,9 +507,9 @@ function addStandardMacros() {
 	 * <<set>>
 	 */
 	macros.add("set", {
-		version: { major: 3, minor: 1, revision: 0 },
-		skipArgs: true,
-		handler: function () {
+		version  : { major : 3, minor : 1, patch : 0 },
+		skipArgs : true,
+		handler  : function () {
 			if (this.args.full.length === 0) {
 				return this.error("no expression specified");
 			}
@@ -522,9 +522,9 @@ function addStandardMacros() {
 	 * <<unset>>
 	 */
 	macros.add("unset", {
-		version: { major: 2, minor: 1, revision: 0 },
-		skipArgs: true,
-		handler: function () {
+		version  : { major : 2, minor : 1, patch : 0 },
+		skipArgs : true,
+		handler  : function () {
 			if (this.args.full.length === 0) {
 				return this.error("no $variable list specified");
 			}
@@ -547,9 +547,9 @@ function addStandardMacros() {
 	 * <<remember>>
 	 */
 	macros.add("remember", {
-		version: { major: 3, minor: 1, revision: 0 },
-		skipArgs: true,
-		handler: function () {
+		version  : { major : 3, minor : 1, patch : 0 },
+		skipArgs : true,
+		handler  : function () {
 			if (this.args.full.length === 0) {
 				return this.error("no expression specified");
 			}
@@ -570,7 +570,7 @@ function addStandardMacros() {
 				}
 			}
 		},
-		init: function () {
+		init : function () {
 			var remember = storage.getItem("remember");
 			if (remember) {
 				for (var name in remember) {
@@ -584,9 +584,9 @@ function addStandardMacros() {
 	 * <<forget>>
 	 */
 	macros.add("forget", {
-		version: { major: 1, minor: 1, revision: 0 },
-		skipArgs: true,
-		handler: function () {
+		version  : { major : 1, minor : 1, patch : 0 },
+		skipArgs : true,
+		handler  : function () {
 			if (this.args.full.length === 0) {
 				return this.error("no $variable list specified");
 			}
@@ -627,10 +627,10 @@ function addStandardMacros() {
 	 * <<script>>
 	 */
 	macros.add("script", {
-		version: { major: 1, minor: 0, revision: 0 },
-		skipArgs: true,
-		tags: null,
-		handler: function () {
+		version  : { major : 1, minor : 0, patch : 0 },
+		skipArgs : true,
+		tags     : null,
+		handler  : function () {
 			macros.evalStatements(this.payload[0].contents, this);
 		}
 	});
@@ -643,9 +643,9 @@ function addStandardMacros() {
 	 * <<click>> & <<button>>
 	 */
 	macros.add(["click", "button"], {
-		version: { major: 4, minor: 1, revision: 0 },
-		tags: null,
-		handler: function () {
+		version : { major : 4, minor : 1, patch : 0 },
+		tags    : null,
+		handler : function () {
 			function getWidgetArgs() {
 				var wargs;
 
@@ -727,8 +727,8 @@ function addStandardMacros() {
 	 * <<textbox>>
 	 */
 	macros.add("textbox", {
-		version: { major: 4, minor: 0, revision: 0 },
-		handler: function () {
+		version : { major : 4, minor : 0, patch : 0 },
+		handler : function () {
 			if (this.args.length < 2) {
 				var errors = [];
 				if (this.args.length < 1) { errors.push("$variable name"); }
@@ -779,8 +779,8 @@ function addStandardMacros() {
 	 * <<checkbox>>
 	 */
 	macros.add("checkbox", {
-		version: { major: 5, minor: 0, revision: 0 },
-		handler: function () {
+		version : { major : 5, minor : 0, patch : 0 },
+		handler : function () {
 			if (this.args.length < 3) {
 				var errors = [];
 				if (this.args.length < 1) { errors.push("$variable name"); }
@@ -821,8 +821,8 @@ function addStandardMacros() {
 	 * <<radiobutton>>
 	 */
 	macros.add("radiobutton", {
-		version: { major: 5, minor: 0, revision: 0 },
-		handler: function () {
+		version : { major : 5, minor : 0, patch : 0 },
+		handler : function () {
 			if (this.args.length < 2) {
 				var errors = [];
 				if (this.args.length < 1) { errors.push("$variable name"); }
@@ -868,8 +868,8 @@ function addStandardMacros() {
 	 * <<addclass>> & <<toggleclass>>
 	 */
 	macros.add(["addclass", "toggleclass"], {
-		version: { major: 2, minor: 0, revision: 0 },
-		handler: function () {
+		version : { major : 2, minor : 0, patch : 0 },
+		handler : function () {
 			if (this.args.length < 2) {
 				var errors = [];
 				if (this.args.length < 1) { errors.push("selector"); }
@@ -898,8 +898,8 @@ function addStandardMacros() {
 	 * <<removeclass>>
 	 */
 	macros.add("removeclass", {
-		version: { major: 1, minor: 0, revision: 0 },
-		handler: function () {
+		version : { major : 1, minor : 0, patch : 0 },
+		handler : function () {
 			if (this.args.length === 0) {
 				return this.error("no selector specified");
 			}
@@ -926,9 +926,9 @@ function addStandardMacros() {
 	 * <<append>>, <<prepend>>, & <<replace>>
 	 */
 	macros.add(["append", "prepend", "replace"], {
-		version: { major: 2, minor: 0, revision: 1 },
-		tags: null,
-		handler: function () {
+		version : { major : 2, minor : 0, patch : 1 },
+		tags    : null,
+		handler : function () {
 			if (this.args.length === 0) {
 				return this.error("no selector specified");
 			}
@@ -961,8 +961,8 @@ function addStandardMacros() {
 	 * <<remove>>
 	 */
 	macros.add("remove", {
-		version: { major: 1, minor: 0, revision: 0 },
-		handler: function () {
+		version : { major : 1, minor : 0, patch : 0 },
+		handler : function () {
 			if (this.args.length === 0) {
 				return this.error("no selector specified");
 			}
@@ -985,9 +985,9 @@ function addStandardMacros() {
 	 * <<widget>>
 	 */
 	macros.add("widget", {
-		version: { major: 2, minor: 0, revision: 0 },
-		tags: null,
-		handler: function () {
+		version : { major : 2, minor : 0, patch : 0 },
+		tags    : null,
+		handler : function () {
 			if (this.args.length === 0) {
 				return this.error("no widget name specified");
 			}
@@ -1005,9 +1005,9 @@ function addStandardMacros() {
 
 			try {
 				macros.add(widgetName, {
-					version: { major: 1, minor: 0, revision: 0 },
-					isWidget: true,
-					handler: (function (contents) {
+					version  : { major : 1, minor : 0, patch : 0 },
+					isWidget : true,
+					handler  : (function (contents) {
 						return function () {
 							try {
 								// store existing $args variables
@@ -1077,9 +1077,9 @@ function addStandardMacros() {
 	 * <<optionlist>> & <<optiontoggle>>
 	 */
 	macros.add(["optiontoggle", "optionlist"], {
-		version: { major: 2, minor: 0, revision: 0 },
-		tags: [ "onchange" ],
-		handler: function () {
+		version : { major : 2, minor : 0, patch : 0 },
+		tags    : [ "onchange" ],
+		handler : function () {
 			if (this.args.length === 0) {
 				return this.error("no option property specified");
 			}
@@ -1184,8 +1184,8 @@ function addStandardMacros() {
 	 * <<optionbar>>
 	 */
 	macros.add("optionbar", {
-		version: { major: 3, minor: 0, revision: 0 },
-		handler: function () {
+		version : { major : 3, minor : 0, patch : 0 },
+		handler : function () {
 			var elSet   = document.createElement("ul"),
 				elOK    = document.createElement("li"),
 				elReset = document.createElement("li");
@@ -1209,11 +1209,11 @@ function addStandardMacros() {
 	 * <<saveoptions>>
 	 */
 	macros.add("saveoptions", {
-		version: { major: 2, minor: 0, revision: 0 },
-		handler: function () {
+		version : { major : 2, minor : 0, patch : 0 },
+		handler : function () {
 			return storage.setItem("options", options);
 		},
-		init: function () {
+		init : function () {
 			var opts = storage.getItem("options");
 			if (opts !== null) {
 				for (var name in opts) {
@@ -1227,8 +1227,8 @@ function addStandardMacros() {
 	 * <<deleteoptions>>
 	 */
 	macros.add("deleteoptions", {
-		version: { major: 2, minor: 0, revision: 0 },
-		handler: function () {
+		version : { major : 2, minor : 0, patch : 0 },
+		handler : function () {
 			options = {};
 			if (!storage.removeItem("options")) {
 				return this.error("unknown error, cannot update options store");

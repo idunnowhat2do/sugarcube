@@ -21,9 +21,11 @@ function technicalAlert(where, mesg, error) {
 	window.alert(errMesg);
 }
 
-window.onerror = function (mesg, url, lineNum, colNum, error) {
-	technicalAlert(null, mesg, error);
-};
+if (!DEBUG) {
+	window.onerror = function (mesg, url, lineNum, colNum, error) {
+		technicalAlert(null, mesg, error);
+	};
+}
 
 
 /***********************************************************************************************************************
@@ -58,22 +60,22 @@ var HistoryMode = Object.freeze({
 	Session : 3
 });
 /* legacy kludge */
-var modes = Object.freeze({ hashTag: HistoryMode.Hash, windowHistory: HistoryMode.Window, sessionHistory: HistoryMode.Session });
+var modes = Object.freeze({ hashTag : HistoryMode.Hash, windowHistory : HistoryMode.Window, sessionHistory : HistoryMode.Session });
 /* /legacy kludge */
 
 // SugarCube runtime object (internal use only)
 var runtime = Object.defineProperties({}, {
-	flags: {
-		value: {
-			HistoryPRNG: {
-				isEnabled:        false,
-				replacedMathPRNG: false
+	flags : {
+		value : {
+			HistoryPRNG : {
+				isEnabled        : false,
+				replacedMathPRNG : false
 			}
 		}
 	},
-	temp: {
-		writable: true,
-		value: {}
+	temp : {
+		writable : true,
+		value    : {}
 	}
 });
 
@@ -104,12 +106,12 @@ var config = {
 	historyMode            : HistoryMode.Hash,
 
 	// macros option properties
-	macros: {
-		maxLoopIterations: 1000
+	macros : {
+		maxLoopIterations : 1000
 	},
 
 	// saves option properties
-	saves: {
+	saves : {
 		autosave  : undefined,
 		id        : "untitled-story",
 		isAllowed : undefined,
@@ -122,7 +124,7 @@ var config = {
 	errorName : "game",
 	errors    : {}
 };
-config.transitionEndEventName = (function () { var teMap = { "transition": "transitionend", "MSTransition": "msTransitionEnd", "WebkitTransition": "webkitTransitionEnd", "MozTransition": "transitionend" }, el = document.createElement("div"); for (var tName in teMap) { if (el.style[tName] !== undefined) { return teMap[tName]; } } return ""; }());
+config.transitionEndEventName = (function () { var teMap = { "transition" : "transitionend", "MSTransition" : "msTransitionEnd", "WebkitTransition" : "webkitTransitionEnd", "MozTransition" : "transitionend" }, el = document.createElement("div"); for (var tName in teMap) { if (el.style[tName] !== undefined) { return teMap[tName]; } } return ""; }());
 config.errors = {
 	savesNotAllowed : "Saving has been disallowed on this passage.",
 	upgradeBrowser  :  "Apologies! Your web browser lacks capabilities that this " + config.errorName + " requires. Please consider upgrading it or switching to a more modern web browser."
@@ -135,7 +137,7 @@ config.browser = {
 	// opera >= 15: "mozilla/5.0 (windows nt 6.1; wow64) applewebkit/537.36 (khtml, like gecko) chrome/28.0.1500.52 safari/537.36 opr/15.0.1147.130"
 	isOpera      : (config.userAgent.contains("opera")) || (config.userAgent.contains(" opr/")),
 	operaVersion : (function () { var re = new RegExp((/applewebkit|chrome/.test(config.userAgent) ? "opr" : "version") + "\\/(\\d{1,2}\\.\\d+)"), oprVer = re.exec(config.userAgent); return oprVer ? +oprVer[1] : 0; }()),
-	isMobile: {
+	isMobile     : {
 		any        : function () { return (config.browser.isMobile.Android || config.browser.isMobile.BlackBerry || config.browser.isMobile.iOS || config.browser.isMobile.Windows); },
 		Android    : (/android/.test(config.userAgent)),
 		BlackBerry : (/blackberry/.test(config.userAgent)),
@@ -273,9 +275,9 @@ $(document).ready(function () {
 ** [Save System]
 ***********************************************************************************************************************/
 var SaveSystem = {
-	_bad: false,
-	_max: -1,
-	init: function () {
+	_bad : false,
+	_max : -1,
+	init : function () {
 		function appendSlots(array, num) {
 			for (var i = 0; i < num; i++) {
 				array.push(null);
@@ -336,7 +338,7 @@ var SaveSystem = {
 						return false;
 					}
 					return true;
-				}, { count: saves.slots.length - config.saves.slots });
+				}, { count : saves.slots.length - config.saves.slots });
 				saves.slots.reverse();
 			} else if (config.saves.slots > saves.slots.length) {
 				// attempt to increase the number of slots
@@ -373,39 +375,39 @@ var SaveSystem = {
 
 		return true;
 	},
-	length: function () {
+	length : function () {
 		return SaveSystem._max + 1;
 	},
-	OK: function () {
+	OK : function () {
 		return SaveSystem.autosaveOK() || SaveSystem.slotsOK();
 	},
-	autosaveOK: function () {
+	autosaveOK : function () {
 		return !SaveSystem._bad && typeof config.saves.autosave !== "undefined";
 	},
-	slotsOK: function () {
+	slotsOK : function () {
 		return !SaveSystem._bad && SaveSystem._max !== -1;
 	},
-	hasAuto: function () {
+	hasAuto : function () {
 		var saves = storage.getItem("saves");
 		if (saves === null) { return false; }
 		if (saves.autosave === null) { return false; }
 
 		return true;
 	},
-	getAuto: function () {
+	getAuto : function () {
 		var saves = storage.getItem("saves");
 		if (saves === null) { return null; }
 
 		return saves.autosave;
 	},
-	loadAuto: function () {
+	loadAuto : function () {
 		var saves = storage.getItem("saves");
 		if (saves === null) { return false; }
 		if (saves.autosave === null) { return false; }
 
 		return SaveSystem.unmarshal(saves.autosave);
 	},
-	saveAuto: function (title, metadata) {
+	saveAuto : function (title, metadata) {
 		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed()) {
 			return false;
 		}
@@ -420,7 +422,7 @@ var SaveSystem = {
 
 		return storage.setItem("saves", saves);
 	},
-	deleteAuto: function () {
+	deleteAuto : function () {
 		var saves = storage.getItem("saves");
 		if (saves === null) { return false; }
 
@@ -428,10 +430,10 @@ var SaveSystem = {
 
 		return storage.setItem("saves", saves);
 	},
-	isEmpty: function () {
+	isEmpty : function () {
 		return SaveSystem.count() === 0;
 	},
-	count: function () {
+	count : function () {
 		if (!SaveSystem.slotsOK()) { return 0; }
 
 		var saves = storage.getItem("saves");
@@ -442,7 +444,7 @@ var SaveSystem = {
 
 		return count;
 	},
-	has: function (slot) {
+	has : function (slot) {
 		if (slot < 0 || slot > SaveSystem._max) { return false; }
 
 		var saves = storage.getItem("saves");
@@ -452,7 +454,7 @@ var SaveSystem = {
 
 		return true;
 	},
-	get: function (slot) {
+	get : function (slot) {
 		if (slot < 0 || slot > SaveSystem._max) { return null; }
 
 		var saves = storage.getItem("saves");
@@ -461,7 +463,7 @@ var SaveSystem = {
 
 		return saves.slots[slot];
 	},
-	load: function (slot) {
+	load : function (slot) {
 		if (slot < 0 || slot > SaveSystem._max) { return false; }
 
 		var saves = storage.getItem("saves");
@@ -471,7 +473,7 @@ var SaveSystem = {
 
 		return SaveSystem.unmarshal(saves.slots[slot]);
 	},
-	save: function (slot, title, metadata) {
+	save : function (slot, title, metadata) {
 		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed()) {
 			UISystem.alert(config.errors.savesNotAllowed);
 			return false;
@@ -489,7 +491,7 @@ var SaveSystem = {
 
 		return storage.setItem("saves", saves);
 	},
-	delete: function (slot) {
+	delete : function (slot) {
 		if (slot < 0 || slot > SaveSystem._max) { return false; }
 
 		var saves = storage.getItem("saves");
@@ -500,11 +502,11 @@ var SaveSystem = {
 
 		return storage.setItem("saves", saves);
 	},
-	purge: function () {
+	purge : function () {
 		storage.removeItem("saves");
 		return SaveSystem.init();
 	},
-	exportSave: function () {
+	exportSave : function () {
 		if (DEBUG) { console.log("[SaveSystem.exportSave()]"); }
 
 		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed()) {
@@ -515,9 +517,9 @@ var SaveSystem = {
 		var saveName = tale.domId + ".save",
 			saveObj  = LZString.compressToBase64(Util.serialize(SaveSystem.marshal()));
 
-		saveAs(new Blob([saveObj], { type: "text/plain;charset=UTF-8" }), saveName);
+		saveAs(new Blob([saveObj], { type : "text/plain;charset=UTF-8" }), saveName);
 	},
-	importSave: function (event) {
+	importSave : function (event) {
 		if (DEBUG) { console.log("[SaveSystem.importSave()]"); }
 
 		var file   = event.target.files[0],
@@ -543,7 +545,7 @@ var SaveSystem = {
 		// initiate the file load
 		reader.readAsText(file);
 	},
-	marshal: function () {
+	marshal : function () {
 		if (DEBUG) { console.log("[SaveSystem.marshal()]"); }
 
 		var saveObj = {
@@ -560,7 +562,7 @@ var SaveSystem = {
 
 		return saveObj;
 	},
-	unmarshal: function (saveObj) {
+	unmarshal : function (saveObj) {
 		if (DEBUG) { console.log("[SaveSystem.unmarshal()]"); }
 
 		try {
@@ -596,10 +598,10 @@ var SaveSystem = {
 ** [UI System]
 ***********************************************************************************************************************/
 var UISystem = {
-	_overlay: null,
-	_body: null,
-	_closer: null,
-	init: function () {
+	_overlay : null,
+	_body    : null,
+	_closer  : null,
+	init     : function () {
 		if (DEBUG) { console.log("[UISystem.init()]"); }
 
 		var html   = $(document.documentElement),
@@ -627,7 +629,7 @@ var UISystem = {
 		// setup Rewind menu
 		target = $("#menu-rewind");
 		if (!config.disableHistoryTracking && tale.lookup("tags", "bookmark").length > 0) {
-			target.css({ display: "block" });
+			target.css({ display : "block" });
 			UISystem.addClickHandler(target.find("a"), null, function () { UISystem.buildRewind(); });
 		} else {
 			target.remove();
@@ -639,7 +641,7 @@ var UISystem = {
 		// setup Options menu
 		target = $("#menu-options");
 		if (tale.has("MenuOptions") && tale.get("MenuOptions").text.trim() !== "") {
-			target.css({ display: "block" });
+			target.css({ display : "block" });
 			UISystem.addClickHandler(target.find("a"), null, function () { UISystem.buildOptions(); });
 		} else {
 			target.remove();
@@ -648,7 +650,7 @@ var UISystem = {
 		// setup Share menu
 		target = $("#menu-share");
 		if (tale.has("MenuShare") && tale.get("MenuShare").text.trim() !== "") {
-			target.css({ display: "block" });
+			target.css({ display : "block" });
 			UISystem.addClickHandler(target.find("a"), null, function () { UISystem.buildShare(); });
 		} else {
 			target.remove();
@@ -674,7 +676,7 @@ var UISystem = {
 			}
 		}, false);
 	},
-	setPageElements: function () {
+	setPageElements : function () {
 		if (DEBUG) { console.log("[UISystem.setPageElements()]"); }
 		// setup for the non-passage page elements
 		setPageElement("story-banner",   "StoryBanner");
@@ -683,7 +685,7 @@ var UISystem = {
 		setPageElement("story-caption",  "StoryCaption");
 		setPageElement("menu-story",     ["StoryMenu", "MenuStory"]);
 	},
-	buildSaves: function () {
+	buildSaves : function () {
 		function createActionItem(bId, bClass, bText, bAction) {
 			var li = document.createElement("li");
 			var btn = document.createElement("button");
@@ -889,7 +891,7 @@ var UISystem = {
 			return false;
 		}
 	},
-	buildRewind: function () {
+	buildRewind : function () {
 		if (DEBUG) { console.log("[UISystem.buildRewind()]"); }
 
 		var dialog   = UISystem._body,
@@ -922,7 +924,7 @@ var UISystem = {
 
 								// load the state into the window history
 								History.replaceWindowState(
-									{ suid: state.suid, sidx: state.history[p].sidx },
+									{ suid : state.suid, sidx : state.history[p].sidx },
 									(config.displayPassageTitles && state.history[p].title !== config.startPassage)
 										? tale.title + ": " + state.history[p].title
 										: tale.title
@@ -933,7 +935,7 @@ var UISystem = {
 
 									// load the state into the window history
 									History.addWindowState(
-										{ suid: state.suid, sidx: state.history[i].sidx },
+										{ suid : state.suid, sidx : state.history[i].sidx },
 										(config.displayPassageTitles && state.history[i].title !== config.startPassage)
 											? tale.title + ": " + state.history[i].title
 											: tale.title
@@ -968,7 +970,7 @@ var UISystem = {
 									if (DEBUG) { console.log("    > pushing: " + i + " (" + state.history[i].title + ")"); }
 
 									// load the state into the window history
-									var stateObj = { history: state.history.slice(0, i + 1) };
+									var stateObj = { history : state.history.slice(0, i + 1) };
 									if (state.hasOwnProperty("prng")) {
 										stateObj.rseed = state.prng.seed;
 									}
@@ -1013,7 +1015,7 @@ var UISystem = {
 			dialog.appendChild(el);
 		}
 	},
-	buildRestart: function () {
+	buildRestart : function () {
 		if (DEBUG) { console.log("[UISystem.buildRestart()]"); }
 
 		var dialog = UISystem._body;
@@ -1030,7 +1032,7 @@ var UISystem = {
 
 		return true;
 	},
-	buildOptions: function () {
+	buildOptions : function () {
 		if (DEBUG) { console.log("[UISystem.buildOptions()]"); }
 
 		var dialog = UISystem._body;
@@ -1042,7 +1044,7 @@ var UISystem = {
 
 		return true;
 	},
-	buildShare: function () {
+	buildShare : function () {
 		if (DEBUG) { console.log("[UISystem.buildShare()]"); }
 
 		var dialog = UISystem._body;
@@ -1055,7 +1057,7 @@ var UISystem = {
 
 		return true;
 	},
-	alert: function (message, options, closeFunc) {
+	alert : function (message, options, closeFunc) {
 		var dialog = UISystem._body;
 
 		$(dialog)
@@ -1066,17 +1068,17 @@ var UISystem = {
 		// show the dialog
 		UISystem.show(options, closeFunc);
 	},
-	restart: function () {
+	restart : function () {
 		// build the dialog
 		UISystem.buildRestart();
 
 		// show the dialog
 		UISystem.show();
 	},
-	isOpen: function () {
+	isOpen : function () {
 		return document.body.classList.contains("ui-open");
 	},
-	addClickHandler: function (target, options, startFunc, doneFunc, closeFunc) {
+	addClickHandler : function (target, options, startFunc, doneFunc, closeFunc) {
 		$(target).click(function (evt) {
 			evt.preventDefault();  // does not prevent bound events, only default actions (e.g. href links)
 
@@ -1090,8 +1092,8 @@ var UISystem = {
 			if (typeof doneFunc === "function") { doneFunc(evt); }
 		});
 	},
-	show: function (options, closeFunc) {
-		options = $.extend({ top: 50, opacity: 0.8 }, options);
+	show : function (options, closeFunc) {
+		options = $.extend({ top : 50, opacity : 0.8 }, options);
 
 		// stop the body from scrolling and setup the delegated UI close handler
 		$(document.body)
@@ -1101,23 +1103,23 @@ var UISystem = {
 		// display the overlay
 		$(UISystem._overlay)
 			//.addClass("ui-close")
-			.css({ display: "block", opacity: 0 })
+			.css({ display : "block", opacity : 0 })
 			.fadeTo(200, options.opacity);
 
 		// display the dialog
 		var position = UISystem.calcPositionalProperties(options.top);
 		$(UISystem._body)
-			.css($.extend({ display: "block", opacity: 0 }, position.dialog))
+			.css($.extend({ display : "block", opacity : 0 }, position.dialog))
 			.fadeTo(200, 1);
 		$(UISystem._closer)
-			.css($.extend({ display: "block", opacity: 0 }, position.closer))
+			.css($.extend({ display : "block", opacity : 0 }, position.closer))
 			.fadeTo(50, 1);
 
 		// add the UI resize handler
 		$(window)
 			.on("resize.uisystem", null, options.top, $.debounce(40, UISystem.resizeHandler));
 	},
-	close: function (evt) {
+	close : function (evt) {
 		// pretty much reverse the actions taken in UISystem.show()
 		$(window)
 			.off("resize.uisystem");
@@ -1158,30 +1160,30 @@ var UISystem = {
 		// call the given "on close" callback function, if any
 		if (evt && typeof evt.data === "function") { evt.data(evt); }
 	},
-	resizeHandler: function (evt) {
+	resizeHandler : function (evt) {
 		var dialog = $(UISystem._body),
 			closer = $(UISystem._closer),
 			topPos = (evt && typeof evt.data !== "undefined") ? evt.data : 50;
 
 		if (dialog.css("display") === "block") {
 			// stow the dialog and unset its positional properties (this is important!)
-			dialog.css({ display: "none", left: "", right: "", top: "", bottom: "" });
-			closer.css({ display: "none", right: "", top: "" });
+			dialog.css({ display : "none", left : "", right : "", top : "", bottom : "" });
+			closer.css({ display : "none", right : "", top : "" });
 
 			// restore the dialog with its new positional properties
 			var position = UISystem.calcPositionalProperties(topPos);
-			dialog.css($.extend({ display: "block" }, position.dialog));
-			closer.css($.extend({ display: "block" }, position.closer));
+			dialog.css($.extend({ display : "block" }, position.dialog));
+			closer.css($.extend({ display : "block" }, position.closer));
 		}
 	},
-	calcPositionalProperties: function (topPos) {
+	calcPositionalProperties : function (topPos) {
 		if (typeof topPos === "undefined") { topPos = 50; }
 
 		var parent    = $(window),
 			dialog    = $(UISystem._body),
-			dialogPos = { left: "", right: "", top: "", bottom: "" },
+			dialogPos = { left : "", right : "", top : "", bottom : "" },
 			closer    = $(UISystem._closer),
-			closerPos = { right: "", top: "" },
+			closerPos = { right : "", top : "" },
 			horzSpace = parent.width() - dialog.outerWidth(true),
 			vertSpace = parent.height() - dialog.outerHeight(true);
 
@@ -1208,7 +1210,7 @@ var UISystem = {
 			}
 		}
 
-		return { dialog: dialogPos, closer: closerPos };
+		return { dialog : dialogPos, closer : closerPos };
 	}
 };
 

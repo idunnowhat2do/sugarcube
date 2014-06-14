@@ -4,7 +4,7 @@
  *   - Description : Node.js-hosted build script for SugarCube
  *   - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
  *   - Copyright   : Copyright © 2014 Thomas Michael Edwards. All rights reserved.
- *   - Version     : 1.0.2, 2014-06-13
+ *   - Version     : 1.0.3, 2014-06-14
  */
 "use strict";
 
@@ -85,7 +85,7 @@ function compileJS(filenames) {
 	log('compiling JS...');
 	var jsSource = concatFiles(filenames);
 	if (_opt.options.unminified) {
-		return jsSource;
+		return "window.DEBUG=" + (_opt.options.debug || false) + ";\n" + jsSource;
 	} else {
 		try {
 			// HOWTO: '--screw-ie8'
