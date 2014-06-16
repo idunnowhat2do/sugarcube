@@ -692,7 +692,7 @@ function KeyValueStore(storeName, storePrefix) {
 	this.prefix = storePrefix + ".";
 }
 
-KeyValueStore.prototype.setItem = function (sKey, sValue) {
+KeyValueStore.prototype.setItem = function (sKey, sValue, quiet) {
 	if (!sKey) { return false; }
 
 	var oKey = sKey;
@@ -714,8 +714,11 @@ KeyValueStore.prototype.setItem = function (sKey, sValue) {
 			 * and are not supported in all browsers.  So, we have to resort to pattern
 			 * matching the damn name.
 			 */
-			technicalAlert(null, "unable to store key; "
-				+ (/quota_?(?:exceeded|reached)/i.test(e.name) ? this.name + " quota exceeded" : "unknown error"), e);
+			if (!quiet) {
+				technicalAlert(null, 'unable to store key "' + oKey + '"; '
+					+ (/quota_?(?:exceeded|reached)/i.test(e.name) ? this.name + " quota exceeded" : "unknown error")
+					, e);
+			}
 			return false;
 		}
 	} else {
@@ -733,11 +736,15 @@ KeyValueStore.prototype.setItem = function (sKey, sValue) {
 			cookie.push("path=/");
 			document.cookie = cookie.join("; ");
 		} catch (e) {
-			technicalAlert(null, "unable to store key; cookie error: " + e.message, e);
+			if (!quiet) {
+				technicalAlert(null, 'unable to store key "' + oKey + '"; cookie error: ' + e.message, e);
+			}
 			return false;
 		}
 		if (!this.hasItem(oKey)) {
-			technicalAlert(null, "unable to store key; unknown cookie error");
+			if (!quiet) {
+				technicalAlert(null, 'unable to store key "' + oKey + '"; unknown cookie error');
+			}
 			return false;
 		}
 	}
@@ -747,18 +754,38 @@ KeyValueStore.prototype.setItem = function (sKey, sValue) {
 KeyValueStore.prototype.getItem = function (sKey) {
 	if (!sKey) { return null; }
 
+	var oKey   = sKey,
+		legacy = false;
+
 	sKey = this.prefix + sKey;
 
 	if (this.store) {
 		var sValue = this.store.getItem(sKey);
 		if (sValue != null) {  // use lazy equality
+			if (DEBUG) { console.log('    > attempting to load value for key "' + oKey + '"'); }
 			/* legacy */
 			if (sValue.slice(0, 2) === "#~") {
-				sValue = sValue.slice(2);
+				// try it as a flagged, compressed value
+				sValue = Util.deserialize(LZString.decompressFromUTF16(sValue.slice(2)));
+				legacy = true;
+			} else {
+				try {
+			/* /legacy */
+					// try it as an unflagged, compressed value
+					sValue = Util.deserialize(LZString.decompressFromUTF16(sValue));
+			/* legacy */
+				} catch (e) {
+					// finally, try it as an uncompressed value
+					sValue = Util.deserialize(sValue);
+					legacy = true;
+				}
+			}
+			// attempt to upgrade the legacy value
+			if (legacy && !this.setItem(oKey, sValue, true)) {
+				throw new Error('unable to upgrade legacy value for key "' + oKey + '" to new format');
 			}
 			/* /legacy */
-			if (DEBUG) { console.log("    > loading lz-string-compressed value for: " + sKey); }
-			return Util.deserialize(LZString.decompressFromUTF16(sValue));
+			return sValue;
 		}
 	} else {
 		sKey = escape(sKey);
@@ -767,13 +794,30 @@ KeyValueStore.prototype.getItem = function (sKey) {
 			var bits = cookies[i].split("=");
 			if (bits[0].trim() === sKey) {
 				var sValue = unescape(bits[1]);
+				if (DEBUG) { console.log('    > attempting to load value for key "' + oKey + '"'); }
 				/* legacy */
 				if (sValue.slice(0, 2) === "#~") {
-					sValue = sValue.slice(2);
+					// try it as a flagged, compressed value
+					sValue = Util.deserialize(LZString.decompressFromBase64(sValue.slice(2)));
+					legacy = true;
+				} else {
+					try {
+				/* /legacy */
+						// try it as an unflagged, compressed value
+						sValue = Util.deserialize(LZString.decompressFromBase64(sValue));
+				/* legacy */
+					} catch (e) {
+						// finally, try it as an uncompressed value
+						sValue = Util.deserialize(sValue);
+						legacy = true;
+					}
+				}
+				// attempt to upgrade the legacy value
+				if (legacy && !this.setItem(oKey, sValue, true)) {
+					throw new Error('unable to upgrade legacy value for key "' + oKey + '" to new format');
 				}
 				/* /legacy */
-				if (DEBUG) { console.log("    > loading lz-string-compressed value for: " + sKey); }
-				return Util.deserialize(LZString.decompressFromBase64(sValue));
+				return sValue;
 			}
 		}
 	}
