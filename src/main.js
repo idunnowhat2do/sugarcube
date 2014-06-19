@@ -165,9 +165,9 @@ var formatter = null,  // Wikifier formatters
 	options   = {},    // options variable store
 	setup     = {};    // author setup variable store
 
-var testPlay,          // Twine 1.4+ "Test Play From Here" feature variable
-	prerender  = {},   // Twine 1.4+ pre-render task callbacks
-	postrender = {};   // Twine 1.4+ post-render task callbacks
+var testPlay   = "START_AT",  // Twine 1.4+ "Test Play From Here" feature variable
+	prerender  = {},          // Twine 1.4+ pre-render task callbacks
+	postrender = {};          // Twine 1.4+ post-render task callbacks
 
 /**
  * Main function, entry point for story startup

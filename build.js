@@ -4,7 +4,7 @@
  *   - Description : Node.js-hosted build script for SugarCube
  *   - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
  *   - Copyright   : Copyright © 2014 Thomas Michael Edwards. All rights reserved.
- *   - Version     : 1.0.5, 2014-06-18
+ *   - Version     : 1.0.6, 2014-06-18
  */
 "use strict";
 
@@ -15,7 +15,18 @@ var CONFIG = {
 	html : {
 		"src/header.tpl" : "dist/sugarcube/header.html"
 	},
-	js   : [ "src/intrinsics.js", "src/utility.js", "src/main.js", "src/story.js", "src/wikifier.js", "src/macros.js" , "src/macroslib.js" ],
+	js   : [
+		// the ordering here is significant
+		"src/intro.js",
+		"src/intrinsics.js",
+		"src/utility.js",
+		"src/main.js",
+		"src/story.js",
+		"src/wikifier.js",
+		"src/macros.js",
+		"src/macroslib.js",
+		"src/outro.js"
+	],
 	css  : [ "src/styles.css" ],
 	copy : {
 		"src/sugarcube.py" : "dist/sugarcube/sugarcube.py"
