@@ -134,7 +134,7 @@ Wikifier.prototype.rawArgs = function () {
  * magic with certain Twine/Twee operators (like: eq, gt, and $variable).
  */
 Wikifier.prototype.fullArgs = function () {
-	return this.parse(this.rawArgs());
+	return Wikifier.parse(this.rawArgs());
 };
 
 /**
@@ -208,7 +208,7 @@ Wikifier.parse = function (expression) {
  * Returns the value of the passed story $variable
  */
 Wikifier.getValue = function (storyVar) {
-	var pNames = this.parseStoryVariable(storyVar),
+	var pNames = Wikifier.parseStoryVariable(storyVar),
 		retVal = undefined;
 
 	if (pNames.length !== 0) {
@@ -229,7 +229,7 @@ Wikifier.getValue = function (storyVar) {
  * Sets the value of the passed story $variable
  */
 Wikifier.setValue = function (storyVar, newValue) {
-	var pNames = this.parseStoryVariable(storyVar);
+	var pNames = Wikifier.parseStoryVariable(storyVar);
 
 	if (pNames.length !== 0) {
 		var baseObj = state.active.variables,
@@ -276,7 +276,7 @@ Wikifier.parseStoryVariable = function (varText) {
 			pNames.push(match[4]);
 		} else if (match[5]) {
 			// Square-bracketed property (embedded $variable)
-			pNames.push(this.getValue(match[5]));
+			pNames.push(Wikifier.getValue(match[5]));
 		} else if (match[6]) {
 			// Square-bracketed property (numeric index)
 			pNames.push(Number(match[6]));
@@ -289,14 +289,14 @@ Wikifier.parseStoryVariable = function (varText) {
  * Evaluate the passed Twine expression and return the result, throwing if there were errors
  */
 Wikifier.evalExpression = function (expression) {
-	return Util.evalExpression(this.parse(expression));
+	return Util.evalExpression(Wikifier.parse(expression));
 };
 
 /**
  * Evaluate the passed Twine statements and return the result, throwing if there were errors
  */
 Wikifier.evalStatements = function (statements) {
-	return Util.evalStatements(this.parse(statements));
+	return Util.evalStatements(Wikifier.parse(statements));
 };
 
 /**

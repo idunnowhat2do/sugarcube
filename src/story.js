@@ -633,8 +633,7 @@ History.marshal = function () {
 	if (DEBUG) { console.log("[History.marshal()]"); }
 
 	var stateObj = {
-		mode : config.historyMode,
-		hver : 1
+		mode : config.historyMode
 	};
 	if (state.hasOwnProperty("prng")) {
 		stateObj.rseed = state.prng.seed;
