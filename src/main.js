@@ -33,25 +33,32 @@ if (!DEBUG) {
 ***********************************************************************************************************************/
 window.SugarCube = {};  // will contain exported identifiers, also allows scripts to detect if they're running in SugarCube (e.g. "SugarCube" in window)
 
-var version = {
-	title    : "SugarCube",
-	major    : "{{BUILD_MAJOR}}",
-	minor    : "{{BUILD_MINOR}}",
-	patch    : "{{BUILD_PATCH}}",
-	build    : "{{BUILD_BUILD}}",
-	date     : new Date("{{BUILD_DATE}}"),
-	toShort  : function() { return this.title + " (v" + this.major + "." + this.minor + "." + this.patch + ")"; },
-	toLong   : function() {
-		return this.title + " v" + this.major + "." + this.minor + "." + this.patch + "+" + this.build
-			+ " (" + this.date.toUTCString() + ")";
+var version = Object.freeze({
+	// data properties
+	title      : "SugarCube",
+	major      : "{{BUILD_MAJOR}}",
+	minor      : "{{BUILD_MINOR}}",
+	patch      : "{{BUILD_PATCH}}",
+	prerelease : "{{BUILD_PRERELEASE}}",
+	build      : "{{BUILD_BUILD}}",
+	date       : new Date("{{BUILD_DATE}}"),
+	/* legacy */
+	extensions : {},
+	/* /legacy */
+
+	// method properties
+	toString : function() {
+		return this.major + "." + this.minor + "." + this.patch
+			+ (this.prerelease ? "-" + this.prerelease : "") + "+" + this.build;
 	},
-	toString : null,
-	/* legacy kludge */
-	extensions : {}
-	/* /legacy kludge */
-};
-version.toString = version.toLong;
-version = Object.freeze(version);
+	short : function() {
+		return this.title + " (v" + this.major + "." + this.minor + "." + this.patch
+			+ (this.prerelease ? "-" + this.prerelease : "") + ")";
+	},
+	long : function() {
+		return this.title + " v" + this.toString() + " (" + this.date.toUTCString() + ")";
+	}
+});
 
 // SugarCube History prototype mode enumeration
 var HistoryMode = Object.freeze({
@@ -68,8 +75,8 @@ var runtime = Object.defineProperties({}, {
 	flags : {
 		value : {
 			HistoryPRNG : {
-				isEnabled        : false,
-				replacedMathPRNG : false
+				isEnabled  : false,
+				isMathPRNG : false
 			}
 		}
 	},
@@ -286,12 +293,17 @@ var SaveSystem = {
 		}
 		/* legacy kludges */
 		function convertOldSave(saveObj) {
-			saveObj.state = {
-				mode    : saveObj.mode,
-				history : saveObj.data
-			};
-			delete saveObj.mode;
-			delete saveObj.data;
+			if (saveObj.hasOwnProperty("data") && !saveObj.hasOwnProperty("state")) {
+				saveObj.state = {
+					mode  : saveObj.mode,
+					delta : History.deltaEncodeHistory(saveObj.data)
+				};
+				delete saveObj.mode;
+				delete saveObj.data;
+			} else if (saveObj.hasOwnProperty("state") && !saveObj.state.hasOwnProperty("delta")) {
+				saveObj.state.delta = History.deltaEncodeHistory(saveObj.state.history);
+				delete saveObj.state.history;
+			}
 		}
 		/* /legacy kludges */
 
@@ -332,7 +344,7 @@ var SaveSystem = {
 				// attempt to decrease the number of slots; this will only compact
 				// the slots array, by removing empty slots, no saves will be deleted
 				saves.slots.reverse();
-				saves.slots = saves.slots.filter(function (val, i, aref) {
+				saves.slots = saves.slots.filter(function (val) {
 					if (val === null && this.count > 0) {
 						this.count--;
 						return false;
@@ -350,22 +362,18 @@ var SaveSystem = {
 		/* legacy kludges */
 		// convert old-style saves
 		var needSave = false;
-		if (
-			   saves.autosave !== null
-			&& saves.autosave.hasOwnProperty("data")
-			&& !saves.autosave.hasOwnProperty("state")
-		) {
-			convertOldSave(saves.autosave);
-			needSave = true;
+		if (saves.autosave !== null) {
+			if (!saves.autosave.hasOwnProperty("state") || !saves.autosave.state.hasOwnProperty("delta")) {
+				convertOldSave(saves.autosave);
+				needSave = true;
+			}
 		}
 		for (var i = 0; i < saves.slots.length; i++) {
-			if (
-				   saves.slots[i] !== null
-				&& saves.slots[i].hasOwnProperty("data")
-				&& !saves.slots[i].hasOwnProperty("state")
-			) {
-				convertOldSave(saves.slots[i]);
-				needSave = true;
+			if (saves.slots[i] !== null) {
+				if (!saves.slots[i].hasOwnProperty("state") || !saves.slots[i].state.hasOwnProperty("delta")) {
+					convertOldSave(saves.slots[i]);
+					needSave = true;
+				}
 			}
 		}
 		if (needSave) { storage.setItem("saves", saves); }
@@ -910,7 +918,7 @@ var UISystem = {
 					var p = i;
 					if (config.historyMode === HistoryMode.Session) {
 						return function () {
-							if (DEBUG) { console.log("[rewind:click() @sessionHistory]"); }
+							if (DEBUG) { console.log("[rewind:click() @Session]"); }
 
 							// necessary?
 							document.title = tale.title;
@@ -959,7 +967,7 @@ var UISystem = {
 						};
 					} else if (config.historyMode === HistoryMode.Window) {
 						return function () {
-							if (DEBUG) { console.log("[rewind:click() @windowHistory]"); }
+							if (DEBUG) { console.log("[rewind:click() @Window]"); }
 
 							// necessary?
 							document.title = tale.title;
@@ -995,6 +1003,8 @@ var UISystem = {
 						};
 					} else {
 						return function () {
+							if (DEBUG) { console.log("[rewind:click() @Hash]"); }
+
 							if (!config.disableHistoryControls) {
 								window.location.hash = state.history[p].hash;
 							} else {

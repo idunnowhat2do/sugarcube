@@ -4,7 +4,7 @@
  *   - Description : Node.js-hosted build script for SugarCube
  *   - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
  *   - Copyright   : Copyright © 2014 Thomas Michael Edwards. All rights reserved.
- *   - Version     : 1.0.3, 2014-06-14
+ *   - Version     : 1.0.5, 2014-06-18
  */
 "use strict";
 
@@ -131,10 +131,12 @@ var _fs     = require("fs"),
 	var version, jsSource, cssSource;
 
 	// get the base version info and set build metadata
-	version = require("./src/sugarcube.json");
+	version          = require("./src/sugarcube.json");  // "./" prefixing the relative path is important here
 	version.build    = +readFileContents(".build") + 1;
-	version.date     = '"'+(new Date()).toISOString()+'"';
-	version.toString = function () { return this.major + "." + this.minor + "." + this.patch; };
+	version.date     = (new Date()).toISOString();
+	version.toString = function () {
+		return "v" + this.major + "." + this.minor + "." + this.patch + (this.prerelease ? "-" + this.prerelease : "");
+	};
 
 	// combine and minify the JS
 	jsSource = compileJS(CONFIG.js);
@@ -157,8 +159,9 @@ var _fs     = require("fs"),
 		output = output.replace(/\"\{\{BUILD_MAJOR\}\}\"/g, version.major);
 		output = output.replace(/\"\{\{BUILD_MINOR\}\}\"/g, version.minor);
 		output = output.replace(/\"\{\{BUILD_PATCH\}\}\"/g, version.patch);
+		output = output.replace(/\"\{\{BUILD_PRERELEASE\}\}\"/g, JSON.stringify(version.prerelease));
 		output = output.replace(/\"\{\{BUILD_BUILD\}\}\"/g, version.build);
-		output = output.replace(/\"\{\{BUILD_DATE\}\}\"/g, version.date);
+		output = output.replace(/\"\{\{BUILD_DATE\}\}\"/g, JSON.stringify(version.date));
 		output = output.replace(/\"\{\{BUILD_VERSION\}\}\"/g, version);
 
 		// write the outfile

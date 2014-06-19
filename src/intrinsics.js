@@ -601,28 +601,19 @@ Object.defineProperty(Function.prototype, "toJSON", {
 	enumerable   : false,
 	configurable : true,
 	writable     : true,
-	value        : function () {
-		"use strict";
-		return "$$revive$$(" + this.toString() + ")";
-	}
+	value        : function () { return "@@revive@@(" + this.toString() + ")"; }
 });
 Object.defineProperty(RegExp.prototype, "toJSON", {
 	enumerable   : false,
 	configurable : true,
 	writable     : true,
-	value        : function () {
-		"use strict";
-		return "$$revive$$(" + this.toString() + ")";
-	}
+	value        : function () { return "@@revive@@(" + this.toString() + ")"; }
 });
 Object.defineProperty(Date.prototype, "toJSON", {
 	enumerable   : false,
 	configurable : true,
 	writable     : true,
-	value        : function () {
-		"use strict";
-		return "$$revive$$(new Date(" + (+this) + "))";
-	}
+	value        : function () { return '@@revive@@(new Date("' + this.toISOString() + '"))'; }
 });
 
 /**
@@ -641,7 +632,7 @@ Object.defineProperty(JSON, "parse", {
 	value        : function (text, reviver) {
 		"use strict";
 		return JSON.real_parse_backup(text, function (key, value) {
-			if (typeof value === "string" && value.slice(0, 10) === "$$revive$$") {
+			if (typeof value === "string" && value.slice(0, 10) === "@@revive@@") {
 				try {
 					value = eval(value.slice(10));
 				} catch (e) { /* noop; although, perhaps, it would be better to throw an error here */ }

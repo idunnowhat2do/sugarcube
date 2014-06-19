@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <!--
 
-SugarCube (v"{{BUILD_VERSION}}"): A free (gratis and libre) header for Twine/Twee, based on TiddlyWiki.
+SugarCube ("{{BUILD_VERSION}}"): A free (gratis and libre) header for Twine/Twee, based on TiddlyWiki.
 Copyright © 2013–2014 Thomas Michael Edwards.
 
 -->
@@ -110,7 +110,7 @@ testPlay = "START_AT";
 		</nav>
 		<footer>
 			<p id="credits">This story was created with <a href="http://twinery.org/" target="_blank">Twine</a> and is powered by <a href="http://www.motoslave.net/sugarcube/" target="_blank">SugarCube</a>, which is based on <a href="http://tiddlywiki.com/" target="_blank">TiddlyWiki</a></p>
-			<p id="version">SugarCube (v"{{BUILD_VERSION}}")</p>
+			<p id="version">SugarCube ("{{BUILD_VERSION}}")</p>
 		</footer>
 	</div>
 
