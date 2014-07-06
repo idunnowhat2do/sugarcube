@@ -30,9 +30,9 @@ function History(instanceName) {
 	}
 
 	// history state stack
-	//     hashTag        [{ title : null, variables : {} }]
-	//     windowHistory  [{ title : null, variables : {} }]
-	//     sessionHistory [{ title : null, variables : {}, sidx : null }]
+	//     Session [{ title : null, variables : {}, sidx : null }]
+	//     Window  [{ title : null, variables : {} }]
+	//     Hash    [{ title : null, variables : {} }]
 	this.history = [];
 
 	// update instance reference in SugarCube global object
