@@ -89,12 +89,12 @@ var runtime = Object.defineProperties({}, {
 // SugarCube config (author/developer use)
 var config = {
 	// capability properties
-	hasPushState      : (("history" in window) && ("pushState" in window.history)),
+	hasPushState      : (("history" in window) && ("pushState" in window.history) && ("state" in window.history)),
 	// the try/catch and length property access here is required due to a monumentally stupid
 	// Firefox bug [ #748620; https://bugzilla.mozilla.org/show_bug.cgi?id=748620 ]
 	// the try/catch is also required due to the iOS browser core throwing on setItem() calls when in private mode
-	hasLocalStorage   : (("localStorage" in window) && (function (wls) { try { if (wls != null && wls.length >= 0) { var tkey = "SugarCube_storage_test"; wls.setItem(tkey, true); wls.removeItem(tkey); return true; } return false; } catch (e) { return false; } }(window.localStorage))),  // use lazy equality on null check
-	hasSessionStorage : (("sessionStorage" in window) && (function (wss) { try { if (wss != null && wss.length >= 0) { var tkey = "SugarCube_storage_test"; wss.setItem(tkey, true); wss.removeItem(tkey); return true; } return false; } catch (e) { return false; } }(window.sessionStorage))),  // use lazy equality on null check
+	hasLocalStorage   : (("localStorage" in window) && (function (wls) { try { if (wls != null && wls.length >= 0) { var tkey = "SugarCube/WLS/Test"; wls.setItem(tkey, "42"); if (wls.getItem(tkey) !== "42") return false; wls.removeItem(tkey); return true; } return false; } catch (e) { return false; } }(window.localStorage))),  // use lazy equality on null check
+	hasSessionStorage : (("sessionStorage" in window) && (function (wss) { try { if (wss != null && wss.length >= 0) { var tkey = "SugarCube/WSS/Test"; wss.setItem(tkey, "42"); if (wss.getItem(tkey) !== "42") return false; wss.removeItem(tkey); return true; } return false; } catch (e) { return false; } }(window.sessionStorage))),  // use lazy equality on null check
 	hasFileAPI        : (("File" in window) && ("FileReader" in window) && ("Blob" in window)),
 
 	// basic browser detection
@@ -153,7 +153,8 @@ config.browser = {
 	}
 };
 // adjust these based on the specific browser used
-config.historyMode = (config.hasPushState ? ((config.browser.isIE || config.browser.isMobile.iOS) && !config.hasSessionStorage ? HistoryMode.Window : HistoryMode.Session) : HistoryMode.Hash);
+//config.historyMode = (config.hasPushState ? ((config.browser.isIE || config.browser.isMobile.iOS) && !config.hasSessionStorage ? HistoryMode.Window : HistoryMode.Session) : HistoryMode.Hash);
+config.historyMode = (config.hasPushState ? (config.hasSessionStorage ? HistoryMode.Session : HistoryMode.Window) : HistoryMode.Hash);
 config.hasFileAPI = config.hasFileAPI && !config.browser.isMobile.any() && (!config.browser.isOpera || config.browser.operaVersion >= 15);
 
 var formatter = null,  // Wikifier formatters
@@ -523,7 +524,7 @@ var SaveSystem = {
 		}
 
 		var saveName = tale.domId + ".save",
-			saveObj  = LZString.compressToBase64(Util.serialize(SaveSystem.marshal()));
+			saveObj  = LZString.compressToBase64(JSON.stringify(SaveSystem.marshal()));
 
 		saveAs(new Blob([saveObj], { type : "text/plain;charset=UTF-8" }), saveName);
 	},
@@ -542,9 +543,9 @@ var SaveSystem = {
 
 				var saveObj;
 				try {
-					saveObj = (/\.json$/i.test(file.name) || /^\{/.test(evt.target.result))
-						? JSON.parse(evt.target.result)
-						: Util.deserialize(LZString.decompressFromBase64(evt.target.result));
+					saveObj = JSON.parse((/\.json$/i.test(file.name) || /^\{/.test(evt.target.result))
+						? evt.target.result
+						: LZString.decompressFromBase64(evt.target.result));
 				} catch (e) { /* noop, the unmarshal() method will handle the error */ }
 				SaveSystem.unmarshal(saveObj);
 			};
@@ -568,6 +569,10 @@ var SaveSystem = {
 			config.saves.onSave(saveObj);
 		}
 
+		// delta encode the state history
+		saveObj.state.delta = History.deltaEncodeHistory(saveObj.state.history);
+		delete saveObj.state.history;
+
 		return saveObj;
 	},
 	unmarshal : function (saveObj) {
@@ -581,6 +586,10 @@ var SaveSystem = {
 					throw new Error("old-style saves seen in SaveSystem.unmarshal()");
 				}
 			}
+
+			// delta decode the state history
+			saveObj.state.history = History.deltaDecodeHistory(saveObj.state.delta);
+			delete saveObj.state.delta;
 
 			if (typeof config.saves.onLoad === "function") {
 				config.saves.onLoad(saveObj);

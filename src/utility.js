@@ -405,7 +405,7 @@ function previous() { return (state.length > 1) ? state.peek(1).title : ""; }
 var Util = {
 
 	/**
-	 * Backup Math.random for system-level tasks, like generateUuid(), in case it's replaced later
+	 * Backup Math.random, in case it's replaced later
 	 */
 	random : Math.random,
 
@@ -506,8 +506,13 @@ var Util = {
 					if (typeof origP === typeof destP) {
 						// values are of the same basic type
 						if (typeof origP === "function") {
+							/*
 							// values are functions, which are problematic to test, so we simply copy
 							diff[p] = [ Util.DiffOp.Copy, clone(destP) ];
+							*/
+							if (origP.toString() !== destP.toString()) {
+								diff[p] = [ Util.DiffOp.Copy, clone(destP) ];
+							}
 						} else if (typeof origP !== "object" || origP === null) {
 							// values are scalars or null
 							diff[p] = [ Util.DiffOp.Copy, destP ];
@@ -569,7 +574,7 @@ var Util = {
 	 */
 	patch : function (orig, diff) /* patched object */ {
 		"use strict";
-		var keys    = Object.keys(diff),
+		var keys    = Object.keys(diff || {}),
 			patched = clone(orig);
 		for (var i = 0, klen = keys.length; i < klen; i++) {
 			var p     = keys[i],
@@ -608,19 +613,10 @@ var Util = {
 	deserialize : JSON.parse,
 
 	/**
-	 * Returns a v4 Universally Unique IDentifier (UUID), a.k.a. Globally Unique IDentifier (GUID)
-	 *     [RFC4122] http://www.ietf.org/rfc/rfc4122.txt
+	 * [DEPRECATED] Returns a v4 Universally Unique IDentifier (UUID), a.k.a. Globally Unique IDentifier (GUID)
+	 *   n.b. Just a legacy alias for UUID.generate now
 	 */
-	generateUuid : function () {
-		// this uses a combination of Util.random() and Date().getTime() to harden itself
-		// against bad Math.random() generators and reduce the likelihood of a collision
-		var d = new Date().getTime();
-		return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-			var r = (d + Util.random()*16)%16 | 0;
-			d = Math.floor(d/16);
-			return (c === 'x' ? r : (r&0x7|0x8)).toString(16);
-		});
-	}
+	generateUuid : UUID.generate
 
 };
 
@@ -698,7 +694,7 @@ KeyValueStore.prototype.setItem = function (sKey, sValue, quiet) {
 	var oKey = sKey;
 
 	sKey = this.prefix + sKey;
-	sValue = Util.serialize(sValue);
+	sValue = JSON.stringify(sValue);
 
 	if (this.store) {
 		try {
@@ -766,17 +762,17 @@ KeyValueStore.prototype.getItem = function (sKey) {
 			/* legacy */
 			if (sValue.slice(0, 2) === "#~") {
 				// try it as a flagged, compressed value
-				sValue = Util.deserialize(LZString.decompressFromUTF16(sValue.slice(2)));
+				sValue = JSON.parse(LZString.decompressFromUTF16(sValue.slice(2)));
 				legacy = true;
 			} else {
 				try {
 			/* /legacy */
 					// try it as an unflagged, compressed value
-					sValue = Util.deserialize(LZString.decompressFromUTF16(sValue));
+					sValue = JSON.parse(LZString.decompressFromUTF16(sValue));
 			/* legacy */
 				} catch (e) {
 					// finally, try it as an uncompressed value
-					sValue = Util.deserialize(sValue);
+					sValue = JSON.parse(sValue);
 					legacy = true;
 				}
 			}
@@ -798,17 +794,17 @@ KeyValueStore.prototype.getItem = function (sKey) {
 				/* legacy */
 				if (sValue.slice(0, 2) === "#~") {
 					// try it as a flagged, compressed value
-					sValue = Util.deserialize(LZString.decompressFromBase64(sValue.slice(2)));
+					sValue = JSON.parse(LZString.decompressFromBase64(sValue.slice(2)));
 					legacy = true;
 				} else {
 					try {
 				/* /legacy */
 						// try it as an unflagged, compressed value
-						sValue = Util.deserialize(LZString.decompressFromBase64(sValue));
+						sValue = JSON.parse(LZString.decompressFromBase64(sValue));
 				/* legacy */
 					} catch (e) {
 						// finally, try it as an uncompressed value
-						sValue = Util.deserialize(sValue);
+						sValue = JSON.parse(sValue);
 						legacy = true;
 					}
 				}

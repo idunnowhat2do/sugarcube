@@ -189,8 +189,8 @@ Wikifier.parse = function (expression) {
 				}
 			}
 
-			// n.b. do not simply use "map[token]", otherwise tokens that match
-			//      basic object properties will break the world (e.g. "toString")
+			// n.b. do not simply use "map[token]" here, otherwise tokens which match
+			//      intrinsic object properties will break the world (e.g. "toString")
 			if (map.hasOwnProperty(token)) {
 				expression = expression.splice(
 					match.index,   // starting index

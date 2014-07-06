@@ -14,6 +14,7 @@
 /**
  * Adds support for window.history.state to browsers which lack it (notably some versions of Safari/iOS)
  */
+/*
 if (("history" in window) && ("pushState" in window.history) && !("state" in window.history)) {
 	(function (origPush, origReplace) {
 		// initialize window.history.state to null
@@ -38,6 +39,7 @@ if (("history" in window) && ("pushState" in window.history) && !("state" in win
 		}, true);
 	})(window.history.pushState, window.history.replaceState);
 }
+*/
 
 /**
  * Returns the array status of the passed variable
@@ -224,6 +226,21 @@ if (!Array.prototype.some) {
 				}
 			}
 			return false;
+		}
+	});
+}
+
+/**
+ * Returns the number of milliseconds elapsed since the JavaScript epoch
+ */
+if (!Date.now) {
+	Object.defineProperty(Date, "now", {
+		enumerable   : false,
+		configurable : true,
+		writable     : true,
+		value        : function () {
+			"use strict";
+			return new Date().getTime();
 		}
 	});
 }
@@ -504,7 +521,8 @@ Object.defineProperty(Number.prototype, "clamp", {
 });
 
 /**
- * Returns a formatted string, after replacing each format item in the given format string with the text equivalent of the corresponding argument's value
+ * Returns a formatted string, after replacing each format item in the given format string
+ * with the text equivalent of the corresponding argument's value
  */
 Object.defineProperty(String, "format", {
 	enumerable   : false,
@@ -571,21 +589,18 @@ Object.defineProperty(String.prototype, "readBracketedList", {
 	value        : function () {
 		"use strict";
 		// RegExp groups: Double-square-bracket quoted | Unquoted
-		var pattern = "(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^\"'\\s]\\S*)",  //"(?:\\[\\[([^\\]]+)\\]\\])|([^\\s$]+)"
-			re      = new RegExp(pattern, "gm"),
-			names   = [];
-		do {
-			var match = re.exec(this);
-			if (match) {
-				if (match[1]) {
-					// Double-square-bracket quoted
-					names.push(match[1]);
-				} else if (match[2]) {
-					// Unquoted
-					names.push(match[2]);
-				}
+		var re    = new RegExp("(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^\"'\\s]\\S*)", "gm"),  //"(?:\\[\\[([^\\]]+)\\]\\])|([^\\s$]+)"
+			match
+			names = [];
+		while ((match = re.exec(this)) !== null) {
+			if (match[1]) {
+				// Double-square-bracket quoted
+				names.push(match[1]);
+			} else if (match[2]) {
+				// Unquoted
+				names.push(match[2]);
 			}
-		} while (match);
+		}
 		return names;
 	}
 });
@@ -617,7 +632,7 @@ Object.defineProperty(Date.prototype, "toJSON", {
 });
 
 /**
- * Backup the original JSON.parse and replace it with a "$$revive$$"-aware version
+ * Backup the original JSON.parse and replace it with a "@@revive@@"-aware version
  */
 Object.defineProperty(JSON, "real_parse_backup", {
 	enumerable   : false,

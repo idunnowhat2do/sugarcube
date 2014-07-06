@@ -62,31 +62,10 @@ History.prototype.clone = function (at) {
 */
 
 History.prototype.getDeltaFromHistory = function (end) {
-	/*
-	if (this.isEmpty) { return null; }
-
-	var hist = this.history,
-		diff = [ clone(this.history[0]) ];
-	for (var i = 1, len = hist.length; i < len; i++) {
-		diff.push(Util.diff(hist[i-1], hist[i]));
-	}
-	return diff;
-	*/
-	//if (end != null && (end < -(this.length - 1) || end > this.length)) { return null; }  // use lazy equality on null check
-
-	return History.deltaEncodeHistory((end != null) ? this.history.slice(0, end) : this.history);  // use lazy equality on null check
+	return History.deltaEncodeHistory(end != null ? this.history.slice(0, end) : this.history);  // use lazy equality on null check
 };
 
 History.prototype.setHistoryFromDelta = function (delta) {
-	/*
-	if (delta == null || typeof delta !== "object") { return null; }  // use lazy equality on null check
-
-	this.history = [ clone(delta[0]) ];
-	var hist = this.history;
-	for (var i = 1, len = delta.length; i < len; i++) {
-		hist.push(Util.patch(hist[i-1], delta[i]));
-	}
-	*/
 	this.history = History.deltaDecodeHistory(delta);
 };
 
@@ -233,18 +212,14 @@ History.prototype.display = function (title, link, option) {
 	if ((updateHistory || config.disableHistoryControls) && config.historyMode !== HistoryMode.Hash) {
 		if (DEBUG) { console.log("    > typeof History.getWindowState(): " + typeof History.getWindowState()); }
 		var stateObj;
-		switch (config.historyMode) {
-		case HistoryMode.Session:
+		if (config.historyMode === HistoryMode.Session) {
 			stateObj = { suid : this.suid, sidx : this.active.sidx };
-			break;
-		case HistoryMode.Window:
+		} else {  // HistoryMode.Window
 			stateObj = { delta : this.getDeltaFromHistory() };
 			if (this.hasOwnProperty("prng")) {
 				stateObj.rseed = this.prng.seed;
 			}
-			break;
 		}
-
 		History[(!History.hasWindowState() || config.disableHistoryControls)
 			? "replaceWindowState"
 			: "addWindowState"
@@ -350,7 +325,7 @@ History.prototype.display = function (title, link, option) {
 
 History.prototype.regenerateSuid = function () {
 	if (DEBUG) { console.log("[<History>.regenerateSuid()]"); }
-	this.suid = Util.generateUuid();
+	this.suid = UUID.generate();
 	this.save();
 };
 
@@ -387,14 +362,14 @@ History.prototype.restore = function (suid) {
 			if (History.hasWindowState()) {
 				this.suid = History.getWindowState().suid;
 			} else {
-				this.suid = Util.generateUuid();
+				this.suid = UUID.generate();
 			}
 		}
 		if (this.suid && session.hasItem("history." + this.suid)) {
 			var stateObj = session.getItem("history." + this.suid),
 				sidx     = History.getWindowState().sidx;
 			if (DEBUG) { console.log("    > History.getWindowState(): " + History.getWindowState().sidx + " / " + History.getWindowState().suid); }
-			if (DEBUG) { console.log("    > history." + this.suid + ": " + Util.serialize(stateObj)); }
+			if (DEBUG) { console.log("    > history." + this.suid + ": " + JSON.stringify(stateObj)); }
 
 			this.setHistoryFromDelta(stateObj.delta);
 			if (this.hasOwnProperty("prng") && stateObj.hasOwnProperty("rseed")) {
@@ -438,11 +413,11 @@ History.prototype.restore = function (suid) {
 };
 
 History.serializeWindowState = function (obj) {
-	return LZString.compressToUTF16(Util.serialize(obj));
+	return LZString.compressToUTF16(JSON.stringify(obj));
 };
 
 History.deserializeWindowState = function (obj) {
-	return Util.deserialize(LZString.decompressFromUTF16(obj));
+	return JSON.parse(LZString.decompressFromUTF16(obj));
 };
 
 History.addWindowState = function (obj, title, url) {
@@ -474,13 +449,13 @@ History.getWindowState = function (obj) {
 };
 
 History.serializeWindowHashState = function (obj) {
-	return "#" + (LZString.compressToBase64(Util.serialize(obj))
+	return "#" + (LZString.compressToBase64(JSON.stringify(obj))
 		.replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, ".")
 	);
 };
 
 History.deserializeWindowHashState = function (obj) {
-	return Util.deserialize(LZString.decompressFromBase64(obj.slice(1)
+	return JSON.parse(LZString.decompressFromBase64(obj.slice(1)
 		.replace(/\-/g, "+").replace(/_/g, "/").replace(/\./g, "=")
 	));
 };
@@ -580,13 +555,13 @@ History.hashChangeHandler = function (evt) {
 		}
 		state.display(state.activate(state.top).title, null, "replace");
 	} else {
-console.log("**** ALERT! ALERT! DANGER, WILL ROBINSON! DANGER! ****  (window.location.hash !== state.hash && !History.hasWindowHashState())");
-console.log("    > window.location.hash:", window.location.hash);
-console.log("    > state.hash:", state.hash);
+//console.log("**** ALERT! ALERT! DANGER, WILL ROBINSON! DANGER! ****  (window.location.hash !== state.hash && !History.hasWindowHashState())");
+//console.log("    > window.location.hash:", window.location.hash);
+//console.log("    > state.hash:", state.hash);
 		window.location.reload();
 	}
 	if (window.location.hash !== state.hash) {
-console.log("**** ASSIGNING window.location.hash TO state.hash ****  (window.location.hash !== state.hash)");
+//console.log("**** ASSIGNING window.location.hash TO state.hash ****  (window.location.hash !== state.hash)");
 		state.hash = window.location.hash;
 	}
 };
@@ -601,7 +576,7 @@ History.initPRNG = function (seed, useEntropy) {
 	if (!runtime.flags.HistoryPRNG.isMathPRNG) {
 		runtime.flags.HistoryPRNG.isMathPRNG = true;
 		Math.random = function () {
-			if (DEBUG) { console.log("**** Math.random() -> state.prng.random() ****"); }
+			if (DEBUG) { console.log("**** state.prng.random() called via Math.random() ****"); }
 			return state.prng.random();
 		};
 	}
@@ -632,21 +607,15 @@ History.deltaDecodeHistory = function (delta) {
 History.marshal = function () {
 	if (DEBUG) { console.log("[History.marshal()]"); }
 
-	var stateObj = {
-		mode : config.historyMode
-	};
+	var stateObj = { mode : config.historyMode };
 	if (state.hasOwnProperty("prng")) {
 		stateObj.rseed = state.prng.seed;
 	}
-	switch (config.historyMode) {
-	case HistoryMode.Session:
-		stateObj.delta = state.getDeltaFromHistory(state.active.sidx + 1);
-		break;
-	default:
-		stateObj.delta = state.getDeltaFromHistory();
-		break;
+	if (config.historyMode === HistoryMode.Session) {
+		stateObj.history = clone(state.history.slice(0, state.active.sidx + 1));
+	} else {
+		stateObj.history = clone(state.history);
 	}
-
 	return stateObj;
 };
 
@@ -670,20 +639,14 @@ History.unmarshal = function (stateObj) {
 	}
 	if (config.historyMode === HistoryMode.Session) {
 		state.regenerateSuid();
-		//if (DEBUG) { console.log("    > [History.unmarshal()] this.suid: " + state.suid); }
+		//if (DEBUG) { console.log("    > this.suid: " + state.suid); }
 	}
 
 	// load the state history from the save
-	var hasDelta = false;
-	if (stateObj.hasOwnProperty("delta")) {
-		state.history = clone(History.deltaDecodeHistory(stateObj.delta));
-		hasDelta = true;
-	} else {
-		state.history = clone(stateObj.history);
-	}
+	state.history = clone(stateObj.history);
 
+	// restore the window history states (in order)
 	if (config.historyMode !== HistoryMode.Hash) {
-		// restore the window history states in order
 		for (var i = 0, len = state.history.length; i < len; i++) {
 			if (DEBUG) { console.log("    > loading state into window history: " + i + " (" + state.history[i].title + ")"); }
 
@@ -698,11 +661,7 @@ History.unmarshal = function (stateObj) {
 					windowState = { suid : state.suid, sidx : state.history[i].sidx };
 					break;
 				case HistoryMode.Window:
-					if (hasDelta) {
-						windowState = { delta : stateObj.delta.slice(0, i + 1) };
-					} else {
-						windowState = { delta : state.getDeltaFromHistory(i + 1) };
-					}
+					windowState = { delta : state.getDeltaFromHistory(i + 1) };
 					if (state.hasOwnProperty("prng")) {
 						windowState.rseed = state.prng.seed;
 					}
@@ -711,8 +670,6 @@ History.unmarshal = function (stateObj) {
 				History.addWindowState(windowState, windowTitle);
 			}
 		}
-	} else {
-		/* FIXME: noop? */
 	}
 
 	// activate the current top and display the passage
