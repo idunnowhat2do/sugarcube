@@ -153,7 +153,6 @@ config.browser = {
 	}
 };
 // adjust these based on the specific browser used
-//config.historyMode = (config.hasPushState ? ((config.browser.isIE || config.browser.isMobile.iOS) && !config.hasSessionStorage ? HistoryMode.Window : HistoryMode.Session) : HistoryMode.Hash);
 config.historyMode = (config.hasPushState ? (config.hasSessionStorage ? HistoryMode.Session : HistoryMode.Window) : HistoryMode.Hash);
 config.hasFileAPI = config.hasFileAPI && !config.browser.isMobile.any() && (!config.browser.isOpera || config.browser.operaVersion >= 15);
 
