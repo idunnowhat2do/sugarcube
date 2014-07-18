@@ -464,12 +464,8 @@ var Util = {
 	evalStatements : function (statements) {
 		"use strict";
 		// the enclosing anonymous function is to isolate the passed code within its own scope
-		try {
-			eval("(function(){" + statements + "\n}());");
-			return true;
-		} catch (e) {
-			return false;
-		}
+		eval("(function(){" + statements + "\n}());");
+		return true;
 	},
 
 	/**

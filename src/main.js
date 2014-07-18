@@ -237,21 +237,6 @@ $(document).ready(function () {
 	// call macros' "early" init functions
 	macros.init();
 
-	// execute the StoryInit passage
-	if (tale.has("StoryInit")) {
-		try {
-			Wikifier.wikifyEval(tale.get("StoryInit").text);
-		} catch (e) {
-			technicalAlert("StoryInit", e.message);
-		}
-	}
-
-	// finalize the config.disableHistoryControls setting before initializing our state
-	//   n.b. we do this here to give the author every opportunity to modify config.disableHistoryTracking during setup
-	if (config.disableHistoryTracking) {
-		config.disableHistoryControls = true;
-	}
-
 	// initialize our state
 	state.init();  // this could take a while, so do it late
 

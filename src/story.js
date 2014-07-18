@@ -129,6 +129,21 @@ History.prototype.activate = function (state) {
 History.prototype.init = function () {
 	if (DEBUG) { console.log("[<History>.init()]"); }
 
+	// execute the StoryInit passage
+	if (tale.has("StoryInit")) {
+		try {
+			Wikifier.wikifyEval(tale.get("StoryInit").text);
+		} catch (e) {
+			technicalAlert("StoryInit", e.message);
+		}
+	}
+
+	// finalize the config.disableHistoryControls setting before displaying the initial passage
+	//   n.b. we do this here to give the author every opportunity to modify config.disableHistoryTracking
+	if (config.disableHistoryTracking) {
+		config.disableHistoryControls = true;
+	}
+
 	// display the initial passage
 	if (typeof testPlay !== "undefined" && testPlay !== "") {
 		// enables the Twine 1.4+ "Test Play From Here" feature
@@ -140,10 +155,9 @@ History.prototype.init = function () {
 	}
 
 	// setup the history change handlers
-	//   n.b. do not update these to use jQuery; the "popstate" event gains
-	//        nothing from being wrapped in the jQuery Event object and it would
-	//        complicate either the handlers, by having to deal with it, or the
-	//        jQuery Event object, if we pushed the properties we need onto it
+	//   n.b. do not update these to use jQuery; the "popstate" event gains nothing from being wrapped in the
+	//        jQuery Event object and it would complicate either the handlers, by having to deal with it,
+	//        or the jQuery Event object, if the necessary properties were pushed onto it
 	if (config.historyMode === HistoryMode.Session) {
 		window.addEventListener("popstate", History.popStateHandler_Session, false);
 	} else if (config.historyMode === HistoryMode.Window) {
@@ -542,7 +556,6 @@ History.hashChangeHandler = function (evt) {
 		if (UISystem.isOpen()) { UISystem.close(); }
 
 		var hashState = History.getWindowHashState();
-//console.log("hashState:", hashState);
 
 		// throw error if state has no history or history is empty
 		if (!hashState.hasOwnProperty("delta") || hashState.delta.length === 0) {
@@ -555,13 +568,9 @@ History.hashChangeHandler = function (evt) {
 		}
 		state.display(state.activate(state.top).title, null, "replace");
 	} else {
-//console.log("**** ALERT! ALERT! DANGER, WILL ROBINSON! DANGER! ****  (window.location.hash !== state.hash && !History.hasWindowHashState())");
-//console.log("    > window.location.hash:", window.location.hash);
-//console.log("    > state.hash:", state.hash);
 		window.location.reload();
 	}
 	if (window.location.hash !== state.hash) {
-//console.log("**** ASSIGNING window.location.hash TO state.hash ****  (window.location.hash !== state.hash)");
 		state.hash = window.location.hash;
 	}
 };

@@ -384,6 +384,10 @@ Object.defineProperty(Array, "random", {
 	writable     : true,
 	value        : function (array, lower, upper) {
 		"use strict";
+		if (arguments.length === 2) {
+			upper = lower;
+			lower = 0;
+		}
 		if (Array.isArray(array)) {
 			return array.random(lower, upper);
 		} else if (array.hasOwnProperty("length")) {
@@ -429,6 +433,10 @@ Object.defineProperty(Array.prototype, "random", {
 	writable     : true,
 	value        : function (lower, upper) {
 		"use strict";
+		if (arguments.length === 1) {
+			upper = lower;
+			lower = 0;
+		}
 		if (lower == null) {  // use lazy equality
 			lower = 0;
 		} else if (lower < 0) {
