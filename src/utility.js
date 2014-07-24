@@ -37,9 +37,7 @@ function clone(orig) {
 	}
 
 	// If we've reached here, we have a regular object, array, or function
-	//   n.b This does NOT preserve ES5 property attributes like 'writable', 'enumerable', etc.
-	//       That could be achieved by using Object.getOwnPropertyNames and Object.defineProperty
-	var okeys = Object.keys(orig),
+	var okeys = Object.keys(orig),  // Object.keys() or Object.getOwnPropertyNames() ?
 		dup;
 	// Ensure the returned object has the same prototype as the original
 	if (Array.isArray(orig)) {
@@ -47,11 +45,14 @@ function clone(orig) {
 		dup = [];
 	} else {
 		// General, non-array, object case
-		var proto = (typeof Object.getPrototypeOf === "function") ? Object.getPrototypeOf(orig) : orig.__proto__;
+		var proto = has.getPrototypeOf ? Object.getPrototypeOf(orig) : orig.__proto__;
 		dup = proto ? Object.create(proto) : orig.constructor.prototype;  // the latter case should only be reached by very old browsers
 	}
 	for (var i = 0, len = okeys.length; i < len; i++) {
 		dup[okeys[i]] = clone(orig[okeys[i]]);
+		// n.b The above does not preserve ES5 property attributes like 'writable', 'enumerable', etc.
+		//     That could be achieved by using the following instead.
+		//Object.defineProperty(dup, okeys[i], clone(Object.getOwnPropertyDescriptor(orig, okeys[i])));
 	}
 	return dup;
 }
@@ -667,13 +668,13 @@ function KeyValueStore(storeName, storePrefix) {
 		break;
 	case "localStorage":
 		this.name = storeName;
-		if (config.hasLocalStorage) {
+		if (has.localStorage) {
 			this.store = window.localStorage;
 		}
 		break;
 	case "sessionStorage":
 		this.name = storeName;
-		if (config.hasSessionStorage) {
+		if (has.sessionStorage) {
 			this.store = window.sessionStorage;
 		}
 		break;
