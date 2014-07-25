@@ -478,12 +478,12 @@ var UISystem = {
 		// show the dialog
 		UISystem.show(options, closeFunc);
 	},
-	restart : function () {
+	restart : function (options) {
 		// build the dialog
 		UISystem.buildRestart();
 
 		// show the dialog
-		UISystem.show();
+		UISystem.show(options);
 	},
 	body : function () {
 		return UISystem._body;
@@ -492,8 +492,10 @@ var UISystem = {
 		$(UISystem._body)
 			.empty()
 			.removeClass()
-			.addClass("dialog")
-			.addClass(classNames);
+			.addClass("dialog");
+		if (classNames != null) {  // use lazy equality
+			$(UISystem._body).addClass(classNames);
+		}
 		return UISystem._body;
 	},
 	isOpen : function () {
