@@ -48,7 +48,7 @@ function clone(orig) {
 		var proto = has.getPrototypeOf ? Object.getPrototypeOf(orig) : orig.__proto__;
 		dup = proto ? Object.create(proto) : orig.constructor.prototype;  // the latter case should only be reached by very old browsers
 	}
-	for (var i = 0, len = okeys.length; i < len; i++) {
+	for (var i = 0, len = okeys.length; i < len; i++) {  // this allows cloning of expando properties as well
 		dup[okeys[i]] = clone(orig[okeys[i]]);
 		// n.b The above does not preserve ES5 property attributes like 'writable', 'enumerable', etc.
 		//     That could be achieved by using the following instead.

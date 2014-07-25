@@ -135,7 +135,7 @@ function addStandardMacros() {
 			if (steps > 0) {
 				$(el).click(function () {
 					if (this.name === "back") {
-						if (config.historyMode === HistoryMode.Hash || config.disableHistoryControls) {
+						if (config.historyMode === History.Modes.Hash || config.disableHistoryControls) {
 							return function () {
 								// pop the history stack
 								//   n.b. (steps > 0) is correct, since SugarCube's history stack does not store "dirty"
