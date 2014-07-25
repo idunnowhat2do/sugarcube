@@ -144,6 +144,10 @@ var config = {
 	disableHistoryTracking : false,
 	historyMode            : (has.pushState ? (has.sessionStorage ? History.Modes.Session : History.Modes.Window) : History.Modes.Hash),
 
+	// transition properties
+	passageTransitionOut   : null,
+	transitionEndEventName : (function () { var teMap = { "transition" : "transitionend", "MSTransition" : "msTransitionEnd", "WebkitTransition" : "webkitTransitionEnd", "MozTransition" : "transitionend" }, el = document.createElement("div"); for (var tName in teMap) { if (el.style[tName] !== undefined) { return teMap[tName]; } } return ""; }()),
+
 	// macros option properties
 	macros : {
 		maxLoopIterations : 1000
@@ -161,14 +165,11 @@ var config = {
 
 	// error messages properties
 	errorName : "game",
-	errors    : { /* see below */ },
-
-	// transition properties
-	transitionEndEventName : (function () { var teMap = { "transition" : "transitionend", "MSTransition" : "msTransitionEnd", "WebkitTransition" : "webkitTransitionEnd", "MozTransition" : "transitionend" }, el = document.createElement("div"); for (var tName in teMap) { if (el.style[tName] !== undefined) { return teMap[tName]; } } return ""; }())
+	errors    : { /* see below */ }
 };
 config.errors = {
 	savesNotAllowed : "Saving has been disallowed on this passage.",
-	upgradeBrowser  :  "Apologies! Your web browser lacks capabilities that this " + config.errorName + " requires. Please consider upgrading it or switching to a more modern web browser."
+	upgradeBrowser  : "Apologies! Your web browser lacks capabilities that this " + config.errorName + " requires. Please consider upgrading it or switching to a more modern web browser."
 };
 // adjust these based on the specific browser used
 config.hasFileAPI = has.fileAPI = (has.fileAPI && !browser.isMobile.any() && (!browser.isOpera || browser.operaVersion >= 15));
