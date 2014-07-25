@@ -28,8 +28,13 @@ function Wikifier(place, source) {
 
 	this.subWikify(this.output);
 
-	if (place == null && typeof this.output["remove"] === "function") {
-		this.output.remove();
+	if (place == null) {
+		if (typeof this.output.remove === "function") {
+			this.output.remove();
+		} else if (this.output.parentNode) {
+			this.output.parentNode.removeChild(this.output);
+		}
+		this.output = null;
 	}
 }
 
@@ -1358,9 +1363,17 @@ Wikifier.formatters =
 			el.setAttribute("data-passage", passage);
 		}
 		if (passage !== "") {
-			switch (el.tagName.toUpperCase()) {
-			case "A":    /* FALL-THROUGH */
-			case "AREA":
+			if (el.tagName.toUpperCase() === "IMG") {
+				var source;
+				// check for Twine 1.4 Base64 image passage transclusion
+				if (tale.has(passage)) {
+					passage = tale.get(passage);
+					if (passage.tags.contains("Twine.image")) {
+						source = passage.text;
+					}
+				}
+				el.src = source;
+			} else {
 				var setter   = el.getAttribute("data-setter"),
 					callback;
 				if (setter != null) {
@@ -1374,18 +1387,6 @@ Wikifier.formatters =
 					if (typeof callback === "function") { callback(); }
 					state.display(passage, el);
 				});
-				break;
-			case "IMG":
-				var source;
-				// check for Twine 1.4 Base64 image passage transclusion
-				if (tale.has(passage)) {
-					passage = tale.get(passage);
-					if (passage.tags.contains("Twine.image")) {
-						source = passage.text;
-					}
-				}
-				el.src = source;
-				break;
 			}
 		}
 	}
