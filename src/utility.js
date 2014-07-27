@@ -339,9 +339,11 @@ function tags(/* variadic */) {
 	if (arguments.length === 0) {
 		return tale.get(state.active.title).tags.slice(0);
 	} else {
-		var tags = [];
-		for (var i = 0; i < arguments.length; i++) {
-			tags = tags.concat(tale.get(arguments[i]).tags);
+		var passages = Array.prototype.concat.apply([], arguments),
+			plen     = passages.length,
+			tags     = [];
+		for (var i = 0; i < plen; i++) {
+			tags = tags.concat(tale.get(passages[i]).tags);
 		}
 		return tags;
 	}
@@ -366,15 +368,17 @@ function visited(title) {
 function visitedTags(/* variadic */) {
 	if (arguments.length === 0) { return 0; }
 
-	var count = 0;
-	for (var i = 0; i < state.length; i++) {
+	var list  = Array.prototype.concat.apply([], arguments),
+		llen  = list.length,
+		count = 0;
+	for (var i = 0, slen = state.length; i < slen; i++) {
 		var tags = tale.get(state.history[i].title).tags;
 		if (tags.length !== 0) {
 			var found = 0;
-			for (var j = 0; j < arguments.length; j++) {
-				if (tags.contains(arguments[j])) { found++; }
+			for (var j = 0; j < llen; j++) {
+				if (tags.contains(list[j])) { found++; }
 			}
-			if (found === arguments.length) { count++; }
+			if (found === llen) { count++; }
 		}
 	}
 	return count;
@@ -386,11 +390,7 @@ function visitedTags(/* variadic */) {
 function either(/* variadic */) {
 	if (arguments.length === 0) { return; }
 
-	var list = [];
-	for (var i = 0; i < arguments.length; i++) {
-		list = list.concat(arguments[i]);  // concat() to merge/flatten passed in arrays
-	}
-	return list.random();
+	return Array.prototype.concat.apply([], arguments).random();
 }
 function visitedTag(/* variadic */) { return visitedTags.apply(null, arguments); }
 function turns() { return state.length; }
