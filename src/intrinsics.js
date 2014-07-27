@@ -12,7 +12,7 @@
 ;if("document" in self&&!("classList" in document.createElement("_"))){(function(j){"use strict";if(!("Element" in j)){return}var a="classList",f="prototype",m=j.Element[f],b=Object,k=String[f].trim||function(){return this.replace(/^\s+|\s+$/g,"")},c=Array[f].indexOf||function(q){var p=0,o=this.length;for(;p<o;p++){if(p in this&&this[p]===q){return p}}return -1},n=function(o,p){this.name=o;this.code=DOMException[o];this.message=p},g=function(p,o){if(o===""){throw new n("SYNTAX_ERR","an invalid or illegal string was specified")}if(/\s/.test(o)){throw new n("INVALID_CHARACTER_ERR","string contains an invalid character")}return c.call(p,o)},d=function(s){var r=k.call(s.getAttribute("class")||""),q=r?r.split(/\s+/):[],p=0,o=q.length;for(;p<o;p++){this.push(q[p])}this._updateClassName=function(){s.setAttribute("class",this.toString())}},e=d[f]=[],i=function(){return new d(this)};n[f]=Error[f];e.item=function(o){return this[o]||null};e.contains=function(o){o+="";return g(this,o)!==-1};e.add=function(){var s=arguments,r=0,p=s.length,q,o=false;do{q=s[r]+"";if(g(this,q)===-1){this.push(q);o=true}}while(++r<p);if(o){this._updateClassName()}};e.remove=function(){var t=arguments,s=0,p=t.length,r,o=false;do{r=t[s]+"";var q=g(this,r);if(q!==-1){this.splice(q,1);o=true}}while(++s<p);if(o){this._updateClassName()}};e.toggle=function(p,q){p+="";var o=this.contains(p),r=o?q!==true&&"remove":q!==false&&"add";if(r){this[r](p)}return !o};e.toString=function(){return this.join(" ")};if(b.defineProperty){var l={get:i,enumerable:true,configurable:true};try{b.defineProperty(m,a,l)}catch(h){if(h.number===-2146823252){l.enumerable=false;b.defineProperty(m,a,l)}}}else{if(b[f].__defineGetter__){m.__defineGetter__(a,i)}}}(self))};
 
 /**
- * Returns the array status of the passed variable
+ * Returns the array status of the given variable
  */
 if (!Array.isArray) {
 	Object.defineProperty(Array, "isArray", {
@@ -238,7 +238,7 @@ if (!String.prototype.contains) {
 		enumerable   : false,
 		configurable : true,
 		writable     : true,
-		value        : function (/* needle */) {
+		value        : function (/* needle [, fromIndex] */) {
 			"use strict";
 			return String.prototype.indexOf.apply(this, arguments) !== -1;
 		}
@@ -376,7 +376,7 @@ if (!Object.create || typeof Object.create !== "function") {
 ** [Extensions, General]
 ***********************************************************************************************************************/
 /**
- * Returns a random value from the passed array in the range of lower and upper, if they are specified
+ * Returns a random value from the given array in the range of lower and upper, if they are specified
  */
 Object.defineProperty(Array, "random", {
 	enumerable   : false,
@@ -398,18 +398,56 @@ Object.defineProperty(Array, "random", {
 });
 
 /**
- * Returns whether an element may be found within the array, returning true or false as appropriate
+ * Returns whether the given element was found within the array, returning true or false as appropriate
  */
 Object.defineProperty(Array.prototype, "contains", {
 	enumerable   : false,
 	configurable : true,
 	writable     : true,
-	value        : function (/* needle */) {
+	value        : function (/* needle [, fromIndex] */) {
 		"use strict";
-		//return Array.prototype.indexOf.apply(this, arguments) !== -1;
+		return Array.prototype.indexOf.apply(this, arguments) !== -1;
+	}
+});
+
+/**
+ * Returns whether all of the given elements were found within the array, returning true or false as appropriate
+ */
+Object.defineProperty(Array.prototype, "containsAll", {
+	enumerable   : false,
+	configurable : true,
+	writable     : true,
+	value        : function (/* needles */) {
+		"use strict";
 		if (arguments.length === 1) {
 			if (Array.isArray(arguments[0])) {
-				return Array.prototype.contains.apply(this, arguments[0]);
+				return Array.prototype.containsAll.apply(this, arguments[0]);
+			} else {
+				return Array.prototype.indexOf.apply(this, arguments) !== -1;
+			}
+		} else {
+			for (var i = 0, len = arguments.length; i < len; i++) {
+				if (!Array.prototype.some.call(this, function (v) { return v === this.val; }, { val: arguments[i] })) {
+					return false;
+				}
+			}
+			return true;
+		}
+	}
+});
+
+/**
+ * Returns whether any of the given elements were found within the array, returning true or false as appropriate
+ */
+Object.defineProperty(Array.prototype, "containsAny", {
+	enumerable   : false,
+	configurable : true,
+	writable     : true,
+	value        : function (/* needles */) {
+		"use strict";
+		if (arguments.length === 1) {
+			if (Array.isArray(arguments[0])) {
+				return Array.prototype.containsAny.apply(this, arguments[0]);
 			} else {
 				return Array.prototype.indexOf.apply(this, arguments) !== -1;
 			}
@@ -456,7 +494,7 @@ Object.defineProperty(Array.prototype, "random", {
 });
 
 /**
- * Returns the passed numerical clamped to the specified bounds
+ * Returns the given numerical clamped to the specified bounds
  */
 Object.defineProperty(Math, "clamp", {
 	enumerable   : false,
