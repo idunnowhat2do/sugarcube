@@ -240,6 +240,10 @@ if (!String.prototype.contains) {
 		writable     : true,
 		value        : function (/* needle [, fromIndex] */) {
 			"use strict";
+			if (this == null) {
+				throw new TypeError("String.prototype.contains called on null or undefined");
+			}
+
 			return String.prototype.indexOf.apply(this, arguments) !== -1;
 		}
 	});
@@ -305,6 +309,10 @@ if (!String.prototype.trim) {
 		writable     : true,
 		value        : function () {
 			"use strict";
+			if (this == null) {
+				throw new TypeError("String.prototype.trim called on null or undefined");
+			}
+
 			//return this.replace(/^\s+/, "").replace(/\s+$/, "");
 			return this.replace(/^\s+|\s+$/g, "");
 		}
@@ -321,6 +329,10 @@ if (!String.prototype.trimLeft) {
 		writable     : true,
 		value        : function () {
 			"use strict";
+			if (this == null) {
+				throw new TypeError("String.prototype.trimLeft called on null or undefined");
+			}
+
 			return this.replace(/^\s+/, "");
 		}
 	});
@@ -336,6 +348,10 @@ if (!String.prototype.trimRight) {
 		writable     : true,
 		value        : function () {
 			"use strict";
+			if (this == null) {
+				throw new TypeError("String.prototype.trimRight called on null or undefined");
+			}
+
 			return this.replace(/\s+$/, "");
 		}
 	});
@@ -406,6 +422,10 @@ Object.defineProperty(Array.prototype, "contains", {
 	writable     : true,
 	value        : function (/* needle [, fromIndex] */) {
 		"use strict";
+		if (this == null) {
+			throw new TypeError("Array.prototype.contains called on null or undefined");
+		}
+
 		return Array.prototype.indexOf.apply(this, arguments) !== -1;
 	}
 });
@@ -419,6 +439,10 @@ Object.defineProperty(Array.prototype, "containsAll", {
 	writable     : true,
 	value        : function (/* needles */) {
 		"use strict";
+		if (this == null) {
+			throw new TypeError("Array.prototype.containsAll called on null or undefined");
+		}
+
 		if (arguments.length === 1) {
 			if (Array.isArray(arguments[0])) {
 				return Array.prototype.containsAll.apply(this, arguments[0]);
@@ -445,6 +469,10 @@ Object.defineProperty(Array.prototype, "containsAny", {
 	writable     : true,
 	value        : function (/* needles */) {
 		"use strict";
+		if (this == null) {
+			throw new TypeError("Array.prototype.containsAny called on null or undefined");
+		}
+
 		if (arguments.length === 1) {
 			if (Array.isArray(arguments[0])) {
 				return Array.prototype.containsAny.apply(this, arguments[0]);
@@ -471,6 +499,10 @@ Object.defineProperty(Array.prototype, "random", {
 	writable     : true,
 	value        : function (lower, upper) {
 		"use strict";
+		if (this == null) {
+			throw new TypeError("Array.prototype.random called on null or undefined");
+		}
+
 		if (arguments.length === 1) {
 			upper = lower;
 			lower = 0;
@@ -604,6 +636,10 @@ Object.defineProperty(String.prototype, "readBracketedList", {
 	writable     : true,
 	value        : function () {
 		"use strict";
+		if (this == null) {
+			throw new TypeError("String.prototype.readBracketedList called on null or undefined");
+		}
+
 		// RegExp groups: Double-square-bracket quoted | Unquoted
 		var re    = new RegExp("(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^\"'\\s]\\S*)", "gm"),  //"(?:\\[\\[([^\\]]+)\\]\\])|([^\\s$]+)"
 			match
