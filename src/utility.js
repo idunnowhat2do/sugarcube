@@ -296,10 +296,9 @@ function scrollWindowTo(el, increment) {
 ** [Function Library, Story Utilities]
 ***********************************************************************************************************************/
 /**
- * Returns a random integer in the range of min and max
+ * Returns a random integer within the given range (min–max)
  *   n.b. Using Math.round() will give you a non-uniform distribution!
  */
-function getRandom(/* min, max */) { return random.apply(null, arguments); }
 function random(min, max) {
 	if (arguments.length === 0) { throw new Error("random called with insufficient arguments"); }
 	if (arguments.length === 1) {
@@ -316,9 +315,8 @@ function random(min, max) {
 }
 
 /**
- * Returns a random float in the range of min and max
+ * Returns a random float within the given range (min–max)
  */
-function getRandomArbitrary(/* min, max */) { return randomFloat.apply(null, arguments); }
 function randomFloat(min, max) {
 	if (arguments.length === 0) { throw new Error("randomFloat called with insufficient arguments"); }
 	if (arguments.length === 1) {
@@ -363,7 +361,7 @@ function visited(title) {
 }
 
 /**
- * Returns an integer count of how many passages within the story history are tagged with all of the tags
+ * Returns an integer count of how many passages within the story history are tagged with all of the given tags
  */
 function visitedTags(/* variadic */) {
 	if (arguments.length === 0) { return 0; }
@@ -390,7 +388,7 @@ function either(/* variadic */) {
 
 	var list = [];
 	for (var i = 0; i < arguments.length; i++) {
-		list = list.concat(arguments[i]);
+		list = list.concat(arguments[i]);  // concat() to merge/flatten passed in arrays
 	}
 	return list.random();
 }
