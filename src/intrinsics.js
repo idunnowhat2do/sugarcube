@@ -684,6 +684,19 @@ Object.defineProperty(Date.prototype, "toJSON", {
 });
 
 /**
+ * Utility function to allow users to easily wrap their code in the revive wrapper
+ */
+Object.defineProperty(JSON, "reviveWrapper", {
+	enumerable   : false,
+	configurable : true,
+	writable     : true,
+	value        : function (code) {
+		if (typeof code !== "string") { throw new TypeError("JSON.reviveWrapper code parameter must be a string"); }
+		return "@@revive@@(" + code + ")";
+	}
+});
+
+/**
  * Backup the original JSON.parse and replace it with a "@@revive@@"-aware version
  */
 Object.defineProperty(JSON, "real_parse_backup", {
