@@ -134,6 +134,38 @@ if (!Array.prototype.find) {
 }
 
 /**
+ * Executes the provided function once per array element
+ */
+if (!Array.prototype.forEach) {
+	Object.defineProperty(Array.prototype, "forEach", {
+		enumerable   : false,
+		configurable : true,
+		writable     : true,
+		value        : function (callback /* , thisp */) {
+			"use strict";
+			if (this == null) {
+				throw new TypeError("Array.prototype.forEach called on null or undefined");
+			}
+			if (typeof callback !== "function") {
+				throw new TypeError("Array.prototype.forEach callback parameter must be a function");
+			}
+
+			var list   = Object(this),
+				length = list.length >>> 0,
+				thisp  = arguments[1];
+
+			for (var i = 0; i < length; i++) {
+				if (i in list) {
+					var val = list[i];
+					callback.call(thisp, val, i, list);
+				}
+			}
+			return undefined;
+		}
+	});
+}
+
+/**
  * Creates a new array with the results of calling a provided function on every element in this array
  */
 if (!Array.prototype.map) {
@@ -450,7 +482,7 @@ Object.defineProperty(Array.prototype, "containsAll", {
 				return Array.prototype.indexOf.apply(this, arguments) !== -1;
 			}
 		} else {
-			for (var i = 0, len = arguments.length; i < len; i++) {
+			for (var i = 0, iend = arguments.length; i < iend; i++) {
 				if (!Array.prototype.some.call(this, function (v) { return v === this.val; }, { val: arguments[i] })) {
 					return false;
 				}
@@ -480,7 +512,7 @@ Object.defineProperty(Array.prototype, "containsAny", {
 				return Array.prototype.indexOf.apply(this, arguments) !== -1;
 			}
 		} else {
-			for (var i = 0, len = arguments.length; i < len; i++) {
+			for (var i = 0, iend = arguments.length; i < iend; i++) {
 				if (Array.prototype.some.call(this, function (v) { return v === this.val; }, { val: arguments[i] })) {
 					return true;
 				}
