@@ -4,7 +4,7 @@
  *   - Description : Node.js-hosted build script for SugarCube
  *   - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
  *   - Copyright   : Copyright © 2014 Thomas Michael Edwards. All rights reserved.
- *   - Version     : 1.0.8, 2014-07-25
+ *   - Version     : 1.0.9, 2014-07-28
  */
 "use strict";
 
@@ -149,6 +149,11 @@ var _fs     = require("fs"),
 (function () {
 	var version, jsSource, cssSource;
 
+	// create the build ID file, if nonexistent
+	if (!_fs.existsSync(".build")) {
+		writeFileContents(".build", 0);
+	}
+
 	// get the base version info and set build metadata
 	version          = require("./src/sugarcube.json");  // "./" prefixing the relative path is important here
 	version.build    = +readFileContents(".build") + 1;
@@ -164,7 +169,7 @@ var _fs     = require("fs"),
 	cssSource = compileCSS(CONFIG.css);
 
 	// process the header templates and write the outfiles
-	for (var file in CONFIG.html) {
+	Object.keys(CONFIG.html).forEach(function (file) {
 		var infile  = _path.normalize(file),
 			outfile = _path.normalize(CONFIG.html[file]),
 			output  = readFileContents(infile);  // load the header template
@@ -186,10 +191,10 @@ var _fs     = require("fs"),
 		// write the outfile
 		makePath(_path.dirname(outfile));
 		writeFileContents(outfile, output);
-	}
+	});
 
 	// process the files that simply need copied into the distribution
-	for (var file in CONFIG.copy) {
+	Object.keys(CONFIG.copy).forEach(function (file) {
 		var infile  = _path.normalize(file),
 			outfile = _path.normalize(CONFIG.copy[file]),
 			output  = readFileContents(infile);  // load the file (raw)
@@ -198,7 +203,7 @@ var _fs     = require("fs"),
 		// write the file
 		makePath(_path.dirname(outfile));
 		writeFileContents(outfile, output);
-	}
+	});
 
 	// update the build ID
 	writeFileContents(".build", version.build);
