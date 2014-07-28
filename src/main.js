@@ -94,8 +94,30 @@ var has = {
 	// the try/catch and length property access here is required due to a monumentally stupid
 	// Firefox bug [ #748620; https://bugzilla.mozilla.org/show_bug.cgi?id=748620 ]
 	// the try/catch is also required due to the iOS browser core throwing on setItem() calls when in private mode
-	localStorage   : (("localStorage" in window) && (function (wls) { try { if (wls != null && wls.length >= 0) { var tkey = "SugarCube/WLS/Test"; wls.setItem(tkey, "42"); if (wls.getItem(tkey) !== "42") return false; wls.removeItem(tkey); return true; } return false; } catch (e) { return false; } }(window.localStorage))),  // use lazy equality on null check
-	sessionStorage : (("sessionStorage" in window) && (function (wss) { try { if (wss != null && wss.length >= 0) { var tkey = "SugarCube/WSS/Test"; wss.setItem(tkey, "42"); if (wss.getItem(tkey) !== "42") return false; wss.removeItem(tkey); return true; } return false; } catch (e) { return false; } }(window.sessionStorage))),  // use lazy equality on null check
+	localStorage   : (("localStorage" in window) && (function (wls) {
+		try {
+			if (wls != null && wls.length >= 0) {  // use lazy equality on null check
+				var tkey = "SugarCube/WLS/Test";
+				wls.setItem(tkey, "42");
+				if (wls.getItem(tkey) !== "42") return false;
+				wls.removeItem(tkey);
+				return true;
+			}
+			return false;
+		} catch (e) { return false; }
+	}(window.localStorage))),
+	sessionStorage : (("sessionStorage" in window) && (function (wss) {
+		try {
+			if (wss != null && wss.length >= 0) {  // use lazy equality on null check
+				var tkey = "SugarCube/WSS/Test";
+				wss.setItem(tkey, "42");
+				if (wss.getItem(tkey) !== "42") return false;
+				wss.removeItem(tkey);
+				return true;
+			}
+			return false;
+		} catch (e) { return false; }
+	}(window.sessionStorage))),
 	// it's probably safe to assume the existence of Blob by the existence of File
 	fileAPI        : (("File" in window) && ("FileList" in window) && ("FileReader" in window))
 };
@@ -104,11 +126,18 @@ var has = {
 var browser          = { userAgent : navigator.userAgent.toLowerCase() };
 browser.isGecko      = (navigator && navigator.product === "Gecko" && !/webkit|trident/.test(browser.userAgent));
 browser.isIE         = (/msie|trident/.test(browser.userAgent) && !browser.userAgent.contains("opera"));
-browser.ieVersion    = (function () { var ieVer = /(?:msie\s+|rv:)(\d{1,2}\.\d)/.exec(browser.userAgent); return ieVer ? +ieVer[1] : 0; }());
+browser.ieVersion    = (function () {
+	var ieVer = /(?:msie\s+|rv:)(\d{1,2}\.\d)/.exec(browser.userAgent);
+	return ieVer ? +ieVer[1] : 0;
+}());
 // opera <= 12: "opera/9.80 (windows nt 6.1; wow64) presto/2.12.388 version/12.16"
 // opera >= 15: "mozilla/5.0 (windows nt 6.1; wow64) applewebkit/537.36 (khtml, like gecko) chrome/28.0.1500.52 safari/537.36 opr/15.0.1147.130"
 browser.isOpera      = (browser.userAgent.contains("opera")) || (browser.userAgent.contains(" opr/"));
-browser.operaVersion = (function () { var re = new RegExp((/applewebkit|chrome/.test(browser.userAgent) ? "opr" : "version") + "\\/(\\d{1,2}\\.\\d+)"), oprVer = re.exec(browser.userAgent); return oprVer ? +oprVer[1] : 0; }());
+browser.operaVersion = (function () {
+	var re     = new RegExp((/applewebkit|chrome/.test(browser.userAgent) ? "opr" : "version") + "\\/(\\d{1,2}\\.\\d+)"),
+		oprVer = re.exec(browser.userAgent);
+	return oprVer ? +oprVer[1] : 0;
+}());
 browser.isMobile     = {
 	any        : function () { return (browser.isMobile.Android || browser.isMobile.BlackBerry || browser.isMobile.iOS || browser.isMobile.Windows); },
 	Android    : (/android/.test(browser.userAgent)),
@@ -146,7 +175,22 @@ var config = {
 
 	// transition properties
 	passageTransitionOut   : null,
-	transitionEndEventName : (function () { var teMap = { "transition" : "transitionend", "MSTransition" : "msTransitionEnd", "WebkitTransition" : "webkitTransitionEnd", "MozTransition" : "transitionend" }, el = document.createElement("div"); for (var tName in teMap) { if (el.style[tName] !== undefined) { return teMap[tName]; } } return ""; }()),
+	transitionEndEventName : (function () {
+		var teMap  = {
+				"transition"       : "transitionend",
+				"MSTransition"     : "msTransitionEnd",
+				"WebkitTransition" : "webkitTransitionEnd",
+				"MozTransition"    : "transitionend"
+			},
+			teKeys = Object.keys(teMap),
+			el     = document.createElement("div");
+		for (var i = 0, iend = teKeys.length; i < iend; i++) {
+			if (el.style[teKeys[i]] !== undefined) {
+				return teMap[teKeys[i]];
+			}
+		}
+		return "";
+	}()),
 
 	// macros option properties
 	macros : {

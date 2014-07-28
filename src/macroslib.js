@@ -573,9 +573,9 @@ function addStandardMacros() {
 		init : function () {
 			var remember = storage.getItem("remember");
 			if (remember) {
-				for (var name in remember) {
+				Object.keys(remember).forEach(function (name) {
 					state.active.variables[name] = remember[name];
-				}
+				});
 			}
 		}
 	});
@@ -1216,9 +1216,9 @@ function addStandardMacros() {
 		init : function () {
 			var opts = storage.getItem("options");
 			if (opts !== null) {
-				for (var name in opts) {
+				Object.keys(opts).forEach(function (name) {
 					options[name] = opts[name];
-				}
+				});
 			}
 		}
 	});

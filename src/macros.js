@@ -172,7 +172,7 @@ function Macros() {
 			value : function (parent) {
 				if (!parent) { throw new Error("no parent specified"); }
 
-				for (var tag in this.tags) {
+				Object.keys(this.tags).forEach(function (tag) {
 					var i = this.tags[tag].indexOf(parent);
 					if (i !== -1) {
 						if (this.tags[tag].length === 1) {
@@ -181,36 +181,36 @@ function Macros() {
 							this.tags[tag].splice(i, 1);
 						}
 					}
-				}
+				}, this);
 			}
 		},
 
 		init : {
 			value : function () {
-				for (var name in this.definitions) {
+				Object.keys(this.definitions).forEach(function (name) {
 					var fn = this.getHandler(name, "init");
 					if (fn) { fn.call(this.definitions[name], name); }
-				}
+				}, this);
 				/* legacy kludges */
-				for (var name in this) {
+				Object.keys(this).forEach(function (name) {
 					var fn = this.getHandler(name, "init");
 					if (fn) { fn.call(this[name], name); }
-				}
+				}, this);
 				/* /legacy kludges */
 			}
 		},
 
 		lateInit : {
 			value : function () {
-				for (var name in this.definitions) {
+				Object.keys(this.definitions).forEach(function (name) {
 					var fn = this.getHandler(name, "lateInit");
 					if (fn) { fn.call(this.definitions[name], name); }
-				}
+				}, this);
 				/* legacy kludges */
-				for (var name in this) {
+				Object.keys(this).forEach(function (name) {
 					var fn = this.getHandler(name, "lateInit");
 					if (fn) { fn.call(this[name], name); }
-				}
+				}, this);
 				/* /legacy kludges */
 			}
 		}

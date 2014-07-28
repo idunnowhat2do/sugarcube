@@ -627,11 +627,11 @@ var UISystem = {
 
 		closerPos.right = (dialogPos.right - closer.outerWidth(true) + 6) + "px";
 		closerPos.top = (dialogPos.top - closer.outerHeight(true) + 6) + "px";
-		for (var p in dialogPos) {
+		Object.keys(dialogPos).forEach(function (p) {
 			if (dialogPos[p] !== "") {
 				dialogPos[p] += "px";
 			}
-		}
+		});
 
 		return { dialog : dialogPos, closer : closerPos };
 	}

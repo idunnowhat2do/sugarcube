@@ -603,7 +603,7 @@ History.deltaEncodeHistory = function (hist) {
 	if (hist.length === 0) { return []; }
 
 	var delta = [ clone(hist[0]) ];
-	for (var i = 1, len = hist.length; i < len; i++) {
+	for (var i = 1, iend = hist.length; i < iend; i++) {
 		delta.push(Util.diff(hist[i-1], hist[i]));
 	}
 	return delta;
@@ -614,7 +614,7 @@ History.deltaDecodeHistory = function (delta) {
 	if (delta.length === 0) { return []; }
 
 	var hist = [ clone(delta[0]) ];
-	for (var i = 1, len = delta.length; i < len; i++) {
+	for (var i = 1, iend = delta.length; i < iend; i++) {
 		hist.push(Util.patch(hist[i-1], delta[i]));
 	}
 	return hist;
@@ -663,7 +663,7 @@ History.unmarshal = function (stateObj) {
 
 	// restore the window history states (in order)
 	if (config.historyMode !== History.Modes.Hash) {
-		for (var i = 0, len = state.history.length; i < len; i++) {
+		for (var i = 0, iend = state.history.length; i < iend; i++) {
 			if (DEBUG) { console.log("    > loading state into window history: " + i + " (" + state.history[i].title + ")"); }
 
 			// load the state into the window history
@@ -719,7 +719,7 @@ function Passage(title, el, order) {
 				//     "script"       : special tag
 				//     "stylesheet"   : special tag
 				//     "widget"       : special tag
-				//     "twine.*"      : special tag (in theory, anyway)
+				//     "twine.*"      : special tag
 				//  ?? "twinequest.*" : private use tag
 				//  ?? "tq.*"         : private use tag, AFAIK shorthand form of twinequest.*
 				var tagsToSkip = /^(?:debug|nobr|passage|script|stylesheet|widget|twine\.\w*)$/i;
@@ -778,7 +778,7 @@ Passage.prototype.render = function () {
 	passage.style.visibility = "hidden";
 
 	// add classes (generated from tags) to the passage and <body>
-	for (var i = 0, len = this.classes.length; i < len; i++) {
+	for (var i = 0, iend = this.classes.length; i < iend; i++) {
 		document.body.classList.add(this.classes[i]);
 		passage.classList.add(this.classes[i]);
 	}
@@ -789,17 +789,17 @@ Passage.prototype.render = function () {
 	insertElement(passage, "footer", null, "footer");
 
 	// execute pre-render tasks
-	for (var task in prerender) {
+	Object.keys(prerender).forEach(function (task) {
 		if (typeof prerender[task] === "function") { prerender[task].call(this, content, task); }
-	}
+	}, this);
 
 	// wikify the passage into the content element
 	new Wikifier(content, this.processText());
 
 	// execute post-render tasks
-	for (var task in postrender) {
+	Object.keys(postrender).forEach(function (task) {
 		if (typeof postrender[task] === "function") { postrender[task].call(this, content, task); }
-	}
+	}, this);
 
 	// update the excerpt cache to reflect the rendered text
 	this.textExcerpt = Passage.getExcerptFromNode(content);
@@ -813,7 +813,7 @@ Passage.prototype.reset = function () {
 	 *   n.b. <Tale>.reset() does call this method, but nothing calls it, so...
 	 */
 	var store = document.getElementById("store-area").childNodes;
-	for (var i = 0; i < store.length; i++) {
+	for (var i = 0, iend = store.length; i < iend; i++) {
 		var el = store[i],
 			tiddlerTitle;
 		if (el.getAttribute && (tiddlerTitle = el.getAttribute("tiddler"))) {
@@ -865,7 +865,7 @@ Passage.getExcerptFromNode = function (node, count) {
 		var nodes  = node.childNodes,
 			output = "";
 
-		for (var i = 0, len = nodes.length; i < len; i++) {
+		for (var i = 0, iend = nodes.length; i < iend; i++) {
 			switch (nodes[i].nodeType) {
 			case 1:  // element nodes
 				if (nodes[i].style.display !== "none") {
@@ -938,14 +938,14 @@ Passage.mergeClassNames = function (/* variadic */) {
 function Tale(instanceName) {
 	if (DEBUG) { console.log("[Tale()]"); }
 
-	this.passages = {};
 	// Chrome breaks some data URIs if you don't normalize
 	if (document.normalize) {
 		document.normalize();
 	}
-	var store = document.getElementById("store-area").childNodes;
 
-	for (var i = 0; i < store.length; i++) {
+	this.passages = {};
+	var store = document.getElementById("store-area").childNodes;
+	for (var i = 0, iend = store.length; i < iend; i++) {
 		var el = store[i],
 			tiddlerTitle;
 		if (el.getAttribute && (tiddlerTitle = el.getAttribute("tiddler"))) {
@@ -974,8 +974,9 @@ Tale.prototype.has = function (key) {
 	if (typeof key === "string") {
 		return this.passages[key] != null;  // use lazy equality
 	} else if (typeof key === "number") {
-		for (var pname in this.passages) {
-			if (this.passages[pname].id === key) {
+		var pnames = Object.keys(this.passages);
+		for (var i = 0, iend = pnames.length; i < iend; i++) {
+			if (this.passages[pnames[i]].id === key) {
 				return true;
 			}
 		}
@@ -987,22 +988,23 @@ Tale.prototype.get = function (key) {
 	if (typeof key === "string") {
 		return this.passages[key] || new Passage(key);
 	} else if (typeof key === "number") {
-		for (var pname in this.passages) {
-			if (this.passages[pname].id === key) {
-				return this.passages[pname];
+		var pnames = Object.keys(this.passages);
+		for (var i = 0, iend = pnames.length; i < iend; i++) {
+			if (this.passages[pnames[i]].id === key) {
+				return this.passages[pnames[i]];
 			}
 		}
 	}
-	return;  //FIXME: should this return null instead of undefined?
+	return;  // FIXME: should this return null instead of undefined?
 };
 
 Tale.prototype.lookup = function (key, value, sortKey) {
 	if (!sortKey) { sortKey = "title"; }
-	var results = [];
 
-	for (var pname in this.passages) {
-		var passage = this.passages[pname];
-
+	var pnames  = Object.keys(this.passages),
+		results = [];
+	for (var i = 0, iend = pnames.length; i < iend; i++) {
+		var passage = this.passages[pnames[i]];
 		switch (typeof passage[key]) {
 		case "undefined":
 			/* noop */
@@ -1010,8 +1012,8 @@ Tale.prototype.lookup = function (key, value, sortKey) {
 		case "object":
 			// currently, we assume that the only properties which are objects
 			// will be either arrays or array-like-objects
-			for (var i = 0; i < passage[key].length; i++) {
-				if (passage[key][i] == value) {  // use lazy equality
+			for (var j = 0, jend = passage[key].length; j < jend; j++) {
+				if (passage[key][j] == value) {  // use lazy equality
 					results.push(passage);
 					break;
 				}
@@ -1034,9 +1036,9 @@ Tale.prototype.reset = function () {
 	/**
 	 * This method should never be called, so this code is largely redundant
 	 */
-	for (var i in this.passages) {
-		this.passages[i].reset();
-	}
+	Object.keys(this.passages).forEach(function (title) {
+		this.passages[title].reset();
+	}, this);
 };
 
 
