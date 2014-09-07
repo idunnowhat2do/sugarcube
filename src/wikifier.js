@@ -20,8 +20,8 @@ function WikiFormatter(formatters) {
 }
 
 function Wikifier(place, source) {
-	this.formatter = formatter;  // formatter comes from the top-level scope of the module
-	this.output    = (place != null) ? place : document.createElement("div");  // use lazy equality
+	this.formatter = formatter; // formatter comes from the top-level scope of the module
+	this.output    = (place != null) ? place : document.createElement("div"); // use lazy equality
 	this.source    = source;
 	this.nextMatch = 0;
 	this.nobr      = [];
@@ -59,7 +59,7 @@ Wikifier.prototype.subWikify = function (output, terminator, terminatorIgnoreCas
 		terminatorMatch = terminatorRegExp ? terminatorRegExp.exec(this.source) : null;
 
 		// Check for a terminator & formatter match
-		if (terminatorMatch && (!formatterMatch || terminatorMatch.index <= formatterMatch.index)) {  // terminator match
+		if (terminatorMatch && (!formatterMatch || terminatorMatch.index <= formatterMatch.index)) { // terminator match
 			// Output any text before the match
 			if (terminatorMatch.index > this.nextMatch) {
 				this.outputText(this.output, this.nextMatch, terminatorMatch.index);
@@ -74,7 +74,7 @@ Wikifier.prototype.subWikify = function (output, terminator, terminatorIgnoreCas
 			// Restore the output pointer and exit
 			this.output = oldOutput;
 			return;
-		} else if (formatterMatch) {  // formatter match
+		} else if (formatterMatch) { // formatter match
 			// Output any text before the match
 			if (formatterMatch.index > this.nextMatch) {
 				this.outputText(this.output, this.nextMatch, formatterMatch.index);
@@ -91,19 +91,19 @@ Wikifier.prototype.subWikify = function (output, terminator, terminatorIgnoreCas
 			for (var i = 1; i < formatterMatch.length; i++) {
 				if (formatterMatch[i]) {
 					matchingFormatter = i - 1;
-					break;  // stop once we've found the matching formatter
+					break; // stop once we've found the matching formatter
 				}
 			}
 
 			// Call the formatter
 			if (matchingFormatter !== -1) {
 				this.formatter.formatters[matchingFormatter].handler(this);
-				if (runtime.temp.break != null) { break; }  // use lazy equality
+				if (runtime.temp.break != null) { break; } // use lazy equality
 			}
 		}
 	} while (terminatorMatch || formatterMatch);
 
-	if (runtime.temp.break == null) {  // use lazy equality
+	if (runtime.temp.break == null) { // use lazy equality
 		// Output any text after the last match
 		if ((this.nextMatch < this.source.length)) {
 			this.outputText(this.output, this.nextMatch, this.source.length);
@@ -198,9 +198,9 @@ Wikifier.parse = function (expression) {
 			//      intrinsic object properties will break the world (e.g. "toString")
 			if (map.hasOwnProperty(token)) {
 				expression = expression.splice(
-					match.index,   // starting index
-					token.length,  // replace how many
-					map[token]     // replacement string
+					match.index,  // starting index
+					token.length, // replace how many
+					map[token]    // replacement string
 				);
 				re.lastIndex += map[token].length - token.length;
 			}
@@ -322,7 +322,7 @@ Wikifier.wikifyEval = function (text) {
 		throw new Error(e.message.replace(/^Error:\s+/, ""));
 	} finally {
 		// probably unnecessary, but let's be tidy
-		removeChildren(errTrap);  // remove any remaining children
+		removeChildren(errTrap); // remove any remaining children
 	}
 };
 
@@ -331,9 +331,16 @@ Wikifier.wikifyEval = function (text) {
  */
 Wikifier.createInternalLink = function (place, passage, text, callback) {
 	var el = document.createElement("a");
-	if (passage != null) {  // use lazy equality; 0 is a valid ID and name, so we cannot simply evaluate passage
+	if (passage != null) { // use lazy equality; 0 is a valid ID and name, so we cannot simply evaluate passage
 		el.setAttribute("data-passage", passage);
-		el.className = tale.has(passage) ? "link-internal" : "link-broken";
+		if (tale.has(passage)) {
+			el.classList.add("link-internal");
+			if (state.has(passage)) {
+				el.classList.add("link-visited");
+			}
+		} else {
+			el.classList.add("link-broken");
+		}
 		$(el).click(function () {
 			if (typeof callback === "function") { callback(); }
 			state.display(passage, el);
@@ -354,7 +361,7 @@ Wikifier.createInternalLink = function (place, passage, text, callback) {
 Wikifier.createExternalLink = function (place, url, text) {
 	var el = insertElement(place, "a", null, "link-external", text);
 	el.target = "_blank";
-	if (url != null) {  // use lazy equality
+	if (url != null) { // use lazy equality
 		el.href = url;
 	}
 	return el;
@@ -391,8 +398,8 @@ Wikifier.textPrimitives.doubleBracketed = "(?:(\\[\\[(?:\\s|\\S)*?\\]\\]))";
 Wikifier.textPrimitives.barewords       = "([^\"'`\\s]\\S*)";
 
 Wikifier.textPrimitives.url      = "(?:file|https?|mailto|ftp|javascript|irc|news|data):[^\\s'\"]+(?:/|\\b)";
-Wikifier.textPrimitives.link     = "\\[\\[\\s*(?:(.+?)\\s*\\|\\s*)?(~)?(.+?)\\s*\\](?:\\[\\s*(.+?)\\s*\\])?\\]";  // 1=(text), 2=(~), 3=link, 4=(set)
-Wikifier.textPrimitives.image    = "\\[([<]?)([>]?)[Ii][Mm][Gg]\\[\\s*(?:(.+?)\\s*\\|\\s*)?([^\\|]+?)\\s*\\](?:\\[\\s*(~)?(.+?)\\s*\\])?(?:\\[\\s*(.+?)\\s*\\])?\\]";  // 1=(left), 2=(right), 3=(title), 4=source, 5=(~), 6=(link), 7=(set)
+Wikifier.textPrimitives.link     = "\\[\\[\\s*(?:(.+?)\\s*\\|\\s*)?(~)?(.+?)\\s*\\](?:\\[\\s*(.+?)\\s*\\])?\\]"; // 1=(text), 2=(~), 3=link, 4=(set)
+Wikifier.textPrimitives.image    = "\\[([<]?)([>]?)[Ii][Mm][Gg]\\[\\s*(?:(.+?)\\s*\\|\\s*)?([^\\|]+?)\\s*\\](?:\\[\\s*(~)?(.+?)\\s*\\])?(?:\\[\\s*(.+?)\\s*\\])?\\]"; // 1=(left), 2=(right), 3=(title), 4=source, 5=(~), 6=(link), 7=(set)
 Wikifier.textPrimitives.macroArg = "(?:" + [
 		Wikifier.textPrimitives.doubleQuoted,    // 1=double quoted
 		Wikifier.textPrimitives.singleQuoted,    // 2=single quoted
@@ -486,7 +493,7 @@ Wikifier.formatterHelpers = {
 		return result;
 	},
 	evalPassageId: function (passage) {
-		if (passage != null && !tale.has(passage)) {  // use lazy equality; 0 is a valid ID and name, so we cannot simply evaluate passage
+		if (passage != null && !tale.has(passage)) { // use lazy equality; 0 is a valid ID and name, so we cannot simply evaluate passage
 			passage = this.evalExpression(passage);
 		}
 		return passage;
@@ -497,7 +504,7 @@ Wikifier.formatterHelpers = {
  * Setup the wiki formatters
  */
 Wikifier.formatters =
-[  // Begin formatters
+[ // Begin formatters
 
 {
 	name: "table",
@@ -833,8 +840,8 @@ Wikifier.formatters =
 	name: "macro",
 	match: "<<",
 	lookaheadRegExp: /<<([^>\s]+)(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|[^>]|(?:>(?!>)))*)>>/gm,
-	working: { name: "", handlerName: "", arguments: "", index: 0 },  // the working parse object
-	context: null,  // last execution context object (top-level macros, hierarchically, have a null context)
+	working: { name: "", handlerName: "", arguments: "", index: 0 }, // the working parse object
+	context: null, // last execution context object (top-level macros, hierarchically, have a null context)
 	handler: function (w) {
 		var matchStart = this.lookaheadRegExp.lastIndex = w.matchStart;
 		if (this.parseTag(w)) {
@@ -851,7 +858,7 @@ Wikifier.formatters =
 					if (macro.hasOwnProperty("tags")) {
 						payload = this.parseBody(w, macro.tags);
 						if (!payload) {
-							w.nextMatch = nextMatch;  // parseBody() changes this during processing, so we reset it here
+							w.nextMatch = nextMatch; // parseBody() changes this during processing, so we reset it here
 							return throwError(w.output, "cannot find a closing tag for macro <<" + macroName + ">>"
 								, w.source.slice(matchStart, w.nextMatch) + "\u2026");
 						}
@@ -862,7 +869,7 @@ Wikifier.formatters =
 						// new-style macros
 						if (macro.hasOwnProperty("_USE_MACROS_API")) {
 							var prevContext = this.context,
-								curContext  = {  // setup the execution context object (should probably make a factory for this)
+								curContext  = { // setup the execution context object (should probably make a factory for this)
 									// data properties
 									"self"    : macro,
 									"name"    : macroName,
@@ -912,7 +919,7 @@ Wikifier.formatters =
 						}
 						// old-style macros
 						else {
-							w._macroRawArgs = macroArgs;  // cache the raw arguments for use by Wikifier.rawArgs() & Wikifier.fullArgs()
+							w._macroRawArgs = macroArgs; // cache the raw arguments for use by Wikifier.rawArgs() & Wikifier.fullArgs()
 							macro[handlerName](w.output, macroName, args, w, payload);
 							w._macroRawArgs = "";
 						}
@@ -1257,7 +1264,7 @@ Wikifier.formatters =
 
 {
 	name: "lineContinuation",
-	match: "\\\\[\\s\\u00a0\\u2028\\u2029]*?(?:\\n|$)",  // Unicode space-character escapes required for IE < 11 (maybe < 10?)
+	match: "\\\\[\\s\\u00a0\\u2028\\u2029]*?(?:\\n|$)", // Unicode space-character escapes required for IE < 11 (maybe < 10?)
 	handler: function (w) {
 		w.nextMatch = w.matchStart + w.matchLength;
 	}
@@ -1318,7 +1325,7 @@ Wikifier.formatters =
 
 			if (!isVoid) {
 				terminator = "<\\/" + tagName + "\\s*>";
-				terminatorRegExp = new RegExp(terminator, "gim");  // ignore case during match
+				terminatorRegExp = new RegExp(terminator, "gim"); // ignore case during match
 				terminatorRegExp.lastIndex = w.matchStart;
 				terminatorMatch = terminatorRegExp.exec(w.source);
 			}
@@ -1340,7 +1347,7 @@ Wikifier.formatters =
 						w.nobr.unshift(false);
 					}
 					try {
-						w.subWikify(el, terminator, true);  // ignore case during match
+						w.subWikify(el, terminator, true); // ignore case during match
 					} finally {
 						if (w.nobr.length !== 0) {
 							w.nobr.shift();
@@ -1355,7 +1362,7 @@ Wikifier.formatters =
 	},
 	processDataAttributes: function (el) {
 		var passage = el.getAttribute("data-passage");
-		if (passage == null) { return; }
+		if (passage == null) { return; } // use lazy equality
 
 		passage = ((typeof passage !== "string") ? String(passage) : passage).trim();
 		if (/^\$\w+/.test(passage)) {
@@ -1376,7 +1383,7 @@ Wikifier.formatters =
 			} else {
 				var setter   = el.getAttribute("data-setter"),
 					callback;
-				if (setter != null) {
+				if (setter != null) { // use lazy equality
 					setter = ((typeof setter !== "string") ? String(setter) : setter).trim();
 					if (setter !== "") {
 						callback = function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(setter));
@@ -1392,7 +1399,7 @@ Wikifier.formatters =
 	}
 }
 
-];  // End formatters
+]; // End formatters
 
 
 /***********************************************************************************************************************
