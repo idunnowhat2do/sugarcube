@@ -22,7 +22,7 @@ function History(instanceName) {
 	}
 
 	// currently active/displayed state
-	this.active = { init : true, variables : {} };  // allows macro initialization to set variables at startup
+	this.active = { init : true, variables : {} }; // allows macro initialization to set variables at startup
 
 	// current hash, if in Hash mode
 	if (config.historyMode === History.Modes.Hash) {
@@ -69,11 +69,18 @@ History.prototype.clone = function (at) {
 */
 
 History.prototype.getDeltaFromHistory = function (end) {
-	return History.deltaEncodeHistory(end != null ? this.history.slice(0, end) : this.history);  // use lazy equality on null check
+	return History.deltaEncodeHistory(end != null ? this.history.slice(0, end) : this.history); // use lazy equality on null check
 };
 
 History.prototype.setHistoryFromDelta = function (delta) {
 	this.history = History.deltaDecodeHistory(delta);
+};
+
+History.prototype.has = function (title) {
+	if (this.isEmpty) { return false; }
+	if (arguments.length === 0 || title == null || title === "") { return false; } // use lazy equality on null check
+
+	return this.history.some(function (o) { return o.title === title; });
 };
 
 History.prototype.index = function (idx) {
@@ -92,7 +99,7 @@ History.prototype.peek = function (at) {
 };
 
 History.prototype.push = function (/* variadic */) {
-	if (arguments.length === 0) { return; }  // maybe throw?
+	if (arguments.length === 0) { return; } // maybe throw?
 
 	for (var i = 0; i < arguments.length; i++) {
 		var state = arguments[i];
@@ -113,8 +120,8 @@ History.prototype.pop = function (num) {
 };
 
 History.prototype.activate = function (state) {
-	if (arguments.length === 0) { return; }  // maybe throw?
-	if (state == null) { throw new Error("state activation attempted with null/undefined"); }  // use lazy equality
+	if (arguments.length === 0) { return; } // maybe throw?
+	if (state == null) { throw new Error("state activation attempted with null/undefined"); } // use lazy equality
 
 	if (typeof state === "object") {
 		this.active = clone(state);
@@ -235,7 +242,7 @@ History.prototype.display = function (title, link, option) {
 		var stateObj;
 		if (config.historyMode === History.Modes.Session) {
 			stateObj = { suid : this.suid, sidx : this.active.sidx };
-		} else {  // History.Modes.Window
+		} else { // History.Modes.Window
 			stateObj = { delta : this.getDeltaFromHistory() };
 			if (this.hasOwnProperty("prng")) {
 				stateObj.rseed = this.prng.seed;
@@ -286,7 +293,7 @@ History.prototype.display = function (title, link, option) {
 			} else {
 				setTimeout(function () {
 					if (outgoing.parentNode) { outgoing.parentNode.removeChild(outgoing); }
-				}, config.passageTransitionOut);  // in milliseconds
+				}, config.passageTransitionOut); // in milliseconds
 			}
 		} else {
 			removeChildren(passages);
@@ -353,7 +360,7 @@ History.prototype.regenerateSuid = function () {
 History.prototype.restart = function () {
 	if (DEBUG) { console.log("[<History>.restart()]"); }
 	if (config.historyMode !== History.Modes.Hash) {
-		History.addWindowState(null, tale.title);  // using null here is deliberate
+		History.addWindowState(null, tale.title); // using null here is deliberate
 		window.location.reload();
 	} else {
 		window.location.hash = "";
@@ -443,7 +450,7 @@ History.deserializeWindowState = function (obj) {
 
 History.addWindowState = function (obj, title, url) {
 	// required by IE (if you pass undefined as the URL, IE will happily set it to that, so you must not pass it at all in that case)
-	if (url != null) {  // use lazy equality
+	if (url != null) { // use lazy equality
 		window.history.pushState((obj != null) ? History.serializeWindowState(obj) : null, title, url);
 	} else {
 		window.history.pushState((obj != null) ? History.serializeWindowState(obj) : null, title);
@@ -452,7 +459,7 @@ History.addWindowState = function (obj, title, url) {
 
 History.replaceWindowState = function (obj, title, url) {
 	// required by IE (if you pass undefined as the URL, IE will happily set it to that, so you must not pass it at all in that case)
-	if (url != null) {  // use lazy equality
+	if (url != null) { // use lazy equality
 		window.history.replaceState((obj != null) ? History.serializeWindowState(obj) : null, title, url);
 	} else {
 		window.history.replaceState((obj != null) ? History.serializeWindowState(obj) : null, title);
@@ -461,12 +468,12 @@ History.replaceWindowState = function (obj, title, url) {
 
 History.hasWindowState = function (obj) {
 	if (arguments.length === 0) { obj = window.history; }
-	return obj.state != null;  // use lazy equality
+	return obj.state != null; // use lazy equality
 };
 
 History.getWindowState = function (obj) {
 	if (arguments.length === 0) { obj = window.history; }
-	return (obj.state != null) ? History.deserializeWindowState(obj.state) : null;  // use lazy equality
+	return (obj.state != null) ? History.deserializeWindowState(obj.state) : null; // use lazy equality
 };
 
 History.serializeWindowHashState = function (obj) {
@@ -706,7 +713,7 @@ function Passage(title, el, order) {
 		this.textExcerpt = Passage.getExcerptFromText(this.text);
 		this.tags        = el.hasAttribute("tags") ? el.getAttribute("tags").trim() : "";
 		if (this.tags) {
-			this.tags      = this.tags.split(/\s+/);  // readBracketedList();
+			this.tags      = this.tags.split(/\s+/); // readBracketedList();
 			this.classes   = [];
 			this.className = "";
 
@@ -867,15 +874,15 @@ Passage.getExcerptFromNode = function (node, count) {
 
 		for (var i = 0, iend = nodes.length; i < iend; i++) {
 			switch (nodes[i].nodeType) {
-			case 1:  // element nodes
+			case 1: // element nodes
 				if (nodes[i].style.display !== "none") {
-					output += " ";  // out here to handle void nodes, in addition to child bearing nodes
+					output += " "; // out here to handle void nodes, in addition to child bearing nodes
 					if (nodes[i].hasChildNodes()) {
 						output += getTextFromNode(nodes[i]);
 					}
 				}
 				break;
-			case 3:  // text nodes
+			case 3: // text nodes
 				output += nodes[i].textContent;
 				break;
 			default:
@@ -905,8 +912,8 @@ Passage.unescapeLineBreaks = function (text) {
 	if (text && text !== "") {
 		return text
 			.replace(/\\n/gm, '\n')
-			.replace(/\\t/gm, '\t')     // Twine 1.4.1 "feature"
-			.replace(/\\s|\\/gm, '\\')  // "\\s" is required to workaround a Twine "feature"
+			.replace(/\\t/gm, '\t')    // Twine 1.4.1 "feature"
+			.replace(/\\s|\\/gm, '\\') // "\\s" is required to workaround a Twine "feature"
 			.replace(/\r/gm, "");
 	}
 	return "";
@@ -972,7 +979,7 @@ Tale.prototype.setTitle = function (title) {
 
 Tale.prototype.has = function (key) {
 	if (typeof key === "string") {
-		return this.passages[key] != null;  // use lazy equality
+		return this.passages[key] != null; // use lazy equality
 	} else if (typeof key === "number") {
 		var pnames = Object.keys(this.passages);
 		for (var i = 0, iend = pnames.length; i < iend; i++) {
@@ -995,7 +1002,7 @@ Tale.prototype.get = function (key) {
 			}
 		}
 	}
-	return;  // FIXME: should this return null instead of undefined?
+	return; // FIXME: should this return null instead of undefined?
 };
 
 Tale.prototype.lookup = function (key, value, sortKey) {
@@ -1013,21 +1020,21 @@ Tale.prototype.lookup = function (key, value, sortKey) {
 			// currently, we assume that the only properties which are objects
 			// will be either arrays or array-like-objects
 			for (var j = 0, jend = passage[key].length; j < jend; j++) {
-				if (passage[key][j] == value) {  // use lazy equality
+				if (passage[key][j] == value) { // use lazy equality
 					results.push(passage);
 					break;
 				}
 			}
 			break;
 		default:
-			if (passage[key] == value) {  // use lazy equality
+			if (passage[key] == value) { // use lazy equality
 				results.push(passage);
 			}
 			break;
 		}
 	}
 
-	results.sort(function (a, b) { return (a[sortKey] == b[sortKey]) ? 0 : ((a[sortKey] < b[sortKey]) ? -1 : +1); });  // use lazy equality
+	results.sort(function (a, b) { return (a[sortKey] == b[sortKey]) ? 0 : ((a[sortKey] < b[sortKey]) ? -1 : +1); }); // use lazy equality
 
 	return results;
 };
