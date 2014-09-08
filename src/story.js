@@ -92,7 +92,7 @@ History.prototype.has = function (title) {
 	if (this.isEmpty) { return false; }
 	if (arguments.length === 0 || title == null || title === "") { return false; } // use lazy equality on null check
 
-	return this.history.some(function (o) { return o.title === title; });
+	return this.history.slice(0, this.length).some(function (o) { return o.title === title; });
 };
 
 History.prototype.index = function (idx) {
