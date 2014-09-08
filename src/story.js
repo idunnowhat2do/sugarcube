@@ -47,12 +47,24 @@ History.Modes = Object.freeze({
 });
 
 // setup some getters
-History.prototype = {
-	get top ()     { return (this.history.length !== 0) ? this.history[this.history.length - 1] : null; },
-	get bottom ()  { return (this.history.length !== 0) ? this.history[0] : null; },
-	get isEmpty () { return this.history.length === 0; },
-	get length ()  { return (config.historyMode === History.Modes.Session) ? this.active.sidx + 1 : this.history.length; }
-};
+Object.defineProperties(History.prototype, {
+	"top" : {
+		enumerable : true,
+		get        : function() { return (this.history.length !== 0) ? this.history[this.history.length - 1] : null; }
+	},
+	"bottom" : {
+		enumerable : true,
+		get        : function() { return (this.history.length !== 0) ? this.history[0] : null; }
+	},
+	"isEmpty" : {
+		enumerable : true,
+		get        : function() { return this.history.length === 0; }
+	},
+	"length" : {
+		enumerable : true,
+		get        : function() { return (config.historyMode === History.Modes.Session) ? this.active.sidx + 1 : this.history.length; }
+	}
+});
 
 /*
 History.prototype.clone = function (at) {
