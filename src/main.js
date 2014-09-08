@@ -163,6 +163,7 @@ var config = {
 	/* /deprecated */
 
 	// general option properties
+	addVisitedLinkClass  : false,
 	displayPassageTitles : false,
 	loadDelay            : 0,
 	startPassage         : "Start",

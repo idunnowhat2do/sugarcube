@@ -335,7 +335,7 @@ Wikifier.createInternalLink = function (place, passage, text, callback) {
 		el.setAttribute("data-passage", passage);
 		if (tale.has(passage)) {
 			el.classList.add("link-internal");
-			if (state.has(passage)) {
+			if (config.addVisitedLinkClass && state.has(passage)) {
 				el.classList.add("link-visited");
 			}
 		} else {
@@ -1389,7 +1389,14 @@ Wikifier.formatters =
 						callback = function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(setter));
 					}
 				}
-				el.classList.add(tale.has(passage) ? "link-internal" : "link-broken");
+				if (tale.has(passage)) {
+					el.classList.add("link-internal");
+					if (config.addVisitedLinkClass && state.has(passage)) {
+						el.classList.add("link-visited");
+					}
+				} else {
+					el.classList.add("link-broken");
+				}
 				$(el).click(function () {
 					if (typeof callback === "function") { callback(); }
 					state.display(passage, el);
