@@ -296,6 +296,33 @@ function scrollWindowTo(el, increment) {
 ** [Function Library, Story Utilities]
 ***********************************************************************************************************************/
 /**
+ * Returns an integer count of how many turns have passed since the last instance of the given passage occurred within
+ * the story history or -1 if it does not exist; if multiple passages are given, returns the lowest count (which can be -1)
+ */
+function lastVisited(/* variadic */) {
+	if (state.isEmpty || arguments.length === 0) { return -1; }
+
+	var passages = Array.prototype.concat.apply([], arguments),
+		turns;
+	if (passages.length > 1) {
+		turns = state.length;
+		for (var i = 0, iend = passages.length; i < iend; i++) {
+			turns = Math.min(turns, lastVisited(passages[i]));
+		}
+	} else {
+		var hist  = state.history,
+			title = passages[0];
+		for (turns = state.length - 1; turns >= 0; turns--) {
+			if (hist[turns].title === title) { break; }
+		}
+		if (turns !== -1) {
+			turns = state.length - 1 - turns;
+		}
+	}
+	return turns;
+}
+
+/**
  * Returns a random integer within the given range (min–max)
  *   n.b. Using Math.round() will give you a non-uniform distribution!
  */
@@ -333,31 +360,40 @@ function randomFloat(min, max) {
 }
 
 /**
- * Returns a new array containing the tags of the passage(s)
+ * Returns a new array containing the tags of the given passage(s)
  */
 function tags(/* variadic */) {
-	if (arguments.length === 0) {
-		return tale.get(state.active.title).tags.slice(0);
-	} else {
-		var passages = Array.prototype.concat.apply([], arguments),
-			plen     = passages.length,
-			tags     = [];
-		for (var i = 0; i < plen; i++) {
-			tags = tags.concat(tale.get(passages[i]).tags);
-		}
-		return tags;
+	if (arguments.length === 0) { return tale.get(state.active.title).tags.slice(0); }
+
+	var passages = Array.prototype.concat.apply([], arguments),
+		tags     = [];
+	for (var i = 0, iend = passages.length; i < iend; i++) {
+		tags = tags.concat(tale.get(passages[i]).tags);
 	}
+	return tags;
 }
 
 /**
- * Returns an integer count of how many times the passage exists within the story history
+ * Returns an integer count of how many times the given passage exists within the story history;
+ * if multiple passages are given, returns the lowest count
  */
-function visited(title) {
-	if (arguments.length === 0) { title = state.active.title; }
+function visited(/* variadic */) {
+	if (state.isEmpty) { return 0; }
 
-	var count = 0;
-	for (var i = 0; i < state.length; i++) {
-		if (state.history[i].title === title) { count++; }
+	var passages = Array.prototype.concat.apply([], (arguments.length === 0) ? [state.active.title] : arguments),
+		count;
+	if (passages.length > 1) {
+		count = state.length;
+		for (var i = 0, iend = passages.length; i < iend; i++) {
+			count = Math.min(count, visited(passages[i]));
+		}
+	} else {
+		var hist  = state.history,
+			title = passages[0];
+		count = 0;
+		for (var i = 0, iend = state.length; i < iend; i++) {
+			if (hist[i].title === title) { count++; }
+		}
 	}
 	return count;
 }
@@ -371,7 +407,7 @@ function visitedTags(/* variadic */) {
 	var list  = Array.prototype.concat.apply([], arguments),
 		llen  = list.length,
 		count = 0;
-	for (var i = 0, slen = state.length; i < slen; i++) {
+	for (var i = 0, iend = state.length; i < iend; i++) {
 		var tags = tale.get(state.history[i].title).tags;
 		if (tags.length !== 0) {
 			var found = 0;
