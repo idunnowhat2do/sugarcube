@@ -16,7 +16,7 @@ var saveAs=saveAs||navigator.msSaveBlob&&navigator.msSaveBlob.bind(navigator)||f
  * Returns a deep copy of the passed object
  */
 function clone(orig) {
-	if (orig == null || typeof orig !== "object") {  // use lazy equality on null check
+	if (orig == null || typeof orig !== "object") { // use lazy equality on null check
 		return orig;
 	}
 
@@ -37,7 +37,7 @@ function clone(orig) {
 	}
 
 	// If we've reached here, we have a regular object, array, or function
-	var okeys = Object.keys(orig),  // Object.keys() or Object.getOwnPropertyNames() ?
+	var okeys = Object.keys(orig), // do not use Object.getOwnPropertyNames(), it's much slower and returns some properties that shouldn't be copied
 		dup;
 	// Ensure the returned object has the same prototype as the original
 	if (Array.isArray(orig)) {
@@ -45,14 +45,11 @@ function clone(orig) {
 		dup = [];
 	} else {
 		// General, non-array, object case
-		var proto = has.getPrototypeOf ? Object.getPrototypeOf(orig) : orig.__proto__;
-		dup = proto ? Object.create(proto) : orig.constructor.prototype;  // the latter case should only be reached by very old browsers
+		var proto = Object.getPrototypeOf(orig);
+		dup = proto ? Object.create(proto) : orig.constructor.prototype; // the latter case should only be reached by very old browsers
 	}
-	for (var i = 0, len = okeys.length; i < len; i++) {  // this allows cloning of expando properties as well
-		dup[okeys[i]] = clone(orig[okeys[i]]);
-		// n.b The above does not preserve ES5 property attributes like 'writable', 'enumerable', etc.
-		//     That could be achieved by using the following instead.
-		//Object.defineProperty(dup, okeys[i], clone(Object.getOwnPropertyDescriptor(orig, okeys[i])));
+	for (var i = 0, len = okeys.length; i < len; i++) { // this allows cloning of expando properties as well
+		dup[okeys[i]] = clone(orig[okeys[i]]); // this does not preserve ES5 property attributes (i.e. 'configurable', 'enumerable', 'writable', 'get', 'set').
 	}
 	return dup;
 }
@@ -130,7 +127,7 @@ function setPageElement(id, titles, defaultText) {
 				return el;
 			}
 		}
-		if (defaultText != null && defaultText !== "") {  // use lazy equality on null check
+		if (defaultText != null && defaultText !== "") { // use lazy equality on null check
 			new Wikifier(el, defaultText);
 		}
 	}
@@ -270,7 +267,7 @@ function scrollWindowTo(el, increment) {
 	}
 
 	// normalize increment
-	if (increment == null) {  // use lazy equality
+	if (increment == null) { // use lazy equality
 		increment = 0.1;
 	} else {
 		if (typeof increment !== "number") {
@@ -788,7 +785,7 @@ KeyValueStore.prototype.getItem = function (sKey) {
 
 	if (this.store) {
 		var sValue = this.store.getItem(sKey);
-		if (sValue != null) {  // use lazy equality
+		if (sValue != null) { // use lazy equality
 			if (DEBUG) { console.log('    > attempting to load value for key "' + oKey + '"'); }
 			/* legacy */
 			if (sValue.slice(0, 2) === "#~") {
