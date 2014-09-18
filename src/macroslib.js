@@ -99,7 +99,7 @@ function addStandardMacros() {
 					if (!tale.has(this.args[1])) {
 						return this.error('the "' + this.args[1] + '" passage does not exist');
 					}
-					if (this.name === "return") {  // || config.disableHistoryTracking)  // allow <<back>> to work like <<return>> when config.disableHistoryTracking is enabled
+					if (this.name === "return") { // || config.disableHistoryTracking) // allow <<back>> to work like <<return>> when config.disableHistoryTracking is enabled
 						pname = this.args[1];
 						ltext += ' (to "' + pname + '")';
 					} else {
@@ -621,7 +621,7 @@ function addStandardMacros() {
 	/**
 	 * <<run>>
 	 */
-	macros.add("run", "set");  // add <<run>> as an alias of <<set>>
+	macros.add("run", "set"); // add <<run>> as an alias of <<set>>
 
 	/**
 	 * <<script>>

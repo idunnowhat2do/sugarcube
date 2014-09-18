@@ -539,14 +539,14 @@ Object.defineProperty(Array.prototype, "random", {
 			upper = lower;
 			lower = 0;
 		}
-		if (lower == null) {  // use lazy equality
+		if (lower == null) { // use lazy equality
 			lower = 0;
 		} else if (lower < 0) {
 			lower = 0;
 		} else if (lower >= this.length) {
 			lower = this.length - 1;
 		}
-		if (upper == null) {  // use lazy equality
+		if (upper == null) { // use lazy equality
 			upper = this.length - 1;
 		} else if (upper < 0) {
 			upper = 0;
@@ -628,7 +628,7 @@ Object.defineProperty(String, "format", {
 
 		return format.replace(/{(\d+)(?:,([+-]?\d+))?}/g, function (match, index, align) {
 			var retval = args[index];
-			if (retval == null) { return ""; }  // use lazy equality
+			if (retval == null) { return ""; } // use lazy equality
 			while (typeof retval === "function") { retval = retval(); }
 			if (typeof retval === "object") { retval = JSON.stringify(retval); }
 			return padString(retval, (!align) ? 0 : parseInt(align), " ");
@@ -673,7 +673,7 @@ Object.defineProperty(String.prototype, "readBracketedList", {
 		}
 
 		// RegExp groups: Double-square-bracket quoted | Unquoted
-		var re    = new RegExp("(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^\"'\\s]\\S*)", "gm"),  //"(?:\\[\\[([^\\]]+)\\]\\])|([^\\s$]+)"
+		var re    = new RegExp("(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^\"'\\s]\\S*)", "gm"), //"(?:\\[\\[([^\\]]+)\\]\\])|([^\\s$]+)"
 			match
 			names = [];
 		while ((match = re.exec(this)) !== null) {

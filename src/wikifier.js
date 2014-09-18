@@ -28,7 +28,7 @@ function Wikifier(place, source) {
 
 	this.subWikify(this.output);
 
-	if (place == null) {
+	if (place == null) { // use lazy equality
 		if (typeof this.output.remove === "function") {
 			this.output.remove();
 		} else if (this.output.parentNode) {

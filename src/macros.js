@@ -134,7 +134,7 @@ function Macros() {
 						: "var output = thisp.output;(function(){" + statements + "\n}.call(thisp));");
 					return true;
 				} catch (e) {
-					if (thisp == null) {  // use lazy equality
+					if (thisp == null) { // use lazy equality
 						throw e;
 					}
 					return thisp.error("bad evaluation: " + e.message);
@@ -148,7 +148,7 @@ function Macros() {
 
 				if (!Array.isArray(bodyTags)) { bodyTags = []; }
 
-				var endTags = [ "/" + parent, "end" + parent ],  // automatically create the closing tags
+				var endTags = [ "/" + parent, "end" + parent ], // automatically create the closing tags
 					allTags = [].concat(endTags, bodyTags);
 
 				for (var i = 0; i < allTags.length; i++) {

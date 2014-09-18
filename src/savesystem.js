@@ -150,7 +150,7 @@ var SaveSystem = {
 		saves.autosave = SaveSystem.marshal();
 		saves.autosave.title = title || tale.get(state.active.title).excerpt();
 		saves.autosave.date = Date.now();
-		if (metadata != null) { saves.autosave.metadata = metadata; }  // use lazy equality
+		if (metadata != null) { saves.autosave.metadata = metadata; } // use lazy equality
 
 		return storage.setItem("saves", saves);
 	},
@@ -219,7 +219,7 @@ var SaveSystem = {
 		saves.slots[slot] = SaveSystem.marshal();
 		saves.slots[slot].title = title || tale.get(state.active.title).excerpt();
 		saves.slots[slot].date = Date.now();
-		if (metadata != null) { saves.slots[slot].metadata = metadata; }  // use lazy equality
+		if (metadata != null) { saves.slots[slot].metadata = metadata; } // use lazy equality
 
 		return storage.setItem("saves", saves);
 	},
