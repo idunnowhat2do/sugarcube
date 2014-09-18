@@ -7,61 +7,90 @@
 ***********************************************************************************************************************/
 var UISystem = {
 	_overlay : null,
-	_body    : null,
-	_closer  : null,
-	init     : function () {
+	_body : null,
+	_closer : null,
+	init : function () {
 		if (DEBUG) { console.log("[UISystem.init()]"); }
 
-		var html   = $(document.documentElement),
-			target;
+		// remove #init-no-js & #init-lacking from #init-screen
+		$("#init-no-js, #init-lacking").remove();
 
-		// add UI dialog elements to <body>
+		// add the core story format elements
+		$("#store-area").before(tale.has("StoryFormatMarkup")
+			? tale.get("StoryFormatMarkup").text
+			:     '<div id="ui-bar">'
+				+     '<header id="title">'
+				+         '<div id="story-banner"></div>'
+				+         '<h1 id="story-title"></h1>'
+				+         '<div id="story-subtitle"></div>'
+				+         '<div id="story-title-separator"></div>'
+				+         '<p id="story-author"></p>'
+				+     '</header>'
+				+     '<div id="story-caption"></div>'
+				+     '<nav>'
+				+         '<ul>'
+				+             '<li id="menu-story"></li>'
+				+             '<li id="menu-saves"><a>Saves</a></li>'
+				+             '<li id="menu-rewind"><a>Rewind</a></li>'
+				+             '<li id="menu-restart"><a>Restart</a></li>'
+				+             '<li id="menu-options"><a>Options</a></li>'
+				+             '<li id="menu-share"><a>Share</a></li>'
+				+         '</ul>'
+				+     '</nav>'
+				+     '<footer>'
+				+         '<p id="version"><a href="http://www.motoslave.net/sugarcube/" target="_blank">SugarCube</a> ("{{BUILD_VERSION}}")</p>'
+				+         '<p id="credits">Made with <a href="http://twinery.org/" target="_blank">Twine</a></p>'
+				+     '</footer>'
+				+ '</div>'
+				+ '<div role="main" id="passages"></div>'
+		);
+
+		// add the UI dialog elements
 		UISystem._overlay = insertElement(document.body, "div", "ui-overlay", "ui-close");
 		UISystem._body    = insertElement(document.body, "div", "ui-body");
 		UISystem._closer  = insertElement(document.body, "a", "ui-body-close", "ui-close");
 		insertText(UISystem._closer, "\ue002");
+	},
+	start : function () {
+		if (DEBUG) { console.log("[UISystem.start()]"); }
 
-		// setup for the non-passage page elements
-		if (tale.has("StoryCaption")) {
-			document.getElementById("story-caption").style.display = "block";
-		}
-		if (tale.has("StoryMenu") || tale.has("MenuStory")) {
-			document.getElementById("menu-story").style.display = "block";
-		}
+		var html = $(document.documentElement);
+
+		// setup non-passage page elements
 		setPageElement("story-title", "StoryTitle", tale.title);
+		if (!tale.has("StoryCaption")) {
+			$("#story-caption").remove();
+		}
+		if (!tale.has("StoryMenu") && !tale.has("MenuStory")) {
+			$("#menu-story").remove();
+		}
 		UISystem.setPageElements();
 
 		// setup Saves menu
 		UISystem.addClickHandler("#menu-saves", null, function () { UISystem.buildSaves(); });
 
 		// setup Rewind menu
-		target = $("#menu-rewind");
 		if (!config.disableHistoryTracking && tale.lookup("tags", "bookmark").length > 0) {
-			target.css({ display : "block" });
-			UISystem.addClickHandler(target.find("a"), null, function () { UISystem.buildRewind(); });
+			UISystem.addClickHandler($("#menu-rewind a"), null, function () { UISystem.buildRewind(); });
 		} else {
-			target.remove();
+			$("#menu-rewind").remove();
 		}
 
 		// setup Restart menu
 		UISystem.addClickHandler("#menu-restart", null, function () { UISystem.buildRestart(); });
 
 		// setup Options menu
-		target = $("#menu-options");
-		if (tale.has("MenuOptions") && tale.get("MenuOptions").text.trim() !== "") {
-			target.css({ display : "block" });
-			UISystem.addClickHandler(target.find("a"), null, function () { UISystem.buildOptions(); });
+		if (tale.has("MenuOptions")) {
+			UISystem.addClickHandler($("#menu-options a"), null, function () { UISystem.buildOptions(); });
 		} else {
-			target.remove();
+			$("#menu-options").remove();
 		}
 
 		// setup Share menu
-		target = $("#menu-share");
-		if (tale.has("MenuShare") && tale.get("MenuShare").text.trim() !== "") {
-			target.css({ display : "block" });
-			UISystem.addClickHandler(target.find("a"), null, function () { UISystem.buildShare(); });
+		if (tale.has("MenuShare")) {
+			UISystem.addClickHandler($("#menu-share a"), null, function () { UISystem.buildShare(); });
 		} else {
-			target.remove();
+			$("#menu-share").remove();
 		}
 
 		// handle the loading screen
@@ -91,12 +120,12 @@ var UISystem = {
 		setPageElement("story-subtitle", "StorySubtitle");
 		setPageElement("story-author",   "StoryAuthor");
 		setPageElement("story-caption",  "StoryCaption");
-		setPageElement("menu-story",     ["StoryMenu", "MenuStory"]);
+		setPageElement("menu-story",     [ "StoryMenu", "MenuStory" ]);
 	},
 	buildSaves : function () {
 		function createActionItem(bId, bClass, bText, bAction) {
-			var li = document.createElement("li");
-			var btn = document.createElement("button");
+			var li  = document.createElement("li"),
+				btn = document.createElement("button");
 			btn.id = "saves-" + bId;
 			if (bClass) { btn.className = bClass; }
 			btn.innerHTML = bText;
