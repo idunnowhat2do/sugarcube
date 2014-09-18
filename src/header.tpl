@@ -19,7 +19,7 @@ Build Info:
 -->
 <script type="text/javascript">
 /* init screen routing */
-(function(){"use strict";document.documentElement.className=(!document.head||!document.querySelector||!document.addEventListener||!window.JSON||!Object.freeze)?"init-lacking":"init-loading";}());
+(function(){"use strict";document.documentElement.className=(!document.head||!document.querySelector||!document.addEventListener||!window.JSON||!Object.getPrototypeOf||!Object.freeze)?"init-lacking":"init-loading";}());
 </script>
 <script type="text/javascript">
 /*! jQuery v2.1.0 | (c) 2005, 2014 jQuery Foundation, Inc. | jquery.org/license */
@@ -81,7 +81,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 "{{JS_SOURCE}}"
 </script>
-<style type="text/css">"{{CSS_SOURCE}}"</style>
+"{{STYLE_TAGS}}"
 </head>
 <body id="body">
 	<div id="init-screen">
@@ -89,33 +89,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		<p id="init-lacking">Apologies! Your web browser lacks required capabilities. Please consider upgrading it or switching to a more modern web browser.</p>
 		<p id="init-loading">Initializing.  Please wait&hellip;<br /><progress></progress></p>
 	</div>
-	<div id="ui-bar">
-		<header id="title">
-			<div id="story-banner"></div>
-			<h1 id="story-title"></h1>
-			<div id="story-subtitle"></div>
-			<div id="story-title-separator"></div>
-			<p id="story-author"></p>
-		</header>
-		<div id="story-caption"></div>
-		<nav>
-			<ul>
-				<li id="menu-story"></li>
-				<li id="menu-saves"><a>Saves</a></li>
-				<li id="menu-rewind"><a>Rewind</a></li>
-				<li id="menu-restart"><a>Restart</a></li>
-				<li id="menu-options"><a>Options</a></li>
-				<li id="menu-share"><a>Share</a></li>
-			</ul>
-		</nav>
-		<footer>
-			<p id="credits">This story was created with <a href="http://twinery.org/" target="_blank">Twine</a> and is powered by <a href="http://www.motoslave.net/sugarcube/" target="_blank">SugarCube</a>, which is based on <a href="http://tiddlywiki.com/" target="_blank">TiddlyWiki</a></p>
-			<p id="version">SugarCube ("{{BUILD_VERSION}}")</p>
-		</footer>
-	</div>
-
-	<div role="main" id="passages"></div>
-
 	<div id="store-area" data-size="STORY_SIZE" hidden>"STORY"</div>
 </body>
 </html>
