@@ -31,7 +31,7 @@ if (!DEBUG) {
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-window.SugarCube = {};  // will contain exported identifiers, also allows scripts to detect if they're running in SugarCube (e.g. "SugarCube" in window)
+window.SugarCube = {}; // will contain exported identifiers, also allows scripts to detect if they're running in SugarCube (e.g. "SugarCube" in window)
 
 var version = Object.freeze({
 	// data properties
@@ -87,7 +87,6 @@ var has = {
 	// javascript capability properties
 	defineProperty           : (typeof Object.defineProperty === "function"),
 	getOwnPropertyDescriptor : (typeof Object.getOwnPropertyDescriptor === "function"),
-	getPrototypeOf           : (typeof Object.getPrototypeOf === "function"),
 
 	// browser api capability properties
 	pushState      : (("history" in window) && ("pushState" in window.history) && ("state" in window.history)),
@@ -96,7 +95,7 @@ var has = {
 	// the try/catch is also required due to the iOS browser core throwing on setItem() calls when in private mode
 	localStorage   : (("localStorage" in window) && (function (wls) {
 		try {
-			if (wls != null && wls.length >= 0) {  // use lazy equality on null check
+			if (wls != null && wls.length >= 0) { // use lazy equality on null check
 				var tkey = "SugarCube/WLS/Test";
 				wls.setItem(tkey, "42");
 				if (wls.getItem(tkey) !== "42") return false;
@@ -108,7 +107,7 @@ var has = {
 	}(window.localStorage))),
 	sessionStorage : (("sessionStorage" in window) && (function (wss) {
 		try {
-			if (wss != null && wss.length >= 0) {  // use lazy equality on null check
+			if (wss != null && wss.length >= 0) { // use lazy equality on null check
 				var tkey = "SugarCube/WSS/Test";
 				wss.setItem(tkey, "42");
 				if (wss.getItem(tkey) !== "42") return false;
@@ -219,18 +218,18 @@ config.errors = {
 // adjust these based on the specific browser used
 config.hasFileAPI = has.fileAPI = (has.fileAPI && !browser.isMobile.any() && (!browser.isOpera || browser.operaVersion >= 15));
 
-var formatter = null,  // Wikifier formatters
-	macros    = {},    // macros manager
-	tale      = {},    // story manager
-	state     = {},    // history manager
-	storage   = {},    // persistant storage manager
-	session   = {},    // session manager
-	options   = {},    // options variable store
-	setup     = {};    // author setup variable store
+var formatter = null, // Wikifier formatters
+	macros    = {},   // macros manager
+	tale      = {},   // story manager
+	state     = {},   // history manager
+	storage   = {},   // persistant storage manager
+	session   = {},   // session manager
+	options   = {},   // options variable store
+	setup     = {};   // author setup variable store
 
-var testPlay   = "START_AT",  // Twine 1.4+ "Test Play From Here" feature variable
-	prerender  = {},          // Twine 1.4+ pre-render task callbacks
-	postrender = {};          // Twine 1.4+ post-render task callbacks
+var testPlay   = "START_AT", // Twine 1.4+ "Test Play From Here" feature variable
+	prerender  = {},         // Twine 1.4+ pre-render task callbacks
+	postrender = {};         // Twine 1.4+ post-render task callbacks
 
 /**
  * Main function, entry point for story startup
@@ -260,6 +259,9 @@ $(document).ready(function () {
 	// set the default saves ID
 	config.saves.id = tale.domId;
 
+	// initialize the user interface (this must be done before script passages)
+	UISystem.init();
+
 	// setup for story stylesheets, scripts, and widgets (in that order)
 	var styles = tale.lookup("tags", "stylesheet");
 	for (var i = 0; i < styles.length; i++) {
@@ -273,10 +275,8 @@ $(document).ready(function () {
 			var errMesg = e.message;
 			if (e.name === "TypeError" && /read[\s-]only/.test(e.message)) {
 				var errMatch = /([\"\'])([^\1]+)\1/.exec(e.message);
-				if (errMatch) {
-					if (errMatch[2] && macros.has(errMatch[2])) {
-						errMesg = "cannot clobber protected macro <<" + errMatch[2] + ">>";
-					}
+				if (errMatch && errMatch[2] && macros.has(errMatch[2])) {
+					errMesg = "cannot clobber protected macro <<" + errMatch[2] + ">>";
 				}
 			}
 			technicalAlert(scripts[i].title, errMesg);
@@ -294,17 +294,17 @@ $(document).ready(function () {
 	// initialize the save system (this must be done after script passages and before state initialization)
 	SaveSystem.init();
 
-	// initialize the user interface
-	UISystem.init();
-
 	// call macros' "early" init functions
 	macros.init();
 
 	// initialize our state
-	state.init();  // this could take a while, so do it late
+	state.init(); // this could take a while, so do it late
 
 	// call macros' "late" init functions
 	macros.lateInit();
+
+	// start the user interface
+	UISystem.start();
 
 	// lastly, export identifiers for debugging purposes
 	window.SugarCube = {
