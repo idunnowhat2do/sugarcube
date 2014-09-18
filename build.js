@@ -4,7 +4,7 @@
  *   - Description : Node.js-hosted build script for SugarCube
  *   - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
  *   - Copyright   : Copyright © 2014 Thomas Michael Edwards. All rights reserved.
- *   - Version     : 1.0.9, 2014-07-28
+ *   - Version     : 1.1.0, 2014-09-18
  */
 "use strict";
 
@@ -13,6 +13,7 @@
  ******************************************************************************/
 var CONFIG = {
 	html : {
+		// SOURCE TEMPLATE : DESTINATION HTML
 		"src/header.tpl" : "dist/sugarcube/header.html"
 	},
 	js   : [
@@ -29,8 +30,16 @@ var CONFIG = {
 		"src/main.js",
 		"src/outro.js"
 	],
-	css  : [ "src/styles.css" ],
+	css  : [
+		// the ordering here is significant
+		"src/init-screen.css",
+		"src/fonts.css",
+		"src/structural.css",
+		"src/appearance.css",
+		"src/media-queries.css"
+	],
 	copy : {
+		// SOURCE : DESTINATION
 		"src/sugarcube.py" : "dist/sugarcube/sugarcube.py"
 	}
 };
@@ -86,16 +95,16 @@ function writeFileContents(filename, data) {
 	}
 }
 
-function concatFiles(filenames) {
-	var _os    = require("os"),
-		output = filenames.map(function (filename) {
-			return readFileContents(_path.normalize(filename));
+function concatFiles(filenames, callback) {
+	var output = filenames.map(function (filename) {
+			var contents = readFileContents(_path.normalize(filename));
+			return (typeof callback === "function") ? callback(filename, contents) : contents;
 		});
-	return output.join("\n");  // we only use UNIX-style line termination
+	return output.join("\n"); // we only use UNIX-style line termination
 }
 
-function compileJS(filenames) {
-	log('compiling JS...');
+function compileJavaScript(filenames) {
+	log('compiling JavaScript...');
 	var jsSource = concatFiles(filenames);
 	if (_opt.options.unminified) {
 		return "window.DEBUG=" + (_opt.options.debug || false) + ";\n" + jsSource;
@@ -123,11 +132,13 @@ function compileJS(filenames) {
 	}
 }
 
-function compileCSS(filenames) {
+function compileStyles(filenames) {
 	log('compiling CSS...');
-	// only returns the files combined contents at the moment, exists so that
-	// in the future this can be rewritten to minify the CSS, if so desired
-	return concatFiles(filenames);
+	return concatFiles(filenames, function (filename, contents) {
+		// at present, the CSS is returned unminified
+		return '<style id="style-' + _path.basename(filename, ".css").toLowerCase().replace(/[^a-z0-9]+/g, "-")
+			+ '" type="text/css">' + contents + '</style>';
+	});
 }
 
 
@@ -141,13 +152,13 @@ var _fs     = require("fs"),
 		['u', 'unminified', 'Suppress minification stages.'],
 		['h', 'help',       'Print this help, then exit.']
 	])
-		.bindHelp()      // bind option 'help' to default action
-		.parseSystem(),  // parse command line
+		.bindHelp()     // bind option 'help' to default action
+		.parseSystem(), // parse command line
 	_indent = " -> ";
 
 // build the project
 (function () {
-	var version, jsSource, cssSource;
+	var version, jsSource, styleTags;
 
 	// create the build ID file, if nonexistent
 	if (!_fs.existsSync(".build")) {
@@ -155,7 +166,7 @@ var _fs     = require("fs"),
 	}
 
 	// get the base version info and set build metadata
-	version          = require("./src/sugarcube.json");  // "./" prefixing the relative path is important here
+	version          = require("./src/sugarcube.json"); // "./" prefixing the relative path is important here
 	version.build    = +readFileContents(".build") + 1;
 	version.date     = (new Date()).toISOString();
 	version.toString = function () {
@@ -163,21 +174,21 @@ var _fs     = require("fs"),
 	};
 
 	// combine and minify the JS
-	jsSource = compileJS(CONFIG.js);
+	jsSource = compileJavaScript(CONFIG.js);
 
 	// combine and minify the CSS
-	cssSource = compileCSS(CONFIG.css);
+	styleTags = compileStyles(CONFIG.css);
 
 	// process the header templates and write the outfiles
 	Object.keys(CONFIG.html).forEach(function (file) {
 		var infile  = _path.normalize(file),
 			outfile = _path.normalize(CONFIG.html[file]),
-			output  = readFileContents(infile);  // load the header template
+			output  = readFileContents(infile); // load the header template
 		log('build "' + outfile + '"');
 
 		// process the source replacement tokens (first!)
 		output = output.replace(/\"\{\{JS_SOURCE\}\}\"/g, jsSource);
-		output = output.replace(/\"\{\{CSS_SOURCE\}\}\"/g, cssSource);
+		output = output.replace(/\"\{\{STYLE_TAGS\}\}\"/g, styleTags);
 
 		// process the build replacement tokens
 		output = output.replace(/\"\{\{BUILD_MAJOR\}\}\"/g, version.major);
@@ -197,7 +208,7 @@ var _fs     = require("fs"),
 	Object.keys(CONFIG.copy).forEach(function (file) {
 		var infile  = _path.normalize(file),
 			outfile = _path.normalize(CONFIG.copy[file]),
-			output  = readFileContents(infile);  // load the file (raw)
+			output  = readFileContents(infile); // load the file (raw)
 		log('copy  "' + outfile + '"');
 
 		// write the file
