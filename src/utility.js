@@ -446,23 +446,16 @@ var Util = {
 	 */
 	isNumeric : function (obj) {
 		switch (typeof obj) {
-		case "boolean":
-			/* FALL-THROUGH */
-		case "object":
-			/* FALL-THROUGH */
-		case "function":
-			return false;
+		case "number":
+			/* noop */
+			break;
 		case "string":
 			obj = Number(obj);
 			break;
+		default:
+			return false;
 		}
 		return isFinite(obj) && !isNaN(obj);
-		/*
-		if (typeof obj === "string") {
-			obj = Number(obj);
-		}
-		return (typeof obj === "number") ? isFinite(obj) && !isNaN(obj) : false;
-		*/
 	},
 
 	/**
