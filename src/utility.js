@@ -44,7 +44,7 @@ function clone(orig) {
 		// Array object case; this must be done separate from the general case or the prototype will be wrong
 		dup = [];
 	} else {
-		// General, non-array, object case
+		// General object case
 		var proto = Object.getPrototypeOf(orig);
 		dup = proto ? Object.create(proto) : orig.constructor.prototype; // the latter case should only be reached by very old browsers
 	}
@@ -449,6 +449,8 @@ var Util = {
 		case "boolean":
 			/* FALL-THROUGH */
 		case "object":
+			/* FALL-THROUGH */
+		case "function":
 			return false;
 		case "string":
 			obj = Number(obj);
@@ -491,7 +493,7 @@ var Util = {
 	},
 
 	/**
-	 * Returns whether the evaluation of the passed statements completed without thrown exceptions
+	 * Evaluates the passed statements, throwing if there were errors
 	 */
 	evalStatements : function (statements) {
 		"use strict";
@@ -680,7 +682,7 @@ SeedablePRNG.unmarshal = function (prngObj) {
 	var prng = new SeedablePRNG(prngObj.seed, false);
 
 	// pull values until the new PRNG is in sync with the original
-	for (var i = 0; i < prngObj.count; i++) {
+	for (var i = 0, iend = prngObj.count; i < iend; i++) {
 		prng.random();
 	}
 
@@ -736,7 +738,7 @@ KeyValueStore.prototype.setItem = function (sKey, sValue, quiet) {
 			 *     e.code === DOMException.QUOTA_EXCEEDED_ERR
 			 * However, both of those are browser convention, not part of the standard,
 			 * and are not supported in all browsers.  So, we have to resort to pattern
-			 * matching the damn name.
+			 * matching the damn name.  I hate web standards developers so much.
 			 */
 			if (!quiet) {
 				technicalAlert(null, 'unable to store key "' + oKey + '"; '
