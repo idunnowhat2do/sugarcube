@@ -392,8 +392,8 @@ if (!((new RegExp("[\u0150\u0170]", "g")).test("\u0150"))) {
 	};
 }
 Wikifier.textPrimitives.emptyQuotes     = "((?:\"\")|(?:''))";
-Wikifier.textPrimitives.doubleQuoted    = '(?:"((?:(?:\\\\")|[^"])+)")';
-Wikifier.textPrimitives.singleQuoted    = "(?:'((?:(?:\\\\')|[^'])+)')";
+Wikifier.textPrimitives.doubleQuoted    = '("(?:(?:\\\\")|[^"])+")';
+Wikifier.textPrimitives.singleQuoted    = "('(?:(?:\\\\')|[^'])+')";
 Wikifier.textPrimitives.doubleBracketed = "(?:(\\[\\[(?:\\s|\\S)*?\\]\\]))";
 Wikifier.textPrimitives.barewords       = "([^\"'`\\s]\\S*)";
 
@@ -1044,9 +1044,23 @@ Wikifier.formatters =
 			if (match[1]) {
 				// Double quoted
 				arg = match[1];
+
+				// Evaluate the string to handle escaped characters
+				try {
+					arg = Util.evalExpression(arg);
+				} catch (e) {
+					throw new Error("unable to parse macro argument '" + arg + "': " + e.message);
+				}
 			} else if (match[2]) {
 				// Single quoted
 				arg = match[2];
+
+				// Evaluate the string to handle escaped characters
+				try {
+					arg = Util.evalExpression(arg);
+				} catch (e) {
+					throw new Error('unable to parse macro argument "' + arg + '": ' + e.message);
+				}
 			} else if (match[3]) {
 				// Empty quotes
 				arg = "";
