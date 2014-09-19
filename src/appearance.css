@@ -95,7 +95,7 @@ button:active {
 /* FULL SIDEBAR PROTOTYPE
 */
 #ui-bar {
-	/*background-color: #222;*/
+	background-color: #111;
 	border-right: 1px solid #fff;
 }
 /* OLD SIDEBAR
@@ -113,6 +113,7 @@ button:active {
 	margin-top: 3em;
 }
 #ui-bar ul {
+	padding: 0;
 	list-style: none;
 }
 #ui-bar li {
