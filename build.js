@@ -4,7 +4,7 @@
  *   - Description : Node.js-hosted build script for SugarCube
  *   - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
  *   - Copyright   : Copyright © 2014 Thomas Michael Edwards. All rights reserved.
- *   - Version     : 1.1.0, 2014-09-18
+ *   - Version     : 1.1.1, 2014-09-20
  */
 "use strict";
 
@@ -184,7 +184,7 @@ var _fs     = require("fs"),
 		var infile  = _path.normalize(file),
 			outfile = _path.normalize(CONFIG.html[file]),
 			output  = readFileContents(infile); // load the header template
-		log('build "' + outfile + '"');
+		log('building: "' + outfile + '"');
 
 		// process the source replacement tokens (first!)
 		output = output.replace(/\"\{\{JS_SOURCE\}\}\"/g, jsSource);
@@ -209,7 +209,7 @@ var _fs     = require("fs"),
 		var infile  = _path.normalize(file),
 			outfile = _path.normalize(CONFIG.copy[file]),
 			output  = readFileContents(infile); // load the file (raw)
-		log('copy  "' + outfile + '"');
+		log('copying : "' + outfile + '"');
 
 		// write the file
 		makePath(_path.dirname(outfile));
