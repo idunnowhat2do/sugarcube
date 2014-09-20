@@ -1,6 +1,6 @@
 
 body {
-	margin: 3.5em 15% 5% 3.5em;
+	margin: 3.5em 3.5em 3.5em 21em;
 }
 
 #store-area {
@@ -8,8 +8,6 @@ body {
 	z-index: 0;
 }
 
-/* FULL SIDEBAR PROTOTYPE
-*/
 #ui-bar {
 	position: fixed;
 	z-index: 50;
@@ -20,17 +18,6 @@ body {
 	margin: 0;
 	padding: 3.5em 1.5em 0 3.5em;
 }
-/* OLD SIDEBAR
-#ui-bar {
-	position: fixed;
-	z-index: 50;
-	top: 3.5em;
-	left: 3.5em;
-	width: 14.5em;
-	margin: 0;
-	padding: 0 1.5em 0 0;
-}
-*/
 
 /* Default menu styling */
 body.ui-open {
@@ -80,8 +67,7 @@ body.ui-open {
 /* Passages area styling */
 #passages {
 	z-index: 10;
-	margin-left: 16em;
-	padding-left: 1.5em;
+	margin-right: 14%;
 }
 
 /* Stop text selection on UI widgets */

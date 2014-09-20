@@ -92,17 +92,10 @@ button:active {
 	opacity: 0;
 }
 
-/* FULL SIDEBAR PROTOTYPE
-*/
 #ui-bar {
-	background-color: #111;
+	background-color: #222;
 	border-right: 1px solid #fff;
 }
-/* OLD SIDEBAR
-#ui-bar {
-	border-right: 1px solid #fff;
-}
-*/
 #ui-bar header, #ui-bar nav, #ui-bar footer {
 	text-align: right;
 }
@@ -386,34 +379,25 @@ a.link-return:after {
 }
 
 /* Passages area styling */
-/* FULL SIDEBAR PROTOTYPE
- - none-
-*/
-/* OLD SIDEBAR
-#passages {
-	border-left: 1px solid #fff;
-}
-*/
-.passage {
+#passages > .passage {
 	line-height: 1.75;
-	margin-bottom: 2em;
 	text-align: left;
 	transition: opacity 400ms ease-in;
 	-webkit-transition: opacity 400ms ease-in;
 }
-.passage ul, .passage ol {
+#passages > .passage ul, #passages > .passage ol {
 	margin-left: 0.5em;
 	padding-left: 1.5em;
 }
-.passage table {
+#passages > .passage table {
 	margin: 0.8em 1.0em;
 	border-collapse: collapse;
 	font-size: 100%;
 }
-.passage th, .passage td, .passage tr, .passage caption {
+#passages > .passage th, #passages > .passage td, #passages > .passage tr, #passages > .passage caption {
 	padding: 3px;
 }
-.passage hr {
+#passages > .passage hr {
 	height: 1px;
 	border: none;
 	background-color: #fff;
