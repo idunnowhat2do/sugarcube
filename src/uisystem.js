@@ -38,11 +38,11 @@ var UISystem = {
 				+         '</ul>'
 				+     '</nav>'
 				+     '<footer>'
-				+         '<p id="version"><a href="http://www.motoslave.net/sugarcube/" target="_blank">SugarCube</a> ("{{BUILD_VERSION}}")</p>'
-				+         '<p id="credits">Made with <a href="http://twinery.org/" target="_blank">Twine</a></p>'
+				+         '<p id="credits">Made with <a href="http://twinery.org/" target="_blank">Twine</a> &amp; <a href="http://www.motoslave.net/sugarcube/" target="_blank">SugarCube</a></p>'
+				+         '<p id="version">SugarCube ("{{BUILD_VERSION}}")</p>'
 				+     '</footer>'
 				+ '</div>'
-				+ '<div role="main" id="passages"></div>'
+				+ '<div id="passages" role="main"></div>'
 		);
 
 		// add the UI dialog elements
@@ -315,7 +315,7 @@ var UISystem = {
 				}));
 			}
 			if (savesOK) {
-				list.appendChild(createActionItem("purge", null, "Purge Save Slots", function (evt) {
+				list.appendChild(createActionItem("purge", null, "Purge Slots", function (evt) {
 					SaveSystem.purge();
 					UISystem.buildSaves();  // rebuild the saves menu
 				}));
