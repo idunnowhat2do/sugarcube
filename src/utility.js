@@ -138,8 +138,13 @@ function setPageElement(id, titles, defaultText) {
  * Appends a new <style> element to the document's <head>
  */
 function addStyle(css) {
-	var style = document.createElement("style");
-	style.type = "text/css";
+	var style = document.head.querySelector("#style-user");
+	if (style === null) {
+		style      = document.createElement("style");
+		style.id   = "style-user";
+		style.type = "text/css";
+		document.head.appendChild(style);
+	}
 
 	// check for Twine 1.4 Base64 image passage transclusion
 	var matchRe = new RegExp(formatter.byName["image"].lookaheadRegExp.source, "gm"),
@@ -163,14 +168,12 @@ function addStyle(css) {
 	}
 
 	if (style.styleSheet) {
-		// for IE
-		style.styleSheet.cssText = css;
+		// for IE ≤ 10
+		style.styleSheet.cssText += css;
 	} else {
 		// for everyone else
 		style.appendChild(document.createTextNode(css));
 	}
-
-	document.head.appendChild(style);
 }
 
 /**
