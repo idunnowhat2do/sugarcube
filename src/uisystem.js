@@ -15,9 +15,14 @@ var UISystem = {
 		// remove #init-no-js & #init-lacking from #init-screen
 		$("#init-no-js, #init-lacking").remove();
 
-		// add the core story format elements
-		$("#store-area").before(tale.has("StoryFormatMarkup")
-			? tale.get("StoryFormatMarkup").text
+		// generate the UI elements and add them to the page
+		var storeArea = document.getElementById("store-area"),
+			uiTree    = document.createDocumentFragment(),
+			tempTree  = document.createElement("div");
+
+		// generate the core elements
+		tempTree.innerHTML = tale.has("StoryFormatMarkup")
+			? tale.get("StoryFormatMarkup").text.trim()
 			:     '<div id="ui-bar">'
 				+     '<header id="title">'
 				+         '<div id="story-banner"></div>'
@@ -42,14 +47,18 @@ var UISystem = {
 				+         '<p id="version">SugarCube ("{{BUILD_VERSION}}")</p>'
 				+     '</footer>'
 				+ '</div>'
-				+ '<div id="passages" role="main"></div>'
-		);
+				+ '<div id="passages" role="main"></div>';
+		while (tempTree.hasChildNodes()) {
+			uiTree.appendChild(tempTree.firstChild);
+		}
 
-		// add the UI dialog elements
-		UISystem._overlay = insertElement(document.body, "div", "ui-overlay", "ui-close");
-		UISystem._body    = insertElement(document.body, "div", "ui-body");
-		UISystem._closer  = insertElement(document.body, "a", "ui-body-close", "ui-close");
-		insertText(UISystem._closer, "\ue002");
+		// generate the dialog elements
+		UISystem._overlay = insertElement(uiTree, "div", "ui-overlay", "ui-close");
+		UISystem._body    = insertElement(uiTree, "div", "ui-body");
+		UISystem._closer  = insertElement(uiTree, "a", "ui-body-close", "ui-close", "\ue002");
+
+		// insert the UI elements into the page before the store area
+		storeArea.parentNode.insertBefore(uiTree, storeArea);
 	},
 	start : function () {
 		if (DEBUG) { console.log("[UISystem.start()]"); }
