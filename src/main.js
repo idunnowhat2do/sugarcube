@@ -275,8 +275,13 @@ $(document).ready(function () {
 			var errMesg = e.message;
 			if (e.name === "TypeError" && /read[\s-]only/.test(e.message)) {
 				var errMatch = /([\"\'])([^\1]+)\1/.exec(e.message);
-				if (errMatch && errMatch[2] && macros.has(errMatch[2])) {
-					errMesg = "cannot clobber protected macro <<" + errMatch[2] + ">>";
+				if (errMatch && errMatch[2]) {
+					if (macros.has(errMatch[2])) {
+						// this case is unlikely to ever happen, but might as well leave it in
+						errMesg = "cannot clobber protected macro <<" + errMatch[2] + ">>";
+					} else if (macros.hasOwnProperty(errMatch[2])) {
+						errMesg = 'cannot clobber macros API method "' + errMatch[2] + '"';
+					}
 				}
 			}
 			technicalAlert(scripts[i].title, errMesg);
