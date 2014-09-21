@@ -6,9 +6,9 @@
 ** [Macros API]
 ***********************************************************************************************************************/
 function Macros() {
-	// protect the Macros API object's properties and return it
+	// create and protect the Macros API object's properties
 	//   n.b. we can't use Object.freeze() here because we still have to support old-style macros
-	return Object.defineProperties({}, {
+	Object.defineProperties(this, {
 		// data properties
 		definitions : {
 			value : {}
@@ -99,7 +99,7 @@ function Macros() {
 
 		has : {
 			value : function (name, searchTags) {
-				return this.definitions.hasOwnProperty(name) || (searchTags && this.tags.hasOwnProperty(name));
+				return this.definitions.hasOwnProperty(name) || (searchTags ? this.tags.hasOwnProperty(name) : false);
 			}
 		},
 
