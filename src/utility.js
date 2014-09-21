@@ -14,44 +14,65 @@ var saveAs=saveAs||navigator.msSaveBlob&&navigator.msSaveBlob.bind(navigator)||f
 ***********************************************************************************************************************/
 /**
  * Returns a deep copy of the passed object
+ *   n.b. clone() does not clone functions, however, since function definitions are immutable, the only possible
+ *        issues are with expando properties and scope.  The former should not be done (seriously, WTH).  The latter
+ *        is problematic either way (damned if you do, damned if you don't).
  */
-function clone(orig) {
-	if (orig == null || typeof orig !== "object") { // use lazy equality on null check
-		return orig;
-	}
+function clone(src) {
+	function _subClone(src) {
+		if (typeof src !== "object" || src == null) { // use lazy equality on null check
+			return src;
+		}
 
-	// Honor native/custom clone methods
-	if (typeof orig.clone === "function") {
-		return orig.clone(true);
-	}
+		// Check the reference cache for a hit and return it if we get one
+		var cacheHit = refCache.find(function (val) { return val.srcRef === src; });
+		if (cacheHit !== undefined) {
+			return cacheHit.dupRef;
+		}
 
-	// Special cases
-	if (orig instanceof Date) {
-		return new Date(orig.getTime());
-	}
-	if (orig instanceof RegExp) {
-		return new RegExp(orig);
-	}
-	if (orig.nodeType && typeof orig.cloneNode === "function") {
-		return orig.cloneNode(true);
-	}
+		// Not an existing reference, so get cloning
+		var dup;
+		if (typeof src.clone === "function") {
+			// Special case: Honor built-in clone methods
+			dup = src.clone(true);
+		} else if (src.nodeType && typeof src.cloneNode === "function") {
+			// Special case: DOM Nodes
+			dup = src.cloneNode(true);
+		} else if (Object.prototype.toString.call(src) === "[object Date]") {
+			// Special case: Date object
+			dup = new Date(src.getTime());
+		} else if (Object.prototype.toString.call(src) === "[object RegExp]") {
+			// Special case: RegExp object
+			dup = new RegExp(src);
+		} else if (Array.isArray(src)) {
+			// Special case: Array object
+			dup = [];
+		} else {
+			// General case; try to ensure that the returned object has the same prototype as the original
+			var proto = Object.getPrototypeOf(src);
+			dup = proto ? Object.create(proto) : src.constructor.prototype; // the latter case should only be reached by very old browsers
+		}
 
-	// If we've reached here, we have a regular object, array, or function
-	var okeys = Object.keys(orig), // do not use Object.getOwnPropertyNames(), it's much slower and returns some properties that shouldn't be copied
-		dup;
-	// Ensure the returned object has the same prototype as the original
-	if (Array.isArray(orig)) {
-		// Array object case; this must be done separate from the general case or the prototype will be wrong
-		dup = [];
-	} else {
-		// General object case
-		var proto = Object.getPrototypeOf(orig);
-		dup = proto ? Object.create(proto) : orig.constructor.prototype; // the latter case should only be reached by very old browsers
+		// Add a src/dup tuple to the reference cache
+		refCache.push({ srcRef : src, dupRef : dup });
+
+		// Copy the object's own properties; this allows cloning of expando properties on special case objects as well
+		Object.keys(src).forEach(function (okey) { // do not use Object.getOwnPropertyNames(), it's much slower and returns properties that shouldn't be copied
+			//dup[okey] = _subClone(src[okey]); // this does not preserve ES5 property attributes (i.e. 'configurable', 'enumerable', 'writable', 'get', 'set')
+			var srcDesc = Object.getOwnPropertyDescriptor(src, okey),
+				dupDesc = {};
+			Object.keys(srcDesc).forEach(function (dkey) {
+				dupDesc[dkey] = (dkey !== "value" || typeof srcDesc[dkey] !== "object" || srcDesc[dkey] == null)
+					? srcDesc[dkey]
+					: _subClone(srcDesc[dkey]);
+			});
+			Object.defineProperty(dup, okey, dupDesc);
+		});
+
+		return dup;
 	}
-	for (var i = 0, len = okeys.length; i < len; i++) { // this allows cloning of expando properties as well
-		dup[okeys[i]] = clone(orig[okeys[i]]); // this does not preserve ES5 property attributes (i.e. 'configurable', 'enumerable', 'writable', 'get', 'set').
-	}
-	return dup;
+	var refCache = [];
+	return _subClone(src);
 }
 
 /**
