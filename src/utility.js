@@ -31,17 +31,18 @@ function clone(src) {
 		}
 
 		// Not an existing reference, so get cloning
-		var dup;
+		var dup,
+			srcType = Object.prototype.toString.call(src);
 		if (typeof src.clone === "function") {
 			// Special case: Honor built-in clone methods
 			dup = src.clone(true);
 		} else if (src.nodeType && typeof src.cloneNode === "function") {
 			// Special case: DOM Nodes
 			dup = src.cloneNode(true);
-		} else if (Object.prototype.toString.call(src) === "[object Date]") {
+		} else if (srcType === "[object Date]") {
 			// Special case: Date object
 			dup = new Date(src.getTime());
-		} else if (Object.prototype.toString.call(src) === "[object RegExp]") {
+		} else if (srcType === "[object RegExp]") {
 			// Special case: RegExp object
 			dup = new RegExp(src);
 		} else if (Array.isArray(src)) {
@@ -57,16 +58,12 @@ function clone(src) {
 		refCache.push({ srcRef : src, dupRef : dup });
 
 		// Copy the object's own properties; this allows cloning of expando properties on special case objects as well
-		Object.keys(src).forEach(function (okey) { // do not use Object.getOwnPropertyNames(), it's much slower and returns properties that shouldn't be copied
-			//dup[okey] = _subClone(src[okey]); // this does not preserve ES5 property attributes (i.e. 'configurable', 'enumerable', 'writable', 'get', 'set')
-			var srcDesc = Object.getOwnPropertyDescriptor(src, okey),
-				dupDesc = {};
-			Object.keys(srcDesc).forEach(function (dkey) {
-				dupDesc[dkey] = (dkey !== "value" || typeof srcDesc[dkey] !== "object" || srcDesc[dkey] == null)
-					? srcDesc[dkey]
-					: _subClone(srcDesc[dkey]);
-			});
-			Object.defineProperty(dup, okey, dupDesc);
+		Object.keys(src).forEach(function (name) { // do not use Object.getOwnPropertyNames(), it's much slower and returns properties that shouldn't be copied
+			var descriptor = Object.getOwnPropertyDescriptor(src, name);
+			if (typeof descriptor["value"] === "object" && descriptor["value"] !== null) {
+				descriptor["value"] = _subClone(descriptor["value"]);
+			}
+			Object.defineProperty(dup, name, descriptor);
 		});
 
 		return dup;
@@ -553,35 +550,40 @@ var Util = {
 					if (typeof origP === typeof destP) {
 						// values are of the same basic type
 						if (typeof origP === "function") {
-							/*
-							// values are functions, which are problematic to test, so we simply copy
-							diff[p] = [ Util.DiffOp.Copy, clone(destP) ];
-							*/
+							// values are functions
+							/* diff[p] = [ Util.DiffOp.Copy, destP ]; */
 							if (origP.toString() !== destP.toString()) {
-								diff[p] = [ Util.DiffOp.Copy, clone(destP) ];
+								diff[p] = [ Util.DiffOp.Copy, destP ];
 							}
 						} else if (typeof origP !== "object" || origP === null) {
 							// values are scalars or null
 							diff[p] = [ Util.DiffOp.Copy, destP ];
-						} else if (Object.prototype.toString.call(origP) === Object.prototype.toString.call(destP)) {
-							// values are objects of the same prototype
-							if (origP instanceof Date) {
-								if ((+origP) !== (+destP)) {
-									diff[p] = [ Util.DiffOp.CopyDate, +destP ];
-								}
-							} else if (origP instanceof RegExp) {
-								if (origP.toString() !== destP.toString()) {
-									diff[p] = [ Util.DiffOp.Copy, clone(destP) ];
+						} else {
+							// values are objects
+							var origPType = Object.prototype.toString.call(origP),
+								destPType = Object.prototype.toString.call(destP);
+							if (origPType === destPType) {
+								// values are objects of the same prototype
+								if (origPType === "[object Date]") {
+									// special case: Date object
+									if ((+origP) !== (+destP)) {
+										diff[p] = [ Util.DiffOp.CopyDate, +destP ];
+									}
+								} else if (origPType === "[object RegExp]") {
+									// special case: RegExp object
+									if (origP.toString() !== destP.toString()) {
+										diff[p] = [ Util.DiffOp.Copy, clone(destP) ];
+									}
+								} else {
+									var recurse = Util.diff(origP, destP);
+									if (recurse !== null) {
+										diff[p] = recurse;
+									}
 								}
 							} else {
-								var recurse = Util.diff(origP, destP);
-								if (recurse !== null) {
-									diff[p] = recurse;
-								}
+								// values are objects of different prototypes
+								diff[p] = [ Util.DiffOp.Copy, clone(destP) ];
 							}
-						} else {
-							// values are objects of different prototypes
-							diff[p] = [ Util.DiffOp.Copy, clone(destP) ];
 						}
 					} else {
 						// values are of different types
