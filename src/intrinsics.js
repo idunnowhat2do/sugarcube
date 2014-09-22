@@ -16,7 +16,6 @@
  */
 if (!Array.isArray) {
 	Object.defineProperty(Array, "isArray", {
-		enumerable   : false,
 		configurable : true,
 		writable     : true,
 		value        : function (obj) {
@@ -31,7 +30,6 @@ if (!Array.isArray) {
  */
 if (!Array.prototype.indexOf) {
 	Object.defineProperty(Array.prototype, "indexOf", {
-		enumerable   : false,
 		configurable : true,
 		writable     : true,
 		value        : function (needle, from) {
@@ -69,7 +67,6 @@ if (!Array.prototype.indexOf) {
  */
 if (!Array.prototype.filter) {
 	Object.defineProperty(Array.prototype, "filter", {
-		enumerable   : false,
 		configurable : true,
 		writable     : true,
 		value        : function (filterFn /* , thisp */) {
@@ -104,7 +101,6 @@ if (!Array.prototype.filter) {
  */
 if (!Array.prototype.find) {
 	Object.defineProperty(Array.prototype, "find", {
-		enumerable   : false,
 		configurable : true,
 		writable     : true,
 		value        : function (callback /* , thisp */) {
@@ -138,7 +134,6 @@ if (!Array.prototype.find) {
  */
 if (!Array.prototype.forEach) {
 	Object.defineProperty(Array.prototype, "forEach", {
-		enumerable   : false,
 		configurable : true,
 		writable     : true,
 		value        : function (callback /* , thisp */) {
@@ -170,7 +165,6 @@ if (!Array.prototype.forEach) {
  */
 if (!Array.prototype.map) {
 	Object.defineProperty(Array.prototype, "map", {
-		enumerable   : false,
 		configurable : true,
 		writable     : true,
 		value        : function (callback /* , thisp */) {
@@ -203,7 +197,6 @@ if (!Array.prototype.map) {
  */
 if (!Array.prototype.some) {
 	Object.defineProperty(Array.prototype, "some", {
-		enumerable   : false,
 		configurable : true,
 		writable     : true,
 		value        : function (callback /*, thisp */) {
@@ -237,7 +230,6 @@ if (!Array.prototype.some) {
  */
 if (!Date.now) {
 	Object.defineProperty(Date, "now", {
-		enumerable   : false,
 		configurable : true,
 		writable     : true,
 		value        : function () {
@@ -252,7 +244,6 @@ if (!Date.now) {
  */
 if (!Math.trunc) {
 	Object.defineProperty(Math, "trunc", {
-		enumerable   : false,
 		configurable : true,
 		writable     : true,
 		value        : function (num) {
@@ -267,7 +258,6 @@ if (!Math.trunc) {
  */
 if (!String.prototype.contains) {
 	Object.defineProperty(String.prototype, "contains", {
-		enumerable   : false,
 		configurable : true,
 		writable     : true,
 		value        : function (/* needle [, fromIndex] */) {
@@ -286,7 +276,6 @@ if (!String.prototype.contains) {
  */
 if (!String.prototype.splice) {
 	Object.defineProperty(String.prototype, "splice", {
-		enumerable   : false,
 		configurable : true,
 		writable     : true,
 		value        : function (start, count, replacement) {
@@ -336,7 +325,6 @@ if (!String.prototype.splice) {
  */
 if (!String.prototype.trim) {
 	Object.defineProperty(String.prototype, "trim", {
-		enumerable   : false,
 		configurable : true,
 		writable     : true,
 		value        : function () {
@@ -356,7 +344,6 @@ if (!String.prototype.trim) {
  */
 if (!String.prototype.trimLeft) {
 	Object.defineProperty(String.prototype, "trimLeft", {
-		enumerable   : false,
 		configurable : true,
 		writable     : true,
 		value        : function () {
@@ -375,7 +362,6 @@ if (!String.prototype.trimLeft) {
  */
 if (!String.prototype.trimRight) {
 	Object.defineProperty(String.prototype, "trimRight", {
-		enumerable   : false,
 		configurable : true,
 		writable     : true,
 		value        : function () {
@@ -394,7 +380,6 @@ if (!String.prototype.trimRight) {
  */
 if (!Object.create || typeof Object.create !== "function") {
 	Object.defineProperty(Object, "create", {
-		enumerable   : false,
 		configurable : true,
 		writable     : true,
 		value        : (function () {
@@ -427,7 +412,6 @@ if (!Object.create || typeof Object.create !== "function") {
  * Returns a random value from the given array in the range of lower and upper, if they are specified
  */
 Object.defineProperty(Array, "random", {
-	enumerable   : false,
 	configurable : true,
 	writable     : true,
 	value        : function (array, lower, upper) {
@@ -449,7 +433,6 @@ Object.defineProperty(Array, "random", {
  * Returns whether the given element was found within the array, returning true or false as appropriate
  */
 Object.defineProperty(Array.prototype, "contains", {
-	enumerable   : false,
 	configurable : true,
 	writable     : true,
 	value        : function (/* needle [, fromIndex] */) {
@@ -466,7 +449,6 @@ Object.defineProperty(Array.prototype, "contains", {
  * Returns whether all of the given elements were found within the array, returning true or false as appropriate
  */
 Object.defineProperty(Array.prototype, "containsAll", {
-	enumerable   : false,
 	configurable : true,
 	writable     : true,
 	value        : function (/* needles */) {
@@ -496,7 +478,6 @@ Object.defineProperty(Array.prototype, "containsAll", {
  * Returns whether any of the given elements were found within the array, returning true or false as appropriate
  */
 Object.defineProperty(Array.prototype, "containsAny", {
-	enumerable   : false,
 	configurable : true,
 	writable     : true,
 	value        : function (/* needles */) {
@@ -526,7 +507,6 @@ Object.defineProperty(Array.prototype, "containsAny", {
  * Returns a random value from the array in the range of lower and upper, if they are specified
  */
 Object.defineProperty(Array.prototype, "random", {
-	enumerable   : false,
 	configurable : true,
 	writable     : true,
 	value        : function (lower, upper) {
@@ -561,7 +541,6 @@ Object.defineProperty(Array.prototype, "random", {
  * Returns the given numerical clamped to the specified bounds
  */
 Object.defineProperty(Math, "clamp", {
-	enumerable   : false,
 	configurable : true,
 	writable     : true,
 	value        : function (num, min, max) {
@@ -575,7 +554,6 @@ Object.defineProperty(Math, "clamp", {
  * Returns a decimal number eased from 0 to 1
  */
 Object.defineProperty(Math, "easeInOut", {
-	enumerable   : false,
 	configurable : true,
 	writable     : true,
 	value        : function (num) {
@@ -588,7 +566,6 @@ Object.defineProperty(Math, "easeInOut", {
  * Returns the number clamped to the specified bounds
  */
 Object.defineProperty(Number.prototype, "clamp", {
-	enumerable   : false,
 	configurable : true,
 	writable     : true,
 	value        : function (min, max) {
@@ -605,7 +582,6 @@ Object.defineProperty(Number.prototype, "clamp", {
  * with the text equivalent of the corresponding argument's value
  */
 Object.defineProperty(String, "format", {
-	enumerable   : false,
 	configurable : true,
 	writable     : true,
 	value        : function (format) {
@@ -641,7 +617,6 @@ Object.defineProperty(String, "format", {
  *   n.b. Just a legacy alias for String.prototype.trimLeft now
  */
 Object.defineProperty(String.prototype, "ltrim", {
-	enumerable   : false,
 	configurable : true,
 	writable     : true,
 	value        : String.prototype.trimLeft
@@ -652,7 +627,6 @@ Object.defineProperty(String.prototype, "ltrim", {
  *   n.b. Just a legacy alias for String.prototype.trimRight now
  */
 Object.defineProperty(String.prototype, "rtrim", {
-	enumerable   : false,
 	configurable : true,
 	writable     : true,
 	value        : String.prototype.trimRight
@@ -663,7 +637,6 @@ Object.defineProperty(String.prototype, "rtrim", {
  *   n.b. Unused in SugarCube, only included for compatibility
  */
 Object.defineProperty(String.prototype, "readBracketedList", {
-	enumerable   : false,
 	configurable : true,
 	writable     : true,
 	value        : function () {
@@ -694,32 +667,28 @@ Object.defineProperty(String.prototype, "readBracketedList", {
 ** [Extensions, JSON/serialization]
 ***********************************************************************************************************************/
 /**
- * Define toJSON functions on each prototype we want to support
+ * Define toJSON methods on each prototype we want to support
  */
 Object.defineProperty(Function.prototype, "toJSON", {
-	enumerable   : false,
 	configurable : true,
 	writable     : true,
-	value        : function () { return "@@revive@@(" + this.toString() + ")"; }
+	value        : function () { return JSON.reviveWrapper(this.toString()); }
 });
 Object.defineProperty(RegExp.prototype, "toJSON", {
-	enumerable   : false,
 	configurable : true,
 	writable     : true,
-	value        : function () { return "@@revive@@(" + this.toString() + ")"; }
+	value        : function () { return JSON.reviveWrapper(this.toString()); }
 });
 Object.defineProperty(Date.prototype, "toJSON", {
-	enumerable   : false,
 	configurable : true,
 	writable     : true,
-	value        : function () { return '@@revive@@(new Date("' + this.toISOString() + '"))'; }
+	value        : function () { return JSON.reviveWrapper('new Date("' + this.toISOString() + '")'); }
 });
 
 /**
- * Utility function to allow users to easily wrap their code in the revive wrapper
+ * Utility method to allow users to easily wrap their code in the revive wrapper
  */
 Object.defineProperty(JSON, "reviveWrapper", {
-	enumerable   : false,
 	configurable : true,
 	writable     : true,
 	value        : function (code) {
@@ -729,21 +698,19 @@ Object.defineProperty(JSON, "reviveWrapper", {
 });
 
 /**
- * Backup the original JSON.parse and replace it with a "@@revive@@"-aware version
+ * Backup the original JSON.parse and replace it with a revive wrapper aware version
  */
-Object.defineProperty(JSON, "real_parse_backup", {
-	enumerable   : false,
+Object.defineProperty(JSON, "_real_parse", {
 	configurable : true,
 	writable     : true,
 	value        : JSON.parse
 });
 Object.defineProperty(JSON, "parse", {
-	enumerable   : false,
 	configurable : true,
 	writable     : true,
 	value        : function (text, reviver) {
 		"use strict";
-		return JSON.real_parse_backup(text, function (key, value) {
+		return JSON._real_parse(text, function (key, value) {
 			if (typeof value === "string" && value.slice(0, 10) === "@@revive@@") {
 				try {
 					value = eval(value.slice(10));
