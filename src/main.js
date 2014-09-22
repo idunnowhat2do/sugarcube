@@ -279,8 +279,8 @@ $(document).ready(function () {
 					if (macros.has(errMatch[2])) {
 						// this case is unlikely to ever happen, but might as well leave it in
 						errMesg = "cannot clobber protected macro <<" + errMatch[2] + ">>";
-					} else if (macros.hasOwnProperty(errMatch[2])) {
-						errMesg = 'cannot clobber macros API method "' + errMatch[2] + '"';
+					} else if (typeof macros[errMatch[2]] !== "undefined") {
+						errMesg = 'cannot clobber macros API property "' + errMatch[2] + '"';
 					}
 				}
 			}
