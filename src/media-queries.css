@@ -1,8 +1,8 @@
 
-/* Basic mobile device styling */
-@media screen and (max-width: 1280px) {
+/* Increase viewport utilization as its size decreases. */
+@media screen and (max-width: 1440px) {
 	#passages {
-		margin-right: 8%;
+		margin-right: 7%;
 	}
 }
 @media screen and (max-width: 1136px) {
