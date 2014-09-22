@@ -18,7 +18,7 @@ var saveAs=saveAs||navigator.msSaveBlob&&navigator.msSaveBlob.bind(navigator)||f
  *        issues are with expando properties and scope.  The former should not be done (seriously, WTH).  The latter
  *        is problematic either way (damned if you do, damned if you don't).
  */
-function clone(src) {
+function clone(src, refCache) {
 	function _subClone(src) {
 		if (typeof src !== "object" || src == null) { // use lazy equality on null check
 			return src;
@@ -68,7 +68,12 @@ function clone(src) {
 
 		return dup;
 	}
-	var refCache = [];
+
+	if (arguments.length < 2) {
+		refCache = [];
+	} else if (!Array.isArray(refCache)) {
+		throw new Error("clone refCache parameter must be an array");
+	}
 	return _subClone(src);
 }
 
