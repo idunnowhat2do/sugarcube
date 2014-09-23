@@ -10,71 +10,54 @@ var saveAs=saveAs||navigator.msSaveBlob&&navigator.msSaveBlob.bind(navigator)||f
 
 
 /***********************************************************************************************************************
-** [Function Library]
+** [Utility Functions]
 ***********************************************************************************************************************/
 /**
  * Returns a deep copy of the passed object
- *   n.b. clone() does not clone functions, however, since function definitions are immutable, the only possible
- *        issues are with expando properties and scope.  The former should not be done (seriously, WTH).  The latter
- *        is problematic either way (damned if you do, damned if you don't).
+ *   n.b. 1. clone() does not clone functions, however, since function definitions are immutable, the only possible
+ *           issues are with expando properties and scope.  The former should not be done (seriously, WTH).  The latter
+ *           is problematic either way (damned if you do, damned if you don't).
+ *        2. clone() does not maintain referential relationships (e.g. multiple references to the same object will,
+ *           post-cloning, refer to different equivalent objects; i.e. each reference will get its own clone of the
+ *           original object).
  */
-function clone(src, refCache) {
-	function _subClone(src) {
-		if (typeof src !== "object" || src == null) { // use lazy equality on null check
-			return src;
-		}
-
-		// Check the reference cache for a hit and return it if we get one
-		var cacheHit = refCache.find(function (val) { return val.srcRef === src; });
-		if (cacheHit !== undefined) {
-			return cacheHit.dupRef;
-		}
-
-		// Not an existing reference, so get cloning
-		var dup,
-			srcType = Object.prototype.toString.call(src);
-		if (typeof src.clone === "function") {
-			// Special case: Honor built-in clone methods
-			dup = src.clone(true);
-		} else if (src.nodeType && typeof src.cloneNode === "function") {
-			// Special case: DOM Nodes
-			dup = src.cloneNode(true);
-		} else if (srcType === "[object Date]") {
-			// Special case: Date object
-			dup = new Date(src.getTime());
-		} else if (srcType === "[object RegExp]") {
-			// Special case: RegExp object
-			dup = new RegExp(src);
-		} else if (Array.isArray(src)) {
-			// Special case: Array object
-			dup = [];
-		} else {
-			// General case; try to ensure that the returned object has the same prototype as the original
-			var proto = Object.getPrototypeOf(src);
-			dup = proto ? Object.create(proto) : src.constructor.prototype; // the latter case should only be reached by very old browsers
-		}
-
-		// Add a src/dup tuple to the reference cache
-		refCache.push({ srcRef : src, dupRef : dup });
-
-		// Copy the object's own properties; this allows cloning of expando properties on special case objects as well
-		Object.keys(src).forEach(function (name) { // do not use Object.getOwnPropertyNames(), it's much slower and returns properties that shouldn't be copied
-			var descriptor = Object.getOwnPropertyDescriptor(src, name);
-			if (typeof descriptor["value"] === "object" && descriptor["value"] !== null) {
-				descriptor["value"] = _subClone(descriptor["value"]);
-			}
-			Object.defineProperty(dup, name, descriptor);
-		});
-
-		return dup;
+function clone(orig) {
+	if (typeof orig !== "object" || orig == null) { // use lazy equality on null check
+		return orig;
 	}
 
-	if (arguments.length < 2) {
-		refCache = [];
-	} else if (!Array.isArray(refCache)) {
-		throw new Error("clone refCache parameter must be an array");
+	// Honor native clone methods
+	if (typeof orig.clone === "function") {
+		return orig.clone(true);
+	} else if (orig.nodeType && typeof orig.cloneNode === "function") {
+		return orig.cloneNode(true);
 	}
-	return _subClone(src);
+
+	// Create a copy of the original
+	var type = Object.prototype.toString.call(orig),
+		copy;
+	if (type === "[object Date]") {
+		copy = new Date(orig.getTime());
+	} else if (type === "[object RegExp]") {
+		copy = new RegExp(orig);
+	} else if (Array.isArray(orig)) {
+		copy = [];
+	} else {
+		// try to ensure that the returned object has the same prototype as the original
+		var proto = Object.getPrototypeOf(orig);
+		copy = proto ? Object.create(proto) : orig.constructor.prototype;
+	}
+
+	// Duplicate the original's own properties; this allows cloning of expando properties on non-generic objects as well
+	Object.keys(orig).forEach(function (name) {
+		var descriptor = Object.getOwnPropertyDescriptor(orig, name);
+		if (typeof descriptor["value"] === "object" && descriptor["value"] !== null) {
+			descriptor["value"] = clone(descriptor["value"]);
+		}
+		Object.defineProperty(copy, name, descriptor);
+	});
+
+	return copy;
 }
 
 /**
