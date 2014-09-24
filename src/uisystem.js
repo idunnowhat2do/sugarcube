@@ -6,9 +6,12 @@
 ** [UISystem API]
 ***********************************************************************************************************************/
 var UISystem = {
+	// data members
 	_overlay : null,
-	_body : null,
-	_closer : null,
+	_body    : null,
+	_closer  : null,
+
+	// static methods
 	init : function () {
 		if (DEBUG) { console.log("[UISystem.init()]"); }
 
@@ -16,12 +19,12 @@ var UISystem = {
 		$("#init-no-js, #init-lacking").remove();
 
 		// generate the UI elements and add them to the page
-		var storeArea = document.getElementById("store-area"),
-			uiTree    = document.createDocumentFragment(),
-			tempTree  = document.createElement("div");
+		var store  = document.getElementById("store-area"),
+			uiTree = document.createDocumentFragment(),
+			temp   = document.createElement("div");
 
 		// generate the core elements
-		tempTree.innerHTML = tale.has("StoryFormatMarkup")
+		temp.innerHTML = tale.has("StoryFormatMarkup")
 			? tale.get("StoryFormatMarkup").text.trim()
 			:     '<div id="ui-bar">'
 				+     '<header id="title">'
@@ -32,7 +35,8 @@ var UISystem = {
 				+         '<p id="story-author"></p>'
 				+     '</header>'
 				+     '<div id="story-caption"></div>'
-				+     '<nav>'
+				+     '<nav id="menu">'
+				+         '<ul id="menu-story-transitional"></ul>'
 				+         '<ul>'
 				+             '<li id="menu-story"></li>'
 				+             '<li id="menu-saves"><a>Saves</a></li>'
@@ -48,8 +52,8 @@ var UISystem = {
 				+     '</footer>'
 				+ '</div>'
 				+ '<div id="passages" role="main"></div>';
-		while (tempTree.hasChildNodes()) {
-			uiTree.appendChild(tempTree.firstChild);
+		while (temp.hasChildNodes()) {
+			uiTree.appendChild(temp.firstChild);
 		}
 
 		// generate the dialog elements
@@ -58,46 +62,51 @@ var UISystem = {
 		UISystem._closer  = insertElement(uiTree, "a", "ui-body-close", "ui-close", "\ue002");
 
 		// insert the UI elements into the page before the store area
-		storeArea.parentNode.insertBefore(uiTree, storeArea);
+		store.parentNode.insertBefore(uiTree, store);
 	},
 	start : function () {
 		if (DEBUG) { console.log("[UISystem.start()]"); }
 
 		var html = $(document.documentElement);
 
-		// setup non-passage page elements
+		// setup the title
 		setPageElement("story-title", "StoryTitle", tale.title);
+
+		// setup the dynamic page elements
 		if (!tale.has("StoryCaption")) {
 			$("#story-caption").remove();
 		}
-		if (!tale.has("StoryMenu") && !tale.has("MenuStory")) {
+		if (!tale.has("StoryMenu")) {
 			$("#menu-story").remove();
+		}
+		if (!tale.has("MenuStory")) {
+			$("#menu-story-transitional").remove();
 		}
 		UISystem.setPageElements();
 
 		// setup Saves menu
-		UISystem.addClickHandler("#menu-saves", null, function () { UISystem.buildSaves(); });
+		UISystem.addClickHandler("#menu-saves", null, function () { UISystem.buildDialogSaves(); });
 
 		// setup Rewind menu
 		if (!config.disableHistoryTracking && tale.lookup("tags", "bookmark").length > 0) {
-			UISystem.addClickHandler($("#menu-rewind a"), null, function () { UISystem.buildRewind(); });
+			UISystem.addClickHandler($("#menu-rewind a"), null, function () { UISystem.buildDialogRewind(); });
 		} else {
 			$("#menu-rewind").remove();
 		}
 
 		// setup Restart menu
-		UISystem.addClickHandler("#menu-restart", null, function () { UISystem.buildRestart(); });
+		UISystem.addClickHandler("#menu-restart", null, function () { UISystem.buildDialogRestart(); });
 
 		// setup Options menu
 		if (tale.has("MenuOptions")) {
-			UISystem.addClickHandler($("#menu-options a"), null, function () { UISystem.buildOptions(); });
+			UISystem.addClickHandler($("#menu-options a"), null, function () { UISystem.buildDialogOptions(); });
 		} else {
 			$("#menu-options").remove();
 		}
 
 		// setup Share menu
 		if (tale.has("MenuShare")) {
-			UISystem.addClickHandler($("#menu-share a"), null, function () { UISystem.buildShare(); });
+			UISystem.addClickHandler($("#menu-share a"), null, function () { UISystem.buildDialogShare(); });
 		} else {
 			$("#menu-share").remove();
 		}
@@ -124,14 +133,20 @@ var UISystem = {
 	},
 	setPageElements : function () {
 		if (DEBUG) { console.log("[UISystem.setPageElements()]"); }
-		// setup for the non-passage page elements
-		setPageElement("story-banner",   "StoryBanner");
+
+		// setup the dynamic page elements
+		setPageElement("story-banner", "StoryBanner");
 		setPageElement("story-subtitle", "StorySubtitle");
-		setPageElement("story-author",   "StoryAuthor");
-		setPageElement("story-caption",  "StoryCaption");
-		setPageElement("menu-story",     [ "StoryMenu", "MenuStory" ]);
+		setPageElement("story-author", "StoryAuthor");
+		setPageElement("story-caption", "StoryCaption");
+		setPageElement("menu-story", "StoryMenu");
+		if (tale.has("MenuStory")) {
+			var menuStory = document.getElementById("menu-story-transitional");
+			removeChildren(menuStory);
+			UISystem.populateListFromPassage("MenuStory", menuStory);
+		}
 	},
-	buildSaves : function () {
+	buildDialogSaves : function () {
 		function createActionItem(bId, bClass, bText, bAction) {
 			var li  = document.createElement("li"),
 				btn = document.createElement("button");
@@ -200,7 +215,7 @@ var UISystem = {
 					tdDeleBtn.innerHTML = "Delete";
 					$(tdDeleBtn).click(function () {
 						SaveSystem.deleteAuto();
-						UISystem.buildSaves();  // rebuild the saves menu
+						UISystem.buildDialogSaves(); // rebuild the saves menu
 					});
 					tdDele.appendChild(tdDeleBtn);
 				} else {
@@ -242,7 +257,7 @@ var UISystem = {
 
 					tdDeleBtn = createButton("delete", null, "Delete", i, function (i) {
 						SaveSystem.delete(i);
-						UISystem.buildSaves();  // rebuild the saves menu
+						UISystem.buildDialogSaves(); // rebuild the saves menu
 					});
 					tdDele.appendChild(tdDeleBtn);
 				} else {
@@ -289,7 +304,7 @@ var UISystem = {
 			return el;
 		}
 
-		if (DEBUG) { console.log("[UISystem.buildSaves()]"); }
+		if (DEBUG) { console.log("[UISystem.buildDialogSaves()]"); }
 
 		var dialog  = UISystem._body,
 			list,
@@ -326,7 +341,7 @@ var UISystem = {
 			if (savesOK) {
 				list.appendChild(createActionItem("purge", null, "Purge Slots", function (evt) {
 					SaveSystem.purge();
-					UISystem.buildSaves();  // rebuild the saves menu
+					UISystem.buildDialogSaves(); // rebuild the saves menu
 				}));
 			}
 			btnBar.appendChild(list);
@@ -337,22 +352,24 @@ var UISystem = {
 			return false;
 		}
 	},
-	buildRewind : function () {
-		if (DEBUG) { console.log("[UISystem.buildRewind()]"); }
+	buildDialogRewind : function () {
+		if (DEBUG) { console.log("[UISystem.buildDialogRewind()]"); }
 
-		var dialog   = UISystem._body,
-			hasItems = false;
+		var dialog = UISystem._body,
+			list   = document.createElement("ul");
 
 		$(dialog)
 			.empty()
-			.addClass("rewind");
+			.addClass("dialog-list rewind")
+			.append(list);
 
-		for (var i = 0, len = state.length - 1; i < len; i++) {
+		for (var i = 0, iend = state.length - 1; i < iend; i++) {
 			var passage = tale.get(state.history[i].title);
 			if (passage && passage.tags.contains("bookmark")) {
-				var el = document.createElement("div");
-				el.classList.add("ui-close");
-				$(el).click(function () {
+				var item = document.createElement("li"),
+					link = document.createElement("a");
+				link.classList.add("ui-close");
+				$(link).click(function () {
 					var p = i;
 					if (config.historyMode === History.Modes.Session) {
 						return function () {
@@ -439,7 +456,7 @@ var UISystem = {
 							// display the passage
 							state.display(state.active.title, null, "replace");
 						};
-					} else {  // History.Modes.Hash
+					} else { // History.Modes.Hash
 						return function () {
 							if (DEBUG) { console.log("[rewind:click() @Hash]"); }
 
@@ -452,19 +469,21 @@ var UISystem = {
 						};
 					}
 				}());
-				el.innerHTML = passage.excerpt();
-				dialog.appendChild(el);
-				hasItems = true;
+				link.appendChild(document.createTextNode("Turn " + (i + 1) + ": " + passage.excerpt()));
+				item.appendChild(link);
+				list.appendChild(item);
 			}
 		}
-		if (!hasItems) {
-			var el = document.createElement("div");
-			el.innerHTML = "<i>No passages available</i>";
-			dialog.appendChild(el);
+		if (!list.hasChildNodes()) {
+			var item = document.createElement("li"),
+				link = document.createElement("a");
+			link.innerHTML = "<i>No rewind points available\u2026</i>";
+			item.appendChild(link);
+			list.appendChild(item);
 		}
 	},
-	buildRestart : function () {
-		if (DEBUG) { console.log("[UISystem.buildRestart()]"); }
+	buildDialogRestart : function () {
+		if (DEBUG) { console.log("[UISystem.buildDialogRestart()]"); }
 
 		var dialog = UISystem._body;
 
@@ -480,8 +499,8 @@ var UISystem = {
 
 		return true;
 	},
-	buildOptions : function () {
-		if (DEBUG) { console.log("[UISystem.buildOptions()]"); }
+	buildDialogOptions : function () {
+		if (DEBUG) { console.log("[UISystem.buildDialogOptions()]"); }
 
 		var dialog = UISystem._body;
 
@@ -492,18 +511,47 @@ var UISystem = {
 
 		return true;
 	},
-	buildShare : function () {
-		if (DEBUG) { console.log("[UISystem.buildShare()]"); }
+	buildDialogShare : function () {
+		if (DEBUG) { console.log("[UISystem.buildDialogShare()]"); }
 
 		var dialog = UISystem._body;
 
 		$(dialog)
 			.empty()
-			.addClass("share");
-		new Wikifier(dialog, tale.get("MenuShare").processText().trim());
-		$("br", dialog).remove();
+			.addClass("dialog-list share")
+			.append(UISystem.populateListFromPassage("MenuShare"));
+			//.find("a")
+			//	.addClass("ui-close");
 
 		return true;
+	},
+	populateListFromPassage : function (passage, list) {
+		if (list == null) { // use lazy equality
+			list = document.createElement("ul");
+		}
+		var temp = document.createDocumentFragment();
+		new Wikifier(temp, tale.get(passage).processText().trim());
+		if (temp.hasChildNodes()) {
+			var li = null;
+			while (temp.hasChildNodes()) {
+				var node = temp.firstChild;
+				if (node.nodeType !== 3 && (node.nodeType !== 1 || node.nodeName.toUpperCase() === "BR")) { // non-text, non-element, or <br>-element nodes
+					temp.removeChild(node);
+					if (li !== null) {
+						// forget the current list item
+						li = null;
+					}
+				} else { // text or non-<br>-element nodes
+					if (li === null) {
+						// create a new list item
+						li = document.createElement("li");
+						list.appendChild(li);
+					}
+					li.appendChild(node);
+				}
+			}
+		}
+		return list;
 	},
 	alert : function (message, options, closeFunc) {
 		var dialog = UISystem._body;
@@ -518,7 +566,7 @@ var UISystem = {
 	},
 	restart : function (options) {
 		// build the dialog
-		UISystem.buildRestart();
+		UISystem.buildDialogRestart();
 
 		// show the dialog
 		UISystem.show(options);
@@ -531,7 +579,7 @@ var UISystem = {
 			.empty()
 			.removeClass()
 			.addClass("dialog");
-		if (classNames != null) {  // use lazy equality
+		if (classNames != null) { // use lazy equality
 			$(UISystem._body).addClass(classNames);
 		}
 		return UISystem._body;
@@ -541,7 +589,7 @@ var UISystem = {
 	},
 	addClickHandler : function (target, options, startFunc, doneFunc, closeFunc) {
 		$(target).click(function (evt) {
-			evt.preventDefault();  // does not prevent bound events, only default actions (e.g. href links)
+			evt.preventDefault(); // does not prevent bound events, only default actions (e.g. href links)
 
 			// call the start function
 			if (typeof startFunc === "function") { startFunc(evt); }
@@ -594,7 +642,7 @@ var UISystem = {
 				bottom  : ""
 			})
 			.removeClass()
-			.empty();  // .empty() here will break static menus
+			.empty(); // .empty() here will break static menus
 		$(UISystem._closer)
 			.css({
 				display : "none",
