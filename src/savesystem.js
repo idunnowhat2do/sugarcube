@@ -6,8 +6,11 @@
 ** [SaveSystem API]
 ***********************************************************************************************************************/
 var SaveSystem = {
+	// data members
 	_bad : false,
 	_max : -1,
+
+	// static methods
 	init : function () {
 		function appendSlots(array, num) {
 			for (var i = 0; i < num; i++) {
