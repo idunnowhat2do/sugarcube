@@ -2,7 +2,7 @@
 /* Increase viewport utilization as its size decreases. */
 @media screen and (max-width: 1440px) {
 	#passages {
-		margin-right: 7%;
+		margin-right: 8%;
 	}
 }
 @media screen and (max-width: 1136px) {
@@ -15,45 +15,5 @@
 	}
 	#passages {
 		margin: 0;
-	}
-}
-@media screen and (max-width: 800px) {
-	body {
-		margin: 0;
-	}
-	#ui-bar {
-		position: relative;
-		top: 0;
-		left: 0;
-		width: auto;
-		height: auto;
-		margin: 0;
-		padding: 2.5% 3.5% 0;
-		border: none;
-		border-bottom: 1px solid #fff;
-	}
-	#ui-bar header, #ui-bar #story-caption, #ui-bar footer {
-		text-align: left;
-		width: 66%;
-	}
-	#ui-bar nav {
-		position: absolute;
-		top: 0;
-		right: 0;
-		margin: 2.5% 3.5% 0 0;
-	}
-	#ui-bar ul {
-		margin: 0;
-	}
-	#ui-bar li {
-		margin-bottom: 0.5em;
-	}
-	#ui-bar li#menu-story {
-		margin-bottom: 0.7em;
-		line-height: 0.9;
-	}
-	#passages {
-		width: auto;
-		margin: 2em 3.5% 3.5%;
 	}
 }

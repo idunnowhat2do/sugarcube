@@ -106,6 +106,7 @@ button:active {
 	margin-top: 3em;
 }
 #ui-bar ul {
+	margin: 1em 0;
 	padding: 0;
 	list-style: none;
 }
@@ -255,6 +256,32 @@ a.link-return:after {
 	padding: 0.4em 0.4em 0.5em;
 }
 
+/* List-based dialog styling (primarily for the Rewind & Share menus) */
+#ui-body.dialog-list ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+#ui-body.dialog-list li {
+	margin: 0;
+}
+#ui-body.dialog-list li:nth-child(even) {
+	background-color: #444;
+}
+#ui-body.dialog-list li a {
+	display: block;
+	padding: 0.25em 0.75em;
+	color: #fff;
+	font-weight: normal;
+	text-decoration: none;
+}
+#ui-body.dialog-list li a:hover {
+	background-color: #47b;
+}
+#ui-body.dialog-list li a:active {
+	background-color: #f70;
+}
+
 /* Saves menu styling */
 #ui-body.saves table {
 	border-spacing: 0;
@@ -296,28 +323,6 @@ a.link-return:after {
 }
 #saves-import-file {
 	margin: 0 6px 6px;
-}
-
-/* Rewind & Share menu styling */
-#ui-body.share > a {
-	display: block;
-	color: #fff;
-	font-weight: normal;
-	text-decoration: none;
-}
-#ui-body.rewind div, #ui-body.share div, #ui-body.share a {
-	padding: 0.15em 0.75em;
-}
-#ui-body.rewind div:nth-child(even), #ui-body.share div:nth-child(even), #ui-body.share a:nth-child(even) {
-	background-color: #444;
-}
-#ui-body.rewind div:hover, #ui-body.share div:hover, #ui-body.share a:hover {
-	cursor: pointer;
-	color: #fff;
-	background-color: #47b;
-}
-#ui-body.rewind div:active, #ui-body.share div:active, #ui-body.share a:active {
-	background-color: #47b;
 }
 
 /* Options menu styling */
@@ -390,7 +395,7 @@ a.link-return:after {
 	padding-left: 1.5em;
 }
 #passages > .passage table {
-	margin: 0.8em 1.0em;
+	margin: 1em 0;
 	border-collapse: collapse;
 	font-size: 100%;
 }

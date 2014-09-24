@@ -1,0 +1,42 @@
+
+/* Handle very narrow viewports. */
+@media screen and (max-width: 800px) {
+	body {
+		margin: 0;
+	}
+	#ui-bar {
+		position: relative;
+		top: 0;
+		left: 0;
+		width: auto;
+		height: auto;
+		margin: 0;
+		padding: 2.5% 3.5% 0;
+		border: none;
+		border-bottom: 1px solid #fff;
+	}
+	#ui-bar header, #story-caption, #ui-bar footer {
+		text-align: left;
+		width: 66%;
+	}
+	#ui-bar nav {
+		position: absolute;
+		top: 0;
+		right: 0;
+		margin: 2.5% 3.5% 0 0;
+	}
+	#ui-bar ul {
+		margin: 0;
+	}
+	#ui-bar li {
+		margin-bottom: 0.5em;
+	}
+	#ui-bar #menu-story {
+		margin-bottom: 0.7em;
+		line-height: 0.85;
+	}
+	#passages {
+		width: auto;
+		margin: 2em 3.5% 3.5%;
+	}
+}
