@@ -35,7 +35,7 @@ function lastVisited(/* variadic */) {
 }
 
 /**
- * Returns the title of the previous passage, at the optional offset, or an empty string, if there is no such passage.
+ * Returns the title of a previous passage, either the directly preceding one or the one at the optional offset, or an empty string, if there is no such passage
  */
 function previous(offset) {
 	if (arguments.length === 0) {

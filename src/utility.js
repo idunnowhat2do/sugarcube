@@ -48,7 +48,7 @@ function clone(orig) {
 		copy = proto ? Object.create(proto) : orig.constructor.prototype;
 	}
 
-	// Duplicate the original's own properties; this allows cloning of expando properties on non-generic objects as well
+	// Duplicate the original's own properties; this also handles expando properties on non-generic objects
 	Object.keys(orig).forEach(function (name) {
 		var descriptor = Object.getOwnPropertyDescriptor(orig, name);
 		if (typeof descriptor["value"] === "object" && descriptor["value"] !== null) {
@@ -126,7 +126,9 @@ function setPageElement(id, titles, defaultText) {
 	var el = (typeof id === "object") ? id : document.getElementById(id);
 	if (el) {
 		removeChildren(el);
-		if (!Array.isArray(titles)) { titles = [ titles ]; }
+		if (!Array.isArray(titles)) {
+			titles = [ titles ];
+		}
 		for (var i = 0; i < titles.length; i++) {
 			if (tale.has(titles[i])) {
 				new Wikifier(el, tale.get(titles[i]).processText().trim());
