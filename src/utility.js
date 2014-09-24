@@ -124,18 +124,23 @@ function removeElement(node) {
  */
 function setPageElement(id, titles, defaultText) {
 	var el = (typeof id === "object") ? id : document.getElementById(id);
-	if (el) {
-		removeChildren(el);
-		if (!Array.isArray(titles)) {
-			titles = [ titles ];
+	if (el == null) { // use lazy equality
+		return null;
+	}
+
+	removeChildren(el);
+	if (!Array.isArray(titles)) {
+		titles = [ titles ];
+	}
+	for (var i = 0, iend = titles.length; i < iend; i++) {
+		if (tale.has(titles[i])) {
+			new Wikifier(el, tale.get(titles[i]).processText().trim());
+			return el;
 		}
-		for (var i = 0; i < titles.length; i++) {
-			if (tale.has(titles[i])) {
-				new Wikifier(el, tale.get(titles[i]).processText().trim());
-				return el;
-			}
-		}
-		if (defaultText != null && defaultText !== "") { // use lazy equality on null check
+	}
+	if (defaultText != null) { // use lazy equality
+		defaultText = defaultText.trim();
+		if (defaultText !== "") {
 			new Wikifier(el, defaultText);
 		}
 	}
@@ -146,10 +151,10 @@ function setPageElement(id, titles, defaultText) {
  * Appends a new <style> element to the document's <head>
  */
 function addStyle(css) {
-	var style = document.head.querySelector("#style-user");
+	var style = document.getElementById("style-story");
 	if (style === null) {
 		style      = document.createElement("style");
-		style.id   = "style-user";
+		style.id   = "style-story";
 		style.type = "text/css";
 		document.head.appendChild(style);
 	}
