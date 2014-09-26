@@ -29,6 +29,11 @@ a.link-broken {
 	font-weight: bold;
 	text-decoration: none;
 }
+hr {
+	height: 1px;
+	border: none;
+	background-color: #fff;
+}
 input, textarea {
 	color: #fff;
 	background-color: #444;
@@ -401,9 +406,4 @@ a.link-return:after {
 }
 #passages > .passage th, #passages > .passage td, #passages > .passage tr, #passages > .passage caption {
 	padding: 3px;
-}
-#passages > .passage hr {
-	height: 1px;
-	border: none;
-	background-color: #fff;
 }
