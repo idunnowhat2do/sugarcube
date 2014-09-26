@@ -26,14 +26,14 @@ function clone(orig) {
 		return orig;
 	}
 
-	// Honor native clone methods
+	// honor native clone methods
 	if (typeof orig.clone === "function") {
 		return orig.clone(true);
 	} else if (orig.nodeType && typeof orig.cloneNode === "function") {
 		return orig.cloneNode(true);
 	}
 
-	// Create a copy of the original
+	// create a copy of the original
 	var type = Object.prototype.toString.call(orig),
 		copy;
 	if (type === "[object Date]") {
@@ -48,13 +48,11 @@ function clone(orig) {
 		copy = proto ? Object.create(proto) : orig.constructor.prototype;
 	}
 
-	// Duplicate the original's own properties; this also handles expando properties on non-generic objects
+	// duplicate the original's own properties; this also handles expando properties on non-generic objects
 	Object.keys(orig).forEach(function (name) {
-		var descriptor = Object.getOwnPropertyDescriptor(orig, name);
-		if (typeof descriptor["value"] === "object" && descriptor["value"] !== null) {
-			descriptor["value"] = clone(descriptor["value"]);
-		}
-		Object.defineProperty(copy, name, descriptor);
+		// this does not preserve ES5 property attributes, however, neither does the delta coding and serialization
+		// code, so it's not really an issue
+		copy[name] = clone(orig[name]);
 	});
 
 	return copy;
