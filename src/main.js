@@ -218,14 +218,13 @@ config.errors = {
 // adjust these based on the specific browser used
 config.hasFileAPI = has.fileAPI = (has.fileAPI && !browser.isMobile.any() && (!browser.isOpera || browser.operaVersion >= 15));
 
-var formatter = null, // Wikifier formatters
-	macros    = {},   // macros manager
-	tale      = {},   // story manager
-	state     = {},   // history manager
-	storage   = {},   // persistant storage manager
-	session   = {},   // session manager
-	options   = {},   // options variable store
-	setup     = {};   // author setup variable store
+var macros  = {}, // macros manager
+	tale    = {}, // story manager
+	state   = {}, // history manager
+	storage = {}, // persistant storage manager
+	session = {}, // session manager
+	options = {}, // options variable store
+	setup   = {}; // author setup variable store
 
 var testPlay   = "START_AT", // Twine 1.4+ "Test Play From Here" feature variable
 	prerender  = {},         // Twine 1.4+ pre-render task callbacks
@@ -244,10 +243,9 @@ $(document).ready(function () {
 	 * when mucking around with it.
 	 */
 
-	// instantiate the wikifier formatters and macro objects, as well as the standard macro library
-	// these must be done before any passages are processed
-	formatter = new WikiFormatter(Wikifier.formatters);
-	macros    = new Macros();
+	// instantiate the macro object and standard macro library, these must be
+	// done before any passages are processed
+	macros = new Macros();
 	addStandardMacros();
 
 	// instantiate the tale, state, storage, and session objects

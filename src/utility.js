@@ -158,7 +158,7 @@ function addStyle(css) {
 	}
 
 	// check for Twine 1.4 Base64 image passage transclusion
-	var matchRe = new RegExp(formatter.byName["image"].lookaheadRegExp.source, "gm"),
+	var matchRe = new RegExp(Wikifier.imageFormatter.lookaheadRegExp.source, "gm"),
 		parseRe = new RegExp(Wikifier.textPrimitives.image);
 	if (matchRe.test(css)) {
 		css = css.replace(matchRe, function(wikiImage) {

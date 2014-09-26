@@ -5,22 +5,10 @@
 /***********************************************************************************************************************
 ** [Initialization]
 ***********************************************************************************************************************/
-function WikiFormatter(formatters) {
-	this.formatters = [];
-	this.byName     = {};
-	var pattern     = [];
-
-	for (var i = 0; i < formatters.length; i++) {
-		pattern.push("(" + formatters[i].match + ")");
-		this.formatters.push(formatters[i]);
-		this.byName[formatters[i].name] = this.formatters[this.formatters.length - 1];
-	}
-
-	this.formatterRegExp = new RegExp(pattern.join("|"), "gm");
-}
+var _wikifierFormatterCache; // the Wikifier formatter object cache
 
 function Wikifier(place, source) {
-	this.formatter = formatter; // formatter comes from the top-level scope of the module
+	this.formatter = _wikifierFormatterCache || Wikifier.compileFormatters();
 	this.output    = (place != null) ? place : document.createElement("div"); // use lazy equality
 	this.source    = source;
 	this.nextMatch = 0;
@@ -105,7 +93,7 @@ Wikifier.prototype.subWikify = function (output, terminator, terminatorIgnoreCas
 
 	if (runtime.temp.break == null) { // use lazy equality
 		// Output any text after the last match
-		if ((this.nextMatch < this.source.length)) {
+		if (this.nextMatch < this.source.length) {
 			this.outputText(this.output, this.nextMatch, this.source.length);
 			this.nextMatch = this.source.length;
 		}
@@ -141,6 +129,22 @@ Wikifier.prototype.rawArgs = function () {
 Wikifier.prototype.fullArgs = function () {
 	return Wikifier.parse(this.rawArgs());
 };
+
+/**
+ * Returns a compiled Wikifier formatter object
+ */
+Wikifier.compileFormatters = function () {
+	console.log("[Wikifier.compileFormatters]");
+	var formatters = Wikifier.formatters,
+		pattern    = [];
+	for (var i = 0, iend = formatters.length; i < iend; i++) {
+		pattern.push("(" + formatters[i].match + ")");
+	}
+	return _wikifierFormatterCache = {
+		"formatters"      : formatters,
+		"formatterRegExp" : new RegExp(pattern.join("|"), "gm")
+	};
+}
 
 /**
  * Returns the passed string with all Twine/Twee operators converted to their JavaScript counterparts
@@ -342,7 +346,9 @@ Wikifier.createInternalLink = function (place, passage, text, callback) {
 			el.classList.add("link-broken");
 		}
 		$(el).click(function () {
-			if (typeof callback === "function") { callback(); }
+			if (typeof callback === "function") {
+				callback();
+			}
 			state.display(passage, el);
 		});
 	}
@@ -503,9 +509,8 @@ Wikifier.formatterHelpers = {
 /**
  * Setup the wiki formatters
  */
-Wikifier.formatters =
-[ // Begin formatters
-
+Wikifier.formatters = [
+// Begin formatters
 {
 	name: "table",
 	match: "^\\|(?:[^\\n]*)\\|(?:[fhck]?)$",
@@ -784,7 +789,7 @@ Wikifier.formatters =
 	}
 },
 
-{
+(Wikifier.imageFormatter = {
 	name: "image",
 	match: "\\[[<>]?[Ii][Mm][Gg]\\[",
 	lookaheadRegExp: /(\[[<>]?[Ii][Mm][Gg]\[(?:\s|\S)*?\]\])/gm,
@@ -834,7 +839,7 @@ Wikifier.formatters =
 			}
 		}
 	}
-},
+}),
 
 {
 	name: "macro",
@@ -1124,9 +1129,6 @@ Wikifier.formatters =
 					//        We could use eval("077") instead, which does correctly yield 63, however, it's probably far
 					//        more likely that the average Twine/Twee author would expect "077" to yield 77 rather than 63.
 					//        So, we cater to author expectation and use Number().
-					//
-					//        Besides, octal literals are browser extensions, which aren't part of the ECMAScript standard,
-					//        and are considered deprecated in most (all?) browsers anyway.
 					arg = Number(arg);
 				}
 			}
@@ -1419,8 +1421,8 @@ Wikifier.formatters =
 		}
 	}
 }
-
-]; // End formatters
+// End formatters
+];
 
 
 /***********************************************************************************************************************
