@@ -681,29 +681,32 @@ History.unmarshal = function (stateObj) {
 	state.history = clone(stateObj.history);
 
 	// restore the window history states (in order)
-	if (config.historyMode !== History.Modes.Hash) {
+	if (config.historyMode !== History.Modes.Hash && !config.disableHistoryControls) {
 		for (var i = 0, iend = state.history.length; i < iend; i++) {
 			if (DEBUG) { console.log("    > loading state into window history: " + i + " (" + state.history[i].title + ")"); }
 
 			// load the state into the window history
-			if (!config.disableHistoryControls) {
-				var windowState,
-					windowTitle = (config.displayPassageTitles && state.history[i].title !== config.startPassage)
-						? tale.title + ": " + state.history[i].title
-						: tale.title;
-				switch (config.historyMode) {
-				case History.Modes.Session:
-					windowState = { suid : state.suid, sidx : state.history[i].sidx };
-					break;
-				case History.Modes.Window:
-					windowState = { delta : state.getDeltaFromHistory(i + 1) };
-					if (state.hasOwnProperty("prng")) {
-						windowState.rseed = state.prng.seed;
-					}
-					break;
+			var windowState,
+				windowTitle = (config.displayPassageTitles && state.history[i].title !== config.startPassage)
+					? tale.title + ": " + state.history[i].title
+					: tale.title;
+			switch (config.historyMode) {
+			case History.Modes.Session:
+				windowState = {
+					suid : state.suid,
+					sidx : state.history[i].sidx
+				};
+				break;
+			case History.Modes.Window:
+				windowState = {
+					delta : state.getDeltaFromHistory(i + 1)
+				};
+				if (state.hasOwnProperty("prng")) {
+					windowState.rseed = state.prng.seed;
 				}
-				History.addWindowState(windowState, windowTitle);
+				break;
 			}
+			History.addWindowState(windowState, windowTitle);
 		}
 	}
 
