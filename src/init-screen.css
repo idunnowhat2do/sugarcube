@@ -1,11 +1,9 @@
 
-body > #init-screen { display: none; z-index: 100000; position: fixed; top: 0px; left: 0px; height: 100%; width: 100%; color: #fff; background-color: #111; text-align: center; }
-body > #init-screen p { display: none; width: 75%; margin: 2em auto; font-family: verdana,"dejavu sans",tahoma,arial,sans-serif; font-size: 2em; font-weight: bold; font-style: italic; }
-html.init-no-js body > #init-screen, html.init-lacking body > #init-screen, html.init-loading body > #init-screen { display: block; }
-html.init-no-js body > #init-screen > #init-no-js { display: block; }
-html.init-lacking body > #init-screen > #init-lacking { display: block; }
-html.init-loading body > #init-screen > #init-loading { display: block; }
-html.init-no-js body > #ui-bar, html.init-no-js body > #passages,
-html.init-lacking body > #ui-bar, html.init-lacking body > #passages,
-html.init-loading body > #ui-bar, html.init-loading body > #passages { display: none; }
-noscript { color: red; font-size: 210%; font-weight: bold; }
+#init-screen { display: none; z-index: 100000; position: fixed; top: 0px; left: 0px; height: 100%; width: 100%; color: #fff; background-color: #111; text-align: center; }
+#init-screen p { display: none; width: 75%; margin: 2em auto; font-family: verdana,"dejavu sans",tahoma,arial,sans-serif; font-size: 28px; font-weight: bold; font-style: italic; }
+html.init-no-js #init-screen, html.init-lacking #init-screen, html.init-loading #init-screen { display: block; }
+html.init-no-js #init-no-js { display: block; }
+html.init-lacking #init-lacking { display: block; }
+html.init-loading #init-loading { display: block; }
+html.init-loading #ui-bar, html.init-loading #passages { display: none; }
+noscript { color: red; font-weight: bold; }

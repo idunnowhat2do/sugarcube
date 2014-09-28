@@ -101,24 +101,24 @@ button:active {
 	background-color: #222;
 	border-right: 1px solid #fff;
 }
-#ui-bar header, #ui-bar nav, #ui-bar footer {
+#ui-bar header, #menu, #ui-bar footer {
 	text-align: right;
 }
-#ui-bar header, #ui-bar nav {
+#ui-bar header, #menu {
 	font-weight: bold;
 }
-#ui-bar nav, #ui-bar footer {
+#menu, #ui-bar footer {
 	margin-top: 3em;
 }
-#ui-bar ul {
+#menu ul {
 	margin: 1em 0;
 	padding: 0;
 	list-style: none;
 }
-#ui-bar li {
+#menu li {
 	margin-bottom: 1em;
 }
-#ui-bar li a {
+#menu li a {
 	text-decoration: none;
 }
 
