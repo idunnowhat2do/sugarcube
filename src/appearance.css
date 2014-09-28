@@ -36,7 +36,7 @@ hr {
 }
 input, textarea {
 	color: #fff;
-	background-color: #444;
+	background-color: #333;
 	border: 1px solid #fff;
 }
 input[type="text"], textarea {
@@ -222,19 +222,13 @@ a.link-return:after {
 }
 #ui-body {
 	opacity: 1;
-	color: #fff;
-	background-color: #333;
+	background-color: #222;
 	border: 1px solid #fff;
 	text-align: left;
 	line-height: 2;
 }
 #ui-body div {
 	padding: 0.2em;
-}
-#ui-body hr {
-	height: 1px;
-	border: none;
-	background-color: #fff;
 }
 
 /* Default menu button styling */
@@ -271,7 +265,7 @@ a.link-return:after {
 	margin: 0;
 }
 #ui-body.dialog-list li:nth-child(even) {
-	background-color: #444;
+	background-color: #333;
 }
 #ui-body.dialog-list li a {
 	display: block;
@@ -294,7 +288,7 @@ a.link-return:after {
 	width: 100%;
 }
 #ui-body.saves tr:nth-child(even) {
-	background-color: #444;
+	background-color: #333;
 }
 #ui-body.saves td {
 	padding: 0.33em 0.33em;
