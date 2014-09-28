@@ -306,496 +306,564 @@ function scrollWindowTo(el, increment) {
 /***********************************************************************************************************************
 ** [Util Object Static Methods]
 ***********************************************************************************************************************/
-var Util = {
+var Util = Object.defineProperties({}, {
 
 	/**
 	 * Backup Math.random, in case it's replaced later
 	 */
-	random : Math.random,
+	random : {
+		value : Math.random
+	},
 
 	/**
 	 * Returns whether the passed value is numeric
 	 */
-	isNumeric : function (obj) {
-		switch (typeof obj) {
-		case "number":
-			/* noop */
-			break;
-		case "string":
-			obj = Number(obj);
-			break;
-		default:
-			return false;
+	isNumeric : {
+		value : function (obj) {
+			switch (typeof obj) {
+			case "number":
+				/* noop */
+				break;
+			case "string":
+				obj = Number(obj);
+				break;
+			default:
+				return false;
+			}
+			return isFinite(obj) && !isNaN(obj);
 		}
-		return isFinite(obj) && !isNaN(obj);
 	},
 
 	/**
 	 * Returns whether the passed value is boolean-ish
 	 */
-	isBoolean : function (obj) {
-		return typeof obj === "boolean" || (typeof obj === "string" && (obj === "true" || obj === "false"));
+	isBoolean : {
+		value : function (obj) {
+			return typeof obj === "boolean" || (typeof obj === "string" && (obj === "true" || obj === "false"));
+		}
 	},
 
 	/**
 	 * Returns a lowercased and underscore encoded version of the passed string
 	 */
-	slugify : function (str) {
-		return str
-			.trim()
-			.replace(/[^\w\s\u2013\u2014-]+/g, '')
-			.replace(/[_\s\u2013\u2014-]+/g, '-')
-			.toLocaleLowerCase();
+	slugify : {
+		value : function (str) {
+			return str
+				.trim()
+				.replace(/[^\w\s\u2013\u2014-]+/g, '')
+				.replace(/[_\s\u2013\u2014-]+/g, '-')
+				.toLocaleLowerCase();
+		}
 	},
 
 	/**
 	 * Returns the evaluation of the passed expression, throwing if there were errors
 	 */
-	evalExpression : function (expression) {
-		"use strict";
-		// the parens are to protect object literals from being confused with block statements
-		return eval("(" + expression + ")");
+	evalExpression : {
+		value : function (expression) {
+			"use strict";
+			// the parens are to protect object literals from being confused with block statements
+			return eval("(" + expression + ")");
+		}
 	},
 
 	/**
 	 * Evaluates the passed statements, throwing if there were errors
 	 */
-	evalStatements : function (statements) {
-		"use strict";
-		// the enclosing anonymous function is to isolate the passed code within its own scope
-		eval("(function(){" + statements + "\n}());");
-		return true;
+	evalStatements : {
+		value : function (statements) {
+			"use strict";
+			// the enclosing anonymous function is to isolate the passed code within its own scope
+			eval("(function(){" + statements + "\n}());");
+			return true;
+		}
 	},
 
 	/**
 	 * Diff operations enumeration
 	 */
-	DiffOp : Object.freeze({
-		Delete      : 0,
-		SpliceArray : 1,
-		Copy        : 2,
-		CopyDate    : 3
-	}),
+	DiffOp : {
+		value : Object.freeze({
+			Delete      : 0,
+			SpliceArray : 1,
+			Copy        : 2,
+			CopyDate    : 3
+		})
+	},
 
 	/**
 	 * Returns a patch object containing the differences between the original and the destination objects
 	 */
-	diff : function (orig, dest) /* diff object */ {
-		"use strict";
-		var keys    = [].concat(Object.keys(orig), Object.keys(dest))
-				        .sort().filter(function (v, i, a) { return (i === 0 || a[i-1] != v); }),
-			diff    = {},
-			isArray = Array.isArray(orig),
-			aOpRef;
-		for (var i = 0, klen = keys.length; i < klen; i++) {
-			var p     = keys[i],
-				origP = orig[p],
-				destP = dest[p];
-			if (orig.hasOwnProperty(p)) {
-				if (dest.hasOwnProperty(p)) {
-					// key exists in both
-					if (origP === destP) {
-						// values are exactly the same, so do nothing
-						continue;
-					}
-					if (typeof origP === typeof destP) {
-						// values are of the same basic type
-						if (typeof origP === "function") {
-							// values are functions
-							/* diff[p] = [ Util.DiffOp.Copy, destP ]; */
-							if (origP.toString() !== destP.toString()) {
+	diff : {
+		value : function (orig, dest) /* diff object */ {
+			"use strict";
+			var keys    = [].concat(Object.keys(orig), Object.keys(dest))
+					        .sort().filter(function (v, i, a) { return (i === 0 || a[i-1] != v); }),
+				diff    = {},
+				isArray = Array.isArray(orig),
+				aOpRef;
+			for (var i = 0, klen = keys.length; i < klen; i++) {
+				var p     = keys[i],
+					origP = orig[p],
+					destP = dest[p];
+				if (orig.hasOwnProperty(p)) {
+					if (dest.hasOwnProperty(p)) {
+						// key exists in both
+						if (origP === destP) {
+							// values are exactly the same, so do nothing
+							continue;
+						}
+						if (typeof origP === typeof destP) {
+							// values are of the same basic type
+							if (typeof origP === "function") {
+								// values are functions
+								/* diff[p] = [ Util.DiffOp.Copy, destP ]; */
+								if (origP.toString() !== destP.toString()) {
+									diff[p] = [ Util.DiffOp.Copy, destP ];
+								}
+							} else if (typeof origP !== "object" || origP === null) {
+								// values are scalars or null
 								diff[p] = [ Util.DiffOp.Copy, destP ];
-							}
-						} else if (typeof origP !== "object" || origP === null) {
-							// values are scalars or null
-							diff[p] = [ Util.DiffOp.Copy, destP ];
-						} else {
-							// values are objects
-							var origPType = Object.prototype.toString.call(origP),
-								destPType = Object.prototype.toString.call(destP);
-							if (origPType === destPType) {
-								// values are objects of the same prototype
-								if (origPType === "[object Date]") {
-									// special case: Date object
-									if ((+origP) !== (+destP)) {
-										diff[p] = [ Util.DiffOp.CopyDate, +destP ];
-									}
-								} else if (origPType === "[object RegExp]") {
-									// special case: RegExp object
-									if (origP.toString() !== destP.toString()) {
-										diff[p] = [ Util.DiffOp.Copy, clone(destP) ];
+							} else {
+								// values are objects
+								var origPType = Object.prototype.toString.call(origP),
+									destPType = Object.prototype.toString.call(destP);
+								if (origPType === destPType) {
+									// values are objects of the same prototype
+									if (origPType === "[object Date]") {
+										// special case: Date object
+										if ((+origP) !== (+destP)) {
+											diff[p] = [ Util.DiffOp.CopyDate, +destP ];
+										}
+									} else if (origPType === "[object RegExp]") {
+										// special case: RegExp object
+										if (origP.toString() !== destP.toString()) {
+											diff[p] = [ Util.DiffOp.Copy, clone(destP) ];
+										}
+									} else {
+										var recurse = Util.diff(origP, destP);
+										if (recurse !== null) {
+											diff[p] = recurse;
+										}
 									}
 								} else {
-									var recurse = Util.diff(origP, destP);
-									if (recurse !== null) {
-										diff[p] = recurse;
-									}
+									// values are objects of different prototypes
+									diff[p] = [ Util.DiffOp.Copy, clone(destP) ];
 								}
-							} else {
-								// values are objects of different prototypes
-								diff[p] = [ Util.DiffOp.Copy, clone(destP) ];
 							}
+						} else {
+							// values are of different types
+							diff[p] = [ Util.DiffOp.Copy, (typeof destP !== "object" || destP === null) ? destP : clone(destP) ];
 						}
 					} else {
-						// values are of different types
-						diff[p] = [ Util.DiffOp.Copy, (typeof destP !== "object" || destP === null) ? destP : clone(destP) ];
+						// key only exists in orig
+						if (isArray && Util.isNumeric(p)) {
+							var np = +p;
+							if (!aOpRef) {
+								aOpRef = "";
+								do {
+									aOpRef += "~";
+								} while (keys.some(function (v) { return v === this.val; }, { val: aOpRef }));
+								diff[aOpRef] = [ Util.DiffOp.SpliceArray, np, np ];
+							}
+							if (np < diff[aOpRef][1]) {
+								diff[aOpRef][1] = np;
+							}
+							if (np > diff[aOpRef][2]) {
+								diff[aOpRef][2] = np;
+							}
+						} else {
+							diff[p] = Util.DiffOp.Delete;
+						}
 					}
 				} else {
-					// key only exists in orig
-					if (isArray && Util.isNumeric(p)) {
-						var np = +p;
-						if (!aOpRef) {
-							aOpRef = "";
-							do {
-								aOpRef += "~";
-							} while (keys.some(function (v) { return v === this.val; }, { val: aOpRef }));
-							diff[aOpRef] = [ Util.DiffOp.SpliceArray, np, np ];
-						}
-						if (np < diff[aOpRef][1]) {
-							diff[aOpRef][1] = np;
-						}
-						if (np > diff[aOpRef][2]) {
-							diff[aOpRef][2] = np;
-						}
-					} else {
-						diff[p] = Util.DiffOp.Delete;
-					}
+					// key only exists in dest
+					diff[p] = [ Util.DiffOp.Copy, (typeof destP !== "object" || destP === null) ? destP : clone(destP) ];
 				}
-			} else {
-				// key only exists in dest
-				diff[p] = [ Util.DiffOp.Copy, (typeof destP !== "object" || destP === null) ? destP : clone(destP) ];
 			}
+			return (Object.keys(diff).length !== 0) ? diff : null;
 		}
-		return (Object.keys(diff).length !== 0) ? diff : null;
 	},
 
 	/**
 	 * Returns an object resulting from updating the original object with the difference object
 	 */
-	patch : function (orig, diff) /* patched object */ {
-		"use strict";
-		var keys    = Object.keys(diff || {}),
-			patched = clone(orig);
-		for (var i = 0, klen = keys.length; i < klen; i++) {
-			var p     = keys[i],
-				diffP = diff[p];
-			if (diffP === Util.DiffOp.Delete) {
-				delete patched[p];
-			} else if (Array.isArray(diffP)) {
-				switch (diffP[0]) {
-				case Util.DiffOp.SpliceArray:
-					patched.splice(diffP[1], 1 + (diffP[2] - diffP[1]));
-					break;
-				case Util.DiffOp.Copy:
-					patched[p] = clone(diffP[1]);
-					break;
-				case Util.DiffOp.CopyDate:
-					patched[p] = new Date(diffP[1]);
-					break;
+	patch : {
+		value : function (orig, diff) /* patched object */ {
+			"use strict";
+			var keys    = Object.keys(diff || {}),
+				patched = clone(orig);
+			for (var i = 0, klen = keys.length; i < klen; i++) {
+				var p     = keys[i],
+					diffP = diff[p];
+				if (diffP === Util.DiffOp.Delete) {
+					delete patched[p];
+				} else if (Array.isArray(diffP)) {
+					switch (diffP[0]) {
+					case Util.DiffOp.SpliceArray:
+						patched.splice(diffP[1], 1 + (diffP[2] - diffP[1]));
+						break;
+					case Util.DiffOp.Copy:
+						patched[p] = clone(diffP[1]);
+						break;
+					case Util.DiffOp.CopyDate:
+						patched[p] = new Date(diffP[1]);
+						break;
+					}
+				} else {
+					patched[p] = Util.patch(patched[p], diffP);
 				}
-			} else {
-				patched[p] = Util.patch(patched[p], diffP);
 			}
+			return patched;
 		}
-		return patched;
 	},
 
 	/**
 	 * [DEPRECATED] Returns a JSON-based serialization of the passed object
 	 *   n.b. Just a legacy alias for JSON.stringify now, see 'intrinsics.js' for the new serialization code
 	 */
-	serialize : JSON.stringify,
+	serialize : {
+		value : JSON.stringify
+	},
 
 	/**
 	 * [DEPRECATED] Returns a copy of the original object from the passed JSON-based serialization
 	 *   n.b. Just a legacy alias for JSON.parse now, see 'intrinsics.js' for the new serialization code
 	 */
-	deserialize : JSON.parse,
+	deserialize : {
+		value : JSON.parse
+	},
 
 	/**
 	 * [DEPRECATED] Returns a v4 Universally Unique IDentifier (UUID), a.k.a. Globally Unique IDentifier (GUID)
 	 *   n.b. Just a legacy alias for UUID.generate now
 	 */
-	generateUuid : UUID.generate
+	generateUuid : {
+		value : UUID.generate
+	}
 
-};
+});
 
 
 /***********************************************************************************************************************
 ** [Seedable PRNG (wrapper for seedrandom.js)]
 ***********************************************************************************************************************/
+// Setup the SeedablePRNG constructor
 function SeedablePRNG(seed, useEntropy) {
-	return new Math.seedrandom(seed, useEntropy, function(prng, seed) {
+	Object.defineProperties(this, new Math.seedrandom(seed, useEntropy, function(prng, seed) {
 		return {
-			random : function () { this.count++; return this._prng(); },
-			_prng  : prng,
-			seed   : seed,
-			count  : 0
+			_prng : {
+				value : prng
+			},
+			seed : {
+				value : seed
+			},
+			count : {
+				writable : true,
+				value    : 0
+			},
+			random : {
+				value : function () {
+					this.count++;
+					return this._prng();
+				}
+			}
 		};
-	});
+	}));
 }
 
-SeedablePRNG.marshal = function (prng) {
-	if (!prng || !prng.hasOwnProperty("seed") || !prng.hasOwnProperty("count")) {
-		throw new Error("PRNG is missing required data");
+// Setup the SeedablePRNG static methods
+Object.defineProperties(SeedablePRNG, {
+	marshal : {
+		value : function (prng) {
+			if (!prng || !prng.hasOwnProperty("seed") || !prng.hasOwnProperty("count")) {
+				throw new Error("PRNG is missing required data");
+			}
+
+			return {
+				seed  : prng.seed,
+				count : prng.count
+			};
+		}
+	},
+
+	unmarshal : {
+		value : function (prngObj) {
+			if (!prngObj || !prngObj.hasOwnProperty("seed") || !prngObj.hasOwnProperty("count")) {
+				throw new Error("PRNG object is missing required data");
+			}
+
+			// create a new PRNG using the original seed
+			var prng = new SeedablePRNG(prngObj.seed, false);
+
+			// pull values until the new PRNG is in sync with the original
+			for (var i = 0, iend = prngObj.count; i < iend; i++) {
+				prng.random();
+			}
+			return prng;
+		}
 	}
-
-	return { seed: prng.seed, count: prng.count };
-};
-
-SeedablePRNG.unmarshal = function (prngObj) {
-	if (!prngObj || !prngObj.hasOwnProperty("seed") || !prngObj.hasOwnProperty("count")) {
-		throw new Error("PRNG object is missing required data");
-	}
-
-	// create a new PRNG using the original seed
-	var prng = new SeedablePRNG(prngObj.seed, false);
-
-	// pull values until the new PRNG is in sync with the original
-	for (var i = 0, iend = prngObj.count; i < iend; i++) {
-		prng.random();
-	}
-
-	return prng;
-};
+});
 
 
 /***********************************************************************************************************************
 ** [Storage Management]
 ***********************************************************************************************************************/
+// Setup the KeyValueStore constructor
 function KeyValueStore(storeName, storePrefix) {
-	this.store = null;
+	var _store = null;
 	switch (storeName) {
 	case "cookie":
-		this.name = "cookie";
+		/* noop */
 		break;
 	case "localStorage":
-		this.name = storeName;
 		if (has.localStorage) {
-			this.store = window.localStorage;
+			_store = window.localStorage;
 		}
 		break;
 	case "sessionStorage":
-		this.name = storeName;
 		if (has.sessionStorage) {
-			this.store = window.sessionStorage;
+			_store = window.sessionStorage;
 		}
 		break;
 	default:
 		throw new Error("unknown storage type");
 		break;
 	}
-	this.prefix = storePrefix + ".";
+	Object.defineProperties(this, {
+		_store : {
+			value : _store
+		},
+		name : {
+			value : storeName
+		},
+		prefix : {
+			value : storePrefix + "."
+		}
+	});
 }
 
-KeyValueStore.prototype.setItem = function (sKey, sValue, quiet) {
-	if (!sKey) {
-		return false;
-	}
-
-	var oKey = sKey;
-
-	sKey = this.prefix + sKey;
-	sValue = JSON.stringify(sValue);
-
-	if (this.store) {
-		try {
-			sValue = LZString.compressToUTF16(sValue);
-			this.store.setItem(sKey, sValue);
-		} catch (e) {
-			/*
-			 * Ideally, we could simply do something either like:
-			 *     e.code === 22
-			 * Or, preferably, like this:
-			 *     e.code === DOMException.QUOTA_EXCEEDED_ERR
-			 * However, both of those are browser convention, not part of the standard,
-			 * and are not supported in all browsers.  So, we have to resort to pattern
-			 * matching the damn name.  I hate web standards developers so much.
-			 */
-			if (!quiet) {
-				technicalAlert(null, 'unable to store key "' + oKey + '"; '
-					+ (/quota_?(?:exceeded|reached)/i.test(e.name) ? this.name + " quota exceeded" : "unknown error")
-					, e);
+// Setup the KeyValueStore prototype
+Object.defineProperties(KeyValueStore.prototype, {
+	setItem : {
+		value : function (sKey, sValue, quiet) {
+			if (!sKey) {
+				return false;
 			}
-			return false;
-		}
-	} else {
-		try {
-			sValue = LZString.compressToBase64(sValue);
-			var cookie = [ escape(sKey) + "=" + escape(sValue) ];
-			// no expiry means a session cookie
-			switch (this.name) {
-			case "cookie":
-				/* FALL-THROUGH */
-			case "localStorage":
-				cookie.push("expires=Tue, 19 Jan 2038 03:14:07 GMT");
-				break;
-			}
-			cookie.push("path=/");
-			document.cookie = cookie.join("; ");
-		} catch (e) {
-			if (!quiet) {
-				technicalAlert(null, 'unable to store key "' + oKey + '"; cookie error: ' + e.message, e);
-			}
-			return false;
-		}
-		if (!this.hasItem(oKey)) {
-			if (!quiet) {
-				technicalAlert(null, 'unable to store key "' + oKey + '"; unknown cookie error');
-			}
-			return false;
-		}
-	}
-	return true;
-};
 
-KeyValueStore.prototype.getItem = function (sKey) {
-	if (!sKey) {
-		return null;
-	}
+			var oKey = sKey;
 
-	var oKey   = sKey,
-		legacy = false;
+			sKey = this.prefix + sKey;
+			sValue = JSON.stringify(sValue);
 
-	sKey = this.prefix + sKey;
-
-	if (this.store) {
-		var sValue = this.store.getItem(sKey);
-		if (sValue != null) { // use lazy equality
-			if (DEBUG) { console.log('    > attempting to load value for key "' + oKey + '"'); }
-			/* legacy */
-			if (sValue.slice(0, 2) === "#~") {
-				// try it as a flagged, compressed value
-				sValue = JSON.parse(LZString.decompressFromUTF16(sValue.slice(2)));
-				legacy = true;
+			if (this._store) {
+				try {
+					sValue = LZString.compressToUTF16(sValue);
+					this._store.setItem(sKey, sValue);
+				} catch (e) {
+					/*
+					 * Ideally, we could simply do something either like:
+					 *     e.code === 22
+					 * Or, preferably, like this:
+					 *     e.code === DOMException.QUOTA_EXCEEDED_ERR
+					 * However, both of those are browser convention, not part of the standard,
+					 * and are not supported in all browsers.  So, we have to resort to pattern
+					 * matching the damn name.  I hate web standards developers so much.
+					 */
+					if (!quiet) {
+						technicalAlert(null, 'unable to store key "' + oKey + '"; '
+							+ (/quota_?(?:exceeded|reached)/i.test(e.name) ? this.name + " quota exceeded" : "unknown error")
+							, e);
+					}
+					return false;
+				}
 			} else {
 				try {
-			/* /legacy */
-					// try it as an unflagged, compressed value
-					sValue = JSON.parse(LZString.decompressFromUTF16(sValue));
-			/* legacy */
-				} catch (e) {
-					// finally, try it as an uncompressed value
-					sValue = JSON.parse(sValue);
-					legacy = true;
-				}
-			}
-			// attempt to upgrade the legacy value
-			if (legacy && !this.setItem(oKey, sValue, true)) {
-				throw new Error('unable to upgrade legacy value for key "' + oKey + '" to new format');
-			}
-			/* /legacy */
-			return sValue;
-		}
-	} else {
-		sKey = escape(sKey);
-		var cookies = document.cookie.split(";");
-		for (var i = 0; i < cookies.length; i++) {
-			var bits = cookies[i].split("=");
-			if (bits[0].trim() === sKey) {
-				var sValue = unescape(bits[1]);
-				if (DEBUG) { console.log('    > attempting to load value for key "' + oKey + '"'); }
-				/* legacy */
-				if (sValue.slice(0, 2) === "#~") {
-					// try it as a flagged, compressed value
-					sValue = JSON.parse(LZString.decompressFromBase64(sValue.slice(2)));
-					legacy = true;
-				} else {
-					try {
-				/* /legacy */
-						// try it as an unflagged, compressed value
-						sValue = JSON.parse(LZString.decompressFromBase64(sValue));
-				/* legacy */
-					} catch (e) {
-						// finally, try it as an uncompressed value
-						sValue = JSON.parse(sValue);
-						legacy = true;
+					sValue = LZString.compressToBase64(sValue);
+					var cookie = [ escape(sKey) + "=" + escape(sValue) ];
+					// no expiry means a session cookie
+					switch (this.name) {
+					case "localStorage":
+						/* FALL-THROUGH */
+					case "cookie":
+						cookie.push("expires=Tue, 19 Jan 2038 03:14:07 GMT");
+						break;
 					}
+					cookie.push("path=/");
+					document.cookie = cookie.join("; ");
+				} catch (e) {
+					if (!quiet) {
+						technicalAlert(null, 'unable to store key "' + oKey + '"; cookie error: ' + e.message, e);
+					}
+					return false;
 				}
-				// attempt to upgrade the legacy value
-				if (legacy && !this.setItem(oKey, sValue, true)) {
-					throw new Error('unable to upgrade legacy value for key "' + oKey + '" to new format');
+				if (!this.hasItem(oKey)) {
+					if (!quiet) {
+						technicalAlert(null, 'unable to store key "' + oKey + '"; unknown cookie error');
+					}
+					return false;
 				}
-				/* /legacy */
-				return sValue;
 			}
-		}
-	}
-	return null;
-};
-
-KeyValueStore.prototype.removeItem = function (sKey) {
-	if (!sKey) {
-		return false;
-	}
-
-	sKey = this.prefix + sKey;
-
-	if (this.store) {
-		this.store.removeItem(sKey);
-	} else {
-		document.cookie = escape(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-	}
-	return true;
-};
-
-KeyValueStore.prototype.removeMatchingItems = function (sKey) {
-	if (!sKey) {
-		return false;
-	}
-
-	if (DEBUG) { console.log("[<KeyValueStore>.removeMatchingItems()]"); }
-
-	var matched = [];
-	var keyRegexp = new RegExp(("^" + this.prefix + sKey).replace(/\./g, "\\.") + ".*");
-	if (this.store) {
-		for (var i = 0; i < this.store.length; i++) {
-			var key = this.store.key(i);
-			if (keyRegexp.test(key)) {
-				matched.push(key);
-			}
-		}
-	} else {
-		sKey = escape(sKey);
-		var cookies = document.cookie.split(";");
-		for (var i = 0; i < cookies.length; i++) {
-			var bits = cookies[i].split("=");
-			var key = bits[0].trim();
-			if (keyRegexp.test(key)) {
-				matched.push(key);
-			}
-		}
-	}
-	for (var i = 0; i < matched.length; i++) {
-		if (DEBUG) { console.log("    > removing key: " + matched[i]); }
-		this.removeItem(matched[i]);
-	}
-	return true;
-};
-
-KeyValueStore.prototype.hasItem = function (sKey) {
-	if (!sKey) {
-		return false;
-	}
-
-	sKey = this.prefix + sKey;
-
-	if (this.store) {
-		if (this.store.getItem(sKey)) {
 			return true;
 		}
-	} else {
-		sKey = escape(sKey);
-		var cookies = document.cookie.split(";");
-		for (var i = 0; i < cookies.length; i++) {
-			var bits = cookies[i].split("=");
-			if (bits[0].trim() === sKey) {
-				return true;
+	},
+
+	getItem : {
+		value : function (sKey) {
+			if (!sKey) {
+				return null;
 			}
+
+			var oKey   = sKey,
+				legacy = false;
+
+			sKey = this.prefix + sKey;
+
+			if (this._store) {
+				var sValue = this._store.getItem(sKey);
+				if (sValue != null) { // use lazy equality
+					if (DEBUG) { console.log('    > attempting to load value for key "' + oKey + '"'); }
+					/* legacy */
+					if (sValue.slice(0, 2) === "#~") {
+						// try it as a flagged, compressed value
+						sValue = JSON.parse(LZString.decompressFromUTF16(sValue.slice(2)));
+						legacy = true;
+					} else {
+						try {
+					/* /legacy */
+							// try it as an unflagged, compressed value
+							sValue = JSON.parse(LZString.decompressFromUTF16(sValue));
+					/* legacy */
+						} catch (e) {
+							// finally, try it as an uncompressed value
+							sValue = JSON.parse(sValue);
+							legacy = true;
+						}
+					}
+					// attempt to upgrade the legacy value
+					if (legacy && !this.setItem(oKey, sValue, true)) {
+						throw new Error('unable to upgrade legacy value for key "' + oKey + '" to new format');
+					}
+					/* /legacy */
+					return sValue;
+				}
+			} else {
+				sKey = escape(sKey);
+				var cookies = document.cookie.split(";");
+				for (var i = 0; i < cookies.length; i++) {
+					var bits = cookies[i].split("=");
+					if (bits[0].trim() === sKey) {
+						var sValue = unescape(bits[1]);
+						if (DEBUG) { console.log('    > attempting to load value for key "' + oKey + '"'); }
+						/* legacy */
+						if (sValue.slice(0, 2) === "#~") {
+							// try it as a flagged, compressed value
+							sValue = JSON.parse(LZString.decompressFromBase64(sValue.slice(2)));
+							legacy = true;
+						} else {
+							try {
+						/* /legacy */
+								// try it as an unflagged, compressed value
+								sValue = JSON.parse(LZString.decompressFromBase64(sValue));
+						/* legacy */
+							} catch (e) {
+								// finally, try it as an uncompressed value
+								sValue = JSON.parse(sValue);
+								legacy = true;
+							}
+						}
+						// attempt to upgrade the legacy value
+						if (legacy && !this.setItem(oKey, sValue, true)) {
+							throw new Error('unable to upgrade legacy value for key "' + oKey + '" to new format');
+						}
+						/* /legacy */
+						return sValue;
+					}
+				}
+			}
+			return null;
+		}
+	},
+
+	removeItem : {
+		value : function (sKey) {
+			if (!sKey) {
+				return false;
+			}
+
+			sKey = this.prefix + sKey;
+
+			if (this._store) {
+				this._store.removeItem(sKey);
+			} else {
+				document.cookie = escape(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+			}
+			return true;
+		}
+	},
+
+	removeMatchingItems : {
+		value : function (sKey) {
+			if (!sKey) {
+				return false;
+			}
+
+			if (DEBUG) { console.log("[<KeyValueStore>.removeMatchingItems()]"); }
+
+			var matched = [];
+			var keyRegexp = new RegExp(("^" + this.prefix + sKey).replace(/\./g, "\\.") + ".*");
+			if (this._store) {
+				for (var i = 0; i < this._store.length; i++) {
+					var key = this._store.key(i);
+					if (keyRegexp.test(key)) {
+						matched.push(key);
+					}
+				}
+			} else {
+				sKey = escape(sKey);
+				var cookies = document.cookie.split(";");
+				for (var i = 0; i < cookies.length; i++) {
+					var bits = cookies[i].split("=");
+					var key = bits[0].trim();
+					if (keyRegexp.test(key)) {
+						matched.push(key);
+					}
+				}
+			}
+			for (var i = 0; i < matched.length; i++) {
+				if (DEBUG) { console.log("    > removing key: " + matched[i]); }
+				this.removeItem(matched[i]);
+			}
+			return true;
+		}
+	},
+
+	hasItem : {
+		value : function (sKey) {
+			if (!sKey) {
+				return false;
+			}
+
+			sKey = this.prefix + sKey;
+
+			if (this._store) {
+				if (this._store.getItem(sKey)) {
+					return true;
+				}
+			} else {
+				sKey = escape(sKey);
+				var cookies = document.cookie.split(";");
+				for (var i = 0; i < cookies.length; i++) {
+					var bits = cookies[i].split("=");
+					if (bits[0].trim() === sKey) {
+						return true;
+					}
+				}
+			}
+			return false;
 		}
 	}
-	return false;
-};
+});
 
 
 /***********************************************************************************************************************
