@@ -7,14 +7,13 @@
 ***********************************************************************************************************************/
 // Setup the Macros constructor
 function Macros() {
-	// n.b. we can't use Object.freeze() here because we still have to support old-style macros
 	Object.defineProperties(this, {
 		definitions : {
 			value : {}
 		},
 		tags : {
 			value : {}
-		},
+		}
 	});
 }
 
@@ -107,7 +106,6 @@ Object.defineProperties(Macros.prototype, {
 	get : {
 		value : function (name) {
 			var macro = null;
-
 			if (this.definitions.hasOwnProperty(name) && typeof this.definitions[name]["handler"] === "function") {
 				macro = this.definitions[name];
 			} else if (this.hasOwnProperty(name) && typeof this[name]["handler"] === "function") {
@@ -120,8 +118,9 @@ Object.defineProperties(Macros.prototype, {
 	getHandler : {
 		value : function (name, handler) {
 			var macro = this.get(name);
-
-			if (!handler) { handler = "handler"; }
+			if (!handler) {
+				handler = "handler";
+			}
 			return (macro && macro.hasOwnProperty(handler) && typeof macro[handler] === "function") ? macro[handler] : null;
 		}
 	},
@@ -145,9 +144,13 @@ Object.defineProperties(Macros.prototype, {
 
 	registerTags : {
 		value : function (parent, bodyTags) {
-			if (!parent) { throw new Error("no parent specified"); }
+			if (!parent) {
+				throw new Error("no parent specified");
+			}
 
-			if (!Array.isArray(bodyTags)) { bodyTags = []; }
+			if (!Array.isArray(bodyTags)) {
+				bodyTags = [];
+			}
 
 			var endTags = [ "/" + parent, "end" + parent ], // automatically create the closing tags
 				allTags = [].concat(endTags, bodyTags);
@@ -171,7 +174,9 @@ Object.defineProperties(Macros.prototype, {
 
 	unregisterTags : {
 		value : function (parent) {
-			if (!parent) { throw new Error("no parent specified"); }
+			if (!parent) {
+				throw new Error("no parent specified");
+			}
 
 			Object.keys(this.tags).forEach(function (tag) {
 				var i = this.tags[tag].indexOf(parent);
@@ -190,12 +195,16 @@ Object.defineProperties(Macros.prototype, {
 		value : function () {
 			Object.keys(this.definitions).forEach(function (name) {
 				var fn = this.getHandler(name, "init");
-				if (fn) { fn.call(this.definitions[name], name); }
+				if (fn) {
+					fn.call(this.definitions[name], name);
+				}
 			}, this);
 			/* legacy kludges */
 			Object.keys(this).forEach(function (name) {
 				var fn = this.getHandler(name, "init");
-				if (fn) { fn.call(this[name], name); }
+				if (fn) {
+					fn.call(this[name], name);
+				}
 			}, this);
 			/* /legacy kludges */
 		}
@@ -205,12 +214,16 @@ Object.defineProperties(Macros.prototype, {
 		value : function () {
 			Object.keys(this.definitions).forEach(function (name) {
 				var fn = this.getHandler(name, "lateInit");
-				if (fn) { fn.call(this.definitions[name], name); }
+				if (fn) {
+					fn.call(this.definitions[name], name);
+				}
 			}, this);
 			/* legacy kludges */
 			Object.keys(this).forEach(function (name) {
 				var fn = this.getHandler(name, "lateInit");
-				if (fn) { fn.call(this[name], name); }
+				if (fn) {
+					fn.call(this[name], name);
+				}
 			}, this);
 			/* /legacy kludges */
 		}

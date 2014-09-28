@@ -134,7 +134,6 @@ Wikifier.prototype.fullArgs = function () {
  * Returns a compiled Wikifier formatter object
  */
 Wikifier.compileFormatters = function () {
-	console.log("[Wikifier.compileFormatters]");
 	var formatters = Wikifier.formatters,
 		pattern    = [];
 	for (var i = 0, iend = formatters.length; i < iend; i++) {
