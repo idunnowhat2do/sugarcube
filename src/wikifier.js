@@ -8,11 +8,15 @@
 var _wikifierFormatterCache; // the Wikifier formatter object cache
 
 function Wikifier(place, source) {
+	// general Wikifier properties
 	this.formatter = _wikifierFormatterCache || Wikifier.compileFormatters();
 	this.output    = (place != null) ? place : document.createElement("div"); // use lazy equality
 	this.source    = source;
 	this.nextMatch = 0;
-	this.nobr      = [];
+
+	// formatter-related properties
+	this._rawArgs  = "";
+	this._nobr     = [];
 
 	this.subWikify(this.output);
 
@@ -119,7 +123,7 @@ Wikifier.prototype.outputText = function (place, startPos, endPos) {
  * Unlike TiddlyWiki's default mechanism, this does not attempt to split up the arguments into an array.
  */
 Wikifier.prototype.rawArgs = function () {
-	return this._macroRawArgs;
+	return this._rawArgs;
 };
 
 /**
@@ -166,7 +170,8 @@ Wikifier.parse = function (expression) {
 			"not"    : "!",
 			// Twine2-compatible operators
 			"is"     : "===",
-			"is not" : "!==",
+			"isnot"  : "!==",
+			"is not" : "!==", // more of a safety feature, since "$a is not $b" sounds reasonable
 			"to"     : "=",
 			// SugarCube operators
 			"def"    : '"undefined" !== typeof',
@@ -221,7 +226,7 @@ Wikifier.getValue = function (storyVar) {
 
 	if (pNames.length !== 0) {
 		retVal = state.active.variables;
-		for (var i = 0, len = pNames.length; i < len; i++) {
+		for (var i = 0, iend = pNames.length; i < iend; i++) {
 			if (typeof retVal[pNames[i]] !== "undefined") {
 				retVal = retVal[pNames[i]];
 			} else {
@@ -242,7 +247,7 @@ Wikifier.setValue = function (storyVar, newValue) {
 	if (pNames.length !== 0) {
 		var baseObj = state.active.variables,
 			varName = pNames.pop();
-		for (var i = 0, len = pNames.length; i < len; i++) {
+		for (var i = 0, iend = pNames.length; i < iend; i++) {
 			if (typeof baseObj[pNames[i]] !== "undefined") {
 				baseObj = baseObj[pNames[i]];
 			} else {
@@ -844,108 +849,80 @@ Wikifier.formatters = [
 	name: "macro",
 	match: "<<",
 	lookaheadRegExp: /<<([^>\s]+)(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|[^>]|(?:>(?!>)))*)>>/gm,
-	working: { name: "", handlerName: "", arguments: "", index: 0 }, // the working parse object
+	working: { name: "", handler: "", arguments: "", index: 0 }, // the working parse object
 	context: null, // last execution context object (top-level macros, hierarchically, have a null context)
 	handler: function (w) {
 		var matchStart = this.lookaheadRegExp.lastIndex = w.matchStart;
 		if (this.parseTag(w)) {
 			// if parseBody() is called below, it will change the current working
 			// values, so we must cache them now
-			var nextMatch   = w.nextMatch,
-				macroName   = this.working.name,
-				handlerName = this.working.handlerName,
-				macroArgs   = this.working.arguments;
+			var nextMatch = w.nextMatch,
+				name      = this.working.name,
+				handler   = this.working.handler,
+				rawArgs   = this.working.arguments;
 			try {
-				var macro = macros.get(macroName);
+				var macro = macros.get(name);
 				if (macro) {
 					var payload = null;
 					if (macro.hasOwnProperty("tags")) {
 						payload = this.parseBody(w, macro.tags);
 						if (!payload) {
 							w.nextMatch = nextMatch; // parseBody() changes this during processing, so we reset it here
-							return throwError(w.output, "cannot find a closing tag for macro <<" + macroName + ">>"
-								, w.source.slice(matchStart, w.nextMatch) + "\u2026");
+							return throwError(w.output, "cannot find a closing tag for macro <<" + name + ">>",
+								w.source.slice(matchStart, w.nextMatch) + "\u2026");
 						}
 					}
-					if (typeof macro[handlerName] === "function") {
-						var args = (!macro.hasOwnProperty("skipArgs") || !macro["skipArgs"]) ? this.parseArgs(macroArgs) : [];
+					if (typeof macro[handler] === "function") {
+						var args = (!macro.hasOwnProperty("skipArgs") || !macro["skipArgs"]) ? this.parseArgs(rawArgs) : [];
 
 						// new-style macros
 						if (macro.hasOwnProperty("_USE_MACROS_API")) {
-							var prevContext = this.context,
-								curContext  = { // setup the execution context object (should probably make a factory for this)
-									// data properties
-									"self"    : macro,
-									"name"    : macroName,
-									"args"    : args,
-									"payload" : payload,
-									"output"  : w.output,
-									"parser"  : w,
-									"context" : this.context,
-
-									// method properties
-									"contextHas": function (filter) {
-										var c = this;
-
-										while ((c = c.context) !== null) {
-											if (filter(c)) { return true; }
-										}
-										return false;
-									},
-									"contextSelect": function (filter) {
-										var c   = this,
-											res = [];
-
-										while ((c = c.context) !== null) {
-											if (filter(c)) { res.push(c); }
-										}
-										return res;
-									},
-									"error": function (message) {
-										throwError(this.output, "<<" + this.name + ">>: " + message, w.source.slice(matchStart, w.nextMatch));
-										return false;
-									}
-								};
-							// extend the args array with the raw and full argument strings
-							curContext.args["raw"]  = macroArgs;
-							curContext.args["full"] = Wikifier.parse(macroArgs);
-
 							// call the handler, modifying the execution context chain appropriately
 							//   n.b. there's no catch clause because this try/finally is here simply to ensure that
 							//        the execution context is properly restored in the event that an uncaught exception
 							//        is thrown during the handler call
 							try {
-								this.context = curContext;
-								macro[handlerName].call(curContext);
+								this.context = new MacrosContext(
+									this.context,
+									macro,
+									name,
+									rawArgs,
+									args,
+									payload,
+									w,
+									w.source.slice(matchStart, w.nextMatch)
+								);
+								macro[handler].call(this.context);
 							} finally {
-								this.context = prevContext;
+								this.context = this.context.parent;
 							}
 						}
 						// old-style macros
 						else {
-							w._macroRawArgs = macroArgs; // cache the raw arguments for use by Wikifier.rawArgs() & Wikifier.fullArgs()
-							macro[handlerName](w.output, macroName, args, w, payload);
-							w._macroRawArgs = "";
+							var prevRawArgs = w._rawArgs;
+							w._rawArgs = rawArgs; // cache the raw arguments for use by Wikifier.rawArgs() & Wikifier.fullArgs()
+							macro[handler](w.output, name, args, w, payload);
+							w._rawArgs = prevRawArgs;
 						}
 					} else {
-						return throwError(w.output, "macro <<" + macroName + '>> handler function "' + handlerName + '" '
-							+ (macro.hasOwnProperty(handlerName) ? "is not a function" : "does not exist"), w.source.slice(matchStart, w.nextMatch));
+						return throwError(w.output, "macro <<" + name + '>> handler function "' + handler + '" '
+							+ (macro.hasOwnProperty(handler) ? "is not a function" : "does not exist"), w.source.slice(matchStart, w.nextMatch));
 					}
-				} else if (macros.tags.hasOwnProperty(macroName)) {
-					return throwError(w.output, "child tag <<" + macroName + ">> was found outside of a call to its parent macro"
-						+ (macros.tags[macroName].length === 1 ? '' : 's') + " <<" + macros.tags[macroName].join(">>, <<") + ">>",
+				} else if (macros.tags.hasOwnProperty(name)) {
+					return throwError(w.output, "child tag <<" + name + ">> was found outside of a call to its parent macro"
+						+ (macros.tags[name].length === 1 ? '' : 's') + " <<" + macros.tags[name].join(">>, <<") + ">>",
 						  w.source.slice(matchStart, w.nextMatch));
 				} else {
-					return throwError(w.output, "macro <<" + macroName + ">> does not exist", w.source.slice(matchStart, w.nextMatch));
+					return throwError(w.output, "macro <<" + name + ">> does not exist", w.source.slice(matchStart, w.nextMatch));
 				}
 			} catch (e) {
-				return throwError(w.output, "cannot execute " + ((macro && macro.isWidget) ? "widget" : "macro") + " <<" + macroName + ">>: " + e.message,
+				return throwError(w.output, "cannot execute " + ((macro && macro.isWidget) ? "widget" : "macro") + " <<" + name + ">>: " + e.message,
 					w.source.slice(matchStart, w.nextMatch));
 			} finally {
-				this.working.name        = "";
-				this.working.handlerName = "";
-				this.working.arguments   = "";
-				this.working.index       = 0;
+				this.working.name      = "";
+				this.working.handler   = "";
+				this.working.arguments = "";
+				this.working.index     = 0;
 			}
 		}
 	},
@@ -958,10 +935,10 @@ Wikifier.formatters = [
 			var fnSigil = lookaheadMatch[1].indexOf("::");
 			if (fnSigil !== -1) {
 				this.working.name = lookaheadMatch[1].slice(0, fnSigil);
-				this.working.handlerName = lookaheadMatch[1].slice(fnSigil + 2);
+				this.working.handler = lookaheadMatch[1].slice(fnSigil + 2);
 			} else {
 				this.working.name = lookaheadMatch[1];
-				this.working.handlerName = "handler";
+				this.working.handler = "handler";
 			}
 			this.working.arguments = lookaheadMatch[2];
 			this.working.index = lookaheadMatch.index;
@@ -1004,7 +981,7 @@ Wikifier.formatters = [
 
 			default:
 				if (opened === 1 && bodyTags) {
-					for (var i = 0, len = bodyTags.length; i < len; i++) {
+					for (var i = 0, iend = bodyTags.length; i < iend; i++) {
 						if (tagName === bodyTags[i]) {
 							payload.push({
 								name      : curTag,
@@ -1289,7 +1266,7 @@ Wikifier.formatters = [
 	name: "lineBreak",
 	match: "\\n|<br ?/?>",
 	handler: function (w) {
-		if (w.nobr.length === 0 || !w.nobr[0]) {
+		if (w._nobr.length === 0 || !w._nobr[0]) {
 			insertElement(w.output, "br");
 		}
 	}
@@ -1357,15 +1334,15 @@ Wikifier.formatters = [
 
 				if (terminatorMatch) {
 					if (isNobr) {
-						w.nobr.unshift(true);
-					} else if (w.nobr.length !== 0) {
-						w.nobr.unshift(false);
+						w._nobr.unshift(true);
+					} else if (w._nobr.length !== 0) {
+						w._nobr.unshift(false);
 					}
 					try {
 						w.subWikify(el, terminator, true); // ignore case during match
 					} finally {
-						if (w.nobr.length !== 0) {
-							w.nobr.shift();
+						if (w._nobr.length !== 0) {
+							w._nobr.shift();
 						}
 					}
 				}

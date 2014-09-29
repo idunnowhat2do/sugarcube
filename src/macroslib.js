@@ -643,16 +643,16 @@ function addStandardMacros() {
 	 * <<click>> & <<button>>
 	 */
 	macros.add(["click", "button"], {
-		version : { major : 4, minor : 1, patch : 0 },
+		version : { major : 4, minor : 1, patch : 1 },
 		tags    : null,
 		handler : function () {
 			function getWidgetArgs() {
 				var wargs;
-
-				if (this.context && state.active.variables.hasOwnProperty("args")) {
-					if (this.contextHas(function (c) { return c.self.isWidget; })) {
-						wargs = state.active.variables.args;
-					}
+				if (
+					   state.active.variables.hasOwnProperty("args")
+					&& this.contextHas(function (c) { return c.self.isWidget; })
+				) {
+					wargs = state.active.variables.args;
 				}
 				return wargs;
 			}

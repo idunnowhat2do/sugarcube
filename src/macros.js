@@ -230,6 +230,84 @@ Object.defineProperties(Macros.prototype, {
 	}
 });
 
+// Setup the MacrosContext constructor
+function MacrosContext(parent, macro, name, rawArgs, args, payload, parser, source) {
+	Object.defineProperties(this, {
+		/* DEPRECATED */
+		context : {
+			value : parent
+		},
+		/* /DEPRECATED */
+		parent : {
+			value : parent
+		},
+		self : {
+			value : macro
+		},
+		name : {
+			value : name
+		},
+		args : {
+			value : args
+		},
+		payload : {
+			value : payload
+		},
+		parser : {
+			value : parser
+		},
+		output : {
+			value : parser.output
+		},
+		source : {
+			value : source
+		}
+	});
+	// extend the args array with the raw and full argument strings
+	Object.defineProperties(this.args, {
+		raw : {
+			value : rawArgs
+		},
+		full : {
+			value : Wikifier.parse(rawArgs)
+		}
+	});
+};
+
+// Setup the MacrosContext prototype
+Object.defineProperties(MacrosContext.prototype, {
+	contextHas : {
+		value : function (filter) {
+			var context = this;
+			while ((context = context.parent) !== null) {
+				if (filter(context)) {
+					return true;
+				}
+			}
+			return false;
+		}
+	},
+
+	contextSelect : {
+		value : function (filter) {
+			var context = this,
+				result  = [];
+			while ((context = context.parent) !== null) {
+				if (filter(context)) {
+					result.push(context);
+				}
+			}
+			return result;
+		}
+	},
+
+	error : {
+		value : function (message) {
+			return throwError(this.output, "<<" + this.name + ">>: " + message, this.source);
+		}
+	}
+});
+
 
 /***********************************************************************************************************************
 ** [End macros.js]
