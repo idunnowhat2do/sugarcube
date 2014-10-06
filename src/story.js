@@ -176,8 +176,14 @@ History.prototype.init = function () {
 		if (DEBUG) { console.log('    > display: "' + testPlay + '" (testPlay)'); }
 		this.display(testPlay);
 	} else if (!this.restore()) {
-		if (DEBUG) { console.log('    > display: "' + config.startPassage + '"'); }
-		this.display(config.startPassage);
+		// autoload the autosave, if requested and possible, else load the start passage
+		if (DEBUG) {
+			if (config.saves.autoload && SaveSystem.autosaveOK()) { console.log('    > display/autoload: "' + SaveSystem.getAuto().title + '"'); }
+			else { console.log('    > display: "' + config.startPassage + '"'); }
+		}
+		if (!config.saves.autoload || !SaveSystem.autosaveOK() || !SaveSystem.loadAuto()) { // autoload will be attempted within the conditional
+			this.display(config.startPassage);
+		}
 	}
 
 	// setup the history change handlers

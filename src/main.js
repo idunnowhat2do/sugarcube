@@ -199,6 +199,7 @@ var config = {
 
 	// saves option properties
 	saves : {
+		autoload  : undefined,
 		autosave  : undefined,
 		id        : "untitled-story",
 		isAllowed : undefined,
