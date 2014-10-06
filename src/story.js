@@ -299,7 +299,7 @@ History.prototype.display = function (title, link, option) {
 			outgoing.id = "out-" + outgoing.id;
 			outgoing.classList.add("transition-out");
 			if (typeof config.passageTransitionOut === "boolean") {
-				$(outgoing).on(config.transitionEndEventName, function () {
+				jQuery(outgoing).on(config.transitionEndEventName, function () {
 					if (this.parentNode) { this.parentNode.removeChild(this); }
 				});
 			} else {

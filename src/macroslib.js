@@ -133,7 +133,7 @@ function addStandardMacros() {
 			el.classList.add("link-internal");
 			el.classList.add("link-" + this.name);
 			if (steps > 0) {
-				$(el).click(function () {
+				jQuery(el).click(function () {
 					if (this.name === "back") {
 						if (config.historyMode === History.Modes.Hash || config.disableHistoryControls) {
 							return function () {
@@ -679,7 +679,7 @@ function addStandardMacros() {
 			el.classList.add("link-" + (passage ? (tale.has(passage) ? "internal" : "broken") : "internal"));
 			el.classList.add("link-" + this.name);
 			insertText(el, elText);
-			$(el).click(function (self, contents, widgetArgs) {
+			jQuery(el).click(function (self, contents, widgetArgs) {
 				return function () {
 					if (contents !== "") {
 						if (widgetArgs !== undefined) {
@@ -753,7 +753,7 @@ function addStandardMacros() {
 			el.name  = "textbox-" + varId;
 			el.value = defaultValue;
 			Wikifier.setValue(varName, defaultValue);
-			$(el)
+			jQuery(el)
 				.change(function () {
 					// set the $variable upon change, only if Return/Enter was not pressed
 					if (!enterKeyUsed) {
@@ -809,7 +809,7 @@ function addStandardMacros() {
 			} else {
 				Wikifier.setValue(varName, uncheckValue);
 			}
-			$(el)
+			jQuery(el)
 				.change(function () {
 					Wikifier.setValue(varName, this.checked ? checkValue : uncheckValue);
 				});
@@ -850,7 +850,7 @@ function addStandardMacros() {
 				el.checked = true;
 				Wikifier.setValue(varName, checkValue);
 			}
-			$(el)
+			jQuery(el)
 				.change(function () {
 					if (this.checked) {
 						Wikifier.setValue(varName, checkValue);
@@ -877,7 +877,7 @@ function addStandardMacros() {
 				return this.error("no " + errors.join(" or ") + " specified");
 			}
 
-			var targets = $(this.args[0]);
+			var targets = jQuery(this.args[0]);
 
 			if (targets.length === 0) {
 				return this.error('no elements matched the selector "' + this.args[0] + '"');
@@ -904,7 +904,7 @@ function addStandardMacros() {
 				return this.error("no selector specified");
 			}
 
-			var targets = $(this.args[0]);
+			var targets = jQuery(this.args[0]);
 
 			if (targets.length === 0) {
 				return this.error('no elements matched the selector "' + this.args[0] + '"');
@@ -933,7 +933,7 @@ function addStandardMacros() {
 				return this.error("no selector specified");
 			}
 
-			var targets = $(this.args[0]);
+			var targets = jQuery(this.args[0]);
 
 			if (targets.length === 0) {
 				return this.error('no elements matched the selector "' + this.args[0] + '"');
@@ -967,7 +967,7 @@ function addStandardMacros() {
 				return this.error("no selector specified");
 			}
 
-			var targets = $(this.args[0]);
+			var targets = jQuery(this.args[0]);
 
 			if (targets.length === 0) {
 				return this.error('no elements matched the selector "' + this.args[0] + '"');
@@ -1120,7 +1120,7 @@ function addStandardMacros() {
 				} else {
 					insertText(elInput, linkText || "Off");
 				}
-				$(elInput).click(function () {
+				jQuery(elInput).click(function () {
 					return function (evt) {
 						removeChildren(elInput);
 						if (options[propertyName]) {
@@ -1160,7 +1160,7 @@ function addStandardMacros() {
 					elInput.appendChild(elItem);
 				}
 				elInput.value = options[propertyName];
-				$(elInput).change(function () {
+				jQuery(elInput).change(function () {
 					return function (evt) {
 						options[propertyName] = evt.target.value;
 						macros.get("saveoptions").handler();
@@ -1196,7 +1196,7 @@ function addStandardMacros() {
 			elOK.appendChild(insertElement(null, "button", "options-ok", "ui-close", "OK"));
 			elReset.appendChild(insertElement(null, "button", "options-reset", "ui-close", "Reset to Defaults"));
 
-			$("button", elReset).click(function (evt) {
+			jQuery("button", elReset).click(function (evt) {
 				macros.get("deleteoptions").handler();
 				window.location.reload();
 			});

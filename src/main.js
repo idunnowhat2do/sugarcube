@@ -233,7 +233,7 @@ var testPlay   = "START_AT", // Twine 1.4+ "Test Play From Here" feature variabl
 /**
  * Main function, entry point for story startup
  */
-$(document).ready(function () {
+jQuery(document).ready(function () {
 	if (DEBUG) { console.log("[main()]"); }
 
 	/**

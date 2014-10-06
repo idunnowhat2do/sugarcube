@@ -26,7 +26,7 @@ var UISystem = Object.defineProperties({}, {
 			if (DEBUG) { console.log("[UISystem.init()]"); }
 	
 			// remove #init-no-js & #init-lacking from #init-screen
-			$("#init-no-js, #init-lacking").remove();
+			jQuery("#init-no-js, #init-lacking").remove();
 	
 			// generate the UI elements and add them to the page
 			var store  = document.getElementById("store-area"),
@@ -80,20 +80,20 @@ var UISystem = Object.defineProperties({}, {
 		value : function () {
 			if (DEBUG) { console.log("[UISystem.start()]"); }
 	
-			var html = $(document.documentElement);
+			var html = jQuery(document.documentElement);
 	
 			// setup the title
 			setPageElement("story-title", "StoryTitle", tale.title);
 	
 			// setup the dynamic page elements
 			if (!tale.has("StoryCaption")) {
-				$("#story-caption").remove();
+				jQuery("#story-caption").remove();
 			}
 			if (!tale.has("StoryMenu")) {
-				$("#menu-story").remove();
+				jQuery("#menu-story").remove();
 			}
 			if (!tale.has("MenuStory")) {
-				$("#menu-story-transitional").remove();
+				jQuery("#menu-story-transitional").remove();
 			}
 			UISystem.setPageElements();
 	
@@ -102,9 +102,9 @@ var UISystem = Object.defineProperties({}, {
 	
 			// setup Rewind menu
 			if (!config.disableHistoryTracking && tale.lookup("tags", "bookmark").length > 0) {
-				UISystem.addClickHandler($("#menu-rewind a"), null, function () { UISystem.buildDialogRewind(); });
+				UISystem.addClickHandler(jQuery("#menu-rewind a"), null, function () { UISystem.buildDialogRewind(); });
 			} else {
-				$("#menu-rewind").remove();
+				jQuery("#menu-rewind").remove();
 			}
 	
 			// setup Restart menu
@@ -112,16 +112,16 @@ var UISystem = Object.defineProperties({}, {
 	
 			// setup Options menu
 			if (tale.has("MenuOptions")) {
-				UISystem.addClickHandler($("#menu-options a"), null, function () { UISystem.buildDialogOptions(); });
+				UISystem.addClickHandler(jQuery("#menu-options a"), null, function () { UISystem.buildDialogOptions(); });
 			} else {
-				$("#menu-options").remove();
+				jQuery("#menu-options").remove();
 			}
 	
 			// setup Share menu
 			if (tale.has("MenuShare")) {
-				UISystem.addClickHandler($("#menu-share a"), null, function () { UISystem.buildDialogShare(); });
+				UISystem.addClickHandler(jQuery("#menu-share a"), null, function () { UISystem.buildDialogShare(); });
 			} else {
-				$("#menu-share").remove();
+				jQuery("#menu-share").remove();
 			}
 	
 			// handle the loading screen
@@ -171,7 +171,7 @@ var UISystem = Object.defineProperties({}, {
 					btn.className = bClass;
 				}
 				btn.innerHTML = bText;
-				$(btn).click(bAction);
+				jQuery(btn).click(bAction);
 				li.appendChild(btn);
 				return li;
 			}
@@ -184,7 +184,7 @@ var UISystem = Object.defineProperties({}, {
 					}
 					btn.classList.add(bId);
 					btn.innerHTML = bText;
-					$(btn).click(function (i) {
+					jQuery(btn).click(function (i) {
 						return function () { bAction(i); };
 					}(bSlot));
 					return btn;
@@ -219,7 +219,7 @@ var UISystem = Object.defineProperties({}, {
 						tdLoadBtn.classList.add("load");
 						tdLoadBtn.classList.add("ui-close");
 						tdLoadBtn.innerHTML = "Load";
-						$(tdLoadBtn).click(SaveSystem.loadAuto);
+						jQuery(tdLoadBtn).click(SaveSystem.loadAuto);
 						tdLoad.appendChild(tdLoadBtn);
 	
 						tdDescTxt = document.createTextNode(saves.autosave.title);
@@ -233,7 +233,7 @@ var UISystem = Object.defineProperties({}, {
 						tdDeleBtn.id = "saves-delete-autosave";
 						tdDeleBtn.classList.add("delete");
 						tdDeleBtn.innerHTML = "Delete";
-						$(tdDeleBtn).click(function () {
+						jQuery(tdDeleBtn).click(function () {
 							SaveSystem.deleteAuto();
 							UISystem.buildDialogSaves(); // rebuild the saves menu
 						});
@@ -315,7 +315,7 @@ var UISystem = Object.defineProperties({}, {
 				input.type = "file";
 				input.id   = "saves-import-file";
 				input.name = "saves-import-file";
-				$(input).change(function (evt) {
+				jQuery(input).change(function (evt) {
 					SaveSystem.importSave(evt);
 					UISystem.close();
 				});
@@ -331,7 +331,7 @@ var UISystem = Object.defineProperties({}, {
 				btnBar,
 				savesOK = SaveSystem.OK();
 	
-			$(dialog)
+			jQuery(dialog)
 				.empty()
 				.addClass("saves");
 	
@@ -381,7 +381,7 @@ var UISystem = Object.defineProperties({}, {
 			var dialog = UISystem._body,
 				list   = document.createElement("ul");
 	
-			$(dialog)
+			jQuery(dialog)
 				.empty()
 				.addClass("dialog-list rewind")
 				.append(list);
@@ -392,7 +392,7 @@ var UISystem = Object.defineProperties({}, {
 					var item = document.createElement("li"),
 						link = document.createElement("a");
 					link.classList.add("ui-close");
-					$(link).click(function () {
+					jQuery(link).click(function () {
 						var p = i;
 						if (config.historyMode === History.Modes.Session) {
 							return function () {
@@ -513,13 +513,13 @@ var UISystem = Object.defineProperties({}, {
 	
 			var dialog = UISystem._body;
 	
-			$(dialog)
+			jQuery(dialog)
 				.empty()
 				.addClass("dialog restart")
 				.append('<p>Are you sure that you want to restart?  Unsaved progress will be lost.</p><ul><li><button id="restart-ok" class="ui-close">OK</button></li><li><button id="restart-cancel" class="ui-close">Cancel</button></li></ul>');
 	
 			// add an additional click handler for the OK button
-			$("#ui-body #restart-ok").click(function () {
+			jQuery("#ui-body #restart-ok").click(function () {
 				state.restart();
 			});
 	
@@ -533,7 +533,7 @@ var UISystem = Object.defineProperties({}, {
 	
 			var dialog = UISystem._body;
 	
-			$(dialog)
+			jQuery(dialog)
 				.empty()
 				.addClass("dialog options");
 			new Wikifier(dialog, tale.get("MenuOptions").processText().trim());
@@ -548,7 +548,7 @@ var UISystem = Object.defineProperties({}, {
 	
 			var dialog = UISystem._body;
 	
-			$(dialog)
+			jQuery(dialog)
 				.empty()
 				.addClass("dialog-list share")
 				.append(UISystem.populateListFromPassage("MenuShare"));
@@ -594,7 +594,7 @@ var UISystem = Object.defineProperties({}, {
 		value : function (message, options, closeFunc) {
 			var dialog = UISystem._body;
 	
-			$(dialog)
+			jQuery(dialog)
 				.empty()
 				.addClass("dialog alert")
 				.append('<p>' + message + '</p><ul><li><button id="alert-ok" class="ui-close">OK</button></li></ul>');
@@ -622,12 +622,12 @@ var UISystem = Object.defineProperties({}, {
 
 	setup : {
 		value : function (classNames) {
-			$(UISystem._body)
+			jQuery(UISystem._body)
 				.empty()
 				.removeClass()
 				.addClass("dialog");
 			if (classNames != null) { // use lazy equality
-				$(UISystem._body).addClass(classNames);
+				jQuery(UISystem._body).addClass(classNames);
 			}
 			return UISystem._body;
 		}
@@ -641,7 +641,7 @@ var UISystem = Object.defineProperties({}, {
 
 	addClickHandler : {
 		value : function (target, options, startFunc, doneFunc, closeFunc) {
-			$(target).click(function (evt) {
+			jQuery(target).click(function (evt) {
 				evt.preventDefault(); // does not prevent bound events, only default actions (e.g. href links)
 	
 				// call the start function
@@ -665,27 +665,27 @@ var UISystem = Object.defineProperties({}, {
 			options = $.extend({ top : 50, opacity : 0.8 }, options);
 	
 			// stop the body from scrolling and setup the delegated UI close handler
-			$(document.body)
+			jQuery(document.body)
 				.addClass("ui-open")
 				.on("click.uisystem-close", ".ui-close", closeFunc, UISystem.close);
 	
 			// display the overlay
-			$(UISystem._overlay)
+			jQuery(UISystem._overlay)
 				//.addClass("ui-close")
 				.css({ display : "block", opacity : 0 })
 				.fadeTo(200, options.opacity);
 	
 			// display the dialog
 			var position = UISystem.calcPositionalProperties(options.top);
-			$(UISystem._body)
+			jQuery(UISystem._body)
 				.css($.extend({ display : "block", opacity : 0 }, position.dialog))
 				.fadeTo(200, 1);
-			$(UISystem._closer)
+			jQuery(UISystem._closer)
 				.css($.extend({ display : "block", opacity : 0 }, position.closer))
 				.fadeTo(50, 1);
 	
 			// add the UI resize handler
-			$(window)
+			jQuery(window)
 				.on("resize.uisystem", null, options.top, $.debounce(40, UISystem.resizeHandler));
 		}
 	},
@@ -693,9 +693,9 @@ var UISystem = Object.defineProperties({}, {
 	close : {
 		value : function (evt) {
 			// pretty much reverse the actions taken in UISystem.show()
-			$(window)
+			jQuery(window)
 				.off("resize.uisystem");
-			$(UISystem._body)
+			jQuery(UISystem._body)
 				.css({
 					display : "none",
 					opacity : 0,
@@ -706,7 +706,7 @@ var UISystem = Object.defineProperties({}, {
 				})
 				.removeClass()
 				.empty(); // .empty() here will break static menus
-			$(UISystem._closer)
+			jQuery(UISystem._closer)
 				.css({
 					display : "none",
 					opacity : 0,
@@ -714,7 +714,7 @@ var UISystem = Object.defineProperties({}, {
 					top     : ""
 				});
 			/*
-			$(UISystem._overlay)
+			jQuery(UISystem._overlay)
 				.css({
 					display : "none",
 					opacity : 0
@@ -722,10 +722,10 @@ var UISystem = Object.defineProperties({}, {
 				.fadeOut(200)
 				.removeClass();
 			*/
-			$(UISystem._overlay)
+			jQuery(UISystem._overlay)
 				.fadeOut(200);
 				//.removeClass();
-			$(document.body)
+			jQuery(document.body)
 				.off("click.uisystem-close")
 				.removeClass("ui-open");
 	
@@ -738,8 +738,8 @@ var UISystem = Object.defineProperties({}, {
 
 	resizeHandler : {
 		value : function (evt) {
-			var dialog = $(UISystem._body),
-				closer = $(UISystem._closer),
+			var dialog = jQuery(UISystem._body),
+				closer = jQuery(UISystem._closer),
 				topPos = (evt && typeof evt.data !== "undefined") ? evt.data : 50;
 	
 			if (dialog.css("display") === "block") {
@@ -761,10 +761,10 @@ var UISystem = Object.defineProperties({}, {
 				topPos = 50;
 			}
 	
-			var parent    = $(window),
-				dialog    = $(UISystem._body),
+			var parent    = jQuery(window),
+				dialog    = jQuery(UISystem._body),
 				dialogPos = { left : "", right : "", top : "", bottom : "" },
-				closer    = $(UISystem._closer),
+				closer    = jQuery(UISystem._closer),
 				closerPos = { right : "", top : "" },
 				horzSpace = parent.width() - dialog.outerWidth(true),
 				vertSpace = parent.height() - dialog.outerHeight(true);

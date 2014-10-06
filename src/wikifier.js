@@ -349,7 +349,7 @@ Wikifier.createInternalLink = function (place, passage, text, callback) {
 		} else {
 			el.classList.add("link-broken");
 		}
-		$(el).click(function () {
+		jQuery(el).click(function () {
 			if (typeof callback === "function") {
 				callback();
 			}
@@ -1389,7 +1389,7 @@ Wikifier.formatters = [
 				} else {
 					el.classList.add("link-broken");
 				}
-				$(el).click(function () {
+				jQuery(el).click(function () {
 					if (typeof callback === "function") { callback(); }
 					state.display(passage, el);
 				});
