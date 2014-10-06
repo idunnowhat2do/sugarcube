@@ -61,7 +61,7 @@ var version = Object.freeze({
 });
 
 /* deprecated */
-// History prototype mode enumeration
+// History modes enumeration
 var HistoryMode = Object.freeze({ Hash : History.Modes.Hash, Window : History.Modes.Window, Session : History.Modes.Session });
 var modes = Object.freeze({ hashTag : History.Modes.Hash, windowHistory : History.Modes.Window, sessionHistory : History.Modes.Session });
 /* /deprecated */

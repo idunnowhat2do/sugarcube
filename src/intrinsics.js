@@ -587,26 +587,40 @@ Object.defineProperty(String, "format", {
 	value        : function (format) {
 		"use strict";
 		function padString(str, align, pad) {
-			if (!align) { return str; }
+			if (!align) {
+				return str;
+			}
 			var plen = Math.abs(align) - str.length;
-			if (plen < 1) { return str; }
+			if (plen < 1) {
+				return str;
+			}
 			var padding = Array(plen + 1).join(pad);
 			return (align < 0) ? str + padding : padding + str;
 		}
 
-		if (arguments.length < 2) { return (arguments.length === 0) ? "" : format; }
+		if (arguments.length < 2) {
+			return (arguments.length === 0) ? "" : format;
+		}
 
 		var args = (arguments.length === 2 && Array.isArray(arguments[1]))
 			? arguments[1].slice(0)
 			: Array.prototype.slice.call(arguments, 1);
 
-		if (args.length === 0) { return format; }
+		if (args.length === 0) {
+			return format;
+		}
 
 		return format.replace(/{(\d+)(?:,([+-]?\d+))?}/g, function (match, index, align) {
 			var retval = args[index];
-			if (retval == null) { return ""; } // use lazy equality
-			while (typeof retval === "function") { retval = retval(); }
-			if (typeof retval === "object") { retval = JSON.stringify(retval); }
+			if (retval == null) { // use lazy equality
+				return "";
+			}
+			while (typeof retval === "function") {
+				retval = retval();
+			}
+			if (typeof retval === "object") {
+				retval = JSON.stringify(retval);
+			}
 			return padString(retval, (!align) ? 0 : parseInt(align), " ");
 		});
 	}

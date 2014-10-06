@@ -662,13 +662,14 @@ Object.defineProperties(KeyValueStore.prototype, {
 					this._store.setItem(sKey, sValue);
 				} catch (e) {
 					/*
-					 * Ideally, we could simply do something either like:
+					 * Ideally, we could simply do something like:
 					 *     e.code === 22
-					 * Or, preferably, like this:
+					 * Or, preferably, something like this:
 					 *     e.code === DOMException.QUOTA_EXCEEDED_ERR
 					 * However, both of those are browser convention, not part of the standard,
 					 * and are not supported in all browsers.  So, we have to resort to pattern
-					 * matching the damn name.  I hate web standards developers so much.
+					 * matching the damn name.  I hate the parties responsible for this snafu
+					 * so much.
 					 */
 					if (!quiet) {
 						technicalAlert(null, 'unable to store key "' + oKey + '"; '

@@ -39,7 +39,7 @@ function History(instanceName) {
 	window.SugarCube[instanceName || "state"] = this;
 }
 
-// History prototype mode enumeration
+// History modes enumeration
 History.Modes = Object.freeze({
 	Hash    : 1,
 	Window  : 2,
