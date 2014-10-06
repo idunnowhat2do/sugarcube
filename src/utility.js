@@ -556,7 +556,8 @@ function SeedablePRNG(seed, useEntropy) {
 				value : prng
 			},
 			seed : {
-				value : seed
+				writable : true,
+				value    : seed
 			},
 			count : {
 				writable : true,
