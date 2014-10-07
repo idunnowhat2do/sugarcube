@@ -129,7 +129,7 @@ Object.defineProperties(Macros.prototype, {
 		value : function (statements, thisp) {
 			"use strict";
 			try {
-				eval((thisp == null)  /* use lazy equality */
+				eval((thisp == null) /* use lazy equality */
 					? 'var output = document.createElement("div");(function(){' + statements + '\n}());'
 					: "var output = thisp.output;(function(){" + statements + "\n}.call(thisp));");
 				return true;

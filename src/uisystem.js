@@ -20,19 +20,19 @@ var UISystem = Object.defineProperties({}, {
 		value    : null
 	},
 
-	// static methods
+	// static methods: internals
 	init : {
 		value : function () {
 			if (DEBUG) { console.log("[UISystem.init()]"); }
-	
+
 			// remove #init-no-js & #init-lacking from #init-screen
 			jQuery("#init-no-js, #init-lacking").remove();
-	
+
 			// generate the UI elements and add them to the page
 			var store  = document.getElementById("store-area"),
 				uiTree = document.createDocumentFragment(),
 				temp   = document.createElement("div");
-	
+
 			// generate the core elements
 			temp.innerHTML = tale.has("StoryFormatMarkup")
 				? tale.get("StoryFormatMarkup").text.trim()
@@ -65,12 +65,12 @@ var UISystem = Object.defineProperties({}, {
 			while (temp.hasChildNodes()) {
 				uiTree.appendChild(temp.firstChild);
 			}
-	
+
 			// generate the dialog elements
 			UISystem._overlay = insertElement(uiTree, "div", "ui-overlay", "ui-close");
 			UISystem._body    = insertElement(uiTree, "div", "ui-body");
 			UISystem._closer  = insertElement(uiTree, "a", "ui-body-close", "ui-close", "\ue002");
-	
+
 			// insert the UI elements into the page before the store area
 			store.parentNode.insertBefore(uiTree, store);
 		}
@@ -79,12 +79,12 @@ var UISystem = Object.defineProperties({}, {
 	start : {
 		value : function () {
 			if (DEBUG) { console.log("[UISystem.start()]"); }
-	
+
 			var html = jQuery(document.documentElement);
-	
+
 			// setup the title
 			setPageElement("story-title", "StoryTitle", tale.title);
-	
+
 			// setup the dynamic page elements
 			if (!tale.has("StoryCaption")) {
 				jQuery("#story-caption").remove();
@@ -96,34 +96,34 @@ var UISystem = Object.defineProperties({}, {
 				jQuery("#menu-story-transitional").remove();
 			}
 			UISystem.setPageElements();
-	
+
 			// setup Saves menu
 			UISystem.addClickHandler("#menu-saves", null, function () { UISystem.buildDialogSaves(); });
-	
+
 			// setup Rewind menu
 			if (!config.disableHistoryTracking && tale.lookup("tags", "bookmark").length > 0) {
 				UISystem.addClickHandler(jQuery("#menu-rewind a"), null, function () { UISystem.buildDialogRewind(); });
 			} else {
 				jQuery("#menu-rewind").remove();
 			}
-	
+
 			// setup Restart menu
 			UISystem.addClickHandler("#menu-restart", null, function () { UISystem.buildDialogRestart(); });
-	
+
 			// setup Options menu
 			if (tale.has("MenuOptions")) {
 				UISystem.addClickHandler(jQuery("#menu-options a"), null, function () { UISystem.buildDialogOptions(); });
 			} else {
 				jQuery("#menu-options").remove();
 			}
-	
+
 			// setup Share menu
 			if (tale.has("MenuShare")) {
 				UISystem.addClickHandler(jQuery("#menu-share a"), null, function () { UISystem.buildDialogShare(); });
 			} else {
 				jQuery("#menu-share").remove();
 			}
-	
+
 			// handle the loading screen
 			if (document.readyState === "complete") {
 				html.removeClass("init-loading");
@@ -146,7 +146,7 @@ var UISystem = Object.defineProperties({}, {
 	setPageElements : {
 		value : function () {
 			if (DEBUG) { console.log("[UISystem.setPageElements()]"); }
-	
+
 			// setup the dynamic page elements
 			setPageElement("story-banner", "StoryBanner");
 			setPageElement("story-subtitle", "StorySubtitle");
@@ -189,10 +189,10 @@ var UISystem = Object.defineProperties({}, {
 					}(bSlot));
 					return btn;
 				}
-	
+
 				var saves = storage.getItem("saves");
 				if (saves === null) { return false; }
-	
+
 				var tbody  = document.createElement("tbody"),
 					tr,
 					tdSlot,
@@ -200,19 +200,19 @@ var UISystem = Object.defineProperties({}, {
 					tdDesc,
 					tdDele;
 				var tdLoadBtn, tdDescTxt, tdDeleBtn;
-	
+
 				if (SaveSystem.autosaveOK()) {
 					tr     = document.createElement("tr"),
 					tdSlot = document.createElement("td"),
 					tdLoad = document.createElement("td"),
 					tdDesc = document.createElement("td"),
 					tdDele = document.createElement("td");
-	
+
 					//tdSlot.appendChild(document.createTextNode("\u25c6"));
 					tdDescTxt = document.createElement("b");
 					tdDescTxt.innerHTML = "A";
 					tdSlot.appendChild(tdDescTxt);
-	
+
 					if (saves.autosave && saves.autosave.state.mode === config.historyMode) {
 						tdLoadBtn = document.createElement("button");
 						tdLoadBtn.id = "saves-load-autosave";
@@ -221,14 +221,14 @@ var UISystem = Object.defineProperties({}, {
 						tdLoadBtn.innerHTML = "Load";
 						jQuery(tdLoadBtn).click(SaveSystem.loadAuto);
 						tdLoad.appendChild(tdLoadBtn);
-	
+
 						tdDescTxt = document.createTextNode(saves.autosave.title);
 						tdDesc.appendChild(tdDescTxt);
 						tdDesc.appendChild(document.createElement("br"));
 						tdDescTxt = document.createElement("small");
 						tdDescTxt.innerHTML = "Autosaved (" + new Date(saves.autosave.date).toLocaleString() + ")";
 						tdDesc.appendChild(tdDescTxt);
-	
+
 						tdDeleBtn = document.createElement("button");
 						tdDeleBtn.id = "saves-delete-autosave";
 						tdDeleBtn.classList.add("delete");
@@ -244,7 +244,7 @@ var UISystem = Object.defineProperties({}, {
 						tdDesc.appendChild(tdDescTxt);
 						tdDesc.classList.add("empty");
 					}
-	
+
 					tr.appendChild(tdSlot);
 					tr.appendChild(tdLoad);
 					tr.appendChild(tdDesc);
@@ -257,13 +257,13 @@ var UISystem = Object.defineProperties({}, {
 					tdLoad = document.createElement("td"),
 					tdDesc = document.createElement("td"),
 					tdDele = document.createElement("td");
-	
+
 					tdSlot.appendChild(document.createTextNode(i+1));
-	
+
 					if (saves.slots[i] && saves.slots[i].state.mode === config.historyMode) {
 						tdLoadBtn = createButton("load", "ui-close", "Load", i, SaveSystem.load);
 						tdLoad.appendChild(tdLoadBtn);
-	
+
 						tdDescTxt = document.createTextNode(saves.slots[i].title);
 						tdDesc.appendChild(tdDescTxt);
 						tdDesc.appendChild(document.createElement("br"));
@@ -274,7 +274,7 @@ var UISystem = Object.defineProperties({}, {
 							tdDescTxt.innerHTML = "Saved (<i>unknown</i>)";
 						}
 						tdDesc.appendChild(tdDescTxt);
-	
+
 						tdDeleBtn = createButton("delete", null, "Delete", i, function (i) {
 							SaveSystem.delete(i);
 							UISystem.buildDialogSaves(); // rebuild the saves menu
@@ -283,13 +283,13 @@ var UISystem = Object.defineProperties({}, {
 					} else {
 						tdLoadBtn = createButton("save", "ui-close", "Save", i, SaveSystem.save);
 						tdLoad.appendChild(tdLoadBtn);
-	
+
 						tdDescTxt = document.createElement("i");
 						tdDescTxt.innerHTML = "(save slot empty)";
 						tdDesc.appendChild(tdDescTxt);
 						tdDesc.classList.add("empty");
 					}
-	
+
 					tr.appendChild(tdSlot);
 					tr.appendChild(tdLoad);
 					tr.appendChild(tdDesc);
@@ -305,12 +305,12 @@ var UISystem = Object.defineProperties({}, {
 				var el    = document.createElement("div"),
 					label = document.createElement("div"),
 					input = document.createElement("input");
-	
+
 				// add label
 				label.id = "saves-import-label";
 				label.appendChild(document.createTextNode("Select a save file to load:"));
 				el.appendChild(label);
-	
+
 				// add file input
 				input.type = "file";
 				input.id   = "saves-import-file";
@@ -320,21 +320,21 @@ var UISystem = Object.defineProperties({}, {
 					UISystem.close();
 				});
 				el.appendChild(input);
-	
+
 				return el;
 			}
-	
+
 			if (DEBUG) { console.log("[UISystem.buildDialogSaves()]"); }
-	
+
 			var dialog  = UISystem._body,
 				list,
 				btnBar,
 				savesOK = SaveSystem.OK();
-	
+
 			jQuery(dialog)
 				.empty()
 				.addClass("saves");
-	
+
 			if (savesOK) {
 				// add saves list
 				list = createSaveList();
@@ -345,7 +345,7 @@ var UISystem = Object.defineProperties({}, {
 				}
 				dialog.appendChild(list);
 			}
-	
+
 			// add action list (export, import, and purge) and import input
 			if (savesOK || has.fileAPI) {
 				btnBar = document.createElement("div");
@@ -377,15 +377,15 @@ var UISystem = Object.defineProperties({}, {
 	buildDialogRewind : {
 		value : function () {
 			if (DEBUG) { console.log("[UISystem.buildDialogRewind()]"); }
-	
+
 			var dialog = UISystem._body,
 				list   = document.createElement("ul");
-	
+
 			jQuery(dialog)
 				.empty()
 				.addClass("dialog-list rewind")
 				.append(list);
-	
+
 			for (var i = 0, iend = state.length - 1; i < iend; i++) {
 				var passage = tale.get(state.history[i].title);
 				if (passage && passage.tags.contains("bookmark")) {
@@ -397,17 +397,17 @@ var UISystem = Object.defineProperties({}, {
 						if (config.historyMode === History.Modes.Session) {
 							return function () {
 								if (DEBUG) { console.log("[rewind:click() @Session]"); }
-	
+
 								// necessary?
 								document.title = tale.title;
-	
+
 								// regenerate the state history suid
 								state.regenerateSuid();
-	
+
 								// push the history states in order
 								if (config.disableHistoryControls) {
 									if (DEBUG) { console.log("    > pushing: " + p + " (" + state.history[p].title + ")"); }
-	
+
 									// load the state into the window history
 									History.replaceWindowState(
 										{ suid : state.suid, sidx : state.history[p].sidx },
@@ -418,7 +418,7 @@ var UISystem = Object.defineProperties({}, {
 								} else {
 									for (var i = 0, end = p; i <= end; i++) {
 										if (DEBUG) { console.log("    > pushing: " + i + " (" + state.history[i].title + ")"); }
-	
+
 										// load the state into the window history
 										History.addWindowState(
 											{ suid : state.suid, sidx : state.history[i].sidx },
@@ -428,7 +428,7 @@ var UISystem = Object.defineProperties({}, {
 										);
 									}
 								}
-	
+
 								var windowState = History.getWindowState();
 								if (windowState.sidx < state.top.sidx) {
 									if (DEBUG) { console.log("    > stacks out of sync; popping " + (state.top.sidx - windowState.sidx) + " states to equalize"); }
@@ -436,25 +436,25 @@ var UISystem = Object.defineProperties({}, {
 									// we're back in sync with the window.history
 									state.pop(state.top.sidx - windowState.sidx);
 								}
-	
+
 								// activate the current top
 								state.activate(state.top);
-	
+
 								// display the passage
 								state.display(state.active.title, null, "replace");
 							};
 						} else if (config.historyMode === History.Modes.Window) {
 							return function () {
 								if (DEBUG) { console.log("[rewind:click() @Window]"); }
-	
+
 								// necessary?
 								document.title = tale.title;
-	
+
 								// push the history states in order
 								if (!config.disableHistoryControls) {
 									for (var i = 0, end = p; i <= end; i++) {
 										if (DEBUG) { console.log("    > pushing: " + i + " (" + state.history[i].title + ")"); }
-	
+
 										// load the state into the window history
 										var stateObj = { history : state.history.slice(0, i + 1) };
 										if (state.hasOwnProperty("prng")) {
@@ -468,21 +468,21 @@ var UISystem = Object.defineProperties({}, {
 										);
 									}
 								}
-	
+
 								// stack ids are out of sync, pop our stack until
 								// we're back in sync with the window.history
 								state.pop(state.length - (p + 1));
-	
+
 								// activate the current top
 								state.activate(state.top);
-	
+
 								// display the passage
 								state.display(state.active.title, null, "replace");
 							};
 						} else { // History.Modes.Hash
 							return function () {
 								if (DEBUG) { console.log("[rewind:click() @Hash]"); }
-	
+
 								if (!config.disableHistoryControls) {
 									window.location.hash = state.history[p].hash;
 								} else {
@@ -510,19 +510,19 @@ var UISystem = Object.defineProperties({}, {
 	buildDialogRestart : {
 		value : function () {
 			if (DEBUG) { console.log("[UISystem.buildDialogRestart()]"); }
-	
+
 			var dialog = UISystem._body;
-	
+
 			jQuery(dialog)
 				.empty()
 				.addClass("dialog restart")
 				.append('<p>Are you sure that you want to restart?  Unsaved progress will be lost.</p><ul><li><button id="restart-ok" class="ui-close">OK</button></li><li><button id="restart-cancel" class="ui-close">Cancel</button></li></ul>');
-	
+
 			// add an additional click handler for the OK button
 			jQuery("#ui-body #restart-ok").click(function () {
 				state.restart();
 			});
-	
+
 			return true;
 		}
 	},
@@ -530,14 +530,14 @@ var UISystem = Object.defineProperties({}, {
 	buildDialogOptions : {
 		value : function () {
 			if (DEBUG) { console.log("[UISystem.buildDialogOptions()]"); }
-	
+
 			var dialog = UISystem._body;
-	
+
 			jQuery(dialog)
 				.empty()
 				.addClass("dialog options");
 			new Wikifier(dialog, tale.get("MenuOptions").processText().trim());
-	
+
 			return true;
 		}
 	},
@@ -545,16 +545,16 @@ var UISystem = Object.defineProperties({}, {
 	buildDialogShare : {
 		value : function () {
 			if (DEBUG) { console.log("[UISystem.buildDialogShare()]"); }
-	
+
 			var dialog = UISystem._body;
-	
+
 			jQuery(dialog)
 				.empty()
 				.addClass("dialog-list share")
 				.append(UISystem.populateListFromPassage("MenuShare"));
 				//.find("a")
 				//	.addClass("ui-close");
-	
+
 			return true;
 		}
 	},
@@ -590,27 +590,22 @@ var UISystem = Object.defineProperties({}, {
 		}
 	},
 
+	// static methods: built-ins
 	alert : {
-		value : function (message, options, closeFunc) {
+		value : function (message, options, closeFn) {
 			var dialog = UISystem._body;
-	
 			jQuery(dialog)
 				.empty()
 				.addClass("dialog alert")
 				.append('<p>' + message + '</p><ul><li><button id="alert-ok" class="ui-close">OK</button></li></ul>');
-	
-			// show the dialog
-			UISystem.show(options, closeFunc);
+			UISystem.open(options, closeFn);
 		}
 	},
 
 	restart : {
 		value : function (options) {
-			// build the dialog
 			UISystem.buildDialogRestart();
-	
-			// show the dialog
-			UISystem.show(options);
+			UISystem.open(options);
 		}
 	},
 
@@ -640,21 +635,21 @@ var UISystem = Object.defineProperties({}, {
 	},
 
 	addClickHandler : {
-		value : function (target, options, startFunc, doneFunc, closeFunc) {
+		value : function (target, options, startFn, doneFn, closeFn) {
 			jQuery(target).click(function (evt) {
 				evt.preventDefault(); // does not prevent bound events, only default actions (e.g. href links)
-	
+
 				// call the start function
-				if (typeof startFunc === "function") {
-					startFunc(evt);
+				if (typeof startFn === "function") {
+					startFn(evt);
 				}
-	
-				// show the dialog
-				UISystem.show(options, closeFunc);
-	
+
+				// open the dialog
+				UISystem.open(options, closeFn);
+
 				// call the done function
-				if (typeof doneFunc === "function") {
-					doneFunc(evt);
+				if (typeof doneFn === "function") {
+					doneFn(evt);
 				}
 			});
 		}
@@ -674,7 +669,7 @@ var UISystem = Object.defineProperties({}, {
 				//.addClass("ui-close")
 				.css({ display : "block", opacity : 0 })
 				.fadeTo(200, options.opacity);
-	
+
 			// display the dialog
 			var position = UISystem.calcPositionalProperties(options.top);
 			jQuery(UISystem._body)
@@ -683,7 +678,7 @@ var UISystem = Object.defineProperties({}, {
 			jQuery(UISystem._closer)
 				.css($.extend({ display : "block", opacity : 0 }, position.closer))
 				.fadeTo(50, 1);
-	
+
 			// add the UI resize handler
 			jQuery(window)
 				.on("resize.uisystem", null, options.top, $.debounce(40, UISystem.resizeHandler));
@@ -728,7 +723,7 @@ var UISystem = Object.defineProperties({}, {
 			jQuery(document.body)
 				.off("click.uisystem-close")
 				.removeClass("ui-open");
-	
+
 			// call the given "on close" callback function, if any
 			if (evt && typeof evt.data === "function") {
 				evt.data(evt);
@@ -741,12 +736,12 @@ var UISystem = Object.defineProperties({}, {
 			var dialog = jQuery(UISystem._body),
 				closer = jQuery(UISystem._closer),
 				topPos = (evt && typeof evt.data !== "undefined") ? evt.data : 50;
-	
+
 			if (dialog.css("display") === "block") {
 				// stow the dialog and unset its positional properties (this is important!)
 				dialog.css({ display : "none", left : "", right : "", top : "", bottom : "" });
 				closer.css({ display : "none", right : "", top : "" });
-	
+
 				// restore the dialog with its new positional properties
 				var position = UISystem.calcPositionalProperties(topPos);
 				dialog.css($.extend({ display : "block" }, position.dialog));
@@ -760,7 +755,7 @@ var UISystem = Object.defineProperties({}, {
 			if (typeof topPos === "undefined") {
 				topPos = 50;
 			}
-	
+
 			var parent    = jQuery(window),
 				dialog    = jQuery(UISystem._body),
 				dialogPos = { left : "", right : "", top : "", bottom : "" },
@@ -768,7 +763,7 @@ var UISystem = Object.defineProperties({}, {
 				closerPos = { right : "", top : "" },
 				horzSpace = parent.width() - dialog.outerWidth(true),
 				vertSpace = parent.height() - dialog.outerHeight(true);
-	
+
 			if (horzSpace <= 32) {
 				dialogPos.left = dialogPos.right = 16;
 			} else {
@@ -783,7 +778,7 @@ var UISystem = Object.defineProperties({}, {
 					dialogPos.top = dialogPos.bottom = ~~(vertSpace / 2);
 				}
 			}
-	
+
 			closerPos.right = (dialogPos.right - closer.outerWidth(true) + 6) + "px";
 			closerPos.top = (dialogPos.top - closer.outerHeight(true) + 6) + "px";
 			Object.keys(dialogPos).forEach(function (p) {
@@ -791,7 +786,7 @@ var UISystem = Object.defineProperties({}, {
 					dialogPos[p] += "px";
 				}
 			});
-	
+
 			return { dialog : dialogPos, closer : closerPos };
 		}
 	}
