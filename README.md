@@ -1,5 +1,5 @@
 # SugarCube #
-[SugarCube](http://www.motoslave.net/sugarcube/ "http://www.motoslave.net/sugarcube/") is a free (gratis and libre) header for [Twine/Twee](http://twinery.org/ "http://twinery.org/"), based on [TiddlyWiki](http://tiddlywiki.com/ "http://tiddlywiki.com/").
+[SugarCube](http://www.motoslave.net/sugarcube/ "http://www.motoslave.net/sugarcube/") is a free (gratis and libre) story format for [Twine/Twee](http://twinery.org/ "http://twinery.org/"), based on [TiddlyWiki](http://tiddlywiki.com/ "http://tiddlywiki.com/").
 
 Downloads and documentation can be found at [SugarCube's website](http://www.motoslave.net/sugarcube/ "http://www.motoslave.net/sugarcube/").
 
@@ -28,12 +28,12 @@ After downloading and installing Node.js, change to the root of the `sugarcube` 
 
 >     npm install
 
-Dependencies will be installed to the root of the `sugarcube` project directory, nothing will be installed elsewhere on your computer.  Assuming that completes with no errors, run the following command to build the header:
+Dependencies will be installed to the root of the `sugarcube` project directory, nothing will be installed elsewhere on your computer.  Assuming that completes with no errors, run the following command to build the story format:
 
 >     node build.js
 
 If you're running this from a UNIX-style shell, simply running `build.js` should also work as it's shebanged.
 
-If there were no errors, the header will, by default, be output to the `dist` directory.  Congratulations!
+If there were no errors, the story format will, by default, be output to the `dist` directory.  Congratulations!
 
 
