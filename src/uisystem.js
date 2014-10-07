@@ -609,6 +609,35 @@ var UISystem = Object.defineProperties({}, {
 		}
 	},
 
+	options : {
+		value : function (/* options, closeFn */) {
+			UISystem.buildDialogOptions();
+			UISystem.open.apply(null, arguments);
+		}
+	},
+
+	rewind : {
+		value : function (/* options, closeFn */) {
+			UISystem.buildDialogRewind();
+			UISystem.open.apply(null, arguments);
+		}
+	},
+
+	saves : {
+		value : function (/* options, closeFn */) {
+			UISystem.buildDialogSaves();
+			UISystem.open.apply(null, arguments);
+		}
+	},
+
+	share : {
+		value : function (/* options, closeFn */) {
+			UISystem.buildDialogShare();
+			UISystem.open.apply(null, arguments);
+		}
+	},
+
+	// static methods: core
 	body : {
 		value : function () {
 			return UISystem._body;
@@ -655,15 +684,15 @@ var UISystem = Object.defineProperties({}, {
 		}
 	},
 
-	show : {
-		value : function (options, closeFunc) {
-			options = $.extend({ top : 50, opacity : 0.8 }, options);
-	
+	open : {
+		value : function (options, closeFn) {
+			options = jQuery.extend({ top : 50, opacity : 0.8 }, options);
+
 			// stop the body from scrolling and setup the delegated UI close handler
 			jQuery(document.body)
 				.addClass("ui-open")
-				.on("click.uisystem-close", ".ui-close", closeFunc, UISystem.close);
-	
+				.on("click.uisystem-close", ".ui-close", closeFn, UISystem.close);
+
 			// display the overlay
 			jQuery(UISystem._overlay)
 				//.addClass("ui-close")
@@ -673,21 +702,21 @@ var UISystem = Object.defineProperties({}, {
 			// display the dialog
 			var position = UISystem.calcPositionalProperties(options.top);
 			jQuery(UISystem._body)
-				.css($.extend({ display : "block", opacity : 0 }, position.dialog))
+				.css(jQuery.extend({ display : "block", opacity : 0 }, position.dialog))
 				.fadeTo(200, 1);
 			jQuery(UISystem._closer)
-				.css($.extend({ display : "block", opacity : 0 }, position.closer))
+				.css(jQuery.extend({ display : "block", opacity : 0 }, position.closer))
 				.fadeTo(50, 1);
 
 			// add the UI resize handler
 			jQuery(window)
-				.on("resize.uisystem", null, options.top, $.debounce(40, UISystem.resizeHandler));
+				.on("resize.uisystem", null, options.top, jQuery.debounce(40, UISystem.resizeHandler));
 		}
 	},
 
 	close : {
 		value : function (evt) {
-			// pretty much reverse the actions taken in UISystem.show()
+			// pretty much reverse the actions taken in UISystem.open()
 			jQuery(window)
 				.off("resize.uisystem");
 			jQuery(UISystem._body)
@@ -744,8 +773,8 @@ var UISystem = Object.defineProperties({}, {
 
 				// restore the dialog with its new positional properties
 				var position = UISystem.calcPositionalProperties(topPos);
-				dialog.css($.extend({ display : "block" }, position.dialog));
-				closer.css($.extend({ display : "block" }, position.closer));
+				dialog.css(jQuery.extend({ display : "block" }, position.dialog));
+				closer.css(jQuery.extend({ display : "block" }, position.closer));
 			}
 		}
 	},
@@ -791,6 +820,14 @@ var UISystem = Object.defineProperties({}, {
 		}
 	}
 });
+
+/* DEPRECATED */
+Object.defineProperties(UISystem, {
+	show : {
+		value : UISystem.open
+	}
+});
+/* /DEPRECATED */
 
 
 /***********************************************************************************************************************
