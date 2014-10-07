@@ -1,10 +1,16 @@
-import header
+import os, os.path, header
 from collections import OrderedDict
 
 class Header (header.Header):
 
 	def filesToEmbed(self):
-		return OrderedDict()
+		userLibPath = self.builtinPath + os.sep + 'sugarcube' + os.sep + 'userlib.js'
+		if os.path.isfile(userLibPath):
+			return OrderedDict([
+				('"USER_LIB"', userLibPath)
+			])
+		else:
+			return OrderedDict()
 
 	def storySettings(self):
 		return "SugarCube does not support the StorySettings special passage.\n\nInstead, you should use SugarCube's configuration object, config.\n    See: http://www.motoslave.net/sugarcube/docs/#config"
