@@ -121,6 +121,9 @@ button:active {
 #menu li a {
 	text-decoration: none;
 }
+#menu ul:last-child, #menu ul:last-child li:last-child {
+	margin-bottom: 0;
+}
 
 #story-title {
 	margin: 0;
