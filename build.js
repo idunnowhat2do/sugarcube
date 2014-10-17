@@ -4,7 +4,7 @@
  *   - Description : Node.js-hosted build script for SugarCube
  *   - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
  *   - Copyright   : Copyright © 2014 Thomas Michael Edwards. All rights reserved.
- *   - Version     : 1.1.3, 2014-09-24
+ *   - Version     : 1.1.4, 2014-10-16
  */
 "use strict";
 
@@ -21,6 +21,7 @@ var CONFIG = {
 		"src/intro.js",
 		"src/intrinsics.js",
 		"src/utility.js",
+		"src/keyvaluestore.js",
 		"src/savesystem.js",
 		"src/uisystem.js",
 		"src/story.js",
@@ -189,8 +190,10 @@ var _fs     = require("fs"),
 		log('building: "' + outfile + '"');
 
 		// process the source replacement tokens (first!)
-		output = output.replace(/\"\{\{JS_SOURCE\}\}\"/g, jsSource);
-		output = output.replace(/\"\{\{STYLE_TAGS\}\}\"/g, styleTags);
+		//   n.b. we use the replacement function style here to disable the special replacement patterns, since some
+		//        of them (notably "$&") exist within the replacement strings (specifically, within jsSource)
+		output = output.replace('"{{JS_SOURCE}}"', function () { return jsSource; });
+		output = output.replace('"{{STYLE_TAGS}}"', function () { return styleTags; });
 
 		// process the build replacement tokens
 		output = output.replace(/\"\{\{BUILD_MAJOR\}\}\"/g, version.major);
