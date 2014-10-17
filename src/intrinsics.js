@@ -514,6 +514,9 @@ Object.defineProperty(Array.prototype, "random", {
 		if (this == null) {
 			throw new TypeError("Array.prototype.random called on null or undefined");
 		}
+		if (this.length === 0) {
+			return;
+		}
 
 		if (arguments.length === 1) {
 			upper = lower;
@@ -552,12 +555,14 @@ Object.defineProperty(Math, "clamp", {
 
 /**
  * Returns a decimal number eased from 0 to 1
+ *   n.b. The magnitude of the returned value decreases if num < 0.5 or increases if num > 0.5
  */
 Object.defineProperty(Math, "easeInOut", {
 	configurable : true,
 	writable     : true,
 	value        : function (num) {
 		"use strict";
+		num = Number(num);
 		return (1 - ((Math.cos(num * Math.PI) + 1) / 2));
 	}
 });
@@ -574,6 +579,18 @@ Object.defineProperty(Number.prototype, "clamp", {
 		if (num < min) { num = min; }
 		if (num > max) { num = max; }
 		return num;
+	}
+});
+
+/**
+ * Returns a copy of the given string with all RegExp metacharacters escaped
+ */
+Object.defineProperty(RegExp, "escape", {
+	configurable : true,
+	writable     : true,
+	value        : function (str) {
+		"use strict";
+		return String(str).replace(/[-.*+?^${}()|\[\]\/\\]/g, "\\$&");
 	}
 });
 
