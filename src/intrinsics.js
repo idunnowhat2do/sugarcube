@@ -541,6 +541,33 @@ Object.defineProperty(Array.prototype, "random", {
 });
 
 /**
+ * Returns a bound function that supplies the given arguments to the base function, followed
+ * by the arguments are supplied to the bound function, whenever it is called
+ */
+Object.defineProperty(Function.prototype, "partial", {
+	configurable : true,
+	writable     : true,
+	value        : function (/* variadic */) {
+		"use strict";
+		if (this == null) {
+			throw new TypeError("Function.prototype.partial called on null or undefined");
+		}
+
+		var slice = Array.prototype.slice,
+			fn    = this,
+			bound = slice.call(arguments, 0);
+		return function () {
+			var applied = [],
+				argc    = 0;
+			for (var i = 0; i < bound.length; i++) {
+				applied.push(bound[i] === undefined ? arguments[argc++] : bound[i]);
+			}
+			return fn.apply(this, applied.concat(slice.call(arguments, argc)));
+		};
+	}
+});
+
+/**
  * Returns the given numerical clamped to the specified bounds
  */
 Object.defineProperty(Math, "clamp", {
