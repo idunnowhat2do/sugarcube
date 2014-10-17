@@ -252,8 +252,8 @@ jQuery(document).ready(function () {
 	// instantiate the tale, state, storage, and session objects
 	tale    = new Tale();
 	state   = new History();
-	storage = new KeyValueStore("localStorage", tale.domId);
-	session = new KeyValueStore("sessionStorage", tale.domId);
+	storage = new KeyValueStore("webStorage", true, tale.domId); // params: driverName, persist, storageId
+	session = new KeyValueStore("webStorage", false, tale.domId);
 
 	// set the default saves ID
 	config.saves.id = tale.domId;
