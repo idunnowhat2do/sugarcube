@@ -3,21 +3,29 @@
 ***********************************************************************************************************************/
 
 // Setup the KeyValueStore constructor
-function KeyValueStore(driverName, storageId, persist) {
+function KeyValueStore(driverName, persist, storageId) {
 	var _driver = null;
 	switch (driverName) {
 	case "cookie":
-		_driver = new KeyValueStore_Cookie(storageId, persist);
+		_driver = new KeyValueStore_Cookie(persist, storageId);
 		break;
 	case "webStorage":
-		_driver = new KeyValueStore_WebStorage(storageId, persist);
+		_driver = new KeyValueStore_WebStorage(persist, storageId);
 		if (!_driver._ok) {
 			// fallback to cookies
-			_driver = new KeyValueStore_Cookie(storageId, persist);
+			_driver = new KeyValueStore_Cookie(persist, storageId);
 		}
 		break;
 	//case "indexedDB":
-	//	_driver = new KeyValueStore_IndexedDB(storageId, persist);
+	//	_driver = new KeyValueStore_IndexedDB(persist, storageId);
+	//	if (!_driver._ok) {
+	//		// fallback to webStorage
+	//		_driver = new KeyValueStore_WebStorage(persist, storageId);
+	//		if (!_driver._ok) {
+	//			// fallback to cookies
+	//			_driver = new KeyValueStore_Cookie(persist, storageId);
+	//		}
+	//	}
 	//	break;
 	default:
 		throw new Error("unknown driver name");
@@ -181,7 +189,7 @@ Object.defineProperties(KeyValueStore.prototype, {
  */
 
 // Setup the KeyValueStore_WebStorage constructor
-function KeyValueStore_WebStorage(storageId, persist) {
+function KeyValueStore_WebStorage(persist, storageId) {
 	var _engine = null,
 		_name   = null;
 	if (persist) {
@@ -329,7 +337,7 @@ Object.defineProperties(KeyValueStore_WebStorage.prototype, {
  */
 
 // Setup the KeyValueStore_IndexedDB constructor
-//function KeyValueStore_IndexedDB(storageId, persist) { /* noop */ }
+//function KeyValueStore_IndexedDB(persist, storageId) { /* noop */ }
 
 
 /*
@@ -337,7 +345,7 @@ Object.defineProperties(KeyValueStore_WebStorage.prototype, {
  */
 
 // Setup the KeyValueStore_Cookie constructor
-function KeyValueStore_Cookie(storageId, persist) {
+function KeyValueStore_Cookie(persist, storageId) {
 	Object.defineProperties(this, {
 		//_dateEpoch : {
 		//	value : (new Date(0)).toUTCString()
