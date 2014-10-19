@@ -429,7 +429,7 @@ function addStandardMacros() {
 	 * <<for>>, <<break>>, & <<continue>>
 	 */
 	macros.add("for", {
-		version  : { major : 1, minor : 0, patch : 0 },
+		version  : { major : 1, minor : 0, patch : 1 },
 		skipArgs : true,
 		tags     : null,
 		handler  : function () {
@@ -455,18 +455,22 @@ function addStandardMacros() {
 
 			try {
 				runtime.temp.break = null;
-				try {
-					if (init) { Util.evalExpression(init); }
-				} catch (e) {
-					return this.error("bad init expression: " + e.message);
+				if (init) {
+					try {
+						Util.evalExpression(init);
+					} catch (e) {
+						return this.error("bad init expression: " + e.message);
+					}
 				}
 				while (!!Util.evalExpression(condition)) {
 					if (--safety < 0) {
 						return this.error("exceeded configured maximum loop iterations (" + config.macros.maxLoopIterations + ")");
 					}
 					new Wikifier(this.output, first ? payload.replace(/^\n/, "") : payload);
-					if (first) { first = false; }
-					if (runtime.temp.break != null) {
+					if (first) {
+						first = false;
+					}
+					if (runtime.temp.break != null) { // use lazy equality
 						if (runtime.temp.break === 1) {
 							runtime.temp.break = null;
 						} else if (runtime.temp.break === 2) {
@@ -474,10 +478,12 @@ function addStandardMacros() {
 							break;
 						}
 					}
-					try {
-						if (post) { Util.evalExpression(post); }
-					} catch (e) {
-						return this.error("bad post expression: " + e.message);
+					if (post) {
+						try {
+							Util.evalExpression(post);
+						} catch (e) {
+							return this.error("bad post expression: " + e.message);
+						}
 					}
 				}
 			} catch (e) {
