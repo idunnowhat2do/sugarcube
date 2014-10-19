@@ -4,26 +4,26 @@
 
 // Setup the KeyValueStore constructor
 function KeyValueStore(driverName, persist, storageId) {
-	var _driver = null;
+	var driver = null;
 	switch (driverName) {
 	case "cookie":
-		_driver = new KeyValueStore_Cookie(persist, storageId);
+		driver = new KeyValueStore_Cookie(persist, storageId);
 		break;
 	case "webStorage":
-		_driver = new KeyValueStore_WebStorage(persist, storageId);
-		if (!_driver._ok) {
+		driver = new KeyValueStore_WebStorage(persist, storageId);
+		if (!driver._ok) {
 			// fallback to cookies
-			_driver = new KeyValueStore_Cookie(persist, storageId);
+			driver = new KeyValueStore_Cookie(persist, storageId);
 		}
 		break;
 	//case "indexedDB":
-	//	_driver = new KeyValueStore_IndexedDB(persist, storageId);
-	//	if (!_driver._ok) {
+	//	driver = new KeyValueStore_IndexedDB(persist, storageId);
+	//	if (!driver._ok) {
 	//		// fallback to webStorage
-	//		_driver = new KeyValueStore_WebStorage(persist, storageId);
-	//		if (!_driver._ok) {
+	//		driver = new KeyValueStore_WebStorage(persist, storageId);
+	//		if (!driver._ok) {
 	//			// fallback to cookies
-	//			_driver = new KeyValueStore_Cookie(persist, storageId);
+	//			driver = new KeyValueStore_Cookie(persist, storageId);
 	//		}
 	//	}
 	//	break;
@@ -31,12 +31,12 @@ function KeyValueStore(driverName, persist, storageId) {
 		throw new Error("unknown driver name");
 		break;
 	}
-	if (!_driver._ok) {
+	if (!driver._ok) {
 		throw new Error("unknown driver error");
 	}
 	Object.defineProperties(this, {
 		_driver : {
-			value : _driver
+			value : driver
 		},
 		name : {
 			value : driverName
@@ -190,25 +190,25 @@ Object.defineProperties(KeyValueStore.prototype, {
 
 // Setup the KeyValueStore_WebStorage constructor
 function KeyValueStore_WebStorage(persist, storageId) {
-	var _engine = null,
-		_name   = null;
+	var engine = null,
+		name   = null;
 	if (persist) {
 		if (has.localStorage) {
-			_engine = window.localStorage;
-			_name   = "localStorage";
+			engine = window.localStorage;
+			name   = "localStorage";
 		}
 	} else {
 		if (has.sessionStorage) {
-			_engine = window.sessionStorage;
-			_name   = "sessionStorage";
+			engine = window.sessionStorage;
+			name   = "sessionStorage";
 		}
 	}
 	Object.defineProperties(this, {
 		_ok : {
-			value : _engine !== null
+			value : engine !== null
 		},
 		_engine : {
-			value : _engine
+			value : engine
 		},
 		_prefix : {
 			value : storageId + "."
@@ -217,7 +217,7 @@ function KeyValueStore_WebStorage(persist, storageId) {
 			value : new RegExp("^" + RegExp.escape(storageId + "."))
 		},
 		name : {
-			value : _name
+			value : name
 		},
 		id : {
 			value : storageId
