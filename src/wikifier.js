@@ -443,7 +443,7 @@ var Wikifier = (function () {
 
 
 	/*******************************************************************************************************************
-	** [Text Primitives (regular expressions)]
+	** [Text Primitives (Regular Expressions)]
 	*******************************************************************************************************************/
 	Object.defineProperty(Wikifier, "textPrimitives", {
 		value : Object.defineProperties({}, {
@@ -476,6 +476,96 @@ var Wikifier = (function () {
 						"([^\"'`\\s]\\S*)"                 // 5=barewords
 					].join("|") + ")"
 			},
+		})
+	});
+
+
+	/*******************************************************************************************************************
+	** [Helper Functions]
+	*******************************************************************************************************************/
+	Object.defineProperty(Wikifier, "helpers", {
+		value : Object.defineProperties({}, {
+			charFormat : {
+				value : function (w) {
+					var b = insertElement(w.output, this.element);
+					w.subWikify(b, this.terminator);
+				}
+			},
+
+			inlineCSS : {
+				value : function (w) {
+					var styles = [],
+						lookahead = "(?:(" + Wikifier.textPrimitives.anyLetter + "+)\\(([^\\)\\|\\n]+)(?:\\):))|(?:("
+							+ Wikifier.textPrimitives.anyLetter + "+):([^;\\|\\n]+);)",
+						lookaheadRegExp = new RegExp(lookahead, "gm");
+					do {
+						lookaheadRegExp.lastIndex = w.nextMatch;
+						var lookaheadMatch = lookaheadRegExp.exec(w.source),
+							gotMatch = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
+						if (gotMatch) {
+							var name, value;
+							if (lookaheadMatch[1]) {
+								name  = Wikifier.helpers.cssToDOMName(lookaheadMatch[1]);
+								value = lookaheadMatch[2];
+							} else {
+								name  = Wikifier.helpers.cssToDOMName(lookaheadMatch[3]);
+								value = lookaheadMatch[4];
+							}
+							styles.push({ style : name, value : value });
+							w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+						}
+					} while (gotMatch);
+					return styles;
+				}
+			},
+
+			cssToDOMName : {
+				value : function (name) {
+					// Returns a DOM property name for a CSS property, parsed from the string
+					if (name.indexOf("-") === -1) {
+						return name;
+					}
+					var parts = name.split("-");
+					for (var i = 1; i < parts.length; i++) {
+						parts[i] = parts[i].slice(0, 1).toUpperCase() + parts[i].slice(1);
+					}
+					name = parts.join("");
+					switch (name) {
+					case "bgcolor":
+						name = "backgroundColor";
+						break;
+					case "float":
+						name = "cssFloat";
+						break;
+					}
+					return name;
+				}
+			},
+
+			evalExpression : {
+				value : function (text) {
+					var badResultRe = /\[(?:object(?:\s+[^\]]+)?|native\s+code)\]/,
+						result;
+					try {
+						result = Wikifier.evalExpression(text);
+						if (badResultRe.test(result)) {
+							result = text;
+						}
+					} catch (e) {
+						result = text;
+					}
+					return result;
+				}
+			},
+
+			evalPassageId : {
+				value : function (passage) {
+					if (passage != null && !tale.has(passage)) { // use lazy equality; 0 is a valid ID and name, so we cannot simply evaluate passage
+						passage = Wikifier.helpers.evalExpression(passage);
+					}
+					return passage;
+				}
+			}
 		})
 	});
 
@@ -563,7 +653,7 @@ var Wikifier = (function () {
 									spaceRight = false,
 									cell;
 								w.nextMatch++;
-								var styles = formatterHelper_inlineCss(w);
+								var styles = Wikifier.helpers.inlineCSS(w);
 								while (w.source.substr(w.nextMatch, 1) === " ") {
 									spaceLeft = true;
 									w.nextMatch++;
@@ -746,8 +836,8 @@ var Wikifier = (function () {
 							// 1=(text), 2=(~), 3=link, 4=(set)
 							w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 
-							var link  = formatterHelper_evalPassageId(match[3]),
-								text  = match[1] ? formatterHelper_evalExpression(match[1]) : link,
+							var link  = Wikifier.helpers.evalPassageId(match[3]),
+								text  = match[1] ? Wikifier.helpers.evalExpression(match[1]) : link,
 								setFn = match[4]
 									? function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(match[4]))
 									: null;
@@ -791,7 +881,7 @@ var Wikifier = (function () {
 									: null,
 								source;
 							if (match[6]) {
-								var link = formatterHelper_evalPassageId(match[6]);
+								var link = Wikifier.helpers.evalPassageId(match[6]);
 								if (!match[5] && Wikifier.isExternalLink(link)) {
 									el = Wikifier.createExternalLink(el, link);
 								} else {
@@ -800,7 +890,7 @@ var Wikifier = (function () {
 								el.classList.add("link-image");
 							}
 							el = insertElement(el, "img");
-							source = formatterHelper_evalPassageId(match[4]);
+							source = Wikifier.helpers.evalPassageId(match[4]);
 							// check for Twine 1.4 Base64 image passage transclusion
 							if (source.slice(0, 5) !== "data:" && tale.has(source)) {
 								var passage = tale.get(source);
@@ -811,7 +901,7 @@ var Wikifier = (function () {
 							}
 							el.src = source;
 							if (match[3]) {
-								el.title = formatterHelper_evalExpression(match[3]);
+								el.title = Wikifier.helpers.evalExpression(match[3]);
 							}
 							if (match[1]) {
 								el.align = "left";
@@ -1034,8 +1124,8 @@ var Wikifier = (function () {
 							if (linkMatch !== null) {
 								// 1=(text), 2=(~), 3=link, 4=(set)
 								linkObj.count      = linkMatch[1] ? 2 : 1;
-								linkObj.link       = formatterHelper_evalPassageId(linkMatch[3]);
-								linkObj.text       = linkMatch[1] ? formatterHelper_evalExpression(linkMatch[1]) : linkObj.link;
+								linkObj.link       = Wikifier.helpers.evalPassageId(linkMatch[3]);
+								linkObj.text       = linkMatch[1] ? Wikifier.helpers.evalExpression(linkMatch[1]) : linkObj.link;
 								linkObj.isExternal = !linkMatch[2] && Wikifier.isExternalLink(linkObj.link);
 								linkObj.setFn      = linkMatch[4]
 									? function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(linkMatch[4]))
@@ -1147,7 +1237,7 @@ var Wikifier = (function () {
 				match: "''",
 				terminator: "''",
 				element: "strong",
-				handler: formatterHelper_charFormat
+				handler: Wikifier.helpers.charFormat
 			},
 
 			{
@@ -1155,7 +1245,7 @@ var Wikifier = (function () {
 				match: "==",
 				terminator: "==",
 				element: "strike",
-				handler: formatterHelper_charFormat
+				handler: Wikifier.helpers.charFormat
 			},
 
 			{
@@ -1163,7 +1253,7 @@ var Wikifier = (function () {
 				match: "__",
 				terminator: "__",
 				element: "u",
-				handler: formatterHelper_charFormat
+				handler: Wikifier.helpers.charFormat
 			},
 
 			{
@@ -1171,7 +1261,7 @@ var Wikifier = (function () {
 				match: "//",
 				terminator: "//",
 				element: "em",
-				handler: formatterHelper_charFormat
+				handler: Wikifier.helpers.charFormat
 			},
 
 			{
@@ -1179,7 +1269,7 @@ var Wikifier = (function () {
 				match: "~~",
 				terminator: "~~",
 				element: "sub",
-				handler: formatterHelper_charFormat
+				handler: Wikifier.helpers.charFormat
 			},
 
 			{
@@ -1187,7 +1277,7 @@ var Wikifier = (function () {
 				match: "\\^\\^",
 				terminator: "\\^\\^",
 				element: "sup",
-				handler: formatterHelper_charFormat
+				handler: Wikifier.helpers.charFormat
 			},
 
 			{
@@ -1212,7 +1302,7 @@ var Wikifier = (function () {
 				lookahead: "(?:([^\\(@]+)\\(([^\\)]+)(?:\\):))|(?:([^:@]+):([^;]+);)",
 				handler: function (w) {
 					var el = insertElement(w.output, "span", null, null, null);
-					var styles = formatterHelper_inlineCss(w);
+					var styles = Wikifier.helpers.inlineCSS(w);
 					if (styles.length == 0) {
 						el.className = "marked";
 					} else {
@@ -1384,84 +1474,6 @@ var Wikifier = (function () {
 	Object.defineProperty(Wikifier, "imageFormatter", {
 		value : _formatterImage
 	});
-
-
-	/*******************************************************************************************************************
-	** [Formatter Helper Functions]
-	*******************************************************************************************************************/
-	function formatterHelper_charFormat(w) {
-		var b = insertElement(w.output, this.element);
-		w.subWikify(b, this.terminator);
-	}
-
-	function formatterHelper_inlineCss(w) {
-		var styles = [],
-			lookahead = "(?:(" + Wikifier.textPrimitives.anyLetter + "+)\\(([^\\)\\|\\n]+)(?:\\):))|(?:("
-				+ Wikifier.textPrimitives.anyLetter + "+):([^;\\|\\n]+);)",
-			lookaheadRegExp = new RegExp(lookahead, "gm");
-		do {
-			lookaheadRegExp.lastIndex = w.nextMatch;
-			var lookaheadMatch = lookaheadRegExp.exec(w.source),
-				gotMatch = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
-			if (gotMatch) {
-				var s, v;
-				if (lookaheadMatch[1]) {
-					s = formatterHelper_cssToDOMPropertyName(lookaheadMatch[1]);
-					v = lookaheadMatch[2];
-				} else {
-					s = formatterHelper_cssToDOMPropertyName(lookaheadMatch[3]);
-					v = lookaheadMatch[4];
-				}
-				styles.push({ style: s, value: v });
-				w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
-			}
-		} while (gotMatch);
-		return styles;
-	}
-
-	/**
-	 * Returns a DOM property name for a CSS property, parsed from the string
-	 */
-	function formatterHelper_cssToDOMPropertyName(name) {
-		if (name.indexOf("-") === -1) {
-			return name;
-		}
-		var parts = name.split("-");
-		for (var i = 1; i < parts.length; i++) {
-			parts[i] = parts[i].slice(0, 1).toUpperCase() + parts[i].slice(1);
-		}
-		name = parts.join("");
-		switch (name) {
-		case "bgcolor":
-			name = "backgroundColor";
-			break;
-		case "float":
-			name = "cssFloat";
-			break;
-		}
-		return name;
-	}
-
-	function formatterHelper_evalExpression(text) {
-		var badResultRe = /\[(?:object(?:\s+[^\]]+)?|native\s+code)\]/,
-			result;
-		try {
-			result = Wikifier.evalExpression(text);
-			if (badResultRe.test(result)) {
-				result = text;
-			}
-		} catch (e) {
-			result = text;
-		}
-		return result;
-	}
-
-	function formatterHelper_evalPassageId(passage) {
-		if (passage != null && !tale.has(passage)) { // use lazy equality; 0 is a valid ID and name, so we cannot simply evaluate passage
-			passage = formatterHelper_evalExpression(passage);
-		}
-		return passage;
-	}
 
 
 	/*******************************************************************************************************************
