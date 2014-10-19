@@ -267,7 +267,7 @@ function addStandardMacros() {
 				}
 			}
 			if (isExternal === undefined) {
-				isExternal = Wikifier.formatterHelpers.isExternalLink(linkLoc);
+				isExternal = Wikifier.isExternalLink(linkLoc);
 			}
 
 			if (limit) {

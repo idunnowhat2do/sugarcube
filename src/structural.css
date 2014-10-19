@@ -20,7 +20,7 @@ body {
 }
 
 /* Default menu styling */
-body.ui-open {
+html.ui-open body {
 	overflow: hidden;
 }
 #ui-overlay {
