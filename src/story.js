@@ -178,7 +178,7 @@ History.prototype.init = function () {
 	} else if (!this.restore()) {
 		// autoload the autosave, if requested and possible, else load the start passage
 		if (DEBUG) {
-			if (config.saves.autoload && SaveSystem.autosaveOK()) { console.log('    > display/autoload: "' + SaveSystem.getAuto().title + '"'); }
+			if (config.saves.autoload && SaveSystem.autosaveOK() && SaveSystem.hasAuto()) { console.log('    > display/autoload: "' + SaveSystem.getAuto().title + '"'); }
 			else { console.log('    > display: "' + config.startPassage + '"'); }
 		}
 		if (!config.saves.autoload || !SaveSystem.autosaveOK() || !SaveSystem.loadAuto()) { // autoload will be attempted within the conditional
@@ -241,11 +241,14 @@ History.prototype.display = function (title, link, option) {
 		if (!this.isEmpty) {
 			if (config.disableHistoryTracking) {
 				this.pop();
-			} else if (config.historyMode === History.Modes.Session && History.getWindowState().sidx < this.top.sidx) {
-				if (DEBUG) { console.log("    > stacks out of sync; popping " + (this.top.sidx - History.getWindowState().sidx) + " states to equalize"); }
-				// stack IDs are out of sync, pop our stack until we're back in
-				// sync with the window.history
-				this.pop(this.top.sidx - History.getWindowState().sidx);
+			} else if (config.historyMode === History.Modes.Session) {
+				var windowState = History.getWindowState();
+				if (windowState !== null && windowState.sidx < this.top.sidx) {
+					if (DEBUG) { console.log("    > stacks out of sync; popping " + (this.top.sidx - windowState.sidx) + " states to equalize"); }
+					// stack IDs are out of sync, pop our stack until we're back in
+					// sync with the window.history
+					this.pop(this.top.sidx - windowState.sidx);
+				}
 			}
 		}
 
