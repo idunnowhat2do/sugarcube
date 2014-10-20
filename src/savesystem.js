@@ -115,6 +115,19 @@ var SaveSystem = (function () {
 
 
 	/*******************************************************************************************************************
+	** [General]
+	*******************************************************************************************************************/
+	function OK() {
+		return autosaveOK() || slotsOK();
+	}
+
+	function purge() {
+		storage.removeItem("saves");
+		return init();
+	}
+
+
+	/*******************************************************************************************************************
 	** [Autosave]
 	*******************************************************************************************************************/
 	function autosaveOK() {
@@ -326,17 +339,8 @@ var SaveSystem = (function () {
 
 
 	/*******************************************************************************************************************
-	** [General]
+	** [Private]
 	*******************************************************************************************************************/
-	function OK() {
-		return autosaveOK() || slotsOK();
-	}
-
-	function purge() {
-		storage.removeItem("saves");
-		return init();
-	}
-
 	function marshal() {
 		if (DEBUG) { console.log("[SaveSystem.marshal()]"); }
 
@@ -400,6 +404,9 @@ var SaveSystem = (function () {
 	return Object.defineProperties({}, {
 		// Initialization
 		init       : { value : init },
+		// General
+		OK         : { value : OK },
+		purge      : { value : purge },
 		// Autosave
 		autosaveOK : { value : autosaveOK },
 		hasAuto    : { value : hasAuto },
@@ -420,11 +427,6 @@ var SaveSystem = (function () {
 		// Filesystem
 		exportSave : { value : exportSave },
 		importSave : { value : importSave },
-		// General
-		OK         : { value : OK },
-		purge      : { value : purge },
-		marshal    : { value : marshal },
-		unmarshal  : { value : unmarshal }
 	});
 
 }());
