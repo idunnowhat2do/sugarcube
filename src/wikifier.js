@@ -186,25 +186,28 @@ var Wikifier = (function () {
 				var re    = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\\')|[^'])+)')|((?:\"\")|(?:''))|([=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}]+)|([^\"'=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}\\s]+))", "g"),
 					match,
 					map   = {
-						// standard Twine/Twee operators
-						"$"      : "state.active.variables.",
-						"eq"     : "==",
-						"neq"    : "!=",
-						"gt"     : ">",
-						"gte"    : ">=",
-						"lt"     : "<",
-						"lte"    : "<=",
-						"and"    : "&&",
-						"or"     : "||",
-						"not"    : "!",
-						// Twine2-compatible operators
-						"is"     : "===",
-						"isnot"  : "!==",
-						"is not" : "!==", // more of a safety feature, since "$a is not $b" sounds reasonable
-						"to"     : "=",
-						// SugarCube operators
-						"def"    : '"undefined" !== typeof',
-						"ndef"   : '"undefined" === typeof'
+						// $variable mapping
+						"$"     : "state.active.variables.",
+						// assignment operators
+						"to"    : "=",
+						// equality operators
+						"eq"    : "==",
+						"neq"   : "!=",
+						"is"    : "===",
+						"isnot" : "!==",
+						"isNot" : "!==", // allow the Harlowe spelling for compatibility
+						// relational operators
+						"gt"    : ">",
+						"gte"   : ">=",
+						"lt"    : "<",
+						"lte"   : "<=",
+						// logical operators
+						"and"   : "&&",
+						"or"    : "||",
+						// unary operators
+						"not"   : "!",
+						"def"   : '"undefined" !== typeof',
+						"ndef"  : '"undefined" === typeof'
 					};
 
 				while ((match = re.exec(expression)) !== null) {
@@ -216,18 +219,20 @@ var Wikifier = (function () {
 
 						// special cases
 						if (token === "$") {
-							// if the token is "$", then it's the jQuery function alias or a naked dollar-sign, so skip over it
+							// if the token is "$", then it's either a naked dollar-sign or a function alias, so skip over it
 							continue;
 						} else if (token[0] === "$") {
 							// if the token starts with a "$", then it's a $variable, so just replace the sigil ("$")
 							token = "$";
 						} else if (token === "is") {
-							// if the token is "is", check to see if it's part of the "is not" operator
+							// if the token is "is", check to see if it's followed by "not", if so, convert them into the
+							// "isnot" operator; this is a safety feature, since "$a is not $b" probably sounds reasonable
+							// to most users
 							var start = match.index + token.length,
 								part  = expression.slice(start);
 							if (/^\s+not\b/.test(part)) {
-								expression = expression.splice(start, part.search(/\S/), " ");
-								token = "is not";
+								expression = expression.splice(start, part.search(/\S/));
+								token = "isnot";
 							}
 						}
 
