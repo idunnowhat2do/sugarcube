@@ -8,6 +8,11 @@ body {
 	z-index: 0;
 }
 
+/* Fixes a rendering bug in Chrome on certain platforms */
+#init-loading progress {
+	height: 20px;
+}
+
 #ui-bar {
 	position: fixed;
 	z-index: 50;
@@ -79,3 +84,4 @@ button, #ui-body-close, #ui-body.dialog-list a, #ui-body.options a[id|="option-i
 	-o-user-select: none;
 	user-select: none;
 }
+
