@@ -4,7 +4,7 @@
  *   - Description : Node.js-hosted build script for SugarCube
  *   - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
  *   - Copyright   : Copyright © 2014 Thomas Michael Edwards. All rights reserved.
- *   - Version     : 1.1.4, 2014-10-16
+ *   - Version     : 1.1.5, 2014-10-22
  */
 "use strict";
 
@@ -20,6 +20,7 @@ var CONFIG = {
 		// the ordering here is significant
 		"src/intro.js",
 		"src/intrinsics.js",
+		"src/capabilities.js",
 		"src/utility.js",
 		"src/keyvaluestore.js",
 		"src/savesystem.js",
