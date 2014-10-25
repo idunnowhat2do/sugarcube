@@ -8,11 +8,6 @@ body {
 	z-index: 0;
 }
 
-/* Fixes a rendering bug in Chrome on certain platforms */
-#init-loading progress {
-	height: 20px;
-}
-
 #ui-bar {
 	position: fixed;
 	z-index: 50;
