@@ -1,6 +1,11 @@
 /***********************************************************************************************************************
-** [Begin capabilities.js]
-***********************************************************************************************************************/
+ *
+ * capabilities.js
+ *
+ * Copyright © 2013–2014 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
+ *
+ **********************************************************************************************************************/
 
 var
 	// Capabilities object
@@ -87,7 +92,3 @@ browser.isMobile = {
 // adjustments based on the specific browser used
 has.fileAPI = (has.fileAPI && !browser.isMobile.any() && (!browser.isOpera || browser.operaVersion >= 15));
 
-
-/***********************************************************************************************************************
-** [End capabilities.js]
-***********************************************************************************************************************/

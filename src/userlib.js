@@ -1,10 +1,15 @@
 /***********************************************************************************************************************
-** [Begin userlib.js]
-***********************************************************************************************************************/
+ *
+ * userlib.js
+ *
+ * Copyright © 2013–2014 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
+ *
+ **********************************************************************************************************************/
 
 /***********************************************************************************************************************
-** [User Utility Functions]
-***********************************************************************************************************************/
+ * User Utility Functions
+ **********************************************************************************************************************/
 /**
  * Returns an integer count of how many turns have passed since the last instance of the given passage occurred within
  * the story history or -1 if it does not exist; if multiple passages are given, returns the lowest count (which can be -1)
@@ -48,7 +53,7 @@ function previous(offset) {
 }
 
 /**
- * Returns a random integer within the given range (min�max)
+ * Returns a random integer within the given range (min–max)
  *   n.b. Using Math.round() will give you a non-uniform distribution!
  */
 function random(min, max) {
@@ -68,7 +73,7 @@ function random(min, max) {
 }
 
 /**
- * Returns a random float within the given range (min�max)
+ * Returns a random float within the given range (min–max)
  */
 function randomFloat(min, max) {
 	if (arguments.length === 0) {
@@ -167,7 +172,3 @@ function visitedTag(/* variadic */) { return visitedTags.apply(null, arguments);
 function turns() { return state.length; }
 function passage() { return state.active.title; }
 
-
-/***********************************************************************************************************************
-** [End userlib.js]
-***********************************************************************************************************************/

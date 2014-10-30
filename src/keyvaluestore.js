@@ -1,12 +1,17 @@
 /***********************************************************************************************************************
-** [Begin keyvaluestore.js]
-***********************************************************************************************************************/
+ *
+ * keyvaluestore.js
+ *
+ * Copyright © 2013–2014 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
+ *
+ **********************************************************************************************************************/
 
 var KeyValueStore = (function () {
 
 	/*******************************************************************************************************************
-	** [KeyValueStore Constructor]
-	*******************************************************************************************************************/
+	 * KeyValueStore Constructor
+	 ******************************************************************************************************************/
 	function KeyValueStore(driverName, persist, storageId) {
 		var driver = null;
 		switch (driverName) {
@@ -20,17 +25,6 @@ var KeyValueStore = (function () {
 				driver = new KeyValueStore_Cookie(persist, storageId);
 			}
 			break;
-		//case "indexedDB":
-		//	driver = new KeyValueStore_IndexedDB(persist, storageId);
-		//	if (!driver._ok) {
-		//		// fallback to webStorage
-		//		driver = new KeyValueStore_WebStorage(persist, storageId);
-		//		if (!driver._ok) {
-		//			// fallback to cookies
-		//			driver = new KeyValueStore_Cookie(persist, storageId);
-		//		}
-		//	}
-		//	break;
 		default:
 			throw new Error("unknown driver name");
 			break;
@@ -55,8 +49,8 @@ var KeyValueStore = (function () {
 	}
 
 	/*******************************************************************************************************************
-	** [KeyValueStore Prototype Methods]
-	*******************************************************************************************************************/
+	 * KeyValueStore Prototype Methods
+	 ******************************************************************************************************************/
 	Object.defineProperties(KeyValueStore.prototype, {
 		length : {
 			get : function () {
@@ -194,8 +188,8 @@ var KeyValueStore = (function () {
 	 * STORAGE DRIVER: WebStorage
 	 */
 	/*******************************************************************************************************************
-	** [KeyValueStore_WebStorage Constructor]
-	*******************************************************************************************************************/
+	 * KeyValueStore_WebStorage Constructor
+	 ******************************************************************************************************************/
 	function KeyValueStore_WebStorage(persist, storageId) {
 		var engine = null,
 			name   = null;
@@ -236,8 +230,8 @@ var KeyValueStore = (function () {
 	}
 
 	/*******************************************************************************************************************
-	** [KeyValueStore_WebStorage Prototype Methods]
-	*******************************************************************************************************************/
+	 * KeyValueStore_WebStorage Prototype Methods
+	 ******************************************************************************************************************/
 	Object.defineProperties(KeyValueStore_WebStorage.prototype, {
 		serialize : {
 			value : function (obj) {
@@ -342,24 +336,11 @@ var KeyValueStore = (function () {
 
 
 	/*
-	 * STORAGE DRIVER: indexedDB
-	 */
-	/*******************************************************************************************************************
-	** [KeyValueStore_IndexedDB Constructor]
-	*******************************************************************************************************************/
-	//function KeyValueStore_IndexedDB(persist, storageId) { /* noop */ }
-
-	/*******************************************************************************************************************
-	** [KeyValueStore_IndexedDB Prototype Methods]
-	*******************************************************************************************************************/
-
-
-	/*
 	 * STORAGE DRIVER: Cookie
 	 */
 	/*******************************************************************************************************************
-	** [KeyValueStore_Cookie Constructor]
-	*******************************************************************************************************************/
+	 * KeyValueStore_Cookie Constructor
+	 ******************************************************************************************************************/
 	function KeyValueStore_Cookie(persist, storageId) {
 		Object.defineProperties(this, {
 			_ok : {
@@ -384,8 +365,8 @@ var KeyValueStore = (function () {
 	}
 
 	/*******************************************************************************************************************
-	** [KeyValueStore_Cookie Prototype Methods]
-	*******************************************************************************************************************/
+	 * KeyValueStore_Cookie Prototype Methods
+	 ******************************************************************************************************************/
 	Object.defineProperties(KeyValueStore_Cookie.prototype, {
 		_setCookie : {
 			value : function (key, value, expiry) {
@@ -520,13 +501,9 @@ var KeyValueStore = (function () {
 
 
 	/*******************************************************************************************************************
-	** [Exports]
-	*******************************************************************************************************************/
+	 * Exports
+	 ******************************************************************************************************************/
 	return KeyValueStore; // export the constructor
 
 }());
 
-
-/***********************************************************************************************************************
-** [End keyvaluestore.js]
-***********************************************************************************************************************/

@@ -1,10 +1,15 @@
 /***********************************************************************************************************************
-** [Begin main.js]
-***********************************************************************************************************************/
+ *
+ * main.js
+ *
+ * Copyright © 2013–2014 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
+ *
+ **********************************************************************************************************************/
 
 /***********************************************************************************************************************
-** [Error Handling Setup]
-***********************************************************************************************************************/
+ * Error Handling Setup
+ **********************************************************************************************************************/
 function technicalAlert(where, mesg, error) {
 	var	errMesg = "Apologies! A technical problem has occurred. You may be able to continue, but some parts may not work properly.";
 	// use lazy equality on these null checks
@@ -29,8 +34,8 @@ if (!DEBUG) {
 
 
 /***********************************************************************************************************************
-** [Initialization]
-***********************************************************************************************************************/
+ * Initialization
+ **********************************************************************************************************************/
 window.SugarCube = {}; // will contain exported identifiers, also allows scripts to detect if they're running in SugarCube (e.g. "SugarCube" in window)
 
 var	version = Object.freeze({
@@ -181,7 +186,7 @@ jQuery(document).ready(function () {
 	// instantiate the macro object and standard macro library, these must be
 	// done before any passages are processed
 	macros = new Macros();
-	addStandardMacros();
+	defineStandardMacros();
 
 	// instantiate the tale, state, storage, and session objects
 	tale    = new Tale();
@@ -265,7 +270,3 @@ jQuery(document).ready(function () {
 	};
 });
 
-
-/***********************************************************************************************************************
-** [End main.js]
-***********************************************************************************************************************/
