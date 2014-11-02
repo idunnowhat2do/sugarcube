@@ -150,14 +150,12 @@ var	config = {
 			slots     : 8
 		},
 
+		/* DEPRECATED; see strings.js */
 		// error messages properties
-		errorName : "game",
-		errors    : { /* see below */ }
+		errorName : undefined,
+		errors    : { /* noop */ }
+		/* /DEPRECATED */
 	};
-config.errors = {
-	savesNotAllowed : "Saving has been disallowed on this passage.",
-	upgradeBrowser  : "Apologies! Your web browser lacks capabilities that this " + config.errorName + " requires. Please consider upgrading it or switching to a more modern web browser."
-};
 
 var	macros     = {},         // macros manager
 	tale       = {},         // story manager

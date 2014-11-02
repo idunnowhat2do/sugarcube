@@ -182,11 +182,43 @@ History.prototype.init = function () {
 		this.display(testPlay);
 	} else if (!this.restore()) {
 		// autoload the autosave, if requested and possible, else load the start passage
-		if (DEBUG) {
-			if (config.saves.autoload && SaveSystem.autosaveOK() && SaveSystem.hasAuto()) { console.log('    > display/autoload: "' + SaveSystem.getAuto().title + '"'); }
-			else { console.log('    > display: "' + config.startPassage + '"'); }
+		var loadStart = true;
+		switch (typeof config.saves.autoload) {
+		case "boolean":
+			if (config.saves.autoload && SaveSystem.autosaveOK()) {
+				if (DEBUG) { console.log('    > display/autoload: "' + SaveSystem.getAuto().title + '"'); }
+				loadStart = !SaveSystem.loadAuto();
+			}
+			break;
+		case "string":
+			if (config.saves.autoload === "prompt" && SaveSystem.autosaveOK() && SaveSystem.hasAuto()) {
+				loadStart = false;
+				var dialog = UISystem.setup("autoload");
+				jQuery(dialog)
+					.append('<p>' + strings.saves.autoloadPrompt + '</p><ul>'
+						+ '<li><button id="autoload-ok" class="ui-close">' + strings.saves.autoloadPromptOK + '</button></li>'
+						+ '<li><button id="autoload-cancel" class="ui-close">' + strings.saves.autoloadPromptCancel + '</button></li>'
+						+ '</ul>');
+				jQuery(document.body).on("click.autoload", ".ui-close", function (evt) {
+					jQuery(document.body).off("click.autoload");
+					if (DEBUG) { console.log('    > display/autoload: "' + SaveSystem.getAuto().title + '"'); }
+					if (evt.target.id !== "autoload-ok" || !SaveSystem.loadAuto()) {
+						if (DEBUG) { console.log('    > display: "' + config.startPassage + '"'); }
+						state.display(config.startPassage);
+					}
+				});
+				UISystem.open();
+			}
+			break;
+		case "function":
+			if (SaveSystem.autosaveOK() && SaveSystem.hasAuto() && !!config.saves.autoload()) {
+				if (DEBUG) { console.log('    > display/autoload: "' + SaveSystem.getAuto().title + '"'); }
+				loadStart = !SaveSystem.loadAuto();
+			}
+			break;
 		}
-		if (!config.saves.autoload || !SaveSystem.autosaveOK() || !SaveSystem.loadAuto()) { // autoload will be attempted within the conditional
+		if (loadStart) {
+			if (DEBUG) { console.log('    > display: "' + config.startPassage + '"'); }
 			this.display(config.startPassage);
 		}
 	}
@@ -354,24 +386,22 @@ History.prototype.display = function (title, link, option) {
 	}
 
 	// handle autosaves
-	if (typeof config.saves.autosave !== "undefined") {
-		switch (typeof config.saves.autosave) {
-		case "boolean":
-			if (config.saves.autosave) {
-				SaveSystem.saveAuto();
-			}
-			break;
-		case "string":
-			if (passage.tags.contains(config.saves.autosave)) {
-				SaveSystem.saveAuto();
-			}
-			break;
-		case "object":
-			if (Array.isArray(config.saves.autosave) && passage.tags.some(function (v) { return config.saves.autosave.contains(v); })) {
-				SaveSystem.saveAuto();
-			}
-			break;
+	switch (typeof config.saves.autosave) {
+	case "boolean":
+		if (config.saves.autosave) {
+			SaveSystem.saveAuto();
 		}
+		break;
+	case "string":
+		if (passage.tags.contains(config.saves.autosave)) {
+			SaveSystem.saveAuto();
+		}
+		break;
+	case "object":
+		if (Array.isArray(config.saves.autosave) && passage.tags.some(function (v) { return config.saves.autosave.contains(v); })) {
+			SaveSystem.saveAuto();
+		}
+		break;
 	}
 
 	return el;

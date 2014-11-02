@@ -361,7 +361,7 @@ var UISystem = (function () {
 			_body.appendChild(btnBar);
 			return true;
 		} else {
-			dialogAlert("Apologies! Your browser either lacks some of the capabilities required to support saves or has disabled them.\n\nThe former may be solved by updating it to a newer version or by switching to a more modern browser.\n\nThe latter may be solved by loosening its security restrictions or, perhaps, by viewing the " + config.errorName + " via the HTTP protocol.");
+			dialogAlert("Apologies! Your browser either lacks some of the capabilities required to support saves or has disabled them.\n\nThe former may be solved by updating it to a newer version or by switching to a more modern browser.\n\nThe latter may be solved by loosening its security restrictions or, perhaps, by viewing the " + strings.identity + " via the HTTP protocol.");
 			return false;
 		}
 	}

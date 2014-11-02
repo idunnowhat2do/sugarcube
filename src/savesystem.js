@@ -262,7 +262,7 @@ var SaveSystem = (function () {
 
 	function saveSlot(slot, title, metadata) {
 		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed()) {
-			UISystem.alert(config.errors.savesNotAllowed);
+			UISystem.alert(strings.saves.disallowed);
 			return false;
 		}
 		if (slot < 0 || slot > _slotsUBound) {
@@ -303,7 +303,7 @@ var SaveSystem = (function () {
 		if (DEBUG) { console.log("[SaveSystem.exportSave()]"); }
 
 		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed()) {
-			UISystem.alert(config.errors.savesNotAllowed);
+			UISystem.alert(strings.saves.disallowed);
 			return;
 		}
 
@@ -389,7 +389,7 @@ var SaveSystem = (function () {
 			}
 
 			if (saveObj.id !== config.saves.id) {
-				throw new Error("save is from the wrong " + config.errorName);
+				throw new Error("save is from the wrong " + strings.identity);
 			}
 
 			// restore the state
