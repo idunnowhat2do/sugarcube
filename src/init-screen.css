@@ -7,4 +7,4 @@ html.init-no-js #init-no-js { display: block; }
 html.init-lacking #init-lacking { display: block; }
 html.init-loading #init-loading { display: block; }
 html.init-loading #ui-bar, html.init-loading #passages { display: none; }
-noscript { color: red; font-weight: bold; }
+html.init-no-js #init-no-js, noscript { color: red; font-weight: bold; }
