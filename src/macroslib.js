@@ -27,7 +27,7 @@ function defineStandardMacros() {
 				state.active.variables["#actions"] = {};
 			}
 			for (var i = 0; i < this.args.length; i++) {
-				var linkText,
+				var	linkText,
 					passage,
 					setFn,
 					el;
@@ -63,7 +63,7 @@ function defineStandardMacros() {
 	macros.add(["back", "return"], {
 		version : { major : 4, minor : 2, patch : 0 },
 		handler : function () {
-			var steps = 1,
+			var	steps = 1,
 				pname,
 				ctext,
 				ltext = this.name[0].toUpperCase() + this.name.slice(1),
@@ -194,7 +194,7 @@ function defineStandardMacros() {
 				return this.error("no passage specified");
 			}
 
-			var linkText,
+			var	linkText,
 				passage,
 				setFn,
 				choiceId  = state.active.title,
@@ -241,7 +241,7 @@ function defineStandardMacros() {
 				return this.error("no link location specified");
 			}
 
-			var linkText,
+			var	linkText,
 				linkLoc,
 				isExternal,
 				setFn,
@@ -380,7 +380,7 @@ function defineStandardMacros() {
 		skipArgs : true,
 		tags     : null,
 		handler  : function () {
-			var errTrap = document.createDocumentFragment(),
+			var	errTrap = document.createDocumentFragment(),
 				errList = [];
 
 			// wikify the contents
@@ -439,7 +439,7 @@ function defineStandardMacros() {
 		skipArgs : true,
 		tags     : null,
 		handler  : function () {
-			var init,
+			var	init,
 				condition = this.args.full.trim(),
 				post,
 				parts,
@@ -541,7 +541,7 @@ function defineStandardMacros() {
 				return this.error("no $variable list specified");
 			}
 
-			var expression = this.args.full,
+			var	expression = this.args.full,
 				re         = /state\.active\.variables\.(\w+)/g,
 				match;
 
@@ -568,7 +568,7 @@ function defineStandardMacros() {
 
 			var expression = this.args.full;
 			if (macros.evalStatements(expression, this)) {
-				var remember = storage.getItem("remember") || {},
+				var	remember = storage.getItem("remember") || {},
 					re       = /state\.active\.variables\.(\w+)/g,
 					match;
 
@@ -603,7 +603,7 @@ function defineStandardMacros() {
 				return this.error("no $variable list specified");
 			}
 
-			var expression = this.args.full,
+			var	expression = this.args.full,
 				re         = /state\.active\.variables\.(\w+)/g,
 				match,
 				remember   = storage.getItem("remember"),
@@ -673,7 +673,7 @@ function defineStandardMacros() {
 				return this.error("no " + (this.name === "click" ? "link" : "button") + " text specified");
 			}
 
-			var elText,
+			var	elText,
 				passage,
 				widgetArgs = getWidgetArgs.call(this),
 				el         = document.createElement(this.name === "click" ? "a" : "button");
@@ -739,7 +739,7 @@ function defineStandardMacros() {
 	 * <<textbox>>
 	 */
 	macros.add("textbox", {
-		version : { major : 4, minor : 0, patch : 0 },
+		version : { major : 5, minor : 0, patch : 0 },
 		handler : function () {
 			if (this.args.length < 2) {
 				var errors = [];
@@ -748,35 +748,45 @@ function defineStandardMacros() {
 				return this.error("no " + errors.join(" or ") + " specified");
 			}
 
-			var varName      = this.args[0].trim(),
+			var	varName      = this.args[0].trim(),
 				varId        = Util.slugify(varName),
 				defaultValue = this.args[1],
-				passage      = this.args.length > 2 ? this.args[2] : undefined,
-				el           = document.createElement("input"),
-				enterKeyUsed = false;
+				passage,
+				autofocus    = false,
+				el           = document.createElement("input");
 
 			// legacy error
 			if (varName[0] !== "$") {
 				return this.error('$variable name "' + varName + '" is missing its sigil ($)');
 			}
 
+			if (this.args.length > 3) {
+				passage   = this.args[2];
+				autofocus = (this.args[3] === "autofocus");
+			} else if (this.args.length > 2) {
+				if (this.args[2] === "autofocus") {
+					autofocus = true;
+				} else {
+					passage = this.args[2];
+				}
+			}
+
 			el.type  = "text";
 			el.id    = "textbox-" + varId;
 			el.name  = "textbox-" + varId;
 			el.value = defaultValue;
+			if (autofocus) {
+				el.setAttribute("autofocus", "autofocus");
+			}
 			Wikifier.setValue(varName, defaultValue);
 			jQuery(el)
 				.change(function () {
-					// set the $variable upon change, only if Return/Enter was not pressed
-					if (!enterKeyUsed) {
-						Wikifier.setValue(varName, this.value);
-					}
+					Wikifier.setValue(varName, this.value);
 				})
 				.keypress(function (evt) {
-					// set the $variable and, optionally, forward to another passage if Return/Enter is pressed
-					if (evt.which === 13) {
+					// if Return/Enter is pressed, set the $variable and, optionally, forward to another passage
+					if (evt.which === 13) { // 13 is Return/Enter
 						evt.preventDefault();
-						enterKeyUsed = true;
 						Wikifier.setValue(varName, this.value);
 						if (typeof passage !== "undefined") {
 							state.display(passage, this);
@@ -784,6 +794,14 @@ function defineStandardMacros() {
 					}
 				});
 			this.output.appendChild(el);
+
+			// setup a single-use post-display task to autofocus the element, if necessary
+			if (autofocus) {
+				postdisplay["#autofocus:" + el.id] = function (task) {
+					setTimeout(function () { el.focus(); }, 1);
+					delete postdisplay[task]; // single-use task
+				};
+			}
 		}
 	});
 
@@ -801,7 +819,7 @@ function defineStandardMacros() {
 				return this.error("no " + errors.join(" or ") + " specified");
 			}
 
-			var varName      = this.args[0].trim(),
+			var	varName      = this.args[0].trim(),
 				varId        = Util.slugify(varName),
 				uncheckValue = this.args[1],
 				checkValue   = this.args[2],
@@ -842,7 +860,7 @@ function defineStandardMacros() {
 				return this.error("no " + errors.join(" or ") + " specified");
 			}
 
-			var varName    = this.args[0].trim(),
+			var	varName    = this.args[0].trim(),
 				varId      = Util.slugify(varName),
 				checkValue = this.args[1],
 				el         = document.createElement("input");
@@ -1039,7 +1057,7 @@ function defineStandardMacros() {
 								state.active.variables.args.full = this.args.full;
 
 								// setup the error trapping variables
-								var outFrag = document.createDocumentFragment(),
+								var	outFrag = document.createDocumentFragment(),
 									resFrag = document.createDocumentFragment(),
 									errList = [];
 
@@ -1099,7 +1117,7 @@ function defineStandardMacros() {
 				return this.error("no list specified");
 			}
 
-			var propertyName = this.args[0],
+			var	propertyName = this.args[0],
 				propertyId   = Util.slugify(propertyName),
 				elOption     = document.createElement("div"),
 				elLabel      = document.createElement("div"),
@@ -1121,7 +1139,7 @@ function defineStandardMacros() {
 			}
 			switch (this.name) {
 			case "optiontoggle":
-				var linkText = this.args.length > 1 ? this.args[1] : undefined,
+				var	linkText = this.args.length > 1 ? this.args[1] : undefined,
 					elInput  = document.createElement("a");
 				if (options[propertyName] === undefined) {
 					options[propertyName] = false;
@@ -1154,7 +1172,7 @@ function defineStandardMacros() {
 				}());
 				break;
 			case "optionlist":
-				var items   = this.args[1],
+				var	items   = this.args[1],
 					elInput = document.createElement("select");
 				if (!Array.isArray(items)) {
 					if (options.hasOwnProperty(items)) {
@@ -1198,7 +1216,7 @@ function defineStandardMacros() {
 	macros.add("optionbar", {
 		version : { major : 3, minor : 0, patch : 0 },
 		handler : function () {
-			var elSet   = document.createElement("ul"),
+			var	elSet   = document.createElement("ul"),
 				elOK    = document.createElement("li"),
 				elReset = document.createElement("li");
 
