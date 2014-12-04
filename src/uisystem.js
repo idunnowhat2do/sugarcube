@@ -96,7 +96,7 @@ var UISystem = (function () {
 		setPageElements();
 
 		// setup Saves menu
-		uiAddClickHandler("#menu-saves", null, function () { buildDialogSaves(); });
+		uiAddClickHandler("#menu-saves a", null, function () { buildDialogSaves(); });
 
 		// setup Rewind menu
 		if (!config.disableHistoryTracking && tale.lookup("tags", "bookmark").length > 0) {
@@ -106,7 +106,7 @@ var UISystem = (function () {
 		}
 
 		// setup Restart menu
-		uiAddClickHandler("#menu-restart", null, function () { buildDialogRestart(); });
+		uiAddClickHandler("#menu-restart a", null, function () { buildDialogRestart(); });
 
 		// setup Options menu
 		if (tale.has("MenuOptions")) {
