@@ -315,7 +315,7 @@ History.prototype.display = function (title, link, option) {
 		this.save();
 	}
 
-	// clear <body> classes and execute the PassageReady passage
+	// clear <body> classes, then execute the PassageReady passage and pre-display tasks
 	if (updateDisplay) {
 		if (document.body.className) {
 			document.body.className = "";
@@ -327,6 +327,9 @@ History.prototype.display = function (title, link, option) {
 				technicalAlert("PassageReady", e.message);
 			}
 		}
+		Object.keys(predisplay).forEach(function (task) {
+			if (typeof predisplay[task] === "function") { predisplay[task].call(this, task); }
+		}, passage);
 	}
 
 	// add it to the page
@@ -371,7 +374,7 @@ History.prototype.display = function (title, link, option) {
 		window.scroll(0, 0);
 	}
 
-	// execute the PassageDone passage and update the non-passage page elements, if enabled
+	// execute the PassageDone passage and post-display tasks, then update the non-passage page elements, if enabled
 	if (updateDisplay) {
 		if (tale.has("PassageDone")) {
 			try {
@@ -380,6 +383,9 @@ History.prototype.display = function (title, link, option) {
 				technicalAlert("PassageDone", e.message);
 			}
 		}
+		Object.keys(postdisplay).forEach(function (task) {
+			if (typeof postdisplay[task] === "function") { postdisplay[task].call(this, task); }
+		}, passage);
 		if (config.updatePageElements) {
 			UISystem.setPageElements();
 		}

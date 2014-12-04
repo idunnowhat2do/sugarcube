@@ -157,16 +157,18 @@ var	config = {
 		/* /DEPRECATED */
 	};
 
-var	macros     = {},         // macros manager
-	tale       = {},         // story manager
-	state      = {},         // history manager
-	storage    = {},         // persistant storage manager
-	session    = {},         // session manager
-	options    = {},         // options variable store
-	setup      = {},         // author setup variable store
-	prerender  = {},         // Twine 1.4+ pre-render task callbacks
-	postrender = {},         // Twine 1.4+ post-render task callbacks
-	testPlay   = "START_AT"; // Twine 1.4+ "Test Play From Here" feature variable
+var	macros      = {},         // macros manager
+	tale        = {},         // story manager
+	state       = {},         // history manager
+	storage     = {},         // persistant storage manager
+	session     = {},         // session manager
+	options     = {},         // options variable store
+	setup       = {},         // author setup variable store
+	predisplay  = {},         // pre-display task callbacks
+	postdisplay = {},         // post-display task callbacks
+	prerender   = {},         // Twine 1.4+ pre-render task callbacks
+	postrender  = {},         // Twine 1.4+ post-render task callbacks
+	testPlay    = "START_AT"; // Twine 1.4+ "Test Play From Here" feature variable
 
 /**
  * Main function, entry point for story startup
