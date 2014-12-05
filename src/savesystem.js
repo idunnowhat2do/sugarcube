@@ -8,6 +8,7 @@
  **********************************************************************************************************************/
 
 var SaveSystem = (function () {
+	"use strict";
 
 	var
 		_badStore    = false,
@@ -431,7 +432,7 @@ var SaveSystem = (function () {
 		delete     : { value : deleteSlot },
 		// Filesystem
 		exportSave : { value : exportSave },
-		importSave : { value : importSave },
+		importSave : { value : importSave }
 	});
 
 }());
