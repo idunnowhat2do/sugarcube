@@ -39,7 +39,7 @@ function clone(orig) {
 	}
 
 	// create a copy of the original
-	var type = Object.prototype.toString.call(orig),
+	var	type = Object.prototype.toString.call(orig),
 		copy;
 	if (type === "[object Date]") {
 		copy = new Date(orig.getTime());
@@ -163,7 +163,7 @@ function addStyle(css) {
 	}
 
 	// check for Twine 1.4 Base64 image passage transclusion
-	var matchRe = new RegExp(Wikifier.imageFormatter.lookaheadRegExp.source, "gm"),
+	var	matchRe = new RegExp(Wikifier.imageFormatter.lookaheadRegExp.source, "gm"),
 		parseRe = new RegExp(Wikifier.textPrimitives.image);
 	if (matchRe.test(css)) {
 		css = css.replace(matchRe, function(wikiImage) {
@@ -229,7 +229,7 @@ function fade(el, options) {
 		el.style.opacity = opacity;
 	}
 
-	var current,
+	var	current,
 		proxy      = el.cloneNode(true),
 		direction  = (options.fade == "in") ? 1 : -1,
 		intervalId;
@@ -265,7 +265,7 @@ function scrollWindowTo(el, increment) {
 		return curtop;
 	}
 	function ensureVisible(el) {
-		var posTop    = findPosY(el),
+		var	posTop    = findPosY(el),
 			posBottom = posTop + el.offsetHeight,
 			winTop    = window.scrollY ? window.scrollY : document.body.scrollTop,
 			winHeight = window.innerHeight ? window.innerHeight : document.body.clientHeight,
@@ -299,7 +299,7 @@ function scrollWindowTo(el, increment) {
 		}
 	}
 
-	var start      = window.scrollY ? window.scrollY : document.body.scrollTop,
+	var	start      = window.scrollY ? window.scrollY : document.body.scrollTop,
 		end        = ensureVisible(el),
 		distance   = Math.abs(start - end),
 		progress   = 0,
@@ -402,13 +402,13 @@ var Util = Object.defineProperties({}, {
 	diff : {
 		value : function (orig, dest) /* diff object */ {
 			"use strict";
-			var keys    = [].concat(Object.keys(orig), Object.keys(dest))
+			var	keys    = [].concat(Object.keys(orig), Object.keys(dest))
 					        .sort().filter(function (v, i, a) { return (i === 0 || a[i-1] != v); }),
 				diff    = {},
 				isArray = Array.isArray(orig),
 				aOpRef;
 			for (var i = 0, klen = keys.length; i < klen; i++) {
-				var p     = keys[i],
+				var	p     = keys[i],
 					origP = orig[p],
 					destP = dest[p];
 				if (orig.hasOwnProperty(p)) {
@@ -431,7 +431,7 @@ var Util = Object.defineProperties({}, {
 								diff[p] = [ Util.DiffOp.Copy, destP ];
 							} else {
 								// values are objects
-								var origPType = Object.prototype.toString.call(origP),
+								var	origPType = Object.prototype.toString.call(origP),
 									destPType = Object.prototype.toString.call(destP);
 								if (origPType === destPType) {
 									// values are objects of the same prototype
@@ -496,10 +496,10 @@ var Util = Object.defineProperties({}, {
 	patch : {
 		value : function (orig, diff) /* patched object */ {
 			"use strict";
-			var keys    = Object.keys(diff || {}),
+			var	keys    = Object.keys(diff || {}),
 				patched = clone(orig);
 			for (var i = 0, klen = keys.length; i < klen; i++) {
-				var p     = keys[i],
+				var	p     = keys[i],
 					diffP = diff[p];
 				if (diffP === Util.DiffOp.Delete) {
 					delete patched[p];
@@ -520,6 +520,50 @@ var Util = Object.defineProperties({}, {
 				}
 			}
 			return patched;
+		}
+	},
+
+	/**
+	 * Returns the number of miliseconds represented by the passed CSS time string
+	 */
+	fromCSSTime : {
+		value : function (cssTime) {
+			"use strict";
+			var	re    = /^([+-]?[0-9]+(?:\.[0-9]+)?)\s*(m?s)$/, // more forgiving than the specification requires
+				match = re.exec(cssTime);
+			if (match === null) {
+				throw new Error('invalid CSS time string: "' + cssTime + '"');
+			}
+			if (match[2] === "ms") {
+				return Number(match[1]);
+			} else {
+				return Number(match[1]) * 1000;
+			}
+		}
+	},
+
+	/**
+	 * Returns the CSS time string represented by the passed number of milliseconds
+	 */
+	toCSSTime : {
+		value : function (msec) {
+			"use strict";
+			if (typeof msec !== "number" || isNaN(msec) || !isFinite(msec)) {
+				var what;
+				switch (typeof msec) {
+				case "string":
+					what = '"' + msec + '"';
+					break;
+				case "number":
+					what = String(msec);
+					break;
+				default:
+					what = Object.prototype.toString.call(msec);
+					break;
+				}
+				throw new Error("invalid milliseconds: " + what);
+			}
+			return msec + "ms";
 		}
 	},
 
