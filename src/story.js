@@ -1057,15 +1057,17 @@ Tale.prototype.has = function (key) {
 };
 
 Tale.prototype.get = function (key) {
-	if (typeof key === "string") {
-		return this.passages[key] || new Passage(key);
-	} else if (typeof key === "number") {
+	switch (typeof key) {
+	case "string":
+		return this.passages.hasOwnProperty(key) ? this.passages[key] : new Passage(key || "(unknown)");
+	case "number":
 		var pnames = Object.keys(this.passages);
 		for (var i = 0, iend = pnames.length; i < iend; i++) {
 			if (this.passages[pnames[i]].id === key) {
 				return this.passages[pnames[i]];
 			}
 		}
+		break;
 	}
 	return; // FIXME: should this return null instead of undefined?
 };
