@@ -401,6 +401,6 @@ a.link-return:after {
 	border-collapse: collapse;
 	font-size: 100%;
 }
-.passage th, .passage td, .passage tr, .passage caption {
+.passage tr, .passage th, .passage td, .passage caption {
 	padding: 3px;
 }
