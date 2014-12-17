@@ -26,7 +26,7 @@ var UISystem = (function () {
 		jQuery("#init-no-js, #init-lacking").remove();
 
 		// generate the UI elements and add them to the page
-		var store  = document.getElementById("store-area"),
+		var	store  = document.getElementById("store-area"),
 			uiTree = document.createDocumentFragment(),
 			temp   = document.createElement("div");
 
@@ -34,7 +34,7 @@ var UISystem = (function () {
 		temp.innerHTML = tale.has("StoryFormatMarkup")
 			? tale.get("StoryFormatMarkup").text.trim()
 			:     '<div id="ui-bar">'
-				+     '<header id="title">'
+				+     '<header id="title" role="banner">'
 				+         '<div id="story-banner"></div>'
 				+         '<h1 id="story-title"></h1>'
 				+         '<div id="story-subtitle"></div>'
@@ -42,7 +42,7 @@ var UISystem = (function () {
 				+         '<p id="story-author"></p>'
 				+     '</header>'
 				+     '<div id="story-caption"></div>'
-				+     '<nav id="menu">'
+				+     '<nav id="menu" role="navigation">'
 				+         '<ul id="menu-story-transitional"></ul>'
 				+         '<ul id="menu-core">'
 				+             '<li id="menu-story"></li>'
@@ -53,7 +53,7 @@ var UISystem = (function () {
 				+             '<li id="menu-share"><a>Share</a></li>'
 				+         '</ul>'
 				+     '</nav>'
-				+     '<footer>'
+				+     '<footer role="contentinfo">'
 				+         '<p id="credits">Made with <a href="http://twinery.org/" target="_blank">Twine</a> &amp; <a href="http://www.motoslave.net/sugarcube/" target="_blank">SugarCube</a></p>'
 				+         '<p id="version">SugarCube ("{{BUILD_VERSION}}")</p>'
 				+     '</footer>'
@@ -159,7 +159,7 @@ var UISystem = (function () {
 
 	function buildDialogSaves() {
 		function createActionItem(bId, bClass, bText, bAction) {
-			var li  = document.createElement("li"),
+			var	li  = document.createElement("li"),
 				btn = document.createElement("button");
 			btn.id = "saves-" + bId;
 			if (bClass) {
@@ -188,13 +188,13 @@ var UISystem = (function () {
 			var saves = storage.getItem("saves");
 			if (saves === null) { return false; }
 
-			var tbody  = document.createElement("tbody"),
+			var	tbody  = document.createElement("tbody"),
 				tr,
 				tdSlot,
 				tdLoad,
 				tdDesc,
 				tdDele;
-			var tdLoadBtn, tdDescTxt, tdDeleBtn;
+			var	tdLoadBtn, tdDescTxt, tdDeleBtn;
 
 			if (SaveSystem.autosaveOK()) {
 				tr     = document.createElement("tr"),
@@ -297,7 +297,7 @@ var UISystem = (function () {
 			return table;
 		}
 		function createSavesImport() {
-			var el    = document.createElement("div"),
+			var	el    = document.createElement("div"),
 				label = document.createElement("div"),
 				input = document.createElement("input");
 
@@ -321,7 +321,7 @@ var UISystem = (function () {
 
 		if (DEBUG) { console.log("[UISystem.buildDialogSaves()]"); }
 
-		var savesOK = SaveSystem.OK(),
+		var	savesOK = SaveSystem.OK(),
 			list,
 			btnBar;
 
@@ -380,7 +380,7 @@ var UISystem = (function () {
 		for (var i = 0, iend = state.length - 1; i < iend; i++) {
 			var passage = tale.get(state.history[i].title);
 			if (passage && passage.tags.contains("bookmark")) {
-				var item = document.createElement("li"),
+				var	item = document.createElement("li"),
 					link = document.createElement("a");
 				link.classList.add("ui-close");
 				jQuery(link).click(function () {
@@ -489,7 +489,7 @@ var UISystem = (function () {
 			}
 		}
 		if (!list.hasChildNodes()) {
-			var item = document.createElement("li"),
+			var	item = document.createElement("li"),
 				link = document.createElement("a");
 			link.innerHTML = "<i>No rewind points available\u2026</i>";
 			item.appendChild(link);
@@ -719,7 +719,7 @@ var UISystem = (function () {
 	}
 
 	function uiResizeHandler(evt) {
-		var dialog = jQuery(_body),
+		var	dialog = jQuery(_body),
 			closer = jQuery(_closer),
 			topPos = (evt && typeof evt.data !== "undefined") ? evt.data : 50;
 
@@ -740,7 +740,7 @@ var UISystem = (function () {
 			topPos = 50;
 		}
 
-		var parent    = jQuery(window),
+		var	parent    = jQuery(window),
 			dialog    = jQuery(_body),
 			dialogPos = { left : "", right : "", top : "", bottom : "" },
 			closer    = jQuery(_closer),
@@ -780,7 +780,7 @@ var UISystem = (function () {
 	 ******************************************************************************************************************/
 	return Object.defineProperties({}, {
 		// Initialization
-		init                : { value : init },
+		init                 : { value : init },
 		// Internals
 		start                : { value : start },
 		setPageElements      : { value : setPageElements },
