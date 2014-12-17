@@ -161,7 +161,7 @@ var	macros      = {},         // macros manager
 	tale        = {},         // story manager
 	state       = {},         // history manager
 	storage     = {},         // persistant storage manager
-	session     = {},         // session manager
+	session     = {},         // session storage manager
 	options     = {},         // options variable store
 	setup       = {},         // author setup variable store
 	predisplay  = {},         // pre-display task callbacks
@@ -265,6 +265,8 @@ jQuery(document).ready(function () {
 		Wikifier   : Wikifier,
 		Util       : Util,
 		History    : History,
+		Passage    : Passage,
+		Tale       : Tale,
 		SaveSystem : SaveSystem,
 		UISystem   : UISystem
 	};
