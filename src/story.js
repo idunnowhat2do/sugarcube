@@ -240,7 +240,7 @@ History.prototype.display = function (title, link, option) {
 	if (DEBUG) { console.log("[<History>.display()]"); }
 
 	// process option
-	var updateDisplay = (option === "hidden" || option === "offscreen" || option === "quietly" || option === false) ? false : true,
+	var	updateDisplay = (option === "hidden" || option === "offscreen" || option === "quietly" || option === false) ? false : true,
 		updateHistory = (option === "replace" || option === "back") ? false : true;
 
 	// reset the runtime temp/scratch object
@@ -248,7 +248,7 @@ History.prototype.display = function (title, link, option) {
 
 	// n.b. the title parameter can either be a passage title (string) or passage ID (number), so
 	//      after loading the passage, always refer to passage.title and never the title parameter
-	var passage     = tale.get(title),
+	var	passage     = tale.get(title),
 		windowTitle = (config.displayPassageTitles && passage.title !== config.startPassage)
 			? tale.title + ": " + passage.title
 			: tale.title;
@@ -336,7 +336,7 @@ History.prototype.display = function (title, link, option) {
 	var el = passage.render();
 	el.style.visibility = "visible";
 	if (updateDisplay) {
-		var passages = document.getElementById("passages"),
+		var	passages = document.getElementById("passages"),
 			outgoing = passages.querySelector(".passage");
 		if (
 			   outgoing !== null
@@ -456,7 +456,7 @@ History.prototype.restore = function (suid) {
 			}
 		}
 		if (this.suid && session.hasItem("history." + this.suid)) {
-			var stateObj = session.getItem("history." + this.suid),
+			var	stateObj = session.getItem("history." + this.suid),
 				sidx     = History.getWindowState().sidx;
 			if (DEBUG) { console.log("    > History.getWindowState(): " + History.getWindowState().sidx + " / " + History.getWindowState().suid); }
 			if (DEBUG) { console.log("    > history." + this.suid + ": " + JSON.stringify(stateObj)); }
@@ -736,7 +736,7 @@ History.unmarshal = function (stateObj) {
 			if (DEBUG) { console.log("    > loading state into window history: " + i + " (" + state.history[i].title + ")"); }
 
 			// load the state into the window history
-			var windowState,
+			var	windowState,
 				windowTitle = (config.displayPassageTitles && state.history[i].title !== config.startPassage)
 					? tale.title + ": " + state.history[i].title
 					: tale.title;
@@ -774,7 +774,7 @@ function Passage(title, el, order) {
 	if (el) {
 		this.id          = order;
 		this.domId       = "passage-" + Util.slugify(this.title);
-		this.text        = Passage.unescapeLineBreaks(el.firstChild ? el.firstChild.nodeValue : "");
+		this.text        = Passage.unescape(el.firstChild ? el.firstChild.nodeValue : "");
 		this.textExcerpt = Passage.getExcerptFromText(this.text);
 		this.tags        = el.hasAttribute("tags") ? el.getAttribute("tags").trim() : "";
 		if (this.tags) {
@@ -794,13 +794,11 @@ function Passage(title, el, order) {
 				//     "twine.*"      : special tag
 				//  ?? "twinequest.*" : private use tag
 				//  ?? "tq.*"         : private use tag, AFAIK shorthand form of twinequest.*
-				var tagsToSkip = /^(?:debug|nobr|passage|script|stylesheet|widget|twine\.\w*)$/i;
-
-				var tagClasses = [];
+				var	tagsToSkip = /^(?:debug|nobr|passage|script|stylesheet|widget|twine\..*)$/i,
+					tagClasses = [];
 				for (var i = 0; i < this.tags.length; i++) {
-					var tag = this.tags[i].toLowerCase();
-					if (!tagsToSkip.test(tag)) {
-						tagClasses.push(Util.slugify(tag));
+					if (!tagsToSkip.test(this.tags[i])) {
+						tagClasses.push(Util.slugify(this.tags[i]));
 					}
 				}
 				if (tagClasses.length > 0) {
@@ -830,7 +828,6 @@ function Passage(title, el, order) {
 
 Passage.prototype.processText = function () {
 	var res = this.text;
-
 	if (this.tags.contains("nobr")) {
 		res = res.replace(/\n/g, " ");
 	}
@@ -886,16 +883,17 @@ Passage.prototype.reset = function () {
 	 */
 	var store = document.getElementById("store-area").childNodes;
 	for (var i = 0, iend = store.length; i < iend; i++) {
-		var el = store[i],
+		var	el = store[i],
 			tiddlerTitle;
 		if (el.getAttribute && (tiddlerTitle = el.getAttribute("tiddler"))) {
 			if (this.title === tiddlerTitle) {
-				this.text = Passage.unescapeLineBreaks(el.firstChild ? el.firstChild.nodeValue : "");
+				this.text = Passage.unescape(el.firstChild ? el.firstChild.nodeValue : "");
 				return;
 			}
 		}
 	}
-	this.text = "<html><span class=\"error\">Error: this passage does not exist</span></html>";
+	this.text = String.format('<span class="error" title="{0}">Error: this passage does not exist: {0}</span>',
+		this.title.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"));
 };
 
 Passage.prototype.excerpt = function () {
@@ -903,8 +901,8 @@ Passage.prototype.excerpt = function () {
 };
 
 Passage.getExcerptFromText = function (text, count) {
-	var pattern = new RegExp("(\\S+(?:\\s+\\S+){0," + (typeof count !== 'undefined' ? count - 1 : 7) + "})"),
-		result  = text
+	var	excerptRe = new RegExp("(\\S+(?:\\s+\\S+){0," + (typeof count !== 'undefined' ? count - 1 : 7) + "})"),
+		excerpt   = text
 			// strip macro tags (replace with a space)
 			.replace(/<<.*?>>/g, " ")
 			// strip html tags (replace with a space)
@@ -921,27 +919,27 @@ Passage.getExcerptFromText = function (text, count) {
 			.replace(/^\s*!+(.*?)$/gm, "$1")
 			// clean wiki bold/italic/underline/highlight formatting
 			.replace(/\'{2}|\/{2}|_{2}|@{2}/g, "")
-			// compact remaining whitespace
-			.replace(/\s+/g, " ")
 			// a final trim
 			.trim()
-			// lastly, match the excerpt
-			.match(pattern);
-	return (result ? result[1] + "\u2026" : "\u2026");
+			// compact whitespace
+			.replace(/\s+/g, " ")
+			// attempt to match the excerpt regexp
+			.match(excerptRe);
+	return (excerpt ? excerpt[1] + "\u2026" : "\u2026");
 };
 
 Passage.getExcerptFromNode = function (node, count) {
 	function getTextFromNode(node) {
 		if (!node.hasChildNodes()) { return ""; }
 
-		var nodes  = node.childNodes,
+		var	nodes  = node.childNodes,
 			output = "";
 
 		for (var i = 0, iend = nodes.length; i < iend; i++) {
 			switch (nodes[i].nodeType) {
 			case 1: // element nodes
 				if (nodes[i].style.display !== "none") {
-					output += " "; // out here to handle void nodes, in addition to child bearing nodes
+					output += " "; // out here to handle both void and child bearing nodes
 					if (nodes[i].hasChildNodes()) {
 						output += getTextFromNode(nodes[i]);
 					}
@@ -960,10 +958,10 @@ Passage.getExcerptFromNode = function (node, count) {
 
 	if (!node.hasChildNodes()) { return ""; }
 
-	var excerptRe = new RegExp("(\\S+(?:\\s+\\S+){0," + (typeof count !== 'undefined' ? count - 1 : 7) + "})"),
+	var	excerptRe = new RegExp("(\\S+(?:\\s+\\S+){0," + (typeof count !== "undefined" ? count - 1 : 7) + "})"),
 		excerpt   = getTextFromNode(node).trim();
 
-	if (excerpt) {
+	if (excerpt !== "") {
 		excerpt = excerpt
 			// compact whitespace
 			.replace(/\s+/g, " ")
@@ -973,34 +971,17 @@ Passage.getExcerptFromNode = function (node, count) {
 	return (excerpt ? excerpt[1] + "\u2026" : "\u2026");
 };
 
-Passage.unescapeLineBreaks = function (text) {
-	if (text && text !== "") {
-		return text
-			.replace(/\\n/gm, '\n')
-			.replace(/\\t/gm, '\t')    // Twine 1.4.1 "feature"
-			.replace(/\\s|\\/gm, '\\') // "\\s" is required to workaround a Twine "feature"
-			.replace(/\r/gm, "");
-	}
-	return "";
-};
-
-/* DEPRECATED */
-Passage.mergeClassNames = function (/* variadic */) {
-	if (arguments.length == 0) { return ""; }
-
-	var classes = [];
-	for (var i = 0; i < arguments.length; i++) {
-		if (typeof arguments[i] === "object" && Array.isArray(arguments[i])) {
-			classes = classes.concat(arguments[i]);
-		} else if (typeof arguments[i] === "string") {
-			classes = classes.concat(arguments[i].split(/\s+/));
-		}
-	}
-	if (classes.length > 0) {
-		// return a string of sorted, and unique, class names
-		return classes.sort().filter(function (v, i, a) { return (i === 0 || a[i-1] !== v); }).join(' ');
-	}
-	return "";
+Passage.unescape = function (text) {
+	if (typeof text !== "string" || text === "") { return ""; }
+	return text
+		// unescape line feeds
+		.replace(/\\n/gm, "\n")
+		// unescape tabs, which is a Twine 1.4.1 "feature"
+		.replace(/\\t/gm, "\t")
+		// unescape backslashes, including "\\s" which is an old Twine "feature"
+		.replace(/\\s|\\/gm, "\\")
+		// remove carriage returns
+		.replace(/\r/gm, "");
 };
 
 
@@ -1018,7 +999,7 @@ function Tale(instanceName) {
 	this.passages = {};
 	var store = document.getElementById("store-area").childNodes;
 	for (var i = 0, iend = store.length; i < iend; i++) {
-		var el = store[i],
+		var	el = store[i],
 			tiddlerTitle;
 		if (el.getAttribute && (tiddlerTitle = el.getAttribute("tiddler"))) {
 			this.passages[tiddlerTitle] = new Passage(tiddlerTitle, el, i);
@@ -1043,17 +1024,19 @@ Tale.prototype.setTitle = function (title) {
 };
 
 Tale.prototype.has = function (key) {
-	if (typeof key === "string") {
+	switch (typeof key) {
+	case "string":
 		return this.passages[key] != null; // use lazy equality
-	} else if (typeof key === "number") {
+	case "number":
 		var pnames = Object.keys(this.passages);
 		for (var i = 0, iend = pnames.length; i < iend; i++) {
 			if (this.passages[pnames[i]].id === key) {
 				return true;
 			}
 		}
+		return false;
 	}
-	return false;
+	throw new TypeError("Tale.prototype.has key parameter must be a string or number");
 };
 
 Tale.prototype.get = function (key) {
@@ -1067,15 +1050,15 @@ Tale.prototype.get = function (key) {
 				return this.passages[pnames[i]];
 			}
 		}
-		break;
+		return new Passage("(unknown ID: " + key + ")");
 	}
-	return; // FIXME: should this return null instead of undefined?
+	throw new TypeError("Tale.prototype.get key parameter must be a string or number");
 };
 
 Tale.prototype.lookup = function (key, value, sortKey) {
 	if (!sortKey) { sortKey = "title"; }
 
-	var pnames  = Object.keys(this.passages),
+	var	pnames  = Object.keys(this.passages),
 		results = [];
 	for (var i = 0, iend = pnames.length; i < iend; i++) {
 		var passage = this.passages[pnames[i]];
@@ -1101,7 +1084,11 @@ Tale.prototype.lookup = function (key, value, sortKey) {
 		}
 	}
 
-	results.sort(function (a, b) { return (a[sortKey] == b[sortKey]) ? 0 : ((a[sortKey] < b[sortKey]) ? -1 : +1); }); // use lazy equality
+	results.sort(function (a, b) {
+		return (a[sortKey] == b[sortKey]) // use lazy equality
+			? 0
+			: ((a[sortKey] < b[sortKey]) ? -1 : +1);
+	});
 
 	return results;
 };
