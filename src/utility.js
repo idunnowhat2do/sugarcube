@@ -362,6 +362,32 @@ var Util = Object.defineProperties({}, {
 	},
 
 	/**
+	 * Returns an entity encoded version of the passed string
+	 */
+	entityEncode : {
+		value : function (str) {
+			return str
+				.replace(/&/g,  "&amp;")
+				.replace(/</g,  "&lt;")
+				.replace(/>/g,  "&gt;")
+				.replace(/\"/g, "&quot;");
+		}
+	},
+
+	/**
+	 * Returns a decoded version of the passed entity encoded string
+	 */
+	entityDecode : {
+		value : function (str) {
+			return str
+				.replace(/&quot;/g, '"')
+				.replace(/&gt;/g,   ">")
+				.replace(/&lt;/g,   "<")
+				.replace(/&amp;/g,  "&");
+		}
+	},
+
+	/**
 	 * Returns the evaluation of the passed expression, throwing if there were errors
 	 */
 	evalExpression : {
