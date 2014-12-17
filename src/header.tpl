@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <!--
 
-SugarCube ("{{BUILD_VERSION}}"): A free (gratis and libre) header for Twine/Twee, based on TiddlyWiki.
+SugarCube ("{{BUILD_VERSION}}"): A free (gratis and libre) story format for Twine/Twee, based on TiddlyWiki.
 
 Copyright © 2013–2014 Thomas Michael Edwards <tmedwards@motoslave.net>.
 All rights reserved.
