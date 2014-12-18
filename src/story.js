@@ -55,25 +55,25 @@ History.Modes = Object.freeze({
 // Setup the History prototype
 Object.defineProperties(History.prototype, {
 	// getters
-	"top" : {
+	top : {
 		get : function() { return (this.history.length !== 0) ? this.history[this.history.length - 1] : null; }
 	},
 
-	"bottom" : {
+	bottom : {
 		get : function() { return (this.history.length !== 0) ? this.history[0] : null; }
 	},
 
-	"length" : {
+	length : {
 		get : function() { return (config.historyMode === History.Modes.Session) ? this.active.sidx + 1 : this.history.length; }
 	},
 
 	// methods
-	"isEmpty" : {
+	isEmpty : {
 		value : function() { return this.history.length === 0; }
 	},
 
 	/*
-	"clone" : {
+	clone : {
 		enumerable : true,
 		get        : function (at) {
 			if (this.isEmpty()) { return null; }
@@ -89,19 +89,19 @@ Object.defineProperties(History.prototype, {
 	},
 	*/
 
-	"getDeltaFromHistory" : {
+	getDeltaFromHistory : {
 		value : function (end) {
 			return History.deltaEncodeHistory(end != null ? this.history.slice(0, end) : this.history); // use lazy equality on null check
 		}
 	},
 
-	"setHistoryFromDelta" : {
+	setHistoryFromDelta : {
 		value : function (delta) {
 			this.history = History.deltaDecodeHistory(delta);
 		}
 	},
 
-	"has" : {
+	has : {
 		value : function (title) {
 			if (this.isEmpty()) { return false; }
 			if (arguments.length === 0 || title == null || title === "") { return false; } // use lazy equality on null check
@@ -110,7 +110,7 @@ Object.defineProperties(History.prototype, {
 		}
 	},
 
-	"index" : {
+	index : {
 		value : function (idx) {
 			if (this.isEmpty()) { return null; }
 			if (idx < 0 || idx >= this.length) { return null; }
@@ -119,7 +119,7 @@ Object.defineProperties(History.prototype, {
 		}
 	},
 
-	"peek" : {
+	peek : {
 		value : function (at) {
 			if (this.isEmpty()) { return null; }
 			at = 1 + (at ? Math.abs(at) : 0);
@@ -129,7 +129,7 @@ Object.defineProperties(History.prototype, {
 		}
 	},
 
-	"push" : {
+	push : {
 		value : function (/* variadic */) {
 			if (arguments.length === 0) { return; } // maybe throw?
 
@@ -144,7 +144,7 @@ Object.defineProperties(History.prototype, {
 		}
 	},
 
-	"pop" : {
+	pop : {
 		value : function (num) {
 			if (this.isEmpty()) { return []; }
 			num = num ? Math.abs(num) : 1;
@@ -154,7 +154,7 @@ Object.defineProperties(History.prototype, {
 		}
 	},
 
-	"setActiveState" : {
+	setActiveState : {
 		value : function (state) {
 			if (arguments.length === 0) { return; } // maybe throw?
 			if (state == null) { throw new Error("state activation attempted with null/undefined"); } // use lazy equality
@@ -177,7 +177,7 @@ Object.defineProperties(History.prototype, {
 		}
 	},
 
-	"init" : {
+	init : {
 		value : function () {
 			if (DEBUG) { console.log("[<History>.init()]"); }
 
@@ -258,7 +258,7 @@ Object.defineProperties(History.prototype, {
 		}
 	},
 
-	"display" : {
+	display : {
 		value : function (title, link, option) {
 			if (DEBUG) { console.log("[<History>.display()]"); }
 
@@ -437,7 +437,7 @@ Object.defineProperties(History.prototype, {
 		}
 	},
 
-	"regenerateSuid" : {
+	regenerateSuid : {
 		value : function () {
 			if (DEBUG) { console.log("[<History>.regenerateSuid()]"); }
 			this.suid = UUID.generate();
@@ -445,7 +445,7 @@ Object.defineProperties(History.prototype, {
 		}
 	},
 
-	"restart" : {
+	restart : {
 		value : function () {
 			if (DEBUG) { console.log("[<History>.restart()]"); }
 			if (config.historyMode !== History.Modes.Hash) {
@@ -457,7 +457,7 @@ Object.defineProperties(History.prototype, {
 		}
 	},
 
-	"save" : {
+	save : {
 		value : function () {
 			if (DEBUG) { console.log("[<History>.save()]"); }
 			var stateObj = { delta : this.getDeltaFromHistory() };
@@ -473,7 +473,7 @@ Object.defineProperties(History.prototype, {
 		}
 	},
 
-	"restore" : {
+	restore : {
 		value : function (suid) {
 			if (DEBUG) { console.log("[<History>.restore()]"); }
 			if (config.historyMode === History.Modes.Session) {
@@ -537,33 +537,33 @@ Object.defineProperties(History.prototype, {
 
 // Setup the History static methods
 Object.defineProperties(History, {
-	"serializeWindowState" : {
+	serializeWindowState : {
 		value : function (obj) {
 			return LZString.compressToUTF16(JSON.stringify(obj));
 		}
 	},
 
-	"deserializeWindowState" : {
+	deserializeWindowState : {
 		value : function (obj) {
 			return JSON.parse(LZString.decompressFromUTF16(obj));
 		}
 	},
 
-	"hasWindowState" : {
+	hasWindowState : {
 		value : function (obj) {
 			if (arguments.length === 0) { obj = window.history; }
 			return obj.state != null; // use lazy equality
 		}
 	},
 
-	"getWindowState" : {
+	getWindowState : {
 		value : function (obj) {
 			if (arguments.length === 0) { obj = window.history; }
 			return (obj.state != null) ? History.deserializeWindowState(obj.state) : null; // use lazy equality
 		}
 	},
 
-	"addWindowState" : {
+	addWindowState : {
 		value : function (obj, title, url) {
 			// required by IE (if you pass undefined as the URL, IE will happily set it to that, so you must not pass it at all in that case)
 			if (url != null) { // use lazy equality
@@ -574,7 +574,7 @@ Object.defineProperties(History, {
 		}
 	},
 
-	"replaceWindowState" : {
+	replaceWindowState : {
 		value : function (obj, title, url) {
 			// required by IE (if you pass undefined as the URL, IE will happily set it to that, so you must not pass it at all in that case)
 			if (url != null) { // use lazy equality
@@ -585,7 +585,7 @@ Object.defineProperties(History, {
 		}
 	},
 
-	"serializeWindowHashState" : {
+	serializeWindowHashState : {
 		value : function (obj) {
 			return "#" + (LZString.compressToBase64(JSON.stringify(obj))
 				.replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, ".")
@@ -593,7 +593,7 @@ Object.defineProperties(History, {
 		}
 	},
 
-	"deserializeWindowHashState" : {
+	deserializeWindowHashState : {
 		value : function (obj) {
 			return JSON.parse(LZString.decompressFromBase64(obj.slice(1)
 				.replace(/\-/g, "+").replace(/_/g, "/").replace(/\./g, "=")
@@ -601,21 +601,21 @@ Object.defineProperties(History, {
 		}
 	},
 
-	"hasWindowHashState" : {
+	hasWindowHashState : {
 		value : function (hash) {
 			if (arguments.length === 0) { hash = window.location.hash; }
 			return (hash !== "" && hash !== "#");
 		}
 	},
 
-	"getWindowHashState" : {
+	getWindowHashState : {
 		value : function (hash) {
 			if (arguments.length === 0) { hash = window.location.hash; }
 			return (hash !== "" && hash !== "#") ? History.deserializeWindowHashState(hash) : null;
 		}
 	},
 
-	"popStateHandler_Session" : {
+	popStateHandler_Session : {
 		value : function (evt) {
 			if (DEBUG) {
 				console.log("[History.popStateHandler_Session()]");
@@ -641,7 +641,7 @@ Object.defineProperties(History, {
 		}
 	},
 
-	"popStateHandler_Window" : {
+	popStateHandler_Window : {
 		value : function (evt) {
 			if (DEBUG) {
 				console.log("[History.popStateHandler_Window()]");
@@ -670,7 +670,7 @@ Object.defineProperties(History, {
 		}
 	},
 
-	"hashChangeHandler" : {
+	hashChangeHandler : {
 		value : function (evt) {
 			if (DEBUG) {
 				console.log("[History.hashChangeHandler()]");
@@ -712,7 +712,7 @@ Object.defineProperties(History, {
 		}
 	},
 
-	"initPRNG" : {
+	initPRNG : {
 		value : function (seed, useEntropy) {
 			if (DEBUG) { console.log("[History.initPRNG()]"); }
 
@@ -730,7 +730,7 @@ Object.defineProperties(History, {
 		}
 	},
 
-	"deltaEncodeHistory" : {
+	deltaEncodeHistory : {
 		value : function (hist) {
 			if (!Array.isArray(hist)) { return null; }
 			if (hist.length === 0) { return []; }
@@ -743,7 +743,7 @@ Object.defineProperties(History, {
 		}
 	},
 
-	"deltaDecodeHistory" : {
+	deltaDecodeHistory : {
 		value : function (delta) {
 			if (!Array.isArray(delta)) { return null; }
 			if (delta.length === 0) { return []; }
@@ -756,7 +756,7 @@ Object.defineProperties(History, {
 		}
 	},
 
-	"marshal" : {
+	marshal : {
 		value : function () {
 			if (DEBUG) { console.log("[History.marshal()]"); }
 
@@ -773,7 +773,7 @@ Object.defineProperties(History, {
 		}
 	},
 
-	"unmarshal" : {
+	unmarshal : {
 		value : function (stateObj) {
 			if (DEBUG) { console.log("[History.unmarshal()]"); }
 
@@ -917,6 +917,7 @@ Object.defineProperties(Passage.prototype, {
 	processText : {
 		value : function () {
 			var res = this.text;
+			// handle the nobr tag
 			if (this.tags.contains("nobr")) {
 				res = res.replace(/\n/g, "\u0020"); // space
 			}

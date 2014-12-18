@@ -116,7 +116,7 @@ var	config = {
 		historyMode            : (has.pushState ? (has.sessionStorage ? History.Modes.Session : History.Modes.Window) : History.Modes.Hash),
 
 		// transition properties
-		passageTransitionOut   : null,
+		passageTransitionOut   : undefined,
 		transitionEndEventName : (function () {
 			var	teMap  = {
 					"transition"       : "transitionend",
