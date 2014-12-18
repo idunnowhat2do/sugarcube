@@ -429,7 +429,7 @@ var UISystem = (function () {
 							}
 
 							// activate the current top
-							state.activate(state.top);
+							state.setActiveState(state.top);
 
 							// display the passage
 							state.display(state.active.title, null, "replace");
@@ -465,7 +465,7 @@ var UISystem = (function () {
 							state.pop(state.length - (p + 1));
 
 							// activate the current top
-							state.activate(state.top);
+							state.setActiveState(state.top);
 
 							// display the passage
 							state.display(state.active.title, null, "replace");

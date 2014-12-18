@@ -154,7 +154,7 @@ Object.defineProperties(History.prototype, {
 		}
 	},
 
-	"activate" : {
+	"setActiveState" : {
 		value : function (state) {
 			if (arguments.length === 0) { return; } // maybe throw?
 			if (state == null) { throw new Error("state activation attempted with null/undefined"); } // use lazy equality
@@ -283,7 +283,7 @@ Object.defineProperties(History.prototype, {
 						console.log("    [S]> state.active.init && !state.isEmpty(); activating: "
 							+ (History.hasWindowState() ? "History.getWindowState().sidx = " + History.getWindowState().sidx : "state.top"));
 					}
-					this.activate(History.hasWindowState() ? History.getWindowState().sidx : this.top);
+					this.setActiveState(History.hasWindowState() ? History.getWindowState().sidx : this.top);
 				} else {
 					if (DEBUG) {
 						if (config.historyMode === History.Modes.Window) {
@@ -292,7 +292,7 @@ Object.defineProperties(History.prototype, {
 							console.log("    [H]> state.active.init && !state.isEmpty(); activating: state.top");
 						}
 					}
-					this.activate(this.top);
+					this.setActiveState(this.top);
 				}
 			}
 
@@ -316,7 +316,7 @@ Object.defineProperties(History.prototype, {
 				if (this.prng) {
 					this.top.rcount = this.prng.count;
 				}
-				this.activate(this.top);
+				this.setActiveState(this.top);
 			}
 			if ((updateHistory || config.disableHistoryControls) && config.historyMode !== History.Modes.Hash) {
 				if (DEBUG) { console.log("    > typeof History.getWindowState(): " + typeof History.getWindowState()); }
@@ -637,7 +637,7 @@ Object.defineProperties(History, {
 				state.restore(windowState.suid);
 			}
 
-			state.display(state.activate(windowState.sidx).title, null, "replace");
+			state.display(state.setActiveState(windowState.sidx).title, null, "replace");
 		}
 	},
 
@@ -666,7 +666,7 @@ Object.defineProperties(History, {
 			if (state.hasOwnProperty("prng") && windowState.hasOwnProperty("rseed")) {
 				state.prng.seed = windowState.rseed;
 			}
-			state.display(state.activate(state.top).title, null, "replace");
+			state.display(state.setActiveState(state.top).title, null, "replace");
 		}
 	},
 
@@ -702,7 +702,7 @@ Object.defineProperties(History, {
 				if (state.hasOwnProperty("prng") && hashState.hasOwnProperty("rseed")) {
 					state.prng.seed = hashState.rseed;
 				}
-				state.display(state.activate(state.top).title, null, "replace");
+				state.display(state.setActiveState(state.top).title, null, "replace");
 			} else {
 				window.location.reload();
 			}
@@ -831,7 +831,7 @@ Object.defineProperties(History, {
 			}
 
 			// activate the current top and display the passage
-			state.activate(state.top);
+			state.setActiveState(state.top);
 			state.display(state.active.title, null, "replace");
 		}
 	}

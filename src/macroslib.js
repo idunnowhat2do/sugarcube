@@ -154,7 +154,7 @@ function defineStandardMacros() {
 									steps--;
 								}
 								// activate the new top since we popped the stack
-								state.activate(state.top);
+								state.setActiveState(state.top);
 								// display the passage
 								state.display(pname, el, "replace");
 							};
