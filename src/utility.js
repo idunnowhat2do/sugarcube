@@ -202,7 +202,7 @@ function throwError(place, message, title) {
 
 /**
  * Fades a DOM element in or out
- *   n.b. Unused in SugarCube, only included for compatibility
+ *   n.b. Unused, included only for compatibility
  */
 function fade(el, options) {
 	function tick() {
@@ -246,7 +246,7 @@ function fade(el, options) {
 
 /**
  * Scrolls the browser window to ensure that a DOM element is in view
- *   n.b. Unused in SugarCube, only included for compatibility
+ *   n.b. Unused, included only for compatibility
  */
 function scrollWindowTo(el, increment) {
 	function tick() {
@@ -591,30 +591,6 @@ var Util = Object.defineProperties({}, {
 			}
 			return msec + "ms";
 		}
-	},
-
-	/**
-	 * [DEPRECATED] Returns a JSON-based serialization of the passed object
-	 *   n.b. Just a legacy alias for JSON.stringify now, see 'intrinsics.js' for the new serialization code
-	 */
-	serialize : {
-		value : JSON.stringify
-	},
-
-	/**
-	 * [DEPRECATED] Returns a copy of the original object from the passed JSON-based serialization
-	 *   n.b. Just a legacy alias for JSON.parse now, see 'intrinsics.js' for the new serialization code
-	 */
-	deserialize : {
-		value : JSON.parse
-	},
-
-	/**
-	 * [DEPRECATED] Returns a v4 Universally Unique IDentifier (UUID), a.k.a. Globally Unique IDentifier (GUID)
-	 *   n.b. Just a legacy alias for UUID.generate now
-	 */
-	generateUuid : {
-		value : UUID.generate
 	}
 
 });
