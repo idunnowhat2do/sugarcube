@@ -844,13 +844,12 @@ Object.defineProperties(History, {
 // Setup the Passage constructor
 function Passage(title, el, order) {
 	this.title = title;
+	this.domId = "passage-" + Util.slugify(this.title);
 	if (el) {
-		this.element     = el;
-		this.id          = order;
-		this.domId       = "passage-" + Util.slugify(this.title);
-		//this.text        = Passage.unescape(el.textContent);
-		this.textExcerpt = Passage.getExcerptFromText(this.text);
-		this.tags        = el.hasAttribute("tags") ? el.getAttribute("tags").trim() : "";
+		this.element = el;
+		this.id      = order;
+		//this.text  = Passage.unescape(el.textContent);
+		this.tags    = el.hasAttribute("tags") ? el.getAttribute("tags").trim() : "";
 		if (this.tags !== "") {
 			this.tags    = this.tags.split(/\s+/);
 			this.classes = [];
@@ -858,13 +857,13 @@ function Passage(title, el, order) {
 			// add tags as classes
 			if (this.tags.length > 0) {
 				// tags to skip transforming into classes
-				//     "debug"        : special tag
-				//     "nobr"         : special tag
-				//     "passage"      : the default class
-				//     "script"       : special tag
-				//     "stylesheet"   : special tag
-				//     "widget"       : special tag
-				//     "twine.*"      : special tag
+				//     debug      : special tag
+				//     nobr       : special tag
+				//     passage    : the default class
+				//     script     : special tag
+				//     stylesheet : special tag
+				//     widget     : special tag
+				//     twine.*    : special tag
 				var	tagsToSkip = /^(?:debug|nobr|passage|script|stylesheet|widget|twine\..*)$/i,
 					tagClasses = [];
 				for (var i = 0; i < this.tags.length; i++) {
@@ -885,6 +884,8 @@ function Passage(title, el, order) {
 			this.classes = [];
 		}
 	} else {
+		this.element = null;
+		this.id      = undefined;
 		/*
 		this.text    = String.format('<span class="error" title="{0}">Error: this passage does not exist: {0}</span>',
 						this.title.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"));
@@ -899,7 +900,7 @@ Object.defineProperties(Passage.prototype, {
 	// getters
 	className : {
 		get : function () {
-			return this.classes.join("\u0020"); // space
+			return this.classes.join(" ");
 		}
 	},
 
@@ -914,12 +915,43 @@ Object.defineProperties(Passage.prototype, {
 	},
 
 	// methods
+	description : {
+		value : function () {
+			if (config.altPassageDescription != null) { // use lazy equality
+				switch (typeof config.altPassageDescription) {
+				case "boolean":
+					if (config.altPassageDescription) {
+						return this.title;
+					}
+					break;
+				case "object":
+					if (config.altPassageDescription.hasOwnProperty(this.title)) {
+						return config.altPassageDescription[this.title];
+					}
+					break;
+				case "function":
+					var result = config.altPassageDescription.call(this);
+					if (!!result) {
+						return result;
+					}
+					break;
+				default:
+					throw new TypeError("config.altPassageDescription must be a boolean, object, or function");
+				}
+			}
+			if (this._excerpt == null) { // use lazy equality
+				return Passage.getExcerptFromText(this.text);
+			}
+			return this._excerpt;
+		}
+	},
+
 	processText : {
 		value : function () {
 			var res = this.text;
 			// handle the nobr tag
 			if (this.tags.contains("nobr")) {
-				res = res.replace(/\n/g, "\u0020"); // space
+				res = res.replace(/\n/g, " ");
 			}
 			// check for Twine 1.4 Base64 image passage transclusion
 			if (this.tags.contains("Twine.image")) {
@@ -962,16 +994,10 @@ Object.defineProperties(Passage.prototype, {
 				if (typeof postrender[task] === "function") { postrender[task].call(this, content, task); }
 			}, this);
 
-			// update the excerpt cache to reflect the rendered text
-			this.textExcerpt = Passage.getExcerptFromNode(content);
+			// create/update the excerpt cache to reflect the rendered text
+			this._excerpt = Passage.getExcerptFromNode(content);
 
 			return passage;
-		}
-	},
-
-	excerpt : {
-		value : function () {
-			return this.textExcerpt;
 		}
 	},
 
@@ -997,8 +1023,27 @@ Object.defineProperties(Passage, {
 		}
 	},
 
+	getExcerptFromNode : {
+		value : function (node, count) {
+			if (!node.hasChildNodes()) { return ""; }
+
+			var	excerptRe = new RegExp("(\\S+(?:\\s+\\S+){0," + (typeof count !== "undefined" ? count - 1 : 7) + "})"),
+				excerpt   = String(node.textContent).trim();
+			if (excerpt !== "") {
+				excerpt = excerpt
+					// compact whitespace
+					.replace(/\s+/g, " ")
+					// attempt to match the excerpt regexp
+					.match(excerptRe);
+			}
+			return (excerpt ? excerpt[1] + "\u2026" : "\u2026"); // horizontal ellipsis
+		}
+	},
+
 	getExcerptFromText : {
 		value : function (text, count) {
+			if (text === "") { return ""; }
+
 			var	excerptRe = new RegExp("(\\S+(?:\\s+\\S+){0," + (typeof count !== 'undefined' ? count - 1 : 7) + "})"),
 				excerpt   = text
 					// strip macro tags (replace with a space)
@@ -1023,52 +1068,7 @@ Object.defineProperties(Passage, {
 					.replace(/\s+/g, " ")
 					// attempt to match the excerpt regexp
 					.match(excerptRe);
-			return (excerpt ? excerpt[1] + "\u2026" : "\u2026");
-		}
-	},
-
-	getExcerptFromNode : {
-		value : function (node, count) {
-			function getTextFromNode(node) {
-				if (!node.hasChildNodes()) { return ""; }
-
-				var	nodes  = node.childNodes,
-					output = "";
-
-				for (var i = 0, iend = nodes.length; i < iend; i++) {
-					switch (nodes[i].nodeType) {
-					case 1: // element nodes
-						if (nodes[i].style.display !== "none") {
-							output += " "; // out here to handle both void and child bearing nodes
-							if (nodes[i].hasChildNodes()) {
-								output += getTextFromNode(nodes[i]);
-							}
-						}
-						break;
-					case 3: // text nodes
-						output += nodes[i].textContent;
-						break;
-					default:
-						if (DEBUG) { console.log(" ~> nodes[" + i + "].nodeType: " + nodes[i].nodeType); }
-						break;
-					}
-				}
-				return output;
-			}
-
-			if (!node.hasChildNodes()) { return ""; }
-
-			var	excerptRe = new RegExp("(\\S+(?:\\s+\\S+){0," + (typeof count !== "undefined" ? count - 1 : 7) + "})"),
-				excerpt   = getTextFromNode(node).trim();
-
-			if (excerpt !== "") {
-				excerpt = excerpt
-					// compact whitespace
-					.replace(/\s+/g, " ")
-					// attempt to match the excerpt regexp
-					.match(excerptRe);
-			}
-			return (excerpt ? excerpt[1] + "\u2026" : "\u2026");
+			return (excerpt ? excerpt[1] + "\u2026" : "\u2026"); // horizontal ellipsis
 		}
 	}
 });

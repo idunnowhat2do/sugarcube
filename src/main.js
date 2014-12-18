@@ -104,11 +104,12 @@ var	config = {
 		/* /deprecated */
 
 		// general option properties
-		addVisitedLinkClass  : false,
-		displayPassageTitles : false,
-		loadDelay            : 0,
-		startPassage         : "Start",
-		updatePageElements   : true,
+		addVisitedLinkClass   : false,
+		altPassageDescription : undefined,
+		displayPassageTitles  : false,
+		loadDelay             : 0,
+		startPassage          : "Start",
+		updatePageElements    : true,
 
 		// history option properties
 		disableHistoryControls : false,

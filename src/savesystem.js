@@ -174,7 +174,7 @@ var SaveSystem = (function () {
 			return false;
 		}
 		saves.autosave = marshal();
-		saves.autosave.title = title || tale.get(state.active.title).excerpt();
+		saves.autosave.title = title || tale.get(state.active.title).description();
 		saves.autosave.date = Date.now();
 		if (metadata != null) { // use lazy equality
 			saves.autosave.metadata = metadata;
@@ -275,7 +275,7 @@ var SaveSystem = (function () {
 			return false;
 		}
 		saves.slots[slot] = marshal();
-		saves.slots[slot].title = title || tale.get(state.active.title).excerpt();
+		saves.slots[slot].title = title || tale.get(state.active.title).description();
 		saves.slots[slot].date = Date.now();
 		if (metadata != null) { // use lazy equality
 			saves.slots[slot].metadata = metadata;

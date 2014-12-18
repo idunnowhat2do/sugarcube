@@ -483,7 +483,7 @@ var UISystem = (function () {
 						};
 					}
 				}());
-				link.appendChild(document.createTextNode("Turn " + (i + 1) + ": " + passage.excerpt()));
+				link.appendChild(document.createTextNode("Turn " + (i + 1) + ": " + passage.description()));
 				item.appendChild(link);
 				list.appendChild(item);
 			}
