@@ -148,7 +148,7 @@ function defineStandardMacros() {
 								//        (i.e. post-rendered/executed) states; in most other headers, something like
 								//        (steps >= 0) would probably be necessary
 								while (steps > 0) {
-									if (!state.isEmpty) {
+									if (!state.isEmpty()) {
 										state.pop();
 									}
 									steps--;

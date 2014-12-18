@@ -15,7 +15,7 @@
  * the story history or -1 if it does not exist; if multiple passages are given, returns the lowest count (which can be -1)
  */
 function lastVisited(/* variadic */) {
-	if (state.isEmpty || arguments.length === 0) {
+	if (state.isEmpty() || arguments.length === 0) {
 		return -1;
 	}
 
@@ -112,7 +112,7 @@ function tags(/* variadic */) {
  * if multiple passages are given, returns the lowest count
  */
 function visited(/* variadic */) {
-	if (state.isEmpty) {
+	if (state.isEmpty()) {
 		return 0;
 	}
 
