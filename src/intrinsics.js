@@ -676,6 +676,25 @@ Object.defineProperty(String, "format", {
 });
 
 /**
+ * Returns an array of strings, split from the string, or an empty array if the string is empty
+ */
+Object.defineProperty(String.prototype, "splitOrEmpty", {
+	configurable : true,
+	writable     : true,
+	value        : function (/* [ separator [, limit ]] */) {
+		"use strict";
+		if (this == null) {
+			throw new TypeError("String.prototype.splitOrEmpty called on null or undefined");
+		}
+		if (this === "") {
+			return [];
+		}
+
+		return String.prototype.split.apply(this, arguments);
+	}
+});
+
+/**
  * [DEPRECATED] Returns a string with all whitespace removed from the left side of the base string
  *   n.b. Just a legacy alias for String.prototype.trimLeft now
  */
