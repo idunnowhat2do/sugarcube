@@ -842,46 +842,38 @@ Object.defineProperties(History, {
  * Passage API
  **********************************************************************************************************************/
 // Setup the Passage constructor
-function Passage(title, el, order) {
+function Passage(title, el, pid) {
 	this.title = title;
 	this.domId = "passage-" + Util.slugify(this.title);
 	if (el) {
 		this.element = el;
-		this.id      = order;
+		this.id      = pid;
 		//this.text  = Passage.unescape(el.textContent);
-		this.tags    = el.hasAttribute("tags") ? el.getAttribute("tags").trim() : "";
-		if (this.tags !== "") {
-			this.tags    = this.tags.split(/\s+/);
-			this.classes = [];
-
-			// add tags as classes
-			if (this.tags.length > 0) {
-				// tags to skip transforming into classes
-				//     debug      : special tag
-				//     nobr       : special tag
-				//     passage    : the default class
-				//     script     : special tag
-				//     stylesheet : special tag
-				//     widget     : special tag
-				//     twine.*    : special tag
-				var	tagsToSkip = /^(?:debug|nobr|passage|script|stylesheet|widget|twine\..*)$/i,
-					tagClasses = [];
-				for (var i = 0; i < this.tags.length; i++) {
-					if (!tagsToSkip.test(this.tags[i])) {
-						tagClasses.push(Util.slugify(this.tags[i]));
-					}
-				}
-				if (tagClasses.length > 0) {
-					if (el.className) {
-						tagClasses = tagClasses.concat(el.className.split(/\s+/));
-					}
-					// sort and filter out non-uniques
-					this.classes = tagClasses.sort().filter(function (val, i, aref) { return (i === 0 || aref[i-1] !== val); });
+		this.tags    = el.hasAttribute("tags") ? el.getAttribute("tags").trim().splitOrEmpty(/\s+/) : [];
+		this.classes = [];
+		if (this.tags.length > 0) {
+			// tags to skip transforming into classes
+			//     debug      → special tag
+			//     nobr       → special tag
+			//     passage    → the default class
+			//     script     → special tag
+			//     stylesheet → special tag
+			//     twine.*    → special tag
+			//     widget     → special tag
+			var	tagsToSkip = /^(?:debug|nobr|passage|script|stylesheet|widget|twine\..*)$/i,
+				tagClasses = [];
+			for (var i = 0; i < this.tags.length; i++) {
+				if (!tagsToSkip.test(this.tags[i])) {
+					tagClasses.push(Util.slugify(this.tags[i]));
 				}
 			}
-		} else {
-			this.tags    = [];
-			this.classes = [];
+			if (tagClasses.length > 0) {
+				if (el.className) {
+					tagClasses = tagClasses.concat(el.className.split(/\s+/));
+				}
+				// sort and filter out non-uniques
+				this.classes = tagClasses.sort().filter(function (val, i, aref) { return (i === 0 || aref[i-1] !== val); });
+			}
 		}
 	} else {
 		this.element = null;
@@ -971,7 +963,7 @@ Object.defineProperties(Passage.prototype, {
 			passage.style.visibility = "hidden";
 
 			// add classes (generated from tags) to the passage and <body>
-			for (var i = 0, iend = this.classes.length; i < iend; i++) {
+			for (var i = 0; i < this.classes.length; i++) {
 				document.body.classList.add(this.classes[i]);
 				passage.classList.add(this.classes[i]);
 			}
@@ -1081,18 +1073,30 @@ Object.defineProperties(Passage, {
 function Tale(instanceName) {
 	if (DEBUG) { console.log("[Tale()]"); }
 
-	// Chrome breaks some data URIs if you don't normalize
-	if (document.normalize) {
-		document.normalize();
-	}
-
 	this.passages = {};
-	var store = document.getElementById("store-area").childNodes;
-	for (var i = 0, iend = store.length; i < iend; i++) {
-		var	el = store[i],
-			tiddlerTitle;
-		if (el.getAttribute && (tiddlerTitle = el.getAttribute("tiddler"))) {
-			this.passages[tiddlerTitle] = new Passage(tiddlerTitle, el, i);
+	this.styles   = [];
+	this.scripts  = [];
+	this.widgets  = [];
+
+	var nodes = document.getElementById("store-area").childNodes;
+
+	for (var i = 0; i < nodes.length; i++) {
+		var el = nodes[i];
+		if (el.nodeType !== 1) { continue; } // skip non-element nodes (should never be any, but…)
+
+		var name = el.hasAttribute("tiddler") ? el.getAttribute("tiddler") : "";
+		if (name === "") { continue; } // skip nameless passages (should never be any, but…)
+
+		var	tags    = el.hasAttribute("tags") ? el.getAttribute("tags").trim().splitOrEmpty(/\s+/) : [],
+			passage = new Passage(name, el, i);
+		if (tags.contains("stylesheet")) {
+			this.styles.push(passage);
+		} else if (tags.contains("script")) {
+			this.scripts.push(passage);
+		} else if (tags.contains("widget")) {
+			this.widgets.push(passage);
+		} else {
+			this.passages[name] = passage;
 		}
 	}
 
@@ -1121,10 +1125,10 @@ Object.defineProperties(Tale.prototype, {
 		value : function (key) {
 			switch (typeof key) {
 			case "string":
-				return this.passages[key] != null; // use lazy equality
+				return this.passages.hasOwnProperty(key);
 			case "number":
 				var pnames = Object.keys(this.passages);
-				for (var i = 0, iend = pnames.length; i < iend; i++) {
+				for (var i = 0; i < pnames.length; i++) {
 					if (this.passages[pnames[i]].id === key) {
 						return true;
 					}
@@ -1142,7 +1146,7 @@ Object.defineProperties(Tale.prototype, {
 				return this.passages.hasOwnProperty(key) ? this.passages[key] : new Passage(key || "(unknown)");
 			case "number":
 				var pnames = Object.keys(this.passages);
-				for (var i = 0, iend = pnames.length; i < iend; i++) {
+				for (var i = 0; i < pnames.length; i++) {
 					if (this.passages[pnames[i]].id === key) {
 						return this.passages[pnames[i]];
 					}
@@ -1159,7 +1163,7 @@ Object.defineProperties(Tale.prototype, {
 
 			var	pnames  = Object.keys(this.passages),
 				results = [];
-			for (var i = 0, iend = pnames.length; i < iend; i++) {
+			for (var i = 0; i < pnames.length; i++) {
 				var passage = this.passages[pnames[i]];
 				switch (typeof passage[key]) {
 				case "undefined":

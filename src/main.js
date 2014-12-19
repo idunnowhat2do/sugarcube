@@ -180,12 +180,15 @@ jQuery(document).ready(function () {
 	/**
 	 * WARNING!
 	 *
-	 * The ordering of the code in this function is important, so be careful
-	 * when mucking around with it.
+	 * The ordering of the code in this function is important, so be careful when mucking around with it.
 	 */
 
-	// instantiate the macro object and standard macro library, these must be
-	// done before any passages are processed
+	// normalize the document
+	if (document.normalize) {
+		document.normalize();
+	}
+
+	// instantiate the macro object and standard macro library (this must be done before any passages are processed)
 	macros = new Macros();
 	defineStandardMacros();
 
@@ -201,15 +204,15 @@ jQuery(document).ready(function () {
 	// initialize the user interface (this must be done before script passages)
 	UISystem.init();
 
-	// setup for story stylesheets, scripts, and widgets (in that order)
-	var	styles = tale.lookup("tags", "stylesheet");
-	for (var i = 0; i < styles.length; i++) {
-		addStyle(styles[i].text);
+	// add the story styles
+	for (var i = 0; i < tale.styles.length; i++) {
+		addStyle(tale.styles[i].text);
 	}
-	var	scripts = tale.lookup("tags", "script");
-	for (var i = 0; i < scripts.length; i++) {
+
+	// evaluate the story scripts
+	for (var i = 0; i < tale.scripts.length; i++) {
 		try {
-			eval(scripts[i].text);
+			eval(tale.scripts[i].text);
 		} catch (e) {
 			var	errMesg = e.message;
 			if (e.name === "TypeError" && /read[\s-]only/.test(e.message)) {
@@ -223,15 +226,16 @@ jQuery(document).ready(function () {
 					}
 				}
 			}
-			technicalAlert(scripts[i].title, errMesg);
+			technicalAlert(tale.scripts[i].title, errMesg);
 		}
 	}
-	var	widgets = tale.lookup("tags", "widget");
-	for (var i = 0; i < widgets.length; i++) {
+
+	// process the story widgets
+	for (var i = 0; i < tale.widgets.length; i++) {
 		try {
-			Wikifier.wikifyEval(widgets[i].processText());
+			Wikifier.wikifyEval(tale.widgets[i].processText());
 		} catch (e) {
-			technicalAlert(widgets[i].title, e.message);
+			technicalAlert(tale.widgets[i].title, e.message);
 		}
 	}
 
