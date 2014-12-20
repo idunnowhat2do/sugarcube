@@ -57,7 +57,7 @@ var Wikifier = (function () {
 	function Wikifier(place, source) {
 		// general Wikifier properties
 		this.formatter = _formatterCache || Wikifier.compileFormatters();
-		this.output    = (place != null) ? place : document.createElement("div"); // use lazy equality
+		this.output    = (place != null) ? place : document.createElement("div"); // use lazy equality on null check
 		this.source    = source;
 		this.nextMatch = 0;
 
@@ -65,15 +65,13 @@ var Wikifier = (function () {
 		this._rawArgs  = "";
 		this._nobr     = [];
 
+		// wikify the source into the output buffer element
 		this.subWikify(this.output);
 
-		if (place == null) { // use lazy equality
-			if (typeof this.output.remove === "function") {
-				this.output.remove();
-			} else if (this.output.parentNode) {
-				this.output.parentNode.removeChild(this.output);
-			}
-			this.output = null;
+		// remove the temp output buffer element; unnecessary, as the browser will eventually GC the element,
+		// however, it's better to clean up after ourselves and not generate garbage in the first place
+		if (place == null && typeof this.output.remove === "function") { // use lazy equality on null check
+			this.output.remove();
 		}
 	}
 
@@ -88,10 +86,9 @@ var Wikifier = (function () {
 				var oldOutput = this.output;
 				this.output = output;
 
-				// Prepare the terminator RegExp
-				var terminatorRegExp = terminator ? new RegExp("(" + terminator + ")", terminatorIgnoreCase ? "gim" : "gm") : null;
-
-				var formatterMatch, terminatorMatch;
+				var	terminatorRegExp = terminator ? new RegExp("(" + terminator + ")", terminatorIgnoreCase ? "gim" : "gm") : null,
+					terminatorMatch,
+					formatterMatch;
 				do {
 					// Prepare the RegExp match positions
 					this.formatter.formatterRegExp.lastIndex = this.nextMatch;
@@ -100,7 +97,7 @@ var Wikifier = (function () {
 					}
 
 					// Get the first matches
-					formatterMatch = this.formatter.formatterRegExp.exec(this.source);
+					formatterMatch  = this.formatter.formatterRegExp.exec(this.source);
 					terminatorMatch = terminatorRegExp ? terminatorRegExp.exec(this.source) : null;
 
 					// Check for a terminator & formatter match
@@ -111,10 +108,10 @@ var Wikifier = (function () {
 						}
 
 						// Set the match parameters
-						this.matchStart = terminatorMatch.index;
+						this.matchStart  = terminatorMatch.index;
 						this.matchLength = terminatorMatch[1].length;
-						this.matchText = terminatorMatch[1];
-						this.nextMatch = terminatorMatch.index + terminatorMatch[1].length;
+						this.matchText   = terminatorMatch[1];
+						this.nextMatch   = terminatorMatch.index + terminatorMatch[1].length;
 
 						// Restore the output pointer and exit
 						this.output = oldOutput;
@@ -126,10 +123,10 @@ var Wikifier = (function () {
 						}
 
 						// Set the match parameters
-						this.matchStart = formatterMatch.index;
+						this.matchStart  = formatterMatch.index;
 						this.matchLength = formatterMatch[0].length;
-						this.matchText = formatterMatch[0];
-						this.nextMatch = this.formatter.formatterRegExp.lastIndex;
+						this.matchText   = formatterMatch[0];
+						this.nextMatch   = this.formatter.formatterRegExp.lastIndex;
 
 						// Figure out which formatter matched
 						var matchingFormatter = -1;
@@ -156,7 +153,7 @@ var Wikifier = (function () {
 					}
 				} else if (
 					   this.output.lastChild
-					&& this.output.lastChild.nodeType === 1 /* Element Node */
+					&& this.output.lastChild.nodeType === 1 /* Element node */
 					&& this.output.lastChild.nodeName.toUpperCase() === "BR"
 				) {
 					// In case of <<break>>/<<continue>>, remove the last <br>
@@ -206,7 +203,7 @@ var Wikifier = (function () {
 		compileFormatters : {
 			value : function () {
 				if (DEBUG) { console.log("[Wikifier.compileFormatters]"); }
-				var formatters = Wikifier.formatters,
+				var	formatters = Wikifier.formatters,
 					patterns   = [];
 				for (var i = 0, iend = formatters.length; i < iend; i++) {
 					patterns.push("(" + formatters[i].match + ")");
@@ -224,7 +221,7 @@ var Wikifier = (function () {
 		parse : {
 			value : function (expression) {
 				// Double quoted | Single quoted | Empty quotes | Operator delimiters | Barewords & Sigil
-				var re    = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\\')|[^'])+)')|((?:\"\")|(?:''))|([=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}]+)|([^\"'=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}\\s]+))", "g"),
+				var	re    = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\\')|[^'])+)')|((?:\"\")|(?:''))|([=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}]+)|([^\"'=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}\\s]+))", "g"),
 					match,
 					map   = {
 						// $variable mapping
@@ -269,7 +266,7 @@ var Wikifier = (function () {
 							// if the token is "is", check to see if it's followed by "not", if so, convert them into the
 							// "isnot" operator; this is a safety feature, since "$a is not $b" probably sounds reasonable
 							// to most users
-							var start = match.index + token.length,
+							var	start = match.index + token.length,
 								part  = expression.slice(start);
 							if (/^\s+not\b/.test(part)) {
 								expression = expression.splice(start, part.search(/\S/));
@@ -298,7 +295,7 @@ var Wikifier = (function () {
 		 */
 		getValue : {
 			value : function (storyVar) {
-				var pNames = Wikifier.parseStoryVariable(storyVar),
+				var	pNames = Wikifier.parseStoryVariable(storyVar),
 					retVal = undefined;
 
 				if (pNames.length !== 0) {
@@ -324,7 +321,7 @@ var Wikifier = (function () {
 				var pNames = Wikifier.parseStoryVariable(storyVar);
 
 				if (pNames.length !== 0) {
-					var baseObj = state.active.variables,
+					var	baseObj = state.active.variables,
 						varName = pNames.pop();
 					for (var i = 0, iend = pNames.length; i < iend; i++) {
 						if (typeof baseObj[pNames[i]] !== "undefined") {
@@ -348,7 +345,7 @@ var Wikifier = (function () {
 		 */
 		parseStoryVariable : {
 			value : function (varText) {
-				var re     = /^(?:\$(\w+)|\.(\w+)|\[(?:(?:\"((?:\\.|[^\"\\])+)\")|(?:\'((?:\\.|[^\'\\])+)\')|(\$\w.*)|(\d+))\])/,
+				var	re     = /^(?:\$(\w+)|\.(\w+)|\[(?:(?:\"((?:\\.|[^\"\\])+)\")|(?:\'((?:\\.|[^\'\\])+)\')|(\$\w.*)|(\d+))\])/,
 					match,
 					pNames = [];
 
@@ -479,10 +476,7 @@ var Wikifier = (function () {
 				}
 
 				var urlRegExp = new RegExp("^" + Wikifier.textPrimitives.url, "gim");
-				if (urlRegExp.test(link) || /[\.\/\\#]/.test(link)) {
-					return true;
-				}
-				return false;
+				return (urlRegExp.test(link) || /[\.\/\\#]/.test(link));
 			}
 		}
 	});
@@ -491,6 +485,7 @@ var Wikifier = (function () {
 	/*******************************************************************************************************************
 	 * Text Primitives (Regular Expressions)
 	 ******************************************************************************************************************/
+	// tier-1 primitives
 	Object.defineProperty(Wikifier, "textPrimitives", {
 		value : Object.defineProperties({}, {
 			anyLetter : {
@@ -525,6 +520,15 @@ var Wikifier = (function () {
 		})
 	});
 
+	// tier-2 primitives
+	Object.defineProperty(Wikifier.textPrimitives, "inlineCSS", {
+		value : [
+				"(?:(" + Wikifier.textPrimitives.anyLetter + "+)\\(([^\\)\\|\\n]+)\\):)", // [1,2]=style(value):
+				"(?:(" + Wikifier.textPrimitives.anyLetter + "+):([^;\\|\\n]+);)",        // [3,4]=style:value;
+				"(?:((?:\\." + Wikifier.textPrimitives.anyLetter + "+)+);)"               // [5]  =.className;  (Twine 1.4 extension)
+			].join("|")
+	});
+
 
 	/*******************************************************************************************************************
 	 * Helper Functions
@@ -540,57 +544,54 @@ var Wikifier = (function () {
 
 			inlineCSS : {
 				value : function (w) {
-					var styles = [],
-						lookahead = "(?:(" + Wikifier.textPrimitives.anyLetter + "+)\\(([^\\)\\|\\n]+)(?:\\):))|(?:("
-							+ Wikifier.textPrimitives.anyLetter + "+):([^;\\|\\n]+);)",
-						lookaheadRegExp = new RegExp(lookahead, "gm");
+					var	css             = { styles : [], classes : [] },
+						lookaheadRegExp = new RegExp(Wikifier.textPrimitives.inlineCSS, "gm");
 					do {
 						lookaheadRegExp.lastIndex = w.nextMatch;
-						var lookaheadMatch = lookaheadRegExp.exec(w.source),
-							gotMatch = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
+						var	lookaheadMatch = lookaheadRegExp.exec(w.source),
+							gotMatch = (lookaheadMatch && lookaheadMatch.index == w.nextMatch);
 						if (gotMatch) {
-							var name, value;
 							if (lookaheadMatch[1]) {
-								name  = Wikifier.helpers.cssToDOMName(lookaheadMatch[1]);
-								value = lookaheadMatch[2];
-							} else {
-								name  = Wikifier.helpers.cssToDOMName(lookaheadMatch[3]);
-								value = lookaheadMatch[4];
+								css.styles.push({
+									style : Wikifier.helpers.cssToDOMName(lookaheadMatch[1]),
+									value : lookaheadMatch[2].trim()
+								});
+							} else if (lookaheadMatch[3]) {
+								css.styles.push({
+									style : Wikifier.helpers.cssToDOMName(lookaheadMatch[3]),
+									value : lookaheadMatch[4].trim()
+								});
+							} else if (lookaheadMatch[5]) {
+								css.classes = css.classes.concat(lookaheadMatch[5].slice(1).split(/\./));
 							}
-							styles.push({ style : name, value : value });
 							w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 						}
 					} while (gotMatch);
-					return styles;
+					return css;
 				}
 			},
 
 			cssToDOMName : {
 				value : function (name) {
 					// Returns a DOM property name for a CSS property, parsed from the string
-					if (name.indexOf("-") === -1) {
+					if (!name.contains("-")) {
+						switch (name) {
+						case "bgcolor": name = "backgroundColor"; break;
+						case "float":   name = "cssFloat"; break;
+						}
 						return name;
 					}
 					var parts = name.split("-");
 					for (var i = 1; i < parts.length; i++) {
 						parts[i] = parts[i].slice(0, 1).toUpperCase() + parts[i].slice(1);
 					}
-					name = parts.join("");
-					switch (name) {
-					case "bgcolor":
-						name = "backgroundColor";
-						break;
-					case "float":
-						name = "cssFloat";
-						break;
-					}
-					return name;
+					return parts.join("");
 				}
 			},
 
 			evalExpression : {
 				value : function (text) {
-					var badResultRe = /\[(?:object(?:\s+[^\]]+)?|native\s+code)\]/,
+					var	badResultRe = /\[(?:object(?:\s+[^\]]+)?|native\s+code)\]/,
 						result;
 					try {
 						result = Wikifier.evalExpression(text);
@@ -630,7 +631,7 @@ var Wikifier = (function () {
 				cellTerminator: "(?:\\x20*)\\|",
 				rowTypes: { "c": "caption", "h": "thead", "": "tbody", "f": "tfoot" },
 				handler: function (w) {
-					var table           = insertElement(w.output, "table"),
+					var	table           = insertElement(w.output, "table"),
 						lookaheadRegExp = new RegExp(this.lookahead, "gm"),
 						curRowType      = null,
 						nextRowType,
@@ -641,7 +642,7 @@ var Wikifier = (function () {
 					w.nextMatch = w.matchStart;
 					do {
 						lookaheadRegExp.lastIndex = w.nextMatch;
-						var lookaheadMatch = lookaheadRegExp.exec(w.source),
+						var	lookaheadMatch = lookaheadRegExp.exec(w.source),
 							matched        = lookaheadMatch && lookaheadMatch.index === w.nextMatch;
 						if (matched) {
 							nextRowType = lookaheadMatch[2];
@@ -671,12 +672,12 @@ var Wikifier = (function () {
 					} while (matched);
 				},
 				rowHandler: function (w, e, prevColumns) {
-					var col          = 0,
+					var	col          = 0,
 						curColCount  = 1,
 						cellRegExp   = new RegExp(this.cellPattern, "gm");
 					do {
 						cellRegExp.lastIndex = w.nextMatch;
-						var cellMatch = cellRegExp.exec(w.source),
+						var	cellMatch = cellRegExp.exec(w.source),
 							matched   = cellMatch && cellMatch.index === w.nextMatch;
 						if (matched) {
 							if (cellMatch[1] === "~") {
@@ -695,11 +696,11 @@ var Wikifier = (function () {
 								w.nextMatch = cellMatch.index + cellMatch[0].length;
 								break;
 							} else {
-								var spaceLeft  = false,
+								var	spaceLeft  = false,
 									spaceRight = false,
 									cell;
 								w.nextMatch++;
-								var styles = Wikifier.helpers.inlineCSS(w);
+								var css = Wikifier.helpers.inlineCSS(w);
 								while (w.source.substr(w.nextMatch, 1) === " ") {
 									spaceLeft = true;
 									w.nextMatch++;
@@ -711,15 +712,18 @@ var Wikifier = (function () {
 									cell = insertElement(e, "td");
 								}
 								prevColumns[col] = { rowCount: 1, element: cell };
-								var lastColCount   = 1,
+								var	lastColCount   = 1,
 									lastColElement = cell;
 								if (curColCount > 1) {
 									cell.setAttribute("colSpan", curColCount);
 									cell.setAttribute("colspan", curColCount);
 									curColCount = 1;
 								}
-								for (var i = 0; i < styles.length; i++) {
-									cell.style[styles[i].style] = styles[i].value;
+								for (var i = 0; i < css.styles.length; i++) {
+									cell.style[css.styles[i].style] = css.styles[i].value;
+								}
+								for (var i = 0; i < css.classes.length; i++) {
+									cell.classList.add(css.classes[i]);
 								}
 								w.subWikify(cell, this.cellTerminator);
 								if (w.matchText.substr(w.matchText.length - 2, 1) === " ") {
@@ -759,7 +763,7 @@ var Wikifier = (function () {
 				handler: function (w) {
 					var lookaheadRegExp = new RegExp(this.lookahead, "gm");
 					w.nextMatch = w.matchStart;
-					var placeStack = [w.output],
+					var	placeStack = [w.output],
 						curType    = null,
 						newType,
 						curLevel   = 0,
@@ -791,8 +795,7 @@ var Wikifier = (function () {
 							}
 							curLevel = newLevel;
 							curType = newType;
-							var el = insertElement(placeStack[placeStack.length - 1], "li");
-							w.subWikify(el, this.terminator);
+							w.subWikify(insertElement(placeStack[placeStack.length - 1], "li"), this.terminator);
 						}
 					} while (matched);
 				}
@@ -803,8 +806,7 @@ var Wikifier = (function () {
 				match: "^<<<\\n",
 				terminator: "^<<<\\n",
 				handler: function (w) {
-					var el = insertElement(w.output, "blockquote");
-					w.subWikify(el, this.terminator);
+					w.subWikify(insertElement(w.output, "blockquote"), this.terminator);
 				}
 			},
 
@@ -814,7 +816,7 @@ var Wikifier = (function () {
 				terminator: "\\n",
 				element: "blockquote",
 				handler: function (w) {
-					var lookaheadRegExp = new RegExp(this.match, "gm"),
+					var	lookaheadRegExp = new RegExp(this.match, "gm"),
 						placeStack      = [w.output],
 						curLevel        = 0,
 						newLevel        = w.matchLength,
@@ -835,8 +837,8 @@ var Wikifier = (function () {
 						w.subWikify(placeStack[placeStack.length - 1], this.terminator);
 						insertElement(placeStack[placeStack.length - 1], "br");
 						lookaheadRegExp.lastIndex = w.nextMatch;
-						var lookaheadMatch = lookaheadRegExp.exec(w.source);
-						var matched = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
+						var	lookaheadMatch = lookaheadRegExp.exec(w.source),
+							matched        = (lookaheadMatch && lookaheadMatch.index == w.nextMatch);
 						if (matched) {
 							newLevel = lookaheadMatch[0].length;
 							w.nextMatch += lookaheadMatch[0].length;
@@ -876,13 +878,13 @@ var Wikifier = (function () {
 					this.lookaheadRegExp.lastIndex = w.matchStart;
 					var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
 					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
-						var re    = new RegExp("^" + Wikifier.textPrimitives.link + "$"),
+						var	re    = new RegExp("^" + Wikifier.textPrimitives.link + "$"),
 							match = re.exec(lookaheadMatch[0]);
 						if (match !== null) {
 							// 1=(text), 2=(~), 3=link, 4=(set)
 							w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 
-							var link  = Wikifier.helpers.evalPassageId(match[3]),
+							var	link  = Wikifier.helpers.evalPassageId(match[3]),
 								text  = match[1] ? Wikifier.helpers.evalExpression(match[1]) : link,
 								setFn = match[4]
 									? function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(match[4]))
@@ -902,8 +904,7 @@ var Wikifier = (function () {
 				name: "urlLink",
 				match: Wikifier.textPrimitives.url,
 				handler: function (w) {
-					var el = Wikifier.createExternalLink(w.output, w.matchText);
-					w.outputText(el, w.matchStart, w.nextMatch);
+					w.outputText(Wikifier.createExternalLink(w.output, w.matchText), w.matchStart, w.nextMatch);
 				}
 			},
 
@@ -915,13 +916,13 @@ var Wikifier = (function () {
 					this.lookaheadRegExp.lastIndex = w.matchStart;
 					var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
 					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
-						var re    = new RegExp("^" + Wikifier.textPrimitives.image + "$"),
+						var	re    = new RegExp("^" + Wikifier.textPrimitives.image + "$"),
 							match = re.exec(lookaheadMatch[0]);
 						if (match !== null) {
 							// 1=(left), 2=(right), 3=(title), 4=source, 5=(~), 6=(link), 7=(set)
 							w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 
-							var el     = w.output,
+							var	el     = w.output,
 								setFn  = match[7]
 									? function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(match[7]))
 									: null,
@@ -970,7 +971,7 @@ var Wikifier = (function () {
 					if (this.parseTag(w)) {
 						// if parseBody() is called below, it will change the current working
 						// values, so we must cache them now
-						var nextMatch = w.nextMatch,
+						var	nextMatch = w.nextMatch,
 							name      = this.working.name,
 							handler   = this.working.handler,
 							rawArgs   = this.working.arguments;
@@ -1062,7 +1063,7 @@ var Wikifier = (function () {
 					return false;
 				},
 				parseBody: function (w, tags) {
-					var openTag      = this.working.name,
+					var	openTag      = this.working.name,
 						closeTag     = "/" + openTag,
 						closeAlt     = "end" + openTag,
 						bodyTags     = Array.isArray(tags) ? tags : false,
@@ -1077,7 +1078,7 @@ var Wikifier = (function () {
 						   (w.matchStart = w.source.indexOf("<<", w.nextMatch)) !== -1
 						&& this.parseTag(w)
 					) {
-						var tagName  = this.working.name,
+						var	tagName  = this.working.name,
 							tagArgs  = this.working.arguments,
 							tagBegin = this.working.index,
 							tagEnd   = w.nextMatch;
@@ -1129,7 +1130,7 @@ var Wikifier = (function () {
 				},
 				parseArgs: function (str) {
 					// Groups: 1=double quoted | 2=single quoted | 3=empty quotes | 4=double square-bracketed | 5=barewords
-					var re    = new RegExp(Wikifier.textPrimitives.macroArg, "gm"),
+					var	re    = new RegExp(Wikifier.textPrimitives.macroArg, "gm"),
 						match,
 						args  = [];
 
@@ -1164,7 +1165,7 @@ var Wikifier = (function () {
 							arg = match[4];
 
 							// Convert to an object
-							var linkRe    = new RegExp(Wikifier.textPrimitives.link),
+							var	linkRe    = new RegExp(Wikifier.textPrimitives.link),
 								linkMatch = linkRe.exec(arg),
 								linkObj   = {};
 							if (linkMatch !== null) {
@@ -1240,7 +1241,7 @@ var Wikifier = (function () {
 					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
 						w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 
-						var frag = document.createDocumentFragment(),
+						var	frag = document.createDocumentFragment(),
 							temp = document.createElement("div");
 						temp.innerHTML = lookaheadMatch[1];
 						while (temp.firstChild) {
@@ -1345,15 +1346,18 @@ var Wikifier = (function () {
 				name: "styleByChar",
 				match: "@@",
 				terminator: "@@",
-				lookahead: "(?:([^\\(@]+)\\(([^\\)]+)(?:\\):))|(?:([^:@]+):([^;]+);)",
+				lookahead: Wikifier.textPrimitives.inlineCSS,
 				handler: function (w) {
-					var el = insertElement(w.output, "span", null, null, null);
-					var styles = Wikifier.helpers.inlineCSS(w);
-					if (styles.length == 0) {
+					var	el  = insertElement(w.output, "span"),
+						css = Wikifier.helpers.inlineCSS(w);
+					if (css.styles.length === 0 && css.classes.length === 0) {
 						el.className = "marked";
 					} else {
-						for (var i = 0; i < styles.length; i++) {
-							el.style[styles[i].style] = styles[i].value;
+						for (var i = 0; i < css.styles.length; i++) {
+							el.style[css.styles[i].style] = css.styles[i].value;
+						}
+						for (var i = 0; i < css.classes.length; i++) {
+							el.classList.add(css.classes[i]);
 						}
 					}
 					w.subWikify(el, this.terminator);
@@ -1404,7 +1408,7 @@ var Wikifier = (function () {
 				name: "htmlCharacterReference",
 				match: "(?:(?:&#?[a-zA-Z0-9]{2,8};|.)(?:&#?(?:x0*(?:3[0-6][0-9a-fA-F]|1D[c-fC-F][0-9a-fA-F]|20[d-fD-F][0-9a-fA-F]|FE2[0-9a-fA-F])|0*(?:76[89]|7[7-9][0-9]|8[0-7][0-9]|761[6-9]|76[2-7][0-9]|84[0-3][0-9]|844[0-7]|6505[6-9]|6506[0-9]|6507[0-1]));)+|&#?[a-zA-Z0-9]{2,8};)",
 				handler: function(w) {
-					var el = document.createElement("div");
+					var el = document.createElement("span");
 					el.innerHTML = w.matchText;
 					insertText(w.output, el.textContent);
 				}
@@ -1417,13 +1421,13 @@ var Wikifier = (function () {
 				voidElements: [ "area", "base", "br", "col", "embed", "hr", "img", "input", "keygen", "link", "menuitem", "meta", "param", "source", "track", "wbr" ],
 				nobrElements: [ "colgroup", "datalist", "dl", "figure", "ol", "optgroup", "select", "table", "tbody", "tfoot", "thead", "tr", "ul" ],
 				handler: function (w) {
-					var tagMatch = new RegExp(this.tagPattern).exec(w.matchText),
+					var	tagMatch = new RegExp(this.tagPattern).exec(w.matchText),
 						tag      = tagMatch && tagMatch[1],
 						tagName  = tag && tag.toLowerCase();
 
 					//if (tagName && ["html", "nowiki"].contains(tagName)) {
 					if (tagName) {
-						var isVoid = this.voidElements.contains(tagName),
+						var	isVoid = this.voidElements.contains(tagName),
 							isNobr = this.nobrElements.contains(tagName),
 							terminator,
 							terminatorRegExp,
@@ -1487,7 +1491,7 @@ var Wikifier = (function () {
 							}
 							el.src = source;
 						} else {
-							var setter   = el.getAttribute("data-setter"),
+							var	setter   = el.getAttribute("data-setter"),
 								callback;
 							if (setter != null) { // use lazy equality
 								setter = ((typeof setter !== "string") ? String(setter) : setter).trim();
