@@ -887,7 +887,7 @@ var Wikifier = (function () {
 							var	link  = Wikifier.helpers.evalPassageId(match[3]),
 								text  = match[1] ? Wikifier.helpers.evalExpression(match[1]) : link,
 								setFn = match[4]
-									? function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(match[4]))
+									? (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(match[4])))
 									: null;
 							if (!match[2] && Wikifier.isExternalLink(link)) {
 								Wikifier.createExternalLink(w.output, link, text)
@@ -924,7 +924,7 @@ var Wikifier = (function () {
 
 							var	el     = w.output,
 								setFn  = match[7]
-									? function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(match[7]))
+									? (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(match[7])))
 									: null,
 								source;
 							if (match[6]) {
@@ -1175,7 +1175,7 @@ var Wikifier = (function () {
 								linkObj.text       = linkMatch[1] ? Wikifier.helpers.evalExpression(linkMatch[1]) : linkObj.link;
 								linkObj.isExternal = !linkMatch[2] && Wikifier.isExternalLink(linkObj.link);
 								linkObj.setFn      = linkMatch[4]
-									? function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(linkMatch[4]))
+									? (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(linkMatch[4])))
 									: null;
 								arg = linkObj;
 							}
@@ -1496,7 +1496,7 @@ var Wikifier = (function () {
 							if (setter != null) { // use lazy equality
 								setter = ((typeof setter !== "string") ? String(setter) : setter).trim();
 								if (setter !== "") {
-									callback = function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(setter));
+									callback = (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(setter)));
 								}
 							}
 							if (tale.has(passage)) {
