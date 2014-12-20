@@ -341,12 +341,12 @@ function defineStandardMacros() {
 	 * <<nobr>>
 	 */
 	macros.add("nobr", {
-		version  : { major : 1, minor : 1, patch : 0 },
+		version  : { major : 2, minor : 0, patch : 0 },
 		skipArgs : true,
 		tags     : null,
 		handler  : function () {
 			// wikify the contents, after removing all newlines
-			new Wikifier(this.output, this.payload[0].contents.replace(/\n/g, " "));
+			new Wikifier(this.output, this.payload[0].contents.replace(/^\n+|\n+$/g, "").replace(/\n+/g, " "));
 		}
 	});
 
