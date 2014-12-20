@@ -1411,6 +1411,9 @@ var Wikifier = (function () {
 					var el = document.createElement("span");
 					el.innerHTML = w.matchText;
 					insertText(w.output, el.textContent);
+					if (typeof el.remove === "function") {
+						el.remove();
+					}
 				}
 			},
 
