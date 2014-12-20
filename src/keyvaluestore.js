@@ -171,7 +171,7 @@ var KeyValueStore = (function () {
 				}
 				if (DEBUG) { console.log('[<KeyValueStore>.removeMatchingItems("' + subKey + '")]'); }
 
-				var keys = this.keys(),
+				var	keys = this.keys(),
 					re   = new RegExp("^" + RegExp.escape(subKey));
 				for (var i = 0; i < keys.length; i++) {
 					if (re.test(keys[i])) {
@@ -192,7 +192,7 @@ var KeyValueStore = (function () {
 	 * KeyValueStore_WebStorage Constructor
 	 ******************************************************************************************************************/
 	function KeyValueStore_WebStorage(persist, storageId) {
-		var engine = null,
+		var	engine = null,
 			name   = null;
 		if (persist) {
 			if (has.localStorage) {
@@ -391,7 +391,7 @@ var KeyValueStore = (function () {
 				if ("cookie" in document && document.cookie !== "") {
 					var cookies = document.cookie.split(/;\s*/);
 					for (var i = 0; i < cookies.length; i++) {
-						var kv  = cookies[i].split("="),
+						var	kv  = cookies[i].split("="),
 							key = decodeURIComponent(kv[0]);
 						if (this._prefixRe.test(key)) {
 							cookieObj[key] = decodeURIComponent(kv[1]);
@@ -442,7 +442,7 @@ var KeyValueStore = (function () {
 					return null;
 				}
 
-				var cookies = this._getCookies(),
+				var	cookies = this._getCookies(),
 					pKey    = this._prefix + key;
 				if (cookies.hasOwnProperty(pKey)) {
 					return cookies[pKey];

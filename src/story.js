@@ -157,7 +157,7 @@ Object.defineProperties(History.prototype, {
 	setActiveState : {
 		value : function (state) {
 			if (arguments.length === 0) { return; } // maybe throw?
-			if (state == null) { throw new Error("state activation attempted with null/undefined"); } // use lazy equality
+			if (state == null) { throw new Error("state activation attempted with null or undefined"); } // use lazy equality
 
 			if (typeof state === "object") {
 				this.active = clone(state);

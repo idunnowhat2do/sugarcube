@@ -43,7 +43,7 @@ if (!Array.prototype.indexOf) {
 				throw new TypeError("Array.prototype.indexOf called on null or undefined");
 			}
 
-			var list   = Object(this),
+			var	list   = Object(this),
 				length = list.length >>> 0;
 
 			from = +from || 0;
@@ -83,7 +83,7 @@ if (!Array.prototype.filter) {
 				throw new TypeError("Array.prototype.filter callback parameter must be a function");
 			}
 
-			var list   = Object(this),
+			var	list   = Object(this),
 				length = list.length >>> 0,
 				res    = [],
 				thisp  = arguments[1];
@@ -117,7 +117,7 @@ if (!Array.prototype.find) {
 				throw new TypeError("Array.prototype.find callback parameter must be a function");
 			}
 
-			var list   = Object(this),
+			var	list   = Object(this),
 				length = list.length >>> 0,
 				thisp  = arguments[1];
 
@@ -150,7 +150,7 @@ if (!Array.prototype.forEach) {
 				throw new TypeError("Array.prototype.forEach callback parameter must be a function");
 			}
 
-			var list   = Object(this),
+			var	list   = Object(this),
 				length = list.length >>> 0,
 				thisp  = arguments[1];
 
@@ -181,7 +181,7 @@ if (!Array.prototype.map) {
 				throw new TypeError("Array.prototype.map callback parameter must be a function");
 			}
 
-			var list   = Object(this),
+			var	list   = Object(this),
 				length = list.length >>> 0,
 				res    = new Array(length),
 				thisp  = arguments[1];
@@ -213,7 +213,7 @@ if (!Array.prototype.some) {
 				throw new TypeError("Array.prototype.some callback parameter must be a function");
 			}
 
-			var list   = Object(this),
+			var	list   = Object(this),
 				length = list.length >>> 0,
 				thisp  = arguments[1];
 
@@ -558,11 +558,11 @@ Object.defineProperty(Function.prototype, "partial", {
 			throw new TypeError("Function.prototype.partial called on null or undefined");
 		}
 
-		var slice = Array.prototype.slice,
+		var	slice = Array.prototype.slice,
 			fn    = this,
 			bound = slice.call(arguments, 0);
 		return function () {
-			var applied = [],
+			var	applied = [],
 				argc    = 0;
 			for (var i = 0; i < bound.length; i++) {
 				applied.push(bound[i] === undefined ? arguments[argc++] : bound[i]);
@@ -728,7 +728,7 @@ Object.defineProperty(String.prototype, "readBracketedList", {
 		}
 
 		// RegExp groups: Double-square-bracket quoted | Unquoted
-		var re    = new RegExp("(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^\"'\\s]\\S*)", "gm"), //"(?:\\[\\[([^\\]]+)\\]\\])|([^\\s$]+)"
+		var	re    = new RegExp("(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^\"'\\s]\\S*)", "gm"), //"(?:\\[\\[([^\\]]+)\\]\\])|([^\\s$]+)"
 			match
 			names = [];
 		while ((match = re.exec(this)) !== null) {

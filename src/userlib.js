@@ -19,7 +19,7 @@ function lastVisited(/* variadic */) {
 		return -1;
 	}
 
-	var passages = Array.prototype.concat.apply([], arguments),
+	var	passages = Array.prototype.concat.apply([], arguments),
 		turns;
 	if (passages.length > 1) {
 		turns = state.length;
@@ -27,7 +27,7 @@ function lastVisited(/* variadic */) {
 			turns = Math.min(turns, lastVisited(passages[i]));
 		}
 	} else {
-		var hist  = state.history,
+		var	hist  = state.history,
 			title = passages[0];
 		for (turns = state.length - 1; turns >= 0; turns--) {
 			if (hist[turns].title === title) { break; }
@@ -99,7 +99,7 @@ function tags(/* variadic */) {
 		return tale.get(state.active.title).tags.slice(0);
 	}
 
-	var passages = Array.prototype.concat.apply([], arguments),
+	var	passages = Array.prototype.concat.apply([], arguments),
 		tags     = [];
 	for (var i = 0, iend = passages.length; i < iend; i++) {
 		tags = tags.concat(tale.get(passages[i]).tags);
@@ -116,7 +116,7 @@ function visited(/* variadic */) {
 		return 0;
 	}
 
-	var passages = Array.prototype.concat.apply([], (arguments.length === 0) ? [state.active.title] : arguments),
+	var	passages = Array.prototype.concat.apply([], (arguments.length === 0) ? [state.active.title] : arguments),
 		count;
 	if (passages.length > 1) {
 		count = state.length;
@@ -124,7 +124,7 @@ function visited(/* variadic */) {
 			count = Math.min(count, visited(passages[i]));
 		}
 	} else {
-		var hist  = state.history,
+		var	hist  = state.history,
 			title = passages[0];
 		count = 0;
 		for (var i = 0, iend = state.length; i < iend; i++) {
@@ -142,7 +142,7 @@ function visitedTags(/* variadic */) {
 		return 0;
 	}
 
-	var list  = Array.prototype.concat.apply([], arguments),
+	var	list  = Array.prototype.concat.apply([], arguments),
 		llen  = list.length,
 		count = 0;
 	for (var i = 0, iend = state.length; i < iend; i++) {

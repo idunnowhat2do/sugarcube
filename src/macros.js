@@ -157,7 +157,7 @@ Object.defineProperties(Macros.prototype, {
 				bodyTags = [];
 			}
 
-			var endTags = [ "/" + parent, "end" + parent ], // automatically create the closing tags
+			var	endTags = [ "/" + parent, "end" + parent ], // automatically create the closing tags
 				allTags = [].concat(endTags, bodyTags);
 
 			for (var i = 0; i < allTags.length; i++) {
@@ -295,7 +295,7 @@ Object.defineProperties(MacrosContext.prototype, {
 
 	contextSelect : {
 		value : function (filter) {
-			var context = this,
+			var	context = this,
 				result  = [];
 			while ((context = context.parent) !== null) {
 				if (filter(context)) {

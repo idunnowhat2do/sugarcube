@@ -308,7 +308,7 @@ var SaveSystem = (function () {
 			return;
 		}
 
-		var saveName = tale.domId + ".save",
+		var	saveName = tale.domId + ".save",
 			saveObj  = LZString.compressToBase64(JSON.stringify(marshal()));
 
 		saveAs(new Blob([saveObj], { type : "text/plain;charset=UTF-8" }), saveName);
@@ -317,7 +317,7 @@ var SaveSystem = (function () {
 	function importSave(event) {
 		if (DEBUG) { console.log("[SaveSystem.importSave()]"); }
 
-		var file   = event.target.files[0],
+		var	file   = event.target.files[0],
 			reader = new FileReader();
 
 		// capture the file information once the load is finished
@@ -375,9 +375,9 @@ var SaveSystem = (function () {
 		try {
 			if (!saveObj || !saveObj.hasOwnProperty("id") || !saveObj.hasOwnProperty("state")) {
 				if (!saveObj || !saveObj.hasOwnProperty("mode") || !saveObj.hasOwnProperty("id") || !saveObj.hasOwnProperty("data")) {
-					throw new Error("save is missing required data.  Either you've loaded a file which isn't a save, or the save has become corrupted");
+					throw new Error("save is missing required data; either you've loaded a file which isn't a save, or the save has become corrupted");
 				} else {
-					throw new Error("old-style saves seen in SaveSystem.unmarshal()");
+					throw new Error("old-style saves seen during unmarshal");
 				}
 			}
 
