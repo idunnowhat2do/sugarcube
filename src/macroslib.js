@@ -61,7 +61,7 @@ function defineStandardMacros() {
 	 * <<back>> & <<return>>
 	 */
 	macros.add(["back", "return"], {
-		version : { major : 4, minor : 2, patch : 0 },
+		version : { major : 4, minor : 2, patch : 1 },
 		handler : function () {
 			var	steps = 1,
 				pname,
@@ -147,10 +147,8 @@ function defineStandardMacros() {
 								//   n.b. (steps > 0) is correct, since SugarCube's history stack does not store "dirty"
 								//        (i.e. post-rendered/executed) states; in most other headers, something like
 								//        (steps >= 0) would probably be necessary
-								while (steps > 0) {
-									if (!state.isEmpty()) {
-										state.pop();
-									}
+								while (steps > 0 && state.length > 1) {
+									state.pop();
 									steps--;
 								}
 								// activate the new top since we popped the stack
