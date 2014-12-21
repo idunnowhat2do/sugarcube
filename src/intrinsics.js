@@ -74,7 +74,7 @@ if (!Array.prototype.filter) {
 	Object.defineProperty(Array.prototype, "filter", {
 		configurable : true,
 		writable     : true,
-		value        : function (filterFn /* , thisp */) {
+		value        : function (filterFn /* [, thisp] */) {
 			"use strict";
 			if (this == null) {
 				throw new TypeError("Array.prototype.filter called on null or undefined");
@@ -108,7 +108,7 @@ if (!Array.prototype.find) {
 	Object.defineProperty(Array.prototype, "find", {
 		configurable : true,
 		writable     : true,
-		value        : function (callback /* , thisp */) {
+		value        : function (callback /* [, thisp] */) {
 			"use strict";
 			if (this == null) {
 				throw new TypeError("Array.prototype.find called on null or undefined");
@@ -141,7 +141,7 @@ if (!Array.prototype.forEach) {
 	Object.defineProperty(Array.prototype, "forEach", {
 		configurable : true,
 		writable     : true,
-		value        : function (callback /* , thisp */) {
+		value        : function (callback /* [, thisp] */) {
 			"use strict";
 			if (this == null) {
 				throw new TypeError("Array.prototype.forEach called on null or undefined");
@@ -166,13 +166,31 @@ if (!Array.prototype.forEach) {
 }
 
 /**
- * Creates a new array with the results of calling a provided function on every element in this array
+ * Returns whether the given element was found within the array
+ */
+if (!Array.prototype.includes) {
+	Object.defineProperty(Array.prototype, "includes", {
+		configurable : true,
+		writable     : true,
+		value        : function (/* needle [, fromIndex] */) {
+			"use strict";
+			if (this == null) {
+				throw new TypeError("Array.prototype.includes called on null or undefined");
+			}
+
+			return Array.prototype.indexOf.apply(this, arguments) !== -1;
+		}
+	});
+}
+
+/**
+ * Creates a new array with the results of calling a provided function on every element in the array
  */
 if (!Array.prototype.map) {
 	Object.defineProperty(Array.prototype, "map", {
 		configurable : true,
 		writable     : true,
-		value        : function (callback /* , thisp */) {
+		value        : function (callback /* [, thisp] */) {
 			"use strict";
 			if (this == null) {
 				throw new TypeError("Array.prototype.map called on null or undefined");
@@ -204,7 +222,7 @@ if (!Array.prototype.some) {
 	Object.defineProperty(Array.prototype, "some", {
 		configurable : true,
 		writable     : true,
-		value        : function (callback /*, thisp */) {
+		value        : function (callback /* [, thisp] */) {
 			"use strict";
 			if (this == null) {
 				throw new TypeError("Array.prototype.some called on null or undefined");
@@ -259,16 +277,16 @@ if (!Math.trunc) {
 }
 
 /**
- * Returns whether one string may be found within another string, returning true or false as appropriate
+ * Returns whether the given search string was found within the string
  */
-if (!String.prototype.contains) {
-	Object.defineProperty(String.prototype, "contains", {
+if (!String.prototype.includes) {
+	Object.defineProperty(String.prototype, "includes", {
 		configurable : true,
 		writable     : true,
 		value        : function (/* needle [, fromIndex] */) {
 			"use strict";
 			if (this == null) {
-				throw new TypeError("String.prototype.contains called on null or undefined");
+				throw new TypeError("String.prototype.includes called on null or undefined");
 			}
 
 			return String.prototype.indexOf.apply(this, arguments) !== -1;
@@ -326,7 +344,7 @@ if (!String.prototype.splice) {
 }
 
 /**
- * Returns a string with all whitespace removed from both sides of the base string
+ * Returns a string with all whitespace removed from both sides of the string
  */
 if (!String.prototype.trim) {
 	Object.defineProperty(String.prototype, "trim", {
@@ -345,7 +363,7 @@ if (!String.prototype.trim) {
 }
 
 /**
- * Returns a string with all whitespace removed from the left side of the base string
+ * Returns a string with all whitespace removed from the left side of the string
  */
 if (!String.prototype.trimLeft) {
 	Object.defineProperty(String.prototype, "trimLeft", {
@@ -363,7 +381,7 @@ if (!String.prototype.trimLeft) {
 }
 
 /**
- * Returns a string with all whitespace removed from the right side of the base string
+ * Returns a string with all whitespace removed from the right side of the string
  */
 if (!String.prototype.trimRight) {
 	Object.defineProperty(String.prototype, "trimRight", {
@@ -435,7 +453,7 @@ Object.defineProperty(Array, "random", {
 });
 
 /**
- * Returns whether the given element was found within the array, returning true or false as appropriate
+ * Returns whether the given element was found within the array
  */
 Object.defineProperty(Array.prototype, "contains", {
 	configurable : true,
@@ -451,7 +469,7 @@ Object.defineProperty(Array.prototype, "contains", {
 });
 
 /**
- * Returns whether all of the given elements were found within the array, returning true or false as appropriate
+ * Returns whether all of the given elements were found within the array
  */
 Object.defineProperty(Array.prototype, "containsAll", {
 	configurable : true,
@@ -480,7 +498,7 @@ Object.defineProperty(Array.prototype, "containsAll", {
 });
 
 /**
- * Returns whether any of the given elements were found within the array, returning true or false as appropriate
+ * Returns whether any of the given elements were found within the array
  */
 Object.defineProperty(Array.prototype, "containsAny", {
 	configurable : true,
@@ -505,6 +523,31 @@ Object.defineProperty(Array.prototype, "containsAny", {
 			}
 			return false;
 		}
+	}
+});
+
+/**
+ * Returns the number of times the given element was found within the array
+ */
+Object.defineProperty(Array.prototype, "count", {
+	configurable : true,
+	writable     : true,
+	value        : function (/* needle [, fromIndex ] */) {
+		"use strict";
+		if (this == null) {
+			throw new TypeError("Array.prototype.count called on null or undefined");
+		}
+
+		var	indexOf = Array.prototype.indexOf,
+			needle  = arguments[0],
+			pos     = Number(arguments[1] || 0),
+			count   = 0;
+
+		while ((pos = indexOf.call(this, needle, pos)) !== -1) {
+			count++;
+			pos++;
+		}
+		return count;
 	}
 });
 
@@ -672,6 +715,53 @@ Object.defineProperty(String, "format", {
 			}
 			return padString(retval, (!align) ? 0 : parseInt(align), " ");
 		});
+	}
+});
+
+/**
+ * Returns whether the given string was found within the string
+ */
+Object.defineProperty(String.prototype, "contains", {
+	configurable : true,
+	writable     : true,
+	value        : function (/* needle [, fromIndex] */) {
+		"use strict";
+		if (this == null) {
+			throw new TypeError("String.prototype.contains called on null or undefined");
+		}
+
+		return String.prototype.indexOf.apply(this, arguments) !== -1;
+	}
+});
+
+/**
+ * Returns the number of times the given string was found within the string
+ */
+Object.defineProperty(String.prototype, "count", {
+	configurable : true,
+	writable     : true,
+	value        : function (/* needle [, fromIndex ] */) {
+		"use strict";
+		if (this == null) {
+			throw new TypeError("String.prototype.count called on null or undefined");
+		}
+
+		var needle = String(arguments[0] || "");
+
+		if (needle === "") {
+			return 0;
+		}
+
+		var	indexOf = String.prototype.indexOf,
+			step    = needle.length,
+			pos     = Number(arguments[1] || 0),
+			count   = 0;
+
+		while ((pos = indexOf.call(this, needle, pos)) !== -1) {
+			count++;
+			pos += step;
+		}
+		return count;
 	}
 });
 
