@@ -902,7 +902,11 @@ Object.defineProperties(Passage.prototype, {
 				return String.format('<span class="error" title="{0}">Error: this passage does not exist: {0}</span>',
 					this.title.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"));
 			}
-			return Passage.unescape(this.element.textContent);
+			if (TWINE1) {
+				return Passage.unescape(this.element.textContent);
+			} else {
+				return this.element.textContent;
+			}
 		}
 	},
 
@@ -999,22 +1003,25 @@ Object.defineProperties(Passage.prototype, {
 });
 
 // Setup the Passage static methods
-Object.defineProperties(Passage, {
-	unescape : {
-		value : function (str) {
-			if (typeof str !== "string" || str === "") { return ""; }
-			return str
-				// unescape line feeds
-				.replace(/\\n/gm, "\n")
-				// unescape tabs, which is a Twine 1.4.1 "feature"
-				.replace(/\\t/gm, "\t")
-				// unescape backslashes, including "\\s" which is an old Twine "feature"
-				.replace(/\\s|\\/gm, "\\")
-				// remove carriage returns
-				.replace(/\r/gm, "");
+if (TWINE1) {
+	Object.defineProperties(Passage, {
+		unescape : {
+			value : function (str) {
+				if (typeof str !== "string" || str === "") { return ""; }
+				return str
+					// unescape line feeds
+					.replace(/\\n/gm, "\n")
+					// unescape tabs, which is a Twine 1.4.1 "feature"
+					.replace(/\\t/gm, "\t")
+					// unescape backslashes, including "\\s" which is an old Twine "feature"
+					.replace(/\\s|\\/gm, "\\")
+					// remove carriage returns
+					.replace(/\r/gm, "");
+			}
 		}
-	},
-
+	});
+}
+Object.defineProperties(Passage, {
 	getExcerptFromNode : {
 		value : function (node, count) {
 			if (!node.hasChildNodes()) { return ""; }
@@ -1080,32 +1087,81 @@ function Tale(instanceName) {
 
 	var nodes = document.getElementById("store-area").childNodes;
 
-	for (var i = 0; i < nodes.length; i++) {
-		var el = nodes[i];
-		if (el.nodeType !== 1) { continue; } // skip non-element nodes (should never be any, but…)
+	if (TWINE1) {
+		for (var i = 0; i < nodes.length; i++) {
+			var el = nodes[i];
+			if (el.nodeType !== 1) { continue; } // skip non-element nodes (should never be any, but…)
 
-		var name = el.hasAttribute("tiddler") ? el.getAttribute("tiddler") : "";
-		if (name === "") { continue; } // skip nameless passages (should never be any, but…)
+			var name = el.hasAttribute("tiddler") ? el.getAttribute("tiddler") : "";
+			if (name === "") { continue; } // skip nameless passages (should never be any, but…)
 
-		var	tags    = el.hasAttribute("tags") ? el.getAttribute("tags").trim().splitOrEmpty(/\s+/) : [],
-			passage = new Passage(name, el, i);
-		if (tags.contains("stylesheet")) {
-			this.styles.push(passage);
-		} else if (tags.contains("script")) {
-			this.scripts.push(passage);
-		} else if (tags.contains("widget")) {
-			this.widgets.push(passage);
-		} else {
-			this.passages[name] = passage;
+			var	tags    = el.hasAttribute("tags") ? el.getAttribute("tags").trim().splitOrEmpty(/\s+/) : [],
+				passage = new Passage(name, el, i);
+			if (tags.contains("stylesheet")) {
+				this.styles.push(passage);
+			} else if (tags.contains("script")) {
+				this.scripts.push(passage);
+			} else if (tags.contains("widget")) {
+				this.widgets.push(passage);
+			} else {
+				this.passages[name] = passage;
+			}
 		}
-	}
 
-	if (this.passages.hasOwnProperty("StoryTitle")) {
-		var buf = document.createElement("div");
-		new Wikifier(buf, this.passages.StoryTitle.processText().trim());
-		this.setTitle(buf.textContent);
+		if (this.passages.hasOwnProperty("StoryTitle")) {
+			var buf = document.createElement("div");
+			new Wikifier(buf, this.passages.StoryTitle.processText().trim());
+			this.setTitle(buf.textContent);
+		} else {
+			this.setTitle("Untitled Story");
+		}
 	} else {
-		this.setTitle("Untitled Story");
+		//<tw-storydata name="Twine Deux Test" startnode="1" creator="Twine" creator-version="2.0" format="..." options="">
+		//    <style role="stylesheet" id="twine-user-stylesheet" type="text/twine-css"></style>
+		//    <script role="script" id="twine-user-script" type="text/twine-javascript"></script>
+		//    <tw-passagedata pid="1" name="Begin!" tags="sum-dumb-gai some-dumb-chick" position="0,0"></tw-passagedata>
+		//</tw-storydata>
+
+		var startnode = nodes[0].hasAttribute("startnode") ? nodes[0].getAttribute("startnode") : "";
+
+		nodes = nodes[0].childNodes;
+		for (var i = 0; i < nodes.length; i++) {
+			var el = nodes[i];
+			if (el.nodeType !== 1) { continue; } // skip non-element nodes (should never be any, but…)
+
+			switch (el.nodeName.toUpperCase()) {
+			case "STYLE":
+				this.styles.push(new Passage("user-style-node-" + i, el, -1));
+				break;
+			case "SCRIPT":
+				this.scripts.push(new Passage("user-script-node-" + i, el, -2));
+				break;
+			default: // TW-PASSAGEDATA
+				var name = el.hasAttribute("name") ? el.getAttribute("name") : "";
+				if (name === "") { continue; } // skip nameless passages (should never be any, but…)
+
+				var	tags    = el.hasAttribute("tags") ? el.getAttribute("tags").trim().splitOrEmpty(/\s+/) : [],
+					pid     = el.hasAttribute("pid") ? el.getAttribute("pid") : "",
+					passage = new Passage(name, el, +pid);
+				if (startnode !== "" && startnode === pid) {
+					config.startPassage = name;
+				}
+				if (tags.contains("widget")) {
+					this.widgets.push(passage);
+				} else {
+					this.passages[name] = passage;
+				}
+				break;
+			}
+		}
+
+		if (this.passages.hasOwnProperty("StoryTitle")) {
+			var buf = document.createElement("div");
+			new Wikifier(buf, this.passages.StoryTitle.processText().trim());
+			this.setTitle(buf.textContent);
+		} else {
+			this.setTitle(("{{STORY_NAME}}" !== "") ? "{{STORY_NAME}}" : "Untitled Story");
+		}
 	}
 
 	// update instance reference in SugarCube global object

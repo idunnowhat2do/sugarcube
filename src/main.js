@@ -41,12 +41,12 @@ window.SugarCube = {}; // will contain exported identifiers, also allows scripts
 var	version = Object.freeze({
 		// data properties
 		title      : "SugarCube",
-		major      : "{{BUILD_MAJOR}}",
-		minor      : "{{BUILD_MINOR}}",
-		patch      : "{{BUILD_PATCH}}",
-		prerelease : "{{BUILD_PRERELEASE}}",
-		build      : "{{BUILD_BUILD}}",
-		date       : new Date("{{BUILD_DATE}}"),
+		major      : "{{BUILD_VERSION_MAJOR}}",
+		minor      : "{{BUILD_VERSION_MINOR}}",
+		patch      : "{{BUILD_VERSION_PATCH}}",
+		prerelease : "{{BUILD_VERSION_PRERELEASE}}",
+		build      : "{{BUILD_VERSION_BUILD}}",
+		date       : new Date("{{BUILD_VERSION_DATE}}"),
 		/* legacy */
 		extensions : {},
 		/* /legacy */

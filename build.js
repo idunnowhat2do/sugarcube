@@ -4,7 +4,7 @@
  *   - Description : Node.js-hosted build script for SugarCube
  *   - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
  *   - Copyright   : Copyright © 2014 Thomas Michael Edwards. All rights reserved.
- *   - Version     : 1.1.7, 2014-11-02
+ *   - Version     : 1.2.0, 2014-12-23
  */
 "use strict";
 
@@ -12,11 +12,7 @@
  * CONFIGURATION
  ******************************************************************************/
 var CONFIG = {
-	html : {
-		// SOURCE TEMPLATE : DESTINATION HTML
-		"src/header.tpl" : "dist/sugarcube/header.html"
-	},
-	js   : [
+	js : [
 		// the ordering here is significant
 		"src/intro.js",
 		"src/intrinsics.js",
@@ -34,7 +30,7 @@ var CONFIG = {
 		"src/main.js",
 		"src/outro.js"
 	],
-	css  : [
+	css : [
 		// the ordering here is significant
 		"src/init-screen.css",
 		"src/fonts.css",
@@ -43,10 +39,38 @@ var CONFIG = {
 		"src/media-queries.css",
 		"src/media-queries-narrow.css"
 	],
-	copy : {
-		// SOURCE : DESTINATION
-		"src/sugarcube.py" : "dist/sugarcube/sugarcube.py",
-		"LICENSE"          : "dist/sugarcube/LICENSE"
+	twine1 : {
+		build : {
+			src  : "src/format-twine1.tpl",
+			dest : "dist/twine1/sugarcube/header.html"
+		},
+		copy : [
+			{
+				src  : "src/format-twine1.py",
+				dest : "dist/twine1/sugarcube/sugarcube.py"
+			},
+			{
+				src  : "LICENSE",
+				dest : "dist/twine1/sugarcube/LICENSE"
+			}
+		]
+	},
+	twine2 : {
+		build : {
+				src  : "src/format-twine2.tpl",
+				dest : "dist/twine2/SugarCube/format.js",
+				json : "src/format-twine2.json"
+		},
+		copy : [
+			{
+				src  : "icon.svg",
+				dest : "dist/twine2/SugarCube/icon.svg"
+			},
+			{
+				src  : "LICENSE",
+				dest : "dist/twine2/SugarCube/LICENSE"
+			}
+		]
 	}
 };
 
@@ -81,6 +105,21 @@ function makePath(pathname) {
 	}
 }
 
+function copyFile(src, dest) {
+	var buf;
+	try {
+		buf = _fs.readFileSync(src);
+	} catch (e) {
+		die('cannot open file "' + src + '" for reading (reason: ' + e.message + ')');
+	}
+	try {
+		_fs.writeFileSync(dest, buf);
+	} catch (e) {
+		die('cannot open file "' + dest + '" for writing (reason: ' + e.message + ')');
+	}
+	return true;
+}
+
 function readFileContents(filename) {
 	try {
 		// the replace() is necessary because Node.js only offers binary mode file
@@ -109,22 +148,34 @@ function concatFiles(filenames, callback) {
 	return output.join("\n"); // we only use UNIX-style line termination
 }
 
-function compileJavaScript(filenames) {
+function compileJavaScript(filenames, options) {
 	log('compiling JavaScript...');
 	var jsSource = concatFiles(filenames);
 	if (_opt.options.unminified) {
-		return "window.DEBUG=" + (_opt.options.debug || false) + ";\n" + jsSource;
+		return [
+			"window.TWINE1=" + (!!options.twine1),
+			"window.DEBUG=" + (_opt.options.debug || false)
+		].join(";\n") + ";\n" + jsSource;
 	} else {
 		try {
-			// HOWTO: '--screw-ie8'
-			// HOWTO: '-r "thisp"'
-			var uglifyjs = require("uglify-js"),
+			var	uglifyjs = require("uglify-js"),
 				result   = uglifyjs.minify(jsSource, {
-				fromString : true,
-				compress   : { global_defs : { DEBUG : (_opt.options.debug || false) }, screw_ie8 : true },
-				mangle     : { except : [ "thisp" ], screw_ie8 : true },
-				output     : { screw_ie8 : true }
-			});
+					fromString : true,
+					compress : {
+						global_defs : {
+							TWINE1 : (!!options.twine1),
+							DEBUG  : (_opt.options.debug || false)
+						},
+						screw_ie8 : true
+					},
+					mangle : {
+						except    : [ "thisp" ],
+						screw_ie8 : true
+					},
+					output : {
+						screw_ie8 : true
+					}
+				});
 			return result.code;
 		} catch (e) {
 			var mesg = "uglification error";
@@ -147,6 +198,49 @@ function compileStyles(filenames) {
 	});
 }
 
+function projectBuild(project) {
+	var	infile  = _path.normalize(project.build.src),
+		outfile = _path.normalize(project.build.dest),
+		output  = readFileContents(infile); // load the header template
+	log('building: "' + outfile + '"');
+
+	// process the source replacement tokens (first!)
+	//   n.b. we use the replacement function style here to disable the special replacement patterns, since some
+	//        of them (notably "$&") exist within the replacement strings (specifically, within appSource)
+	output = output.replace('"{{BUILD_APP_SOURCE}}"', function () { return project.appSource; });
+	output = output.replace('"{{BUILD_CSS_SOURCE}}"', function () { return project.cssSource; });
+
+	// process the build replacement tokens
+	output = output.replace(/\"\{\{BUILD_VERSION_MAJOR\}\}\"/g, project.version.major);
+	output = output.replace(/\"\{\{BUILD_VERSION_MINOR\}\}\"/g, project.version.minor);
+	output = output.replace(/\"\{\{BUILD_VERSION_PATCH\}\}\"/g, project.version.patch);
+	output = output.replace(/\"\{\{BUILD_VERSION_PRERELEASE\}\}\"/g, JSON.stringify(project.version.prerelease));
+	output = output.replace(/\"\{\{BUILD_VERSION_BUILD\}\}\"/g, project.version.build);
+	output = output.replace(/\"\{\{BUILD_VERSION_DATE\}\}\"/g, JSON.stringify(project.version.date));
+	output = output.replace(/\"\{\{BUILD_VERSION_VERSION\}\}\"/g, project.version);
+
+	// post-process hook
+	if (typeof project.postProcess === "function") {
+		output = project.postProcess.call(project, output);
+	}
+
+	// write the outfile
+	makePath(_path.dirname(outfile));
+	writeFileContents(outfile, output);
+}
+
+function projectCopy(fileObjs) {
+	fileObjs.forEach(function (file) {
+		var	infile  = _path.normalize(file.src),
+			outfile = _path.normalize(file.dest);
+		log('copying : "' + outfile + '"');
+
+		// copy the file
+		makePath(_path.dirname(outfile));
+		copyFile(infile, outfile);
+	});
+}
+
 
 /*******************************************************************************
  * MAIN SCRIPT
@@ -164,70 +258,67 @@ var _fs     = require("fs"),
 
 // build the project
 (function () {
-	var version, jsSource, styleTags;
-
 	// create the build ID file, if nonexistent
 	if (!_fs.existsSync(".build")) {
 		writeFileContents(".build", 0);
 	}
 
 	// get the base version info and set build metadata
-	version          = require("./src/sugarcube.json"); // "./" prefixing the relative path is important here
+	var version      = require("./src/sugarcube.json"); // "./" prefixing the relative path is important here
 	version.build    = +readFileContents(".build") + 1;
 	version.date     = (new Date()).toISOString();
 	version.toString = function () {
-		return "v" + this.major + "." + this.minor + "." + this.patch + (this.prerelease ? "-" + this.prerelease : "");
+		return this.major + "." + this.minor + "." + this.patch + (this.prerelease ? "-" + this.prerelease : "");
 	};
 
-	// combine and minify the JS
-	jsSource = compileJavaScript(CONFIG.js);
+	// build for Twine 1.x
+	if (CONFIG.twine1) {
+		console.log('Beginning Twine 1.x build...');
 
-	// combine and minify the CSS
-	styleTags = compileStyles(CONFIG.css);
+		// process the header templates and write the outfiles
+		projectBuild({
+			build     : CONFIG.twine1.build,
+			version   : version,
+			appSource : compileJavaScript(CONFIG.js, { twine1 : true }), // combine and minify the JS
+			cssSource : compileStyles(CONFIG.css)                        // combine and minify the CSS
+		});
 
-	// process the header templates and write the outfiles
-	Object.keys(CONFIG.html).forEach(function (file) {
-		var infile  = _path.normalize(file),
-			outfile = _path.normalize(CONFIG.html[file]),
-			output  = readFileContents(infile); // load the header template
-		log('building: "' + outfile + '"');
+		// process the files that simply need copied into the distribution
+		projectCopy(CONFIG.twine1.copy);
+	}
 
-		// process the source replacement tokens (first!)
-		//   n.b. we use the replacement function style here to disable the special replacement patterns, since some
-		//        of them (notably "$&") exist within the replacement strings (specifically, within jsSource)
-		output = output.replace('"{{JS_SOURCE}}"', function () { return jsSource; });
-		output = output.replace('"{{STYLE_TAGS}}"', function () { return styleTags; });
+	// build for Twine 2.x
+	if (CONFIG.twine2) {
+		console.log('Beginning Twine 2.x build...');
 
-		// process the build replacement tokens
-		output = output.replace(/\"\{\{BUILD_MAJOR\}\}\"/g, version.major);
-		output = output.replace(/\"\{\{BUILD_MINOR\}\}\"/g, version.minor);
-		output = output.replace(/\"\{\{BUILD_PATCH\}\}\"/g, version.patch);
-		output = output.replace(/\"\{\{BUILD_PRERELEASE\}\}\"/g, JSON.stringify(version.prerelease));
-		output = output.replace(/\"\{\{BUILD_BUILD\}\}\"/g, version.build);
-		output = output.replace(/\"\{\{BUILD_DATE\}\}\"/g, JSON.stringify(version.date));
-		output = output.replace(/\"\{\{BUILD_VERSION\}\}\"/g, version);
+		// process the header templates and write the outfiles
+		projectBuild({
+			build       : CONFIG.twine2.build,
+			version     : version,
+			appSource   : compileJavaScript(CONFIG.js, { twine1 : false }), // combine and minify the JS
+			cssSource   : compileStyles(CONFIG.css),                        // combine and minify the CSS
+			postProcess : function (input) {
+				var output = require("./" + _path.normalize(this.build.json)); // "./" prefixing the relative path is important here
 
-		// write the outfile
-		makePath(_path.dirname(outfile));
-		writeFileContents(outfile, output);
-	});
+				// merge data into the output format
+				output.version = this.version.toString();
+				output.source  = input;
 
-	// process the files that simply need copied into the distribution
-	Object.keys(CONFIG.copy).forEach(function (file) {
-		var infile  = _path.normalize(file),
-			outfile = _path.normalize(CONFIG.copy[file]),
-			output  = readFileContents(infile); // load the file (raw)
-		log('copying : "' + outfile + '"');
+				// wrap the output in the storyFormat() function
+				output = "window.storyFormat(" + JSON.stringify(output) + ");";
 
-		// write the file
-		makePath(_path.dirname(outfile));
-		writeFileContents(outfile, output);
-	});
+				return output;
+			}
+		});
+
+		// process the files that simply need copied into the distribution
+		projectCopy(CONFIG.twine2.copy);
+	}
 
 	// update the build ID
 	writeFileContents(".build", version.build);
 }());
 
 // that's all folks!
-console.log('Build complete!  (check the "dist" directory)');
+console.log('Builds complete!  (check the "dist" directory)');
 

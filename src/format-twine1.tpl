@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <!--
 
-SugarCube ("{{BUILD_VERSION}}"): A free (gratis and libre) story format for Twine/Twee, based on TiddlyWiki.
+SugarCube (v"{{BUILD_VERSION_VERSION}}"): A free (gratis and libre) story format, based on TiddlyWiki.
 
 Copyright © 2013–2014 Thomas Michael Edwards <tmedwards@motoslave.net>.
 All rights reserved.
@@ -91,11 +91,11 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-"{{JS_SOURCE}}"
+"{{BUILD_APP_SOURCE}}"
 }
 /* init wapper end */
 </script>
-"{{STYLE_TAGS}}"
+"{{BUILD_CSS_SOURCE}}"
 </head>
 <body id="body">
 	<div id="init-screen">
