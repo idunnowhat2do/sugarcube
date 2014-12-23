@@ -521,13 +521,6 @@ var Wikifier = (function () {
 	});
 
 	// tier-2 primitives
-//	Object.defineProperty(Wikifier.textPrimitives, "inlineCSS", {
-//		value : [
-//				"(?:(" + Wikifier.textPrimitives.anyLetter + "+)\\(([^\\)\\|\\n]+)\\):)", // [1,2]=style(value):
-//				"(?:(" + Wikifier.textPrimitives.anyLetter + "+):([^;\\|\\n]+);)",        // [3,4]=style:value;
-//				"(?:((?:\\." + Wikifier.textPrimitives.anyLetter + "+)+);)"               // [5]  =.className;  (Twine 1.4 extension)
-//			].join("|")
-//	});
 	Object.defineProperties(Wikifier.textPrimitives, {
 		inlineCSS : {
 			value : [
