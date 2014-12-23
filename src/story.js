@@ -197,6 +197,8 @@ Object.defineProperties(History.prototype, {
 			}
 
 			// display the initial passage
+			var testPlay; // Twine 1.4+ "Test Play From Here" feature variable
+			if (TWINE1) { testPlay = "START_AT"; }
 			if (typeof testPlay !== "undefined" && testPlay !== "") {
 				// enables the Twine 1.4+ "Test Play From Here" feature
 				if (DEBUG) { console.log('    > display: "' + testPlay + '" (testPlay)'); }

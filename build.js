@@ -58,17 +58,17 @@ var CONFIG = {
 	twine2 : {
 		build : {
 				src  : "src/format-twine2.tpl",
-				dest : "dist/twine2/SugarCube/format.js",
+				dest : "dist/twine2/sugarcube/format.js",
 				json : "src/format-twine2.json"
 		},
 		copy : [
 			{
 				src  : "icon.svg",
-				dest : "dist/twine2/SugarCube/icon.svg"
+				dest : "dist/twine2/sugarcube/icon.svg"
 			},
 			{
 				src  : "LICENSE",
-				dest : "dist/twine2/SugarCube/LICENSE"
+				dest : "dist/twine2/sugarcube/LICENSE"
 			}
 		]
 	}
