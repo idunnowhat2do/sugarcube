@@ -9,27 +9,27 @@
  *
  * Portions of this code are based on:
  * ____
- * 
+ *
  * TiddlyWiki 1.2.39 by Jeremy Ruston, (jeremy [at] osmosoft [dot] com)
- * 
+ *
  * Published under a BSD open source license
- * 
+ *
  * Copyright (c) Osmosoft Limited 2005
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * Redistributions of source code must retain the above copyright notice, this list
  * of conditions and the following disclaimer.
- * 
+ *
  * Redistributions in binary form must reproduce the above copyright notice, this
  * list of conditions and the following disclaimer in the documentation and/or
  * other materials provided with the distribution.
- * 
+ *
  * Neither the name of the Osmosoft Limited nor the names of its contributors may
  * be used to endorse or promote products derived from this software without
  * specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -485,135 +485,144 @@ var Wikifier = (function () {
 	/*******************************************************************************************************************
 	 * Text Primitives (Regular Expressions)
 	 ******************************************************************************************************************/
+	Object.defineProperty(Wikifier, "textPrimitives", { value : {} });
+
 	// tier-1 primitives
-	Object.defineProperty(Wikifier, "textPrimitives", {
-		value : Object.defineProperties({}, {
-			anyLetter : {
-				value : _unicodeOK
-					? "[A-Za-z0-9_\\-\u00c0-\u00de\u00df-\u00ff\u0150\u0170\u0151\u0171]"
-					: "[A-Za-z0-9_\\-\u00c0-\u00de\u00df-\u00ff]"
-			},
+	Object.defineProperties(Wikifier.textPrimitives, {
+		anyLetter : {
+			value : _unicodeOK
+				? "[A-Za-z0-9_\\-\u00c0-\u00de\u00df-\u00ff\u0150\u0170\u0151\u0171]"
+				: "[A-Za-z0-9_\\-\u00c0-\u00de\u00df-\u00ff]"
+		},
 
-			url : {
-				value : "(?:file|https?|mailto|ftp|javascript|irc|news|data):[^\\s'\"]+(?:/|\\b)"
-			},
+		url : {
+			value : "(?:file|https?|mailto|ftp|javascript|irc|news|data):[^\\s'\"]+(?:/|\\b)"
+		},
 
-			link : {
-				// 1=(text), 2=(~), 3=link, 4=(set)
-				value : "\\[\\[\\s*(?:(.+?)\\s*\\|\\s*)?(~)?(.+?)\\s*\\](?:\\[\\s*(.+?)\\s*\\])?\\]"
-			},
+		link : {
+			// 1=(text), 2=(~), 3=link, 4=(set)
+			value : "\\[\\[\\s*(?:(.+?)\\s*\\|\\s*)?(~)?(.+?)\\s*\\](?:\\[\\s*(.+?)\\s*\\])?\\]"
+		},
 
-			image : {
-				// 1=(left), 2=(right), 3=(title), 4=source, 5=(~), 6=(link), 7=(set)
-				value : "\\[([<]?)([>]?)[Ii][Mm][Gg]\\[\\s*(?:(.+?)\\s*\\|\\s*)?([^\\|]+?)\\s*\\](?:\\[\\s*(~)?(.+?)\\s*\\])?(?:\\[\\s*(.+?)\\s*\\])?\\]"
-			},
+		image : {
+			// 1=(left), 2=(right), 3=(title), 4=source, 5=(~), 6=(link), 7=(set)
+			value : "\\[([<]?)([>]?)[Ii][Mm][Gg]\\[\\s*(?:(.+?)\\s*\\|\\s*)?([^\\|]+?)\\s*\\](?:\\[\\s*(~)?(.+?)\\s*\\])?(?:\\[\\s*(.+?)\\s*\\])?\\]"
+		},
 
-			macroArg : {
-				value : "(?:" + [
-						'("(?:(?:\\\\")|[^"])+")',         // 1=double quoted
-						"('(?:(?:\\\\')|[^'])+')",         // 2=single quoted
-						"((?:\"\")|(?:''))",               // 3=empty quotes
-						"(?:(\\[\\[(?:\\s|\\S)*?\\]\\]))", // 4=double square-bracketed
-						"([^\"'`\\s]\\S*)"                 // 5=barewords
-					].join("|") + ")"
-			},
-		})
+		macroArg : {
+			value : "(?:" + [
+					'("(?:(?:\\\\")|[^"])+")',         // 1=double quoted
+					"('(?:(?:\\\\')|[^'])+')",         // 2=single quoted
+					"((?:\"\")|(?:''))",               // 3=empty quotes
+					"(?:(\\[\\[(?:\\s|\\S)*?\\]\\]))", // 4=double square-bracketed
+					"([^\"'`\\s]\\S*)"                 // 5=barewords
+				].join("|") + ")"
+		}
 	});
 
 	// tier-2 primitives
-	Object.defineProperty(Wikifier.textPrimitives, "inlineCSS", {
-		value : [
-				"(?:(" + Wikifier.textPrimitives.anyLetter + "+)\\(([^\\)\\|\\n]+)\\):)", // [1,2]=style(value):
-				"(?:(" + Wikifier.textPrimitives.anyLetter + "+):([^;\\|\\n]+);)",        // [3,4]=style:value;
-				"(?:((?:\\." + Wikifier.textPrimitives.anyLetter + "+)+);)"               // [5]  =.className;  (Twine 1.4 extension)
-			].join("|")
+//	Object.defineProperty(Wikifier.textPrimitives, "inlineCSS", {
+//		value : [
+//				"(?:(" + Wikifier.textPrimitives.anyLetter + "+)\\(([^\\)\\|\\n]+)\\):)", // [1,2]=style(value):
+//				"(?:(" + Wikifier.textPrimitives.anyLetter + "+):([^;\\|\\n]+);)",        // [3,4]=style:value;
+//				"(?:((?:\\." + Wikifier.textPrimitives.anyLetter + "+)+);)"               // [5]  =.className;  (Twine 1.4 extension)
+//			].join("|")
+//	});
+	Object.defineProperties(Wikifier.textPrimitives, {
+		inlineCSS : {
+			value : [
+					"(?:(" + Wikifier.textPrimitives.anyLetter + "+)\\(([^\\)\\|\\n]+)\\):)", // [1,2]=style(value):
+					"(?:(" + Wikifier.textPrimitives.anyLetter + "+):([^;\\|\\n]+);)",        // [3,4]=style:value;
+					"(?:((?:\\." + Wikifier.textPrimitives.anyLetter + "+)+);)"               // [5]  =.className;  (Twine 1.4 extension)
+				].join("|")
+		}
 	});
 
 
 	/*******************************************************************************************************************
 	 * Helper Functions
 	 ******************************************************************************************************************/
-	Object.defineProperty(Wikifier, "helpers", {
-		value : Object.defineProperties({}, {
-			charFormat : {
-				value : function (w) {
-					var b = insertElement(w.output, this.element);
-					w.subWikify(b, this.terminator);
-				}
-			},
+	Object.defineProperty(Wikifier, "helpers", { value : {} });
 
-			inlineCSS : {
-				value : function (w) {
-					var	css             = { styles : [], classes : [] },
-						lookaheadRegExp = new RegExp(Wikifier.textPrimitives.inlineCSS, "gm");
-					do {
-						lookaheadRegExp.lastIndex = w.nextMatch;
-						var	lookaheadMatch = lookaheadRegExp.exec(w.source),
-							gotMatch = (lookaheadMatch && lookaheadMatch.index == w.nextMatch);
-						if (gotMatch) {
-							if (lookaheadMatch[1]) {
-								css.styles.push({
-									style : Wikifier.helpers.cssToDOMName(lookaheadMatch[1]),
-									value : lookaheadMatch[2].trim()
-								});
-							} else if (lookaheadMatch[3]) {
-								css.styles.push({
-									style : Wikifier.helpers.cssToDOMName(lookaheadMatch[3]),
-									value : lookaheadMatch[4].trim()
-								});
-							} else if (lookaheadMatch[5]) {
-								css.classes = css.classes.concat(lookaheadMatch[5].slice(1).split(/\./));
-							}
-							w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
-						}
-					} while (gotMatch);
-					return css;
-				}
-			},
+	Object.defineProperties(Wikifier.helpers, {
+		charFormat : {
+			value : function (w) {
+				var b = insertElement(w.output, this.element);
+				w.subWikify(b, this.terminator);
+			}
+		},
 
-			cssToDOMName : {
-				value : function (name) {
-					// Returns a DOM property name for a CSS property, parsed from the string
-					if (!name.contains("-")) {
-						switch (name) {
-						case "bgcolor": name = "backgroundColor"; break;
-						case "float":   name = "cssFloat"; break;
+		inlineCSS : {
+			value : function (w) {
+				var	css             = { styles : [], classes : [] },
+					lookaheadRegExp = new RegExp(Wikifier.textPrimitives.inlineCSS, "gm");
+				do {
+					lookaheadRegExp.lastIndex = w.nextMatch;
+					var	lookaheadMatch = lookaheadRegExp.exec(w.source),
+						gotMatch = (lookaheadMatch && lookaheadMatch.index == w.nextMatch);
+					if (gotMatch) {
+						if (lookaheadMatch[1]) {
+							css.styles.push({
+								style : Wikifier.helpers.cssToDOMName(lookaheadMatch[1]),
+								value : lookaheadMatch[2].trim()
+							});
+						} else if (lookaheadMatch[3]) {
+							css.styles.push({
+								style : Wikifier.helpers.cssToDOMName(lookaheadMatch[3]),
+								value : lookaheadMatch[4].trim()
+							});
+						} else if (lookaheadMatch[5]) {
+							css.classes = css.classes.concat(lookaheadMatch[5].slice(1).split(/\./));
 						}
-						return name;
+						w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
 					}
-					var parts = name.split("-");
-					for (var i = 1; i < parts.length; i++) {
-						parts[i] = parts[i].slice(0, 1).toUpperCase() + parts[i].slice(1);
-					}
-					return parts.join("");
-				}
-			},
+				} while (gotMatch);
+				return css;
+			}
+		},
 
-			evalExpression : {
-				value : function (text) {
-					var	badResultRe = /\[(?:object(?:\s+[^\]]+)?|native\s+code)\]/,
-						result;
-					try {
-						result = Wikifier.evalExpression(text);
-						if (badResultRe.test(result)) {
-							result = text;
-						}
-					} catch (e) {
+		cssToDOMName : {
+			value : function (name) {
+				// Returns a DOM property name for a CSS property, parsed from the string
+				if (!name.contains("-")) {
+					switch (name) {
+					case "bgcolor": name = "backgroundColor"; break;
+					case "float":   name = "cssFloat"; break;
+					}
+					return name;
+				}
+				var parts = name.split("-");
+				for (var i = 1; i < parts.length; i++) {
+					parts[i] = parts[i].slice(0, 1).toUpperCase() + parts[i].slice(1);
+				}
+				return parts.join("");
+			}
+		},
+
+		evalExpression : {
+			value : function (text) {
+				var	badResultRe = /\[(?:object(?:\s+[^\]]+)?|native\s+code)\]/,
+					result;
+				try {
+					result = Wikifier.evalExpression(text);
+					if (badResultRe.test(result)) {
 						result = text;
 					}
-					return result;
+				} catch (e) {
+					result = text;
 				}
-			},
-
-			evalPassageId : {
-				value : function (passage) {
-					if (passage != null && !tale.has(passage)) { // use lazy equality; 0 is a valid ID and name, so we cannot simply evaluate passage
-						passage = Wikifier.helpers.evalExpression(passage);
-					}
-					return passage;
-				}
+				return result;
 			}
-		})
+		},
+
+		evalPassageId : {
+			value : function (passage) {
+				if (passage != null && !tale.has(passage)) { // use lazy equality; 0 is a valid ID and name, so we cannot simply evaluate passage
+					passage = Wikifier.helpers.evalExpression(passage);
+				}
+				return passage;
+			}
+		}
 	});
 
 
@@ -894,7 +903,6 @@ var Wikifier = (function () {
 							} else {
 								Wikifier.createInternalLink(w.output, link, text, setFn);
 							}
-
 						}
 					}
 				}
