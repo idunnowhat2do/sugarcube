@@ -213,19 +213,7 @@ jQuery(document).ready(function () {
 		try {
 			eval(tale.scripts[i].text);
 		} catch (e) {
-			var	errMesg = e.message;
-			if (e.name === "TypeError" && /read[\s-]only/.test(e.message)) {
-				var	errMatch = /([\"\'])([^\1]+)\1/.exec(e.message);
-				if (errMatch && errMatch[2]) {
-					if (macros.has(errMatch[2])) {
-						// this case is unlikely to ever happen, but might as well leave it in
-						errMesg = "cannot clobber protected macro <<" + errMatch[2] + ">>";
-					} else if (typeof macros[errMatch[2]] !== "undefined") {
-						errMesg = 'cannot clobber macros API property "' + errMatch[2] + '"';
-					}
-				}
-			}
-			technicalAlert(tale.scripts[i].title, errMesg);
+			technicalAlert(tale.scripts[i].title, e.message);
 		}
 	}
 
