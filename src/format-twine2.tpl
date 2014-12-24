@@ -89,7 +89,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 </script>
 "{{BUILD_CSS_SOURCE}}"
 </head>
-<body id="body">
+<body>
 	<div id="init-screen">
 		<p id="init-no-js"><noscript>Apologies! JavaScript is required. Please enable it to continue.</noscript></p>
 		<p id="init-lacking">Apologies! Your web browser lacks required capabilities. Please consider upgrading it or switching to a more modern web browser.</p>
