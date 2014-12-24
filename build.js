@@ -4,7 +4,7 @@
  *   - Description : Node.js-hosted build script for SugarCube
  *   - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
  *   - Copyright   : Copyright © 2014 Thomas Michael Edwards. All rights reserved.
- *   - Version     : 1.2.0, 2014-12-23
+ *   - Version     : 1.2.1, 2014-12-24
  */
 "use strict";
 
@@ -258,6 +258,8 @@ var _fs     = require("fs"),
 
 // build the project
 (function () {
+	console.log('Starting builds...');
+
 	// create the build ID file, if nonexistent
 	if (!_fs.existsSync(".build")) {
 		writeFileContents(".build", 0);
@@ -273,7 +275,7 @@ var _fs     = require("fs"),
 
 	// build for Twine 1.x
 	if (CONFIG.twine1) {
-		console.log('Beginning Twine 1.x build...');
+		console.log('\nBuilding Twine 1.x version:');
 
 		// process the header templates and write the outfiles
 		projectBuild({
@@ -289,7 +291,7 @@ var _fs     = require("fs"),
 
 	// build for Twine 2.x
 	if (CONFIG.twine2) {
-		console.log('Beginning Twine 2.x build...');
+		console.log('\nBuilding Twine 2.x version:');
 
 		// process the header templates and write the outfiles
 		projectBuild({
@@ -320,5 +322,5 @@ var _fs     = require("fs"),
 }());
 
 // that's all folks!
-console.log('Builds complete!  (check the "dist" directory)');
+console.log('\nBuilds complete!  (check the "dist" directory)');
 
