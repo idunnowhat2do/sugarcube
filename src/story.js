@@ -261,7 +261,8 @@ Object.defineProperties(History.prototype, {
 	},
 
 	display : {
-		value : function (title, link, option) {
+		writable : true,
+		value    : function (title, link, option) {
 			if (DEBUG) { console.log("[<History>.display()]"); }
 
 			// process option
