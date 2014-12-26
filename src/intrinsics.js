@@ -710,8 +710,16 @@ Object.defineProperty(String, "format", {
 			while (typeof retval === "function") {
 				retval = retval();
 			}
-			if (typeof retval === "object") {
+			switch (typeof retval) {
+			case "string":
+				/* nothing */
+				break;
+			case "object":
 				retval = JSON.stringify(retval);
+				break;
+			default:
+				retval = String(retval);
+				break;
 			}
 			return padString(retval, (!align) ? 0 : parseInt(align), " ");
 		});
