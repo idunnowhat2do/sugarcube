@@ -162,24 +162,27 @@ function addStyle(css) {
 		document.head.appendChild(style);
 	}
 
-	// check for Twine 1.4 Base64 image passage transclusion
-	var	matchRe = new RegExp(Wikifier.imageFormatter.lookaheadRegExp.source, "gm"),
-		parseRe = new RegExp(Wikifier.textPrimitives.image);
+	// check for wiki image transclusion
+	var	matchRe = /\[[<>]?[Ii][Mm][Gg]\[(?:\s|\S)*?\]\]+/g;
 	if (matchRe.test(css)) {
-		css = css.replace(matchRe, function(wikiImage) {
-			var parseMatch = parseRe.exec(wikiImage);
-			if (parseMatch !== null) {
-				// 1=(left), 2=(right), 3=(title), 4=source, 5=(~), 6=(link), 7=(set)
-				var source = parseMatch[4];
-				if (source.slice(0, 5) !== "data:" && tale.has(source)) {
-					var passage = tale.get(source);
-					if (passage.tags.contains("Twine.image")) {
-						source = passage.text;
-					}
-				}
-				return "url(" + source + ")";
+		css = css.replace(matchRe, function (wikiImage) {
+			var markup = Wikifier.lexers.squareBracketedMarkup({
+				source     : wikiImage,
+				matchStart : 0
+			});
+			if (markup.hasOwnProperty("error") || markup.pos < wikiImage.length) {
+				return wikiImage;
 			}
-			return wikiImage;
+
+			var source = markup.source;
+			// check for Twine 1.4 Base64 image passage transclusion
+			if (source.slice(0, 5) !== "data:" && tale.has(source)) {
+				var passage = tale.get(source);
+				if (passage.tags.contains("Twine.image")) {
+					source = passage.text;
+				}
+			}
+			return "url(" + source + ")";
 		});
 	}
 

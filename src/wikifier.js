@@ -47,7 +47,6 @@ var Wikifier = (function () {
 
 	var
 		_formatterCache, // the Wikifier formatter object cache
-		_formatterImage, // the Wikifier image formatter object
 		_unicodeOK      = /[\u0150\u0170]/g.test("\u0150"); // some versions of Safari do not handle Unicode properly
 
 
@@ -499,23 +498,13 @@ var Wikifier = (function () {
 			value : "(?:file|https?|mailto|ftp|javascript|irc|news|data):[^\\s'\"]+(?:/|\\b)"
 		},
 
-		link : {
-			// 1=(text), 2=(~), 3=link, 4=(set)
-			value : "\\[\\[\\s*(?:(.+?)\\s*\\|\\s*)?(~)?(.+?)\\s*\\](?:\\[\\s*(.+?)\\s*\\])?\\]"
-		},
-
-		image : {
-			// 1=(left), 2=(right), 3=(title), 4=source, 5=(~), 6=(link), 7=(set)
-			value : "\\[([<]?)([>]?)[Ii][Mm][Gg]\\[\\s*(?:(.+?)\\s*\\|\\s*)?([^\\|]+?)\\s*\\](?:\\[\\s*(~)?(.+?)\\s*\\])?(?:\\[\\s*(.+?)\\s*\\])?\\]"
-		},
-
 		macroArg : {
 			value : "(?:" + [
-					'("(?:(?:\\\\")|[^"])+")',         // 1=double quoted
-					"('(?:(?:\\\\')|[^'])+')",         // 2=single quoted
-					"((?:\"\")|(?:''))",               // 3=empty quotes
-					"(?:(\\[\\[(?:\\s|\\S)*?\\]\\]))", // 4=double square-bracketed
-					"([^\"'`\\s]\\S*)"                 // 5=barewords
+					'("(?:(?:\\\\")|[^"])+")',          // 1=double quoted
+					"('(?:(?:\\\\')|[^'])+')",          // 2=single quoted
+					"((?:\"\")|(?:''))",                // 3=empty quotes
+					"(?:(\\[\\[(?:\\s|\\S)*?\\]\\]+))", // 4=double square-bracketed
+					"([^\"'`\\s]\\S*)"                  // 5=barewords
 				].join("|") + ")"
 		}
 	});
@@ -533,7 +522,7 @@ var Wikifier = (function () {
 
 
 	/*******************************************************************************************************************
-	 * Helper Functions
+	 * Helper Static Methods
 	 ******************************************************************************************************************/
 	Object.defineProperty(Wikifier, "helpers", { value : {} });
 
@@ -614,6 +603,181 @@ var Wikifier = (function () {
 					passage = Wikifier.helpers.evalExpression(passage);
 				}
 				return passage;
+			}
+		}
+	});
+
+
+	/*******************************************************************************************************************
+	 * Lexing Static Methods
+	 ******************************************************************************************************************/
+	Object.defineProperty(Wikifier, "lexers", { value : {} });
+
+	Object.defineProperties(Wikifier.lexers, {
+		/**
+		 * Lex a square-bracketed markup item and return a component or error object
+		 */
+		squareBracketedMarkup : {
+			value : function (w) {
+				// utility functions (access variables from their parent scope)
+				function next() {
+					if (pos >= w.source.length) {
+						return EOF;
+					}
+					return w.source[pos++];
+				}
+				function peek() {
+					if (pos >= w.source.length) {
+						return EOF;
+					}
+					return w.source[pos];
+				}
+				function ignore() {
+					start = pos;
+				}
+				function error(/* variadic: fmt [, ... ] */) {
+					return {
+						error : String.format.apply(null, arguments),
+						pos   : pos
+					};
+				}
+				function emit(type) {
+					if (type === "link" && w.source[start] === '~') {
+						start++;
+						item["isInternalLink"] = true;
+					}
+					item[type] = w.source.slice(start, pos - 1); // exclude the latest consumed character, since it's always unwanted
+					if (!/\S/.test(item[type])) {
+						throw new Error("malformed square-bracketed wiki markup, empty " + type + " component");
+					}
+					start = pos;
+				}
+				function slurpQuote(endQuote) {
+					loopQuote: for (;;) {
+						switch (next()) {
+						case '\\':
+							var c = next();
+							if (c !== EOF && c !== '\n') {
+								break;
+							}
+							/* FALL-THROUGH */
+						case EOF:
+						case '\n':
+							return EOF;
+						case endQuote:
+							break loopQuote;
+						}
+					}
+					return pos;
+				}
+
+				// [[text|~link][setter]]
+				// [<>img[title|src][~link][setter]]
+
+				var	EOF    = -1,               // end of file (string, really)
+					item   = {},               // scanned item object
+					start  = w.matchStart,     // start position of a component
+					pos    = w.matchStart + 1, // current position in w.source
+					depth,                     // current expression nesting depth
+					state,                     // current state
+					c,
+					isLink = true;
+
+				// scan for image prolog
+				c = peek();
+				if (c !== '[') {
+					isLink = false;
+					switch (c) {
+					case '<':
+						item.align = "left";
+						pos++;
+						break;
+					case '>':
+						item.align = "right";
+						pos++;
+						break;
+					}
+					ignore();
+					pos += 3;
+					if (w.source.slice(start, pos).toUpperCase() !== "IMG") {
+						return error("malformed square-bracketed wiki markup");
+					}
+				}
+
+				// scan for link and image sections
+				if (next() !== '[') {
+					return error("malformed wiki {0}", isLink ? "link" : "image");
+				}
+				depth = 2;
+				state = 0; // [(0|1)(2)(3)] : 0=title, 1=link(link)|src(image), 2=setter(link)|link(image), 3=setter(image)
+				ignore();
+				try {
+					loopCore: for (;;) {
+						switch ((c = next())) {
+						case '\\':
+							c = next();
+							if (c !== EOF && c !== '\n') {
+								break;
+							}
+							/* FALL-THROUGH */
+						case EOF:
+						case '\n':
+							return error("unterminated wiki link");
+						case '"':
+						case "'":
+							if (slurpQuote(c) === EOF) {
+								return error("unterminated {0} quoted string in wiki link", (c === '"') ? "double" : "single");
+							}
+							break;
+						case '|':
+							if (state === 0) {
+								state = 1;
+								emit("label");
+							}
+							break;
+						case '[':
+							if (isLink && state === 3) {
+								return error("unexpected left square bracket '{0}'", c);
+							}
+							depth++;
+							if (depth === 2) {
+								ignore();
+							}
+							break;
+						case ']':
+							depth--;
+							if (depth < 0) {
+								return error("unexpected right square bracket '{0}'", c);
+							}
+							if (depth === 1) {
+								switch (state) {
+								case 0:
+								case 1:
+									emit(isLink ? "link" : "source");
+									state = 2;
+									break;
+								case 2:
+									emit(isLink ? "setter" : "link");
+									state = 3;
+									break;
+								case 3:
+									emit("setter");
+									break;
+								}
+								if (next() === ']') {
+									break loopCore;
+								}
+								pos--;
+							}
+							break;
+						}
+					}
+				} catch (e) {
+					return error(e.message);
+				}
+				item["pos"] = pos;
+
+				return item;
 			}
 		}
 	});
@@ -874,29 +1038,25 @@ var Wikifier = (function () {
 
 			{
 				name: "prettyLink",
-				match: "\\[\\[",
-				lookaheadRegExp: /(\[\[(?:\s|\S)*?\]\])/gm,
+				match: "\\[\\[[^[]",
 				handler: function (w) {
-					this.lookaheadRegExp.lastIndex = w.matchStart;
-					var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
-					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
-						var	re    = new RegExp("^" + Wikifier.textPrimitives.link + "$"),
-							match = re.exec(lookaheadMatch[0]);
-						if (match !== null) {
-							// 1=(text), 2=(~), 3=link, 4=(set)
-							w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+					var markup = Wikifier.lexers.squareBracketedMarkup(w);
+					if (markup.hasOwnProperty("error")) {
+						w.outputText(w.output, w.matchStart, w.nextMatch);
+						return;
+					}
 
-							var	link  = Wikifier.helpers.evalPassageId(match[3]),
-								text  = match[1] ? Wikifier.helpers.evalExpression(match[1]) : link,
-								setFn = match[4]
-									? (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(match[4])))
-									: null;
-							if (!match[2] && Wikifier.isExternalLink(link)) {
-								Wikifier.createExternalLink(w.output, link, text)
-							} else {
-								Wikifier.createInternalLink(w.output, link, text, setFn);
-							}
-						}
+					w.nextMatch = markup.pos;
+					// label=(text), isInternalLink=(~), link=link, setter=(set)
+					var	link  = Wikifier.helpers.evalPassageId(markup.link),
+						text  = markup.hasOwnProperty("label") ? Wikifier.helpers.evalExpression(markup.label) : link,
+						setFn = markup.hasOwnProperty("setter")
+							? (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(markup.setter)))
+							: null;
+					if (markup.isInternalLink || !Wikifier.isExternalLink(link)) {
+						Wikifier.createInternalLink(w.output, link, text, setFn);
+					} else {
+						Wikifier.createExternalLink(w.output, link, text);
 					}
 				}
 			},
@@ -909,57 +1069,51 @@ var Wikifier = (function () {
 				}
 			},
 
-			(_formatterImage = {
+			{
 				name: "image",
 				match: "\\[[<>]?[Ii][Mm][Gg]\\[",
-				lookaheadRegExp: /(\[[<>]?[Ii][Mm][Gg]\[(?:\s|\S)*?\]\])/gm,
 				handler: function (w) {
-					this.lookaheadRegExp.lastIndex = w.matchStart;
-					var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
-					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
-						var	re    = new RegExp("^" + Wikifier.textPrimitives.image + "$"),
-							match = re.exec(lookaheadMatch[0]);
-						if (match !== null) {
-							// 1=(left), 2=(right), 3=(title), 4=source, 5=(~), 6=(link), 7=(set)
-							w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+					var markup = Wikifier.lexers.squareBracketedMarkup(w);
+					if (markup.hasOwnProperty("error")) {
+						w.outputText(w.output, w.matchStart, w.nextMatch);
+						return;
+					}
 
-							var	el     = w.output,
-								setFn  = match[7]
-									? (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(match[7])))
-									: null,
-								source;
-							if (match[6]) {
-								var link = Wikifier.helpers.evalPassageId(match[6]);
-								if (!match[5] && Wikifier.isExternalLink(link)) {
-									el = Wikifier.createExternalLink(el, link);
-								} else {
-									el = Wikifier.createInternalLink(el, link, null, setFn);
-								}
-								el.classList.add("link-image");
-							}
-							el = insertElement(el, "img");
-							source = Wikifier.helpers.evalPassageId(match[4]);
-							// check for Twine 1.4 Base64 image passage transclusion
-							if (source.slice(0, 5) !== "data:" && tale.has(source)) {
-								var passage = tale.get(source);
-								if (passage.tags.contains("Twine.image")) {
-									el.setAttribute("data-passage", passage.title);
-									source = passage.text;
-								}
-							}
-							el.src = source;
-							if (match[3]) {
-								el.title = Wikifier.helpers.evalExpression(match[3]);
-							}
-							if (match[1]) {
-								el.align = "left";
-							} else if (match[2]) {
-								el.align = "right";
-							}
+					w.nextMatch = markup.pos;
+					// align=(left|right), label=(title), source=source, isInternalLink=(~), link=(link), setter=(set)
+					var	el     = w.output,
+						setFn  = markup.hasOwnProperty("setter")
+							? (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(markup.setter)))
+							: null,
+						source;
+					if (markup.hasOwnProperty("link")) {
+						var link = Wikifier.helpers.evalPassageId(markup.link);
+						if (markup.isInternalLink || !Wikifier.isExternalLink(link)) {
+							el = Wikifier.createInternalLink(el, link, null, setFn);
+						} else {
+							el = Wikifier.createExternalLink(el, link);
+						}
+						el.classList.add("link-image");
+					}
+					el = insertElement(el, "img");
+					source = Wikifier.helpers.evalPassageId(markup.source);
+					// check for Twine 1.4 Base64 image passage transclusion
+					if (source.slice(0, 5) !== "data:" && tale.has(source)) {
+						var passage = tale.get(source);
+						if (passage.tags.contains("Twine.image")) {
+							el.setAttribute("data-passage", passage.title);
+							source = passage.text;
 						}
 					}
+					el.src = source;
+					if (markup.hasOwnProperty("label")) {
+						el.title = Wikifier.helpers.evalExpression(markup.label);
+					}
+					if (markup.hasOwnProperty("align")) {
+						el.align = markup.align;
+					}
 				}
-			}),
+			},
 
 			{
 				name: "macro",
@@ -1165,21 +1319,28 @@ var Wikifier = (function () {
 							// Double square-bracketed
 							arg = match[4];
 
-							// Convert to an object
-							var	linkRe    = new RegExp(Wikifier.textPrimitives.link),
-								linkMatch = linkRe.exec(arg),
-								linkObj   = {};
-							if (linkMatch !== null) {
-								// 1=(text), 2=(~), 3=link, 4=(set)
-								linkObj.count      = linkMatch[1] ? 2 : 1;
-								linkObj.link       = Wikifier.helpers.evalPassageId(linkMatch[3]);
-								linkObj.text       = linkMatch[1] ? Wikifier.helpers.evalExpression(linkMatch[1]) : linkObj.link;
-								linkObj.isExternal = !linkMatch[2] && Wikifier.isExternalLink(linkObj.link);
-								linkObj.setFn      = linkMatch[4]
-									? (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(linkMatch[4])))
-									: null;
-								arg = linkObj;
+							var markup = Wikifier.lexers.squareBracketedMarkup({
+								source     : arg,
+								matchStart : 0
+							});
+							if (markup.hasOwnProperty("error")) {
+								throw new Error('unable to parse macro argument "' + arg + '": ' + markup.error);
 							}
+							if (markup.pos < arg.length) {
+								throw new Error('unable to parse macro argument "' + arg + '": unexpected character(s) "'
+									+ arg.slice(markup.pos) + '" (pos: ' + markup.pos + ')');
+							}
+
+							// Convert to a link object
+							arg = {};
+							// label=(text), isInternalLink=(~), link=link, setter=(set)
+							arg.count      = markup.hasOwnProperty("label") ? 2 : 1;
+							arg.link       = Wikifier.helpers.evalPassageId(markup.link);
+							arg.text       = markup.hasOwnProperty("label") ? Wikifier.helpers.evalExpression(markup.label) : arg.link;
+							arg.isExternal = !markup.isInternalLink && Wikifier.isExternalLink(arg.link);
+							arg.setFn      = markup.hasOwnProperty("setter")
+								? (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(markup.setter)))
+								: null;
 						} else if (match[5]) {
 							// Barewords
 							arg = match[5];
@@ -1521,13 +1682,6 @@ var Wikifier = (function () {
 			}
 		]
 	}); // End formatters
-
-	/**
-	 * Setup aliases for externally used formatters
-	 */
-	Object.defineProperty(Wikifier, "imageFormatter", {
-		value : _formatterImage
-	});
 
 
 	/*******************************************************************************************************************
