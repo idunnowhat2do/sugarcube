@@ -845,13 +845,12 @@ Object.defineProperties(History, {
  * Passage API
  **********************************************************************************************************************/
 // Setup the Passage constructor
-function Passage(title, el, pid) {
+function Passage(title, el, id) {
 	this.title = title;
 	this.domId = "passage-" + Util.slugify(this.title);
 	if (el) {
 		this.element = el;
-		this.id      = pid;
-		//this.text  = Passage.unescape(el.textContent);
+		this.id      = id;
 		this.tags    = el.hasAttribute("tags") ? el.getAttribute("tags").trim().splitOrEmpty(/\s+/) : [];
 		this.classes = [];
 		if (this.tags.length > 0) {
@@ -881,10 +880,6 @@ function Passage(title, el, pid) {
 	} else {
 		this.element = null;
 		this.id      = undefined;
-		/*
-		this.text    = String.format('<span class="error" title="{0}">Error: this passage does not exist: {0}</span>',
-						this.title.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"));
-		*/
 		this.tags    = [];
 		this.classes = [];
 	}
@@ -1119,10 +1114,10 @@ function Tale(instanceName) {
 			this.setTitle("Untitled Story");
 		}
 	} else {
-		//<tw-storydata name="Twine Deux Test" startnode="1" creator="Twine" creator-version="2.0" format="..." options="">
+		//<tw-storydata name="Twine 2 Test" startnode="1" creator="Twine" creator-version="2.0" format="..." options="">
 		//    <style role="stylesheet" id="twine-user-stylesheet" type="text/twine-css"></style>
 		//    <script role="script" id="twine-user-script" type="text/twine-javascript"></script>
-		//    <tw-passagedata pid="1" name="Begin!" tags="sum-dumb-gai some-dumb-chick" position="0,0"></tw-passagedata>
+		//    <tw-passagedata pid="1" name="Begin!" tags="a-tag some-other-tag" position="0,0"></tw-passagedata>
 		//</tw-storydata>
 
 		var startnode = nodes[0].hasAttribute("startnode") ? nodes[0].getAttribute("startnode") : "";
@@ -1181,38 +1176,30 @@ Object.defineProperties(Tale.prototype, {
 	},
 
 	has : {
-		value : function (key) {
-			switch (typeof key) {
-			case "string":
-				return this.passages.hasOwnProperty(key);
+		value : function (title) {
+			switch (typeof title) {
 			case "number":
-				var pnames = Object.keys(this.passages);
-				for (var i = 0; i < pnames.length; i++) {
-					if (this.passages[pnames[i]].id === key) {
-						return true;
-					}
-				}
-				return false;
+				title = String(title);
+				/* FALL-THROUGH */
+			case "string":
+				return this.passages.hasOwnProperty(title);
+			default:
+				throw new TypeError("Tale.prototype.has title parameter must be a string");
 			}
-			throw new TypeError("Tale.prototype.has key parameter must be a string or number");
 		}
 	},
 
 	get : {
-		value : function (key) {
-			switch (typeof key) {
-			case "string":
-				return this.passages.hasOwnProperty(key) ? this.passages[key] : new Passage(key || "(unknown)");
+		value : function (title) {
+			switch (typeof title) {
 			case "number":
-				var pnames = Object.keys(this.passages);
-				for (var i = 0; i < pnames.length; i++) {
-					if (this.passages[pnames[i]].id === key) {
-						return this.passages[pnames[i]];
-					}
-				}
-				return new Passage("(unknown ID: " + key + ")");
+				title = String(title);
+				/* FALL-THROUGH */
+			case "string":
+				return this.passages.hasOwnProperty(title) ? this.passages[title] : new Passage(title || "(unknown)");
+			default:
+				throw new TypeError("Tale.prototype.get title parameter must be a string");
 			}
-			throw new TypeError("Tale.prototype.get key parameter must be a string or number");
 		}
 	},
 
@@ -1224,25 +1211,27 @@ Object.defineProperties(Tale.prototype, {
 				results = [];
 			for (var i = 0; i < pnames.length; i++) {
 				var passage = this.passages[pnames[i]];
-				switch (typeof passage[key]) {
-				case "undefined":
-					/* noop */
-					break;
-				case "object":
-					// currently, we assume that the only properties which are objects
-					// will be either arrays or array-like-objects
-					for (var j = 0, jend = passage[key].length; j < jend; j++) {
-						if (passage[key][j] == value) { // use lazy equality
-							results.push(passage);
-							break;
+				if (passage.hasOwnProperty(key)) {
+					switch (typeof passage[key]) {
+					case "undefined":
+						/* noop */
+						break;
+					case "object":
+						// currently, we assume that the only properties which are objects
+						// will be either arrays or array-like-objects
+						for (var j = 0, jend = passage[key].length; j < jend; j++) {
+							if (passage[key][j] == value) { // use lazy equality
+								results.push(passage);
+								break;
+							}
 						}
+						break;
+					default:
+						if (passage[key] == value) { // use lazy equality
+							results.push(passage);
+						}
+						break;
 					}
-					break;
-				default:
-					if (passage[key] == value) { // use lazy equality
-						results.push(passage);
-					}
-					break;
 				}
 			}
 
