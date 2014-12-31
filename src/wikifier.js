@@ -604,88 +604,84 @@ var Wikifier = (function () {
 				}
 				return passage;
 			}
-		}
-	});
+		},
 
-
-	/*******************************************************************************************************************
-	 * Lexing Static Methods
-	 ******************************************************************************************************************/
-	Object.defineProperty(Wikifier, "lexers", { value : {} });
-
-	Object.defineProperties(Wikifier.lexers, {
-		/**
-		 * Lex a square-bracketed markup item and return a component or error object
-		 */
-		squareBracketedMarkup : {
+		parseSquareBracketedMarkup : {
 			value : function (w) {
-				// utility functions (access variables from their parent scope)
-				function next() {
-					if (pos >= w.source.length) {
-						return EOF;
-					}
-					return w.source[pos++];
-				}
-				function peek() {
-					if (pos >= w.source.length) {
-						return EOF;
-					}
-					return w.source[pos];
-				}
-				function ignore() {
-					start = pos;
-				}
-				function error(/* variadic: fmt [, ... ] */) {
-					return {
-						error : String.format.apply(null, arguments),
-						pos   : pos
-					};
-				}
-				function emit(type) {
-					if (type === "link" && w.source[start] === '~') {
-						start++;
-						item["isInternalLink"] = true;
-					}
-					item[type] = w.source.slice(start, pos - 1); // exclude the latest consumed character, since it's always unwanted
-					if (!/\S/.test(item[type])) {
-						throw new Error("malformed square-bracketed wiki markup, empty " + type + " component");
-					}
-					start = pos;
-				}
-				function slurpQuote(endQuote) {
-					loopQuote: for (;;) {
-						switch (next()) {
-						case '\\':
-							var c = next();
-							if (c !== EOF && c !== '\n') {
-								break;
-							}
-							/* FALL-THROUGH */
-						case EOF:
-						case '\n':
+				var	next = function () {
+						if (pos >= w.source.length) {
 							return EOF;
-						case endQuote:
-							break loopQuote;
 						}
-					}
-					return pos;
-				}
+						return w.source[pos++];
+					},
+					peek = function () {
+						if (pos >= w.source.length) {
+							return EOF;
+						}
+						return w.source[pos];
+					},
+					error = function (/* variadic: fmt [, ... ] */) {
+						return {
+							error : String.format.apply(null, arguments),
+							pos   : pos
+						};
+					},
+					ignore = function () {
+						start = pos;
+					},
+					emit = function (type) {
+						var text = w.source.slice(start, pos).trim();
+						if (text === "") {
+							throw new Error("malformed wiki " + (isLink ? "link" : "image") + ", empty " + type + " component");
+						}
+						if (type === "link" && text[0] === '~') {
+							item["forceInternal"] = true;
+							item["link"] = text.slice(1);
+						} else {
+							item[type] = text;
+						}
+						start = pos;
+					},
+					slurpQuote = function (endQuote) {
+						pos++;
+						loop: for (;;) {
+							switch (peek()) {
+							case '\\':
+								pos++;
+								var c = peek();
+								if (c !== EOF && c !== '\n') {
+									break;
+								}
+								/* FALL-THROUGH */
+							case EOF:
+							case '\n':
+								return EOF;
+							case endQuote:
+								break loop;
+							}
+							pos++;
+						}
+						return pos;
+					},
+					EOF    = -1,           // end of file (string, really)
+					item   = {},           // scanned item object
+					start  = w.matchStart, // start position of a component
+					pos    = start + 1,    // current position in w.source
+					depth,                 // current square bracket nesting depth
+					cid,                   // current component ID
+					isLink,                // markup is a link, else image
+					c;
 
 				// [[text|~link][setter]]
-				// [<>img[title|src][~link][setter]]
+				// [<>img[title|source][~link][setter]]
 
-				var	EOF    = -1,               // end of file (string, really)
-					item   = {},               // scanned item object
-					start  = w.matchStart,     // start position of a component
-					pos    = w.matchStart + 1, // current position in w.source
-					depth,                     // current expression nesting depth
-					state,                     // current state
-					c,
-					isLink = true;
-
-				// scan for image prolog
+				// scan left delimiter
 				c = peek();
-				if (c !== '[') {
+				if (c === '[') {
+					// link
+					isLink = true;
+				} else {
+					// image
 					isLink = false;
 					switch (c) {
 					case '<':
@@ -697,80 +693,89 @@ var Wikifier = (function () {
 						pos++;
 						break;
 					}
-					ignore();
-					pos += 3;
-					if (w.source.slice(start, pos).toUpperCase() !== "IMG") {
+					if (!/^[Ii][Mm][Gg]$/.test(w.source.slice(pos, pos + 3))) {
 						return error("malformed square-bracketed wiki markup");
 					}
+					pos += 3;
 				}
 
-				// scan for link and image sections
+				// scan for sections
 				if (next() !== '[') {
 					return error("malformed wiki {0}", isLink ? "link" : "image");
 				}
-				depth = 2;
-				state = 0; // [(0|1)(2)(3)] : 0=title, 1=link(link)|src(image), 2=setter(link)|link(image), 3=setter(image)
+				depth = 1;
+				cid = 0; // 0=title, 1=link(link)|source(image), 2=setter(link)|link(image), 3=setter(image)
 				ignore();
 				try {
-					loopCore: for (;;) {
-						switch ((c = next())) {
+					loop: for (;;) {
+						switch ((c = peek())) {
 						case '\\':
-							c = next();
+							pos++;
+							c = peek();
 							if (c !== EOF && c !== '\n') {
 								break;
 							}
 							/* FALL-THROUGH */
 						case EOF:
 						case '\n':
-							return error("unterminated wiki link");
+							return error("unterminated wiki {0}", isLink ? "link" : "image");
 						case '"':
 						case "'":
 							if (slurpQuote(c) === EOF) {
-								return error("unterminated {0} quoted string in wiki link", (c === '"') ? "double" : "single");
+								return error("unterminated {0} quoted string in wiki {1}",
+									(c === '"') ? "double" : "single", isLink ? "link" : "image");
 							}
 							break;
 						case '|':
-							if (state === 0) {
-								state = 1;
-								emit("label");
+							if (cid === 0) {
+								emit(isLink ? "text" : "title");
+								start++;
+								cid = 1;
 							}
 							break;
 						case '[':
-							if (isLink && state === 3) {
-								return error("unexpected left square bracket '{0}'", c);
+							if (cid === -1) {
+								return error("unexpected left square bracket '['");
 							}
 							depth++;
-							if (depth === 2) {
+							if (depth === 1) {
 								ignore();
+								start++;
 							}
 							break;
 						case ']':
 							depth--;
-							if (depth < 0) {
-								return error("unexpected right square bracket '{0}'", c);
-							}
-							if (depth === 1) {
-								switch (state) {
+							if (depth === 0) {
+								switch (cid) {
 								case 0:
 								case 1:
 									emit(isLink ? "link" : "source");
-									state = 2;
+									cid = 2;
 									break;
 								case 2:
-									emit(isLink ? "setter" : "link");
-									state = 3;
+									if (isLink) {
+										emit("setter");
+										cid = -1;
+									} else {
+										emit("link");
+										cid = 3;
+									}
 									break;
 								case 3:
 									emit("setter");
+									cid = -1;
 									break;
 								}
-								if (next() === ']') {
-									break loopCore;
+								pos++;
+								if (peek() === ']') {
+									pos++;
+									break loop;
 								}
 								pos--;
 							}
 							break;
 						}
+						pos++;
 					}
 				} catch (e) {
 					return error(e.message);
@@ -1040,20 +1045,20 @@ var Wikifier = (function () {
 				name: "prettyLink",
 				match: "\\[\\[[^[]",
 				handler: function (w) {
-					var markup = Wikifier.lexers.squareBracketedMarkup(w);
+					var markup = Wikifier.helpers.parseSquareBracketedMarkup(w);
 					if (markup.hasOwnProperty("error")) {
 						w.outputText(w.output, w.matchStart, w.nextMatch);
 						return;
 					}
 
 					w.nextMatch = markup.pos;
-					// label=(text), isInternalLink=(~), link=link, setter=(set)
+					// text=(text), forceInternal=(~), link=link, setter=(setter)
 					var	link  = Wikifier.helpers.evalPassageId(markup.link),
-						text  = markup.hasOwnProperty("label") ? Wikifier.helpers.evalExpression(markup.label) : link,
+						text  = markup.hasOwnProperty("text") ? Wikifier.helpers.evalExpression(markup.text) : link,
 						setFn = markup.hasOwnProperty("setter")
 							? (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(markup.setter)))
 							: null;
-					if (markup.isInternalLink || !Wikifier.isExternalLink(link)) {
+					if (markup.forceInternal || !Wikifier.isExternalLink(link)) {
 						Wikifier.createInternalLink(w.output, link, text, setFn);
 					} else {
 						Wikifier.createExternalLink(w.output, link, text);
@@ -1073,14 +1078,14 @@ var Wikifier = (function () {
 				name: "image",
 				match: "\\[[<>]?[Ii][Mm][Gg]\\[",
 				handler: function (w) {
-					var markup = Wikifier.lexers.squareBracketedMarkup(w);
+					var markup = Wikifier.helpers.parseSquareBracketedMarkup(w);
 					if (markup.hasOwnProperty("error")) {
 						w.outputText(w.output, w.matchStart, w.nextMatch);
 						return;
 					}
 
 					w.nextMatch = markup.pos;
-					// align=(left|right), label=(title), source=source, isInternalLink=(~), link=(link), setter=(set)
+					// align=(left|right), title=(title), source=source, forceInternal=(~), link=(link), setter=(setter)
 					var	el     = w.output,
 						setFn  = markup.hasOwnProperty("setter")
 							? (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(markup.setter)))
@@ -1088,7 +1093,7 @@ var Wikifier = (function () {
 						source;
 					if (markup.hasOwnProperty("link")) {
 						var link = Wikifier.helpers.evalPassageId(markup.link);
-						if (markup.isInternalLink || !Wikifier.isExternalLink(link)) {
+						if (markup.forceInternal || !Wikifier.isExternalLink(link)) {
 							el = Wikifier.createInternalLink(el, link, null, setFn);
 						} else {
 							el = Wikifier.createExternalLink(el, link);
@@ -1106,8 +1111,8 @@ var Wikifier = (function () {
 						}
 					}
 					el.src = source;
-					if (markup.hasOwnProperty("label")) {
-						el.title = Wikifier.helpers.evalExpression(markup.label);
+					if (markup.hasOwnProperty("title")) {
+						el.title = Wikifier.helpers.evalExpression(markup.title);
 					}
 					if (markup.hasOwnProperty("align")) {
 						el.align = markup.align;
@@ -1319,10 +1324,10 @@ var Wikifier = (function () {
 							// Double square-bracketed
 							arg = match[4];
 
-							var markup = Wikifier.lexers.squareBracketedMarkup({
-								source     : arg,
-								matchStart : 0
-							});
+							var markup = Wikifier.helpers.parseSquareBracketedMarkup({
+									source     : arg,
+									matchStart : 0
+								});
 							if (markup.hasOwnProperty("error")) {
 								throw new Error('unable to parse macro argument "' + arg + '": ' + markup.error);
 							}
@@ -1333,11 +1338,11 @@ var Wikifier = (function () {
 
 							// Convert to a link object
 							arg = {};
-							// label=(text), isInternalLink=(~), link=link, setter=(set)
-							arg.count      = markup.hasOwnProperty("label") ? 2 : 1;
+							// text=(text), forceInternal=(~), link=link, setter=(setter)
+							arg.count      = markup.hasOwnProperty("text") ? 2 : 1;
 							arg.link       = Wikifier.helpers.evalPassageId(markup.link);
-							arg.text       = markup.hasOwnProperty("label") ? Wikifier.helpers.evalExpression(markup.label) : arg.link;
-							arg.isExternal = !markup.isInternalLink && Wikifier.isExternalLink(arg.link);
+							arg.text       = markup.hasOwnProperty("text") ? Wikifier.helpers.evalExpression(markup.text) : arg.link;
+							arg.isExternal = !markup.forceInternal && Wikifier.isExternalLink(arg.link);
 							arg.setFn      = markup.hasOwnProperty("setter")
 								? (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(markup.setter)))
 								: null;

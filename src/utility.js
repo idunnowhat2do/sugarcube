@@ -166,7 +166,7 @@ function addStyle(css) {
 	var	matchRe = /\[[<>]?[Ii][Mm][Gg]\[(?:\s|\S)*?\]\]+/g;
 	if (matchRe.test(css)) {
 		css = css.replace(matchRe, function (wikiImage) {
-			var markup = Wikifier.lexers.squareBracketedMarkup({
+			var markup = Wikifier.helpers.parseSquareBracketedMarkup({
 				source     : wikiImage,
 				matchStart : 0
 			});
