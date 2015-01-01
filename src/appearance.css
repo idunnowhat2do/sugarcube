@@ -139,9 +139,6 @@ button:active {
 	margin-top: 3em;
 	text-align: right;
 }
-#menu-story {
-	line-height: 1.125;
-}
 
 [data-icon], a.link-back:before, a.link-return:after, a.link-external:after,
 #menu-saves a:before, #menu-rewind a:before, #menu-restart a:before, #menu-options a:before, #menu-share a:before,

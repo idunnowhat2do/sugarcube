@@ -2,7 +2,7 @@
  *
  * uisystem.js
  *
- * Copyright © 2013–2014 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Copyright © 2013–2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
@@ -43,9 +43,8 @@ var UISystem = (function () {
 				+     '</header>'
 				+     '<div id="story-caption"></div>'
 				+     '<nav id="menu" role="navigation">'
-				+         '<ul id="menu-story-transitional"></ul>'
+				+         '<ul id="menu-story"></ul>'
 				+         '<ul id="menu-core">'
-				+             '<li id="menu-story"></li>'
 				+             '<li id="menu-saves"><a>Saves</a></li>'
 				+             '<li id="menu-rewind"><a>Rewind</a></li>'
 				+             '<li id="menu-restart"><a>Restart</a></li>'
@@ -88,11 +87,8 @@ var UISystem = (function () {
 		if (!tale.has("StoryCaption")) {
 			jQuery("#story-caption").remove();
 		}
-		if (!tale.has("StoryMenu")) {
+		if (!tale.has("StoryMenu") && !tale.has("MenuStory")) {
 			jQuery("#menu-story").remove();
-		}
-		if (!tale.has("MenuStory")) {
-			jQuery("#menu-story-transitional").remove();
 		}
 		setPageElements();
 
@@ -149,11 +145,15 @@ var UISystem = (function () {
 		setPageElement("story-subtitle", "StorySubtitle");
 		setPageElement("story-author", "StoryAuthor");
 		setPageElement("story-caption", "StoryCaption");
-		setPageElement("menu-story", "StoryMenu");
-		if (tale.has("MenuStory")) {
-			var menuStory = document.getElementById("menu-story-transitional");
+
+		var menuStory = document.getElementById("menu-story");
+		if (menuStory !== null) {
 			removeChildren(menuStory);
-			buildListFromPassage("MenuStory", menuStory);
+			if (tale.has("StoryMenu")) {
+				buildListFromPassage("StoryMenu", menuStory);
+			} else if (tale.has("MenuStory")) {
+				buildListFromPassage("MenuStory", menuStory);
+			}
 		}
 	}
 
