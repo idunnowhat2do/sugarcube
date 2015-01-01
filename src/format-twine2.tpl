@@ -8,7 +8,7 @@
 
 SugarCube (v"{{BUILD_VERSION_VERSION}}"): A free (gratis and libre) story format, based on TiddlyWiki.
 
-Copyright © 2013–2014 Thomas Michael Edwards <tmedwards@motoslave.net>.
+Copyright © 2013–2015 Thomas Michael Edwards <tmedwards@motoslave.net>.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
