@@ -248,7 +248,7 @@ var Wikifier = (function () {
 					};
 
 				while ((match = re.exec(expression)) !== null) {
-					// noop: Double quoted | Single quoted | Empty quote | Operator delimiters
+					// noop: Double quoted | Single quoted | Empty quotes | Operator delimiters
 
 					// Barewords & Sigil
 					if (match[5]) {
@@ -274,7 +274,7 @@ var Wikifier = (function () {
 						}
 
 						// n.b. do not simply use "map[token]" here, otherwise tokens which match
-						//      intrinsic object properties will break the world (e.g. "toString")
+						//      properties from the prototype chain will break the world (e.g. "toString")
 						if (map.hasOwnProperty(token)) {
 							expression = expression.splice(
 								match.index,  // starting index
