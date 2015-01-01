@@ -19,7 +19,7 @@ body {
 	padding: 3.5em 1.5em 0 3.5em;
 }
 
-/* Default menu styling */
+/* Default dialog styling */
 html.ui-open body {
 	overflow: hidden;
 }
@@ -48,7 +48,7 @@ html.ui-open body {
 	max-height: 90%;
 }
 
-/* Options menu styling */
+/* Options dialog styling */
 #ui-body.options [id|="option-body"] {
 	display: table;
 	width: 100%;
