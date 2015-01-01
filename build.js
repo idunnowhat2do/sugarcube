@@ -3,8 +3,8 @@
  * build.js
  *   - Description : Node.js-hosted build script for SugarCube
  *   - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
- *   - Copyright   : Copyright © 2014 Thomas Michael Edwards. All rights reserved.
- *   - Version     : 1.2.1, 2014-12-24
+ *   - Copyright   : Copyright © 2014–2015 Thomas Michael Edwards. All rights reserved.
+ *   - Version     : 1.2.2, 2015-01-01
  */
 "use strict";
 
@@ -245,16 +245,34 @@ function projectCopy(fileObjs) {
 /*******************************************************************************
  * MAIN SCRIPT
  ******************************************************************************/
-var _fs     = require("fs"),
-	_path   = require("path"),
-	_opt    = require('node-getopt').create([
-		['d', 'debug',      'Keep debugging code; gated by DEBUG symbol.'],
-		['u', 'unminified', 'Suppress minification stages.'],
-		['h', 'help',       'Print this help, then exit.']
+var	_fs   = require("fs"),
+	_path = require("path"),
+	_opt  = require('node-getopt').create([
+		['b', 'build=VERSION', 'Build only for Twine major version: 1 or 2; default: build for all.'],
+		['d', 'debug',         'Keep debugging code; gated by DEBUG symbol.'],
+		['u', 'unminified',    'Suppress minification stages.'],
+		['h', 'help',          'Print this help, then exit.']
 	])
 		.bindHelp()     // bind option 'help' to default action
-		.parseSystem(), // parse command line
-	_indent = " -> ";
+		.parseSystem(); // parse command line
+var	_buildForTwine1 = true,
+	_buildForTwine2 = true,
+	_indent         = " -> ";
+
+// build selection
+if (_opt.options.build) {
+	switch (_opt.options.build) {
+	case "1":
+		_buildForTwine2 = false;
+		break;
+	case "2":
+		_buildForTwine1 = false;
+		break;
+	default:
+		die('unknown Twine major version: ' + _opt.options.build + '; valid values: 1 or 2');
+		break;
+	}
+}
 
 // build the project
 (function () {
@@ -274,7 +292,7 @@ var _fs     = require("fs"),
 	};
 
 	// build for Twine 1.x
-	if (CONFIG.twine1) {
+	if (_buildForTwine1 && CONFIG.twine1) {
 		console.log('\nBuilding Twine 1.x version:');
 
 		// process the header templates and write the outfiles
@@ -290,7 +308,7 @@ var _fs     = require("fs"),
 	}
 
 	// build for Twine 2.x
-	if (CONFIG.twine2) {
+	if (_buildForTwine2 && CONFIG.twine2) {
 		console.log('\nBuilding Twine 2.x version:');
 
 		// process the header templates and write the outfiles
