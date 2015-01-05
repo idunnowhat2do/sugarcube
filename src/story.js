@@ -482,14 +482,13 @@ Object.defineProperties(History.prototype, {
 			if (config.historyMode === History.Modes.Session) {
 				if (suid) {
 					this.suid = suid;
+				} else if (History.hasWindowState()) {
+					this.suid = History.getWindowState().suid;
 				} else {
-					if (History.hasWindowState()) {
-						this.suid = History.getWindowState().suid;
-					} else {
-						this.suid = UUID.generate();
-					}
+					this.suid = UUID.generate();
+					return false; // return false early to skip the session check
 				}
-				if (this.suid && session.hasItem("history." + this.suid)) {
+				if (session.hasItem("history." + this.suid)) {
 					var	stateObj = session.getItem("history." + this.suid),
 						sidx     = History.getWindowState().sidx;
 					if (DEBUG) { console.log("    > History.getWindowState(): " + History.getWindowState().sidx + " / " + History.getWindowState().suid); }
@@ -1114,12 +1113,6 @@ function Tale(instanceName) {
 			this.setTitle("Untitled Story");
 		}
 	} else {
-		//<tw-storydata name="Twine 2 Test" startnode="1" creator="Twine" creator-version="2.0" format="..." options="">
-		//    <style role="stylesheet" id="twine-user-stylesheet" type="text/twine-css"></style>
-		//    <script role="script" id="twine-user-script" type="text/twine-javascript"></script>
-		//    <tw-passagedata pid="1" name="Begin!" tags="a-tag some-other-tag" position="0,0"></tw-passagedata>
-		//</tw-storydata>
-
 		var startnode = nodes[0].hasAttribute("startnode") ? nodes[0].getAttribute("startnode") : "";
 
 		nodes = nodes[0].childNodes;
