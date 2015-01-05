@@ -308,7 +308,7 @@ Object.defineProperties(History.prototype, {
 						var windowState = History.getWindowState();
 						if (windowState !== null && windowState.sidx < this.top.sidx) {
 							if (DEBUG) { console.log("    > stacks out of sync; popping " + (this.top.sidx - windowState.sidx) + " states to equalize"); }
-							// stack IDs are out of sync, pop our stack until we're back in
+							// stack indexes are out of sync, pop our stack until we're back in
 							// sync with the window.history
 							this.pop(this.top.sidx - windowState.sidx);
 						}
@@ -632,7 +632,7 @@ Object.defineProperties(History, {
 
 			var windowState = History.getWindowState(evt);
 
-			// update the history stack if necessary
+			// update the game state if necessary
 			if (windowState.suid !== state.suid) {
 				if (DEBUG) { console.log("    > state from previous history detected, swapping in history"); }
 				state.save();
