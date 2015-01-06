@@ -620,7 +620,13 @@ var Wikifier = (function () {
 						}
 						return w.source[pos];
 					},
-					error = function (/* variadic: fmt [, ... ] */) {
+					peekAhead = function (count) {
+						if (count < 1 || pos + count >= w.source.length) {
+							return EOF;
+						}
+						return w.source.slice[pos + count];
+					},
+					error = function (/* variadic: fmt [, … ] */) {
 						return {
 							error : String.format.apply(null, arguments),
 							pos   : pos
@@ -726,11 +732,27 @@ var Wikifier = (function () {
 									(c === '"') ? "double" : "single", isLink ? "link" : "image");
 							}
 							break;
-						case '|':
+						case '|': // core section pipe ('|') separator
 							if (cid === 0) {
 								emit(isLink ? "text" : "title");
 								start++;
 								cid = 1;
+							}
+							break;
+						case '-': // possible core section right arrow ("->") separator (Twine 2 extension)
+							if (cid === 0 && peekAhead(1) === '>') {
+								emit(isLink ? "text" : "title");
+								pos++;
+								start += 2;
+								cid = 1;
+							}
+							break;
+						case '<': // possible core section left arrow ("<-") separator (Twine 2 extension)
+							if (cid === 0 && peekAhead(1) === '-') {
+								emit(isLink ? "link" : "source");
+								pos++;
+								start += 2;
+								cid = 2;
 							}
 							break;
 						case '[':
@@ -747,21 +769,25 @@ var Wikifier = (function () {
 							depth--;
 							if (depth === 0) {
 								switch (cid) {
-								case 0:
-								case 1:
+								case 0: // core section (nothing emitted yet)
+								case 1: // core section (already emitted link-text|image-title)
 									emit(isLink ? "link" : "source");
-									cid = 2;
+									cid = 3;
 									break;
-								case 2:
+								case 2: // core section (already emitted link-link|image-source)
+									emit(isLink ? "text" : "title");
+									cid = 3;
+									break;
+								case 3: // link-setter|image-link section
 									if (isLink) {
 										emit("setter");
 										cid = -1;
 									} else {
 										emit("link");
-										cid = 3;
+										cid = 4;
 									}
 									break;
-								case 3:
+								case 4: // image-setter section
 									emit("setter");
 									cid = -1;
 									break;
