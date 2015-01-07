@@ -2,7 +2,7 @@
  *
  * userlib.js
  *
- * Copyright © 2013–2014 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Copyright © 2013–2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
@@ -40,20 +40,31 @@ function lastVisited(/* variadic */) {
 }
 
 /**
- * Returns the title of a previous passage, either the directly preceding one or the one at the optional offset, or an empty string, if there is no such passage
+ * Returns the title of the most recent passage whose title does not match that of the active passage or an empty string, if there is no such passage
  */
 function previous(offset) {
-	if (arguments.length === 0) {
-		offset = 1;
-	} else if (offset < 1) {
-		throw new Error("previous offset parameter must be a positive integer greater than zero");
+	// legacy behavior with an offset
+	if (arguments.length !== 0) {
+		if (offset < 1) {
+			throw new RangeError("previous offset parameter must be a positive integer greater than zero");
+		}
+		return (state.length > offset) ? state.peek(offset).title : "";
 	}
 
-	return (state.length > offset) ? state.peek(offset).title : "";
+	// new behavior without offset
+	if (state.length < 2) {
+		return "";
+	}
+	for (var i = state.length - 2; i >= 0; i--) {
+		if (state.history[i].title !== state.active.title) {
+			return state.history[i].title;
+		}
+	}
+	return "";
 }
 
 /**
- * Returns a random integer within the given range (min–max)
+ * Returns a random integer within the given range [min, max] (i.e. both min and max are inclusive)
  *   n.b. Using Math.round() will give you a non-uniform distribution!
  */
 function random(min, max) {
@@ -73,7 +84,7 @@ function random(min, max) {
 }
 
 /**
- * Returns a random float within the given range (min–max)
+ * Returns a random float within the given range [min, max) (i.e. min is inclusive, max is exclusive)
  */
 function randomFloat(min, max) {
 	if (arguments.length === 0) {
