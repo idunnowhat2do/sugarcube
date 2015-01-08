@@ -2,7 +2,7 @@
  *
  * main.js
  *
- * Copyright © 2013–2014 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Copyright © 2013–2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
@@ -108,7 +108,7 @@ var	config = {
 		altPassageDescription : undefined,
 		displayPassageTitles  : false,
 		loadDelay             : 0,
-		startPassage          : "Start",
+		startPassage          : undefined,
 		updatePageElements    : true,
 
 		// history option properties
