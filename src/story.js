@@ -203,6 +203,11 @@ Object.defineProperties(History.prototype, {
 				// enables the Twine 1.4+ "Test Play From Here" feature
 				if (DEBUG) { console.log('    > display: "' + testPlay + '" (testPlay)'); }
 				this.display(testPlay);
+			} else if (config.startPassage == null || !tale.has(config.startPassage)) { // use lazy equality on null check
+				jQuery("#passages").empty().append("<h1>Starting passage "
+					+ (config.startPassage == null ? "not selected" : '("' + config.startPassage + '") not found') // use lazy equality on null check
+					+ ".  Aborting.</h1>");
+				window.scroll(0, 0);
 			} else if (!this.restore()) {
 				// autoload the autosave, if requested and possible, else load the start passage
 				var loadStart = true;
@@ -1085,6 +1090,7 @@ function Tale(instanceName) {
 	var nodes = document.getElementById("store-area").childNodes;
 
 	if (TWINE1) {
+		config.startPassage = "Start";
 		for (var i = 0; i < nodes.length; i++) {
 			var el = nodes[i];
 			if (el.nodeType !== 1) { continue; } // skip non-element nodes (should never be any, but…)
@@ -1115,6 +1121,7 @@ function Tale(instanceName) {
 	} else {
 		var startnode = nodes[0].hasAttribute("startnode") ? nodes[0].getAttribute("startnode") : "";
 
+		config.startPassage = null;
 		nodes = nodes[0].childNodes;
 		for (var i = 0; i < nodes.length; i++) {
 			var el = nodes[i];
