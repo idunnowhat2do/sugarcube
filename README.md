@@ -3,15 +3,6 @@
 
 Downloads and documentation can be found at [SugarCube's website](http://www.motoslave.net/sugarcube/ "http://www.motoslave.net/sugarcube/").
 
-## Feature Highlights ##
-- Semantic HTML5 (for the most part, anyway).
-- The ability to easily save your progress, at any point, and revisit it at any time.
-- Persistent end-user options, via the [`options` variable](#reserved-names-variables "see: options"), the [`MenuOptions` passage](#reserved-names-passages "see: MenuOptions"), and the [options macros](#macrocat-options "see: options macros").
-- Supports most Twine 1.4+ features (e.g. [embedded image passages](#wiki-syntax-extensions-image-passage "see: Image Passage Syntax for [img[]]")).
-- Supports most of the current set of TiddlyWiki markup (e.g. adds `<nowiki>…</nowiki>` & table caption markup).
-- Embeds the [jQuery library](http://jquery.com/ "http://jquery.com/") (2.x series) and the [seedrandom.js library](https://github.com/davidbau/seedrandom "https://github.com/davidbau/seedrandom").
-- And more….  See the documentation at [SugarCube's website](http://www.motoslave.net/sugarcube/ "http://www.motoslave.net/sugarcube/") for more information.
-
 ## Requirements ##
 SugarCube's sole requirement is a modern web browser, and by *modern* I mean one released within the last several years (you do not need the absolute latest and greatest shiny).
 
