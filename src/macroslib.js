@@ -2,7 +2,7 @@
  *
  * macroslib.js
  *
- * Copyright © 2013–2014 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Copyright © 2013–2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
@@ -404,7 +404,7 @@ function defineStandardMacros() {
 	 * <<if>>
 	 */
 	macros.add("if", {
-		version  : { major : 3, minor : 1, patch : 1 },
+		version  : { major : 3, minor : 2, patch : 0 },
 		skipArgs : true,
 		tags     : [ "elseif", "else" ],
 		handler  : function () {
@@ -424,7 +424,7 @@ function defineStandardMacros() {
 					}
 				}
 			} catch (e) {
-				return this.error("bad conditional expression: " + e.message);
+				return this.error("bad conditional expression in <<" + (i === 0 ? "if" : "elseif") + ">> clause" + (i > 0 ? " (#" + i + ")" : "") + ": " + e.message);
 			}
 		}
 	});
