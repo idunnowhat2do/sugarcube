@@ -1071,7 +1071,9 @@ function Tale(instanceName) {
 	var nodes = document.getElementById("store-area").childNodes;
 
 	if (TWINE1) {
-		config.startPassage = "Start";
+		config.startPassage = "Start"; // set the default starting passage title
+		var	storyStylesheet,
+			storyScript;
 		for (var i = 0; i < nodes.length; i++) {
 			var el = nodes[i];
 			if (el.nodeType !== 1) { continue; } // skip non-element nodes (should never be any, but…)
@@ -1081,7 +1083,12 @@ function Tale(instanceName) {
 
 			var	tags    = el.hasAttribute("tags") ? el.getAttribute("tags").trim().splitOrEmpty(/\s+/) : [],
 				passage = new Passage(name, el, i);
-			if (tags.contains("stylesheet")) {
+
+			if (name === "StoryStylesheet") {
+				storyStylesheet = passage;
+			} else if (name === "StoryScript") {
+				storyScript = passage;
+			} else if (tags.contains("stylesheet")) {
 				this.styles.push(passage);
 			} else if (tags.contains("script")) {
 				this.scripts.push(passage);
@@ -1090,6 +1097,12 @@ function Tale(instanceName) {
 			} else {
 				this.passages[name] = passage;
 			}
+		}
+		if (storyStylesheet) {
+			this.styles.unshift(storyStylesheet);
+		}
+		if (storyScript) {
+			this.scripts.unshift(storyScript);
 		}
 
 		if (this.passages.hasOwnProperty("StoryTitle")) {
@@ -1100,9 +1113,8 @@ function Tale(instanceName) {
 			this.setTitle("Untitled Story");
 		}
 	} else {
-		var startnode = nodes[0].hasAttribute("startnode") ? nodes[0].getAttribute("startnode") : "";
-
-		config.startPassage = null;
+		config.startPassage = null; // no default starting passage title
+		var startNode = nodes[0].hasAttribute("startnode") ? nodes[0].getAttribute("startnode") : "";
 		nodes = nodes[0].childNodes;
 		for (var i = 0; i < nodes.length; i++) {
 			var el = nodes[i];
@@ -1110,10 +1122,10 @@ function Tale(instanceName) {
 
 			switch (el.nodeName.toUpperCase()) {
 			case "STYLE":
-				this.styles.push(new Passage("user-style-node-" + i, el, -1));
+				this.styles.push(new Passage("user-style-node-" + i, el, -i));
 				break;
 			case "SCRIPT":
-				this.scripts.push(new Passage("user-script-node-" + i, el, -2));
+				this.scripts.push(new Passage("user-script-node-" + i, el, -i));
 				break;
 			default: // TW-PASSAGEDATA
 				var name = el.hasAttribute("name") ? el.getAttribute("name") : "";
@@ -1122,7 +1134,7 @@ function Tale(instanceName) {
 				var	tags    = el.hasAttribute("tags") ? el.getAttribute("tags").trim().splitOrEmpty(/\s+/) : [],
 					pid     = el.hasAttribute("pid") ? el.getAttribute("pid") : "",
 					passage = new Passage(name, el, +pid);
-				if (startnode !== "" && startnode === pid) {
+				if (startNode !== "" && startNode === pid) {
 					config.startPassage = name;
 				}
 				if (tags.contains("widget")) {
