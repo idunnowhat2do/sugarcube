@@ -541,7 +541,7 @@ var Wikifier = (function () {
 				do {
 					lookaheadRegExp.lastIndex = w.nextMatch;
 					var	lookaheadMatch = lookaheadRegExp.exec(w.source),
-						gotMatch = (lookaheadMatch && lookaheadMatch.index == w.nextMatch);
+						gotMatch = (lookaheadMatch && lookaheadMatch.index === w.nextMatch);
 					if (gotMatch) {
 						if (lookaheadMatch[1]) {
 							css.styles.push({
@@ -624,7 +624,7 @@ var Wikifier = (function () {
 						if (count < 1 || pos + count >= w.source.length) {
 							return EOF;
 						}
-						return w.source.slice[pos + count];
+						return w.source[pos + count];
 					},
 					error = function (/* variadic: fmt [, … ] */) {
 						return {
