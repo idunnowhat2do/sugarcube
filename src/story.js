@@ -89,15 +89,31 @@ Object.defineProperties(History.prototype, {
 	},
 	*/
 
-	getDeltaFromHistory : {
-		value : function (end) {
-			return History.deltaEncodeHistory(end != null ? this.history.slice(0, end) : this.history); // use lazy equality on null check
+	marshal : {
+		value : function (upto) {
+			var stateObj = {
+				delta : History.deltaEncodeHistory(upto != null ? this.history.slice(0, upto) : this.history) // use lazy equality on null check
+			};
+			if (this.hasOwnProperty("prng")) {
+				stateObj.rseed = this.prng.seed;
+			}
+			return stateObj;
 		}
 	},
 
-	setHistoryFromDelta : {
-		value : function (delta) {
-			this.history = History.deltaDecodeHistory(delta);
+	unmarshal : {
+		value : function (stateObj) {
+			if (stateObj == null) { // use lazy equality
+				throw new Error("History.prototype.unmarshal stateObj parameter is null or undefined");
+			}
+			if (!stateObj.hasOwnProperty("delta") || stateObj.delta.length === 0) {
+				throw new Error("History.prototype.unmarshal state object has no history or history is empty");
+			}
+
+			this.history = History.deltaDecodeHistory(stateObj.delta);
+			if (this.hasOwnProperty("prng") && stateObj.hasOwnProperty("rseed")) {
+				this.prng.seed = stateObj.rseed;
+			}
 		}
 	},
 
@@ -281,7 +297,7 @@ Object.defineProperties(History.prototype, {
 			//      after loading the passage, always refer to passage.title and never the title parameter
 			var	passage     = tale.get(title),
 				windowTitle = (config.displayPassageTitles && passage.title !== config.startPassage)
-					? tale.title + ": " + passage.title
+					? passage.title + " | " + tale.title
 					: tale.title;
 
 			// ensure that this.active is set if we have history
@@ -332,10 +348,7 @@ Object.defineProperties(History.prototype, {
 				if (config.historyMode === History.Modes.Session) {
 					stateObj = { suid : this.suid, sidx : this.active.sidx };
 				} else { // History.Modes.Window
-					stateObj = { delta : this.getDeltaFromHistory() };
-					if (this.hasOwnProperty("prng")) {
-						stateObj.rseed = this.prng.seed;
-					}
+					stateObj = this.marshal();
 				}
 				History[(!History.hasWindowState() || config.disableHistoryControls)
 					? "replaceWindowState"
@@ -468,10 +481,7 @@ Object.defineProperties(History.prototype, {
 	save : {
 		value : function () {
 			if (DEBUG) { console.log("[<History>.save()]"); }
-			var stateObj = { delta : this.getDeltaFromHistory() };
-			if (this.hasOwnProperty("prng")) {
-				stateObj.rseed = this.prng.seed;
-			}
+			var stateObj = this.marshal();
 			if (config.historyMode === History.Modes.Session) {
 				if (DEBUG) { console.log("    > this.suid: " + this.suid); }
 				session.setItem("history." + this.suid, stateObj);
@@ -496,13 +506,12 @@ Object.defineProperties(History.prototype, {
 				if (session.hasItem("history." + this.suid)) {
 					var	stateObj = session.getItem("history." + this.suid),
 						sidx     = History.getWindowState().sidx;
-					if (DEBUG) { console.log("    > History.getWindowState(): " + History.getWindowState().sidx + " / " + History.getWindowState().suid); }
-					if (DEBUG) { console.log("    > history." + this.suid + ": " + JSON.stringify(stateObj)); }
-
-					this.setHistoryFromDelta(stateObj.delta);
-					if (this.hasOwnProperty("prng") && stateObj.hasOwnProperty("rseed")) {
-						this.prng.seed = stateObj.rseed;
+					if (DEBUG) {
+						console.log("    > History.getWindowState(): " + History.getWindowState().sidx + " / " + History.getWindowState().suid);
+						console.log("    > history." + this.suid + ": " + JSON.stringify(stateObj));
 					}
+
+					this.unmarshal(stateObj);
 					if (tale.has(this.history[sidx].title)) {
 						this.display(this.history[sidx].title, null, "replace");
 						return true;
@@ -514,11 +523,7 @@ Object.defineProperties(History.prototype, {
 					console.log("    > typeof History.getWindowState(): " + typeof History.getWindowState());
 				}
 				if (History.hasWindowState()) {
-					var windowState = History.getWindowState();
-					this.setHistoryFromDelta(windowState.delta);
-					if (this.hasOwnProperty("prng") && windowState.hasOwnProperty("rseed")) {
-						this.prng.seed = windowState.rseed;
-					}
+					this.unmarshal(History.getWindowState());
 				}
 				if (!this.isEmpty() && tale.has(this.top.title)) {
 					this.display(this.top.title, null, "replace");
@@ -566,7 +571,7 @@ Object.defineProperties(History, {
 	getWindowState : {
 		value : function (obj) {
 			if (arguments.length === 0) { obj = window.history; }
-			return (obj.state != null) ? History.deserializeWindowState(obj.state) : null; // use lazy equality
+			return (obj.state != null) ? History.deserializeWindowState(obj.state) : null; // use lazy equality on null check
 		}
 	},
 
@@ -574,9 +579,9 @@ Object.defineProperties(History, {
 		value : function (obj, title, url) {
 			// required by IE (if you pass undefined as the URL, IE will happily set it to that, so you must not pass it at all in that case)
 			if (url != null) { // use lazy equality
-				window.history.pushState((obj != null) ? History.serializeWindowState(obj) : null, title, url);
+				window.history.pushState((obj != null) ? History.serializeWindowState(obj) : null, title, url); // use lazy equality on null check
 			} else {
-				window.history.pushState((obj != null) ? History.serializeWindowState(obj) : null, title);
+				window.history.pushState((obj != null) ? History.serializeWindowState(obj) : null, title); // use lazy equality on null check
 			}
 		}
 	},
@@ -585,9 +590,9 @@ Object.defineProperties(History, {
 		value : function (obj, title, url) {
 			// required by IE (if you pass undefined as the URL, IE will happily set it to that, so you must not pass it at all in that case)
 			if (url != null) { // use lazy equality
-				window.history.replaceState((obj != null) ? History.serializeWindowState(obj) : null, title, url);
+				window.history.replaceState((obj != null) ? History.serializeWindowState(obj) : null, title, url); // use lazy equality on null check
 			} else {
-				window.history.replaceState((obj != null) ? History.serializeWindowState(obj) : null, title);
+				window.history.replaceState((obj != null) ? History.serializeWindowState(obj) : null, title); // use lazy equality on null check
 			}
 		}
 	},
@@ -662,17 +667,7 @@ Object.defineProperties(History, {
 			if (UISystem.isOpen()) { UISystem.close(); }
 
 			var windowState = History.getWindowState(evt);
-
-			// throw error if state has no history or history is empty
-			if (!windowState.hasOwnProperty("delta") || windowState.delta.length === 0) {
-				throw new Error("window state has no history or history is empty");
-			}
-
-			//state.history = windowState.history;
-			state.setHistoryFromDelta(windowState.delta);
-			if (state.hasOwnProperty("prng") && windowState.hasOwnProperty("rseed")) {
-				state.prng.seed = windowState.rseed;
-			}
+			state.unmarshal(windowState);
 			state.display(state.setActiveState(state.top).title, null, "replace");
 		}
 	},
@@ -699,16 +694,7 @@ Object.defineProperties(History, {
 				if (UISystem.isOpen()) { UISystem.close(); }
 
 				var hashState = History.getWindowHashState();
-
-				// throw error if state has no history or history is empty
-				if (!hashState.hasOwnProperty("delta") || hashState.delta.length === 0) {
-					throw new Error("hash state has no history or history is empty");
-				}
-
-				state.setHistoryFromDelta(hashState.delta);
-				if (state.hasOwnProperty("prng") && hashState.hasOwnProperty("rseed")) {
-					state.prng.seed = hashState.rseed;
-				}
+				state.unmarshal(hashState);
 				state.display(state.setActiveState(state.top).title, null, "replace");
 			} else {
 				window.location.reload();
@@ -763,9 +749,9 @@ Object.defineProperties(History, {
 		}
 	},
 
-	marshal : {
+	marshalToSave : {
 		value : function () {
-			if (DEBUG) { console.log("[History.marshal()]"); }
+			if (DEBUG) { console.log("[History.marshalToSave()]"); }
 
 			var stateObj = { mode : config.historyMode };
 			if (state.hasOwnProperty("prng")) {
@@ -780,9 +766,9 @@ Object.defineProperties(History, {
 		}
 	},
 
-	unmarshal : {
+	unmarshalFromSave : {
 		value : function (stateObj) {
-			if (DEBUG) { console.log("[History.unmarshal()]"); }
+			if (DEBUG) { console.log("[History.unmarshalFromSave()]"); }
 
 			if (!stateObj || !stateObj.hasOwnProperty("mode") || !(stateObj.hasOwnProperty("history") || stateObj.hasOwnProperty("delta"))) {
 				throw new Error("state object is missing required data");
@@ -815,7 +801,7 @@ Object.defineProperties(History, {
 					// load the state into the window history
 					var	windowState,
 						windowTitle = (config.displayPassageTitles && state.history[i].title !== config.startPassage)
-							? tale.title + ": " + state.history[i].title
+							? state.history[i].title + " | " + tale.title
 							: tale.title;
 					switch (config.historyMode) {
 					case History.Modes.Session:
@@ -825,12 +811,7 @@ Object.defineProperties(History, {
 						};
 						break;
 					case History.Modes.Window:
-						windowState = {
-							delta : state.getDeltaFromHistory(i + 1)
-						};
-						if (state.hasOwnProperty("prng")) {
-							windowState.rseed = state.prng.seed;
-						}
+						windowState = state.marshal(i + 1);
 						break;
 					}
 					History.addWindowState(windowState, windowTitle);

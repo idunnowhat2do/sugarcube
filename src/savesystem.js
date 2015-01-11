@@ -2,7 +2,7 @@
  *
  * savesystem.js
  *
- * Copyright © 2013–2014 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Copyright © 2013–2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
@@ -352,7 +352,7 @@ var SaveSystem = (function () {
 
 		var saveObj = {
 			id    : config.saves.id,
-			state : History.marshal()
+			state : History.marshalToSave()
 		};
 		if (config.saves.version) {
 			saveObj.version = config.saves.version;
@@ -394,7 +394,7 @@ var SaveSystem = (function () {
 			}
 
 			// restore the state
-			History.unmarshal(saveObj.state);
+			History.unmarshalFromSave(saveObj.state);
 		} catch (e) {
 			UISystem.alert(e.message[0].toUpperCase() + e.message.slice(1) + ".\n\nAborting load.");
 			return false;
