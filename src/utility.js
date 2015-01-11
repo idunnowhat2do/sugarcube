@@ -2,7 +2,7 @@
  *
  * utility.js
  *
- * Copyright © 2013–2014 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Copyright © 2013–2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
@@ -211,8 +211,8 @@ function fade(el, options) {
 	function tick() {
 		current += 0.05 * direction;
 		setOpacity(proxy, Math.easeInOut(current));
-		if (((direction == 1) && (current >= 1)) || ((direction == -1) && (current <= 0))) {
-			el.style.visibility = (options.fade == "in") ? "visible" : "hidden";
+		if (((direction === 1) && (current >= 1)) || ((direction === -1) && (current <= 0))) {
+			el.style.visibility = (options.fade === "in") ? "visible" : "hidden";
 			proxy.parentNode.replaceChild(el, proxy);
 			proxy = null;
 			window.clearInterval(intervalId);
@@ -234,10 +234,10 @@ function fade(el, options) {
 
 	var	current,
 		proxy      = el.cloneNode(true),
-		direction  = (options.fade == "in") ? 1 : -1,
+		direction  = (options.fade === "in") ? 1 : -1,
 		intervalId;
 	el.parentNode.replaceChild(proxy, el);
-	if (options.fade == "in") {
+	if (options.fade === "in") {
 		current = 0;
 		proxy.style.visibility = "visible";
 	} else {
@@ -432,7 +432,7 @@ var Util = Object.defineProperties({}, {
 		value : function (orig, dest) /* diff object */ {
 			"use strict";
 			var	keys    = [].concat(Object.keys(orig), Object.keys(dest))
-					        .sort().filter(function (v, i, a) { return (i === 0 || a[i-1] != v); }),
+					        .sort().filter(function (v, i, a) { return (i === 0 || a[i-1] !== v); }),
 				diff    = {},
 				isArray = Array.isArray(orig),
 				aOpRef;

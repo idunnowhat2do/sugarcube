@@ -12,13 +12,12 @@
  **********************************************************************************************************************/
 function technicalAlert(where, mesg, error) {
 	var	errMesg = "Apologies! A technical problem has occurred. You may be able to continue, but some parts may not work properly.";
-	// use lazy equality on these null checks
-	if (where != null || mesg != null) {
+	if (where != null || mesg != null) { // use lazy equality
 		errMesg += "\n\nError";
-		if (where != null) {
+		if (where != null) { // use lazy equality
 			errMesg += " [" + where + "]";
 		}
-		errMesg += ": " + ((mesg != null) ? mesg.replace(/^Error:\s+/, "") : "unknown error") + ".";
+		errMesg += ": " + ((mesg != null) ? mesg.replace(/^Error:\s+/, "") : "unknown error") + "."; // use lazy equality on null check
 		if (error && error.stack) {
 			errMesg += "\n\nStack Trace:\n" + error.stack;
 		}

@@ -2,7 +2,7 @@
  *
  * intrinsics.js
  *
- * Copyright © 2013–2014 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Copyright © 2013–2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
@@ -39,7 +39,7 @@ if (!Array.prototype.indexOf) {
 		writable     : true,
 		value        : function (needle, from) {
 			"use strict";
-			if (this == null) {
+			if (this == null) { // use lazy equality
 				throw new TypeError("Array.prototype.indexOf called on null or undefined");
 			}
 
@@ -76,7 +76,7 @@ if (!Array.prototype.filter) {
 		writable     : true,
 		value        : function (filterFn /* [, thisp] */) {
 			"use strict";
-			if (this == null) {
+			if (this == null) { // use lazy equality
 				throw new TypeError("Array.prototype.filter called on null or undefined");
 			}
 			if (typeof filterFn !== "function") {
@@ -110,7 +110,7 @@ if (!Array.prototype.find) {
 		writable     : true,
 		value        : function (callback /* [, thisp] */) {
 			"use strict";
-			if (this == null) {
+			if (this == null) { // use lazy equality
 				throw new TypeError("Array.prototype.find called on null or undefined");
 			}
 			if (typeof callback !== "function") {
@@ -143,7 +143,7 @@ if (!Array.prototype.forEach) {
 		writable     : true,
 		value        : function (callback /* [, thisp] */) {
 			"use strict";
-			if (this == null) {
+			if (this == null) { // use lazy equality
 				throw new TypeError("Array.prototype.forEach called on null or undefined");
 			}
 			if (typeof callback !== "function") {
@@ -174,7 +174,7 @@ if (!Array.prototype.includes) {
 		writable     : true,
 		value        : function (/* needle [, fromIndex] */) {
 			"use strict";
-			if (this == null) {
+			if (this == null) { // use lazy equality
 				throw new TypeError("Array.prototype.includes called on null or undefined");
 			}
 
@@ -192,7 +192,7 @@ if (!Array.prototype.map) {
 		writable     : true,
 		value        : function (callback /* [, thisp] */) {
 			"use strict";
-			if (this == null) {
+			if (this == null) { // use lazy equality
 				throw new TypeError("Array.prototype.map called on null or undefined");
 			}
 			if (typeof callback !== "function") {
@@ -224,7 +224,7 @@ if (!Array.prototype.some) {
 		writable     : true,
 		value        : function (callback /* [, thisp] */) {
 			"use strict";
-			if (this == null) {
+			if (this == null) { // use lazy equality
 				throw new TypeError("Array.prototype.some called on null or undefined");
 			}
 			if (typeof callback !== "function") {
@@ -285,7 +285,7 @@ if (!String.prototype.includes) {
 		writable     : true,
 		value        : function (/* needle [, fromIndex] */) {
 			"use strict";
-			if (this == null) {
+			if (this == null) { // use lazy equality
 				throw new TypeError("String.prototype.includes called on null or undefined");
 			}
 
@@ -303,7 +303,7 @@ if (!String.prototype.splice) {
 		writable     : true,
 		value        : function (start, count, replacement) {
 			"use strict";
-			if (this == null) {
+			if (this == null) { // use lazy equality
 				throw new TypeError("String.prototype.splice called on null or undefined");
 			}
 
@@ -352,7 +352,7 @@ if (!String.prototype.trim) {
 		writable     : true,
 		value        : function () {
 			"use strict";
-			if (this == null) {
+			if (this == null) { // use lazy equality
 				throw new TypeError("String.prototype.trim called on null or undefined");
 			}
 
@@ -371,7 +371,7 @@ if (!String.prototype.trimLeft) {
 		writable     : true,
 		value        : function () {
 			"use strict";
-			if (this == null) {
+			if (this == null) { // use lazy equality
 				throw new TypeError("String.prototype.trimLeft called on null or undefined");
 			}
 
@@ -389,7 +389,7 @@ if (!String.prototype.trimRight) {
 		writable     : true,
 		value        : function () {
 			"use strict";
-			if (this == null) {
+			if (this == null) { // use lazy equality
 				throw new TypeError("String.prototype.trimRight called on null or undefined");
 			}
 
@@ -413,7 +413,7 @@ if (!Object.create || typeof Object.create !== "function") {
 				if (arguments.length !== 1) {
 					throw new Error("polyfill Object.create implementation only accepts one parameter");
 				}
-				if (proto == null) {
+				if (proto == null) { // use lazy equality
 					throw new TypeError("Object.create proto parameter is null or undefined");
 				}
 				if (typeof proto !== "object") {
@@ -460,7 +460,7 @@ Object.defineProperty(Array.prototype, "contains", {
 	writable     : true,
 	value        : function (/* needle [, fromIndex] */) {
 		"use strict";
-		if (this == null) {
+		if (this == null) { // use lazy equality
 			throw new TypeError("Array.prototype.contains called on null or undefined");
 		}
 
@@ -476,7 +476,7 @@ Object.defineProperty(Array.prototype, "containsAll", {
 	writable     : true,
 	value        : function (/* needles */) {
 		"use strict";
-		if (this == null) {
+		if (this == null) { // use lazy equality
 			throw new TypeError("Array.prototype.containsAll called on null or undefined");
 		}
 
@@ -505,7 +505,7 @@ Object.defineProperty(Array.prototype, "containsAny", {
 	writable     : true,
 	value        : function (/* needles */) {
 		"use strict";
-		if (this == null) {
+		if (this == null) { // use lazy equality
 			throw new TypeError("Array.prototype.containsAny called on null or undefined");
 		}
 
@@ -534,7 +534,7 @@ Object.defineProperty(Array.prototype, "count", {
 	writable     : true,
 	value        : function (/* needle [, fromIndex ] */) {
 		"use strict";
-		if (this == null) {
+		if (this == null) { // use lazy equality
 			throw new TypeError("Array.prototype.count called on null or undefined");
 		}
 
@@ -559,7 +559,7 @@ Object.defineProperty(Array.prototype, "random", {
 	writable     : true,
 	value        : function (lower, upper) {
 		"use strict";
-		if (this == null) {
+		if (this == null) { // use lazy equality
 			throw new TypeError("Array.prototype.random called on null or undefined");
 		}
 		if (this.length === 0) {
@@ -597,7 +597,7 @@ Object.defineProperty(Function.prototype, "partial", {
 	writable     : true,
 	value        : function (/* variadic */) {
 		"use strict";
-		if (this == null) {
+		if (this == null) { // use lazy equality
 			throw new TypeError("Function.prototype.partial called on null or undefined");
 		}
 
@@ -734,7 +734,7 @@ Object.defineProperty(String.prototype, "contains", {
 	writable     : true,
 	value        : function (/* needle [, fromIndex] */) {
 		"use strict";
-		if (this == null) {
+		if (this == null) { // use lazy equality
 			throw new TypeError("String.prototype.contains called on null or undefined");
 		}
 
@@ -750,7 +750,7 @@ Object.defineProperty(String.prototype, "count", {
 	writable     : true,
 	value        : function (/* needle [, fromIndex ] */) {
 		"use strict";
-		if (this == null) {
+		if (this == null) { // use lazy equality
 			throw new TypeError("String.prototype.count called on null or undefined");
 		}
 
@@ -781,7 +781,7 @@ Object.defineProperty(String.prototype, "splitOrEmpty", {
 	writable     : true,
 	value        : function (/* [ separator [, limit ]] */) {
 		"use strict";
-		if (this == null) {
+		if (this == null) { // use lazy equality
 			throw new TypeError("String.prototype.splitOrEmpty called on null or undefined");
 		}
 		if (this === "") {
@@ -821,7 +821,7 @@ Object.defineProperty(String.prototype, "readBracketedList", {
 	writable     : true,
 	value        : function () {
 		"use strict";
-		if (this == null) {
+		if (this == null) { // use lazy equality
 			throw new TypeError("String.prototype.readBracketedList called on null or undefined");
 		}
 

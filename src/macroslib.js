@@ -361,7 +361,7 @@ function defineStandardMacros() {
 
 			try {
 				var result = Util.evalExpression(this.args.full);
-				if (result != null && (typeof result !== "number" || !isNaN(result))) {
+				if (result != null && (typeof result !== "number" || !isNaN(result))) { // use lazy equality on null check
 					new Wikifier(this.output, result.toString());
 				}
 			} catch (e) {

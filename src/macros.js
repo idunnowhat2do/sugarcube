@@ -2,7 +2,7 @@
  *
  * macros.js
  *
- * Copyright © 2013–2014 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Copyright © 2013–2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
@@ -65,7 +65,7 @@ Object.defineProperties(Macros.prototype, {
 
 			// tags post-processing
 			if (this.definitions[name].hasOwnProperty("tags")) {
-				if (this.definitions[name].tags == null) {
+				if (this.definitions[name].tags == null) { // use lazy equality
 					this.registerTags(name);
 				} else if (Array.isArray(this.definitions[name].tags)) {
 					this.registerTags(name, this.definitions[name].tags);

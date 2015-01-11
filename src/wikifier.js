@@ -958,18 +958,18 @@ var Wikifier = (function () {
 				outerElement: "ul",
 				itemElement: "li",
 				handler: function (w) {
-					var lookaheadRegExp = new RegExp(this.lookahead, "gm");
 					w.nextMatch = w.matchStart;
-					var	placeStack = [w.output],
-						curType    = null,
+					var	lookaheadRegExp = new RegExp(this.lookahead, "gm"),
+						placeStack      = [w.output],
+						curType         = null,
 						newType,
-						curLevel   = 0,
+						curLevel        = 0,
 						newLevel,
 						i;
 					do {
 						lookaheadRegExp.lastIndex = w.nextMatch;
-						var lookaheadMatch = lookaheadRegExp.exec(w.source);
-						var matched = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
+						var	lookaheadMatch = lookaheadRegExp.exec(w.source),
+							matched        = lookaheadMatch && lookaheadMatch.index === w.nextMatch;
 						if (matched) {
 							if (lookaheadMatch[2]) {
 								newType = "ol";
@@ -986,7 +986,7 @@ var Wikifier = (function () {
 								for (i = curLevel; i > newLevel; i--) {
 									placeStack.pop();
 								}
-							} else if (newLevel == curLevel && newType != curType) {
+							} else if (newLevel === curLevel && newType !== curType) {
 								placeStack.pop();
 								placeStack.push(insertElement(placeStack[placeStack.length - 1], newType));
 							}
@@ -1035,7 +1035,7 @@ var Wikifier = (function () {
 						insertElement(placeStack[placeStack.length - 1], "br");
 						lookaheadRegExp.lastIndex = w.nextMatch;
 						var	lookaheadMatch = lookaheadRegExp.exec(w.source),
-							matched        = (lookaheadMatch && lookaheadMatch.index == w.nextMatch);
+							matched        = lookaheadMatch && lookaheadMatch.index === w.nextMatch;
 						if (matched) {
 							newLevel = lookaheadMatch[0].length;
 							w.nextMatch += lookaheadMatch[0].length;
