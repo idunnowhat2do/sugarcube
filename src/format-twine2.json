@@ -2,7 +2,7 @@
 	"name"        : "SugarCube",
 	"version"     : null,
 	"description" : "A free (gratis and libre) story format, based on TiddlyWiki.",
-	"author"      : "Thomas Michael Edwards &lt;tmedwards@motoslave.net&gt;",
+	"author"      : "Thomas Michael Edwards",
 	"image"       : "icon.svg",
 	"url"         : "http://www.motoslave.net/sugarcube/",
 	"license"     : "Simplified BSD License",

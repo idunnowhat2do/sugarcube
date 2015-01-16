@@ -11,8 +11,18 @@
  * User Utility Functions
  **********************************************************************************************************************/
 /**
- * Returns an integer count of how many turns have passed since the last instance of the given passage occurred within
- * the story history or -1 if it does not exist; if multiple passages are given, returns the lowest count (which can be -1)
+ * Returns a random value from its given arguments.
+ */
+function either(/* variadic */) {
+	if (arguments.length === 0) {
+		return;
+	}
+	return Array.prototype.concat.apply([], arguments).random();
+}
+
+/**
+ * Returns the number of turns that have passed since the last instance of the given passage occurred within the story
+ * history or `-1` if it does not exist.  If multiple passages are given, returns the lowest count (which can be `-1`).
  */
 function lastVisited(/* variadic */) {
 	if (state.isEmpty() || arguments.length === 0) {
@@ -40,7 +50,15 @@ function lastVisited(/* variadic */) {
 }
 
 /**
- * Returns the title of the most recent passage whose title does not match that of the active passage or an empty string, if there is no such passage
+ * Returns the title of the current passage.
+ */
+function passage() {
+	return state.active.title;
+}
+
+/**
+ * Returns the title of a previous passage, either the most recent one whose title does not match that of the active
+ * passage or the one at the optional offset, or an empty string, if there is no such passage.
  */
 function previous(offset) {
 	// legacy behavior with an offset
@@ -64,10 +82,10 @@ function previous(offset) {
 }
 
 /**
- * Returns a random integer within the given range [min, max] (i.e. both min and max are inclusive)
- *   n.b. Using Math.round() will give you a non-uniform distribution!
+ * Returns a pseudo-random whole number (integer) within the range of the given bounds.
+ *   n.b. Using `Math.round()` will yield a non-uniform distribution!
  */
-function random(min, max) {
+function random(/* inclusive */ min, /* inclusive */ max) {
 	if (arguments.length === 0) {
 		throw new Error("random called with insufficient arguments");
 	} else if (arguments.length === 1) {
@@ -84,9 +102,11 @@ function random(min, max) {
 }
 
 /**
- * Returns a random float within the given range [min, max) (i.e. min is inclusive, max is exclusive)
+ * Returns a pseudo-random real number (floating-point) within the range of the given bounds.
+ *   n.b. Unlike with its sibling function `random()`, the `max` parameter is exclusive, not inclusive
+ *        (i.e. the range goes to, but does not include, the given value).
  */
-function randomFloat(min, max) {
+function randomFloat(/* inclusive */ min, /* exclusive */ max) {
 	if (arguments.length === 0) {
 		throw new Error("randomFloat called with insufficient arguments");
 	} else if (arguments.length === 1) {
@@ -103,7 +123,7 @@ function randomFloat(min, max) {
 }
 
 /**
- * Returns a new array containing the tags of the given passage(s)
+ * Returns a new array consisting of all of the tags of the given passages.
  */
 function tags(/* variadic */) {
 	if (arguments.length === 0) {
@@ -119,8 +139,17 @@ function tags(/* variadic */) {
 }
 
 /**
- * Returns an integer count of how many times the given passage exists within the story history;
- * if multiple passages are given, returns the lowest count
+ * Returns the number of passages that the player has moved through (incl. the Start passage).
+ *   n.b. Passages that were visited, but have been unwound (e.g. via the browser's `Back` button or the
+ *        `<<back>>` macro) are no longer part of the story history and thus do not count toward the total.
+ */
+function turns() {
+	return state.length;
+}
+
+/**
+ * Returns the number of times that the passage with the given title exists within the story history.
+ * If multiple passage titles are given, returns the lowest count.
  */
 function visited(/* variadic */) {
 	if (state.isEmpty()) {
@@ -146,7 +175,7 @@ function visited(/* variadic */) {
 }
 
 /**
- * Returns an integer count of how many passages within the story history are tagged with all of the given tags
+ * Returns the number of passages within the story history which are tagged with *all* of the given tags.
  */
 function visitedTags(/* variadic */) {
 	if (arguments.length === 0) {
@@ -168,18 +197,6 @@ function visitedTags(/* variadic */) {
 	}
 	return count;
 }
-
-/**
- * Vanilla-header compatibility shims
- */
-function either(/* variadic */) {
-	if (arguments.length === 0) {
-		return;
-	}
-
-	return Array.prototype.concat.apply([], arguments).random();
-}
+// Vanilla story format compatibility shim
 function visitedTag(/* variadic */) { return visitedTags.apply(null, arguments); }
-function turns() { return state.length; }
-function passage() { return state.active.title; }
 

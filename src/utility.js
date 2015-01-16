@@ -553,7 +553,7 @@ var Util = Object.defineProperties({}, {
 	},
 
 	/**
-	 * Returns the number of miliseconds represented by the passed CSS time string
+	 * Returns the number of miliseconds represented by the passed CSS time string.
 	 */
 	fromCSSTime : {
 		value : function (cssTime) {
@@ -561,7 +561,7 @@ var Util = Object.defineProperties({}, {
 			var	re    = /^([+-]?[0-9]+(?:\.[0-9]+)?)\s*(m?s)$/, // more forgiving than the specification requires
 				match = re.exec(cssTime);
 			if (match === null) {
-				throw new Error('invalid CSS time string: "' + cssTime + '"');
+				throw new Error('invalid time value: "' + cssTime + '"');
 			}
 			if (match[2] === "ms") {
 				return Number(match[1]);
@@ -572,7 +572,7 @@ var Util = Object.defineProperties({}, {
 	},
 
 	/**
-	 * Returns the CSS time string represented by the passed number of milliseconds
+	 * Returns the CSS time string represented by the passed number of milliseconds.
 	 */
 	toCSSTime : {
 		value : function (msec) {
