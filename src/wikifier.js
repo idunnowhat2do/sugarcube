@@ -81,7 +81,7 @@ var Wikifier = (function () {
 	Object.defineProperties(Wikifier.prototype, {
 		subWikify : {
 			value : function (output, terminator, terminatorIgnoreCase) {
-				// Temporarily replace the output pointer
+				// Temporarily replace the output buffer
 				var oldOutput = this.output;
 				this.output = output;
 
@@ -159,7 +159,7 @@ var Wikifier = (function () {
 					removeElement(this.output.lastChild);
 				}
 
-				// Restore the output pointer
+				// Restore the output buffer
 				this.output = oldOutput;
 			}
 		},
@@ -232,7 +232,6 @@ var Wikifier = (function () {
 						"neq"   : "!=",
 						"is"    : "===",
 						"isnot" : "!==",
-						"isNot" : "!==", // allow the Harlowe spelling for compatibility
 						// relational operators
 						"gt"    : ">",
 						"gte"   : ">=",
@@ -265,7 +264,7 @@ var Wikifier = (function () {
 							// if the token is "is", check to see if it's followed by "not", if so, convert them into the
 							// "isnot" operator; this is a safety feature, since "$a is not $b" probably sounds reasonable
 							// to most users
-							var	start = match.index + token.length,
+							var	start = re.lastIndex,
 								part  = expression.slice(start);
 							if (/^\s+not\b/.test(part)) {
 								expression = expression.splice(start, part.search(/\S/));
@@ -529,8 +528,7 @@ var Wikifier = (function () {
 	Object.defineProperties(Wikifier.helpers, {
 		charFormat : {
 			value : function (w) {
-				var b = insertElement(w.output, this.element);
-				w.subWikify(b, this.terminator);
+				w.subWikify(insertElement(w.output, this.element), this.terminator);
 			}
 		},
 
@@ -541,8 +539,8 @@ var Wikifier = (function () {
 				do {
 					lookaheadRegExp.lastIndex = w.nextMatch;
 					var	lookaheadMatch = lookaheadRegExp.exec(w.source),
-						gotMatch = (lookaheadMatch && lookaheadMatch.index === w.nextMatch);
-					if (gotMatch) {
+						matched        = (lookaheadMatch && lookaheadMatch.index === w.nextMatch);
+					if (matched) {
 						if (lookaheadMatch[1]) {
 							css.styles.push({
 								style : Wikifier.helpers.cssToDOMName(lookaheadMatch[1]),
@@ -556,9 +554,9 @@ var Wikifier = (function () {
 						} else if (lookaheadMatch[5]) {
 							css.classes = css.classes.concat(lookaheadMatch[5].slice(1).split(/\./));
 						}
-						w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+						w.nextMatch = lookaheadRegExp.lastIndex;
 					}
-				} while (gotMatch);
+				} while (matched);
 				return css;
 			}
 		},
@@ -886,10 +884,10 @@ var Wikifier = (function () {
 									last.element.setAttribute("rowspan", last.rowCount);
 									last.element.valign = "center";
 								}
-								w.nextMatch = cellMatch.index + cellMatch[0].length-1;
+								w.nextMatch = cellMatch.index + cellMatch[0].length - 1;
 							} else if (cellMatch[1] === ">") {
 								curColCount++;
-								w.nextMatch = cellMatch.index + cellMatch[0].length-1;
+								w.nextMatch = cellMatch.index + cellMatch[0].length - 1;
 							} else if (cellMatch[2]) {
 								w.nextMatch = cellMatch.index + cellMatch[0].length;
 								break;
@@ -1063,7 +1061,7 @@ var Wikifier = (function () {
 					var lookaheadMatch = lookaheadRegExp.exec(w.source);
 					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
 						insertElement(w.output, "pre", null, null, lookaheadMatch[1]);
-						w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+						w.nextMatch = lookaheadRegExp.lastIndex;
 					}
 				}
 			},
@@ -1231,9 +1229,7 @@ var Wikifier = (function () {
 				parseTag: function (w) {
 					var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
 					if (lookaheadMatch && lookaheadMatch.index === w.matchStart && lookaheadMatch[1]) {
-						w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
-						this.lookaheadRegExp.lastIndex = w.nextMatch;
-
+						w.nextMatch = this.lookaheadRegExp.lastIndex;
 						var fnSigil = lookaheadMatch[1].indexOf("::");
 						if (fnSigil !== -1) {
 							this.working.name = lookaheadMatch[1].slice(0, fnSigil);
@@ -1433,8 +1429,7 @@ var Wikifier = (function () {
 					this.lookaheadRegExp.lastIndex = w.matchStart;
 					var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
 					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
-						w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
-
+						w.nextMatch = this.lookaheadRegExp.lastIndex;
 						var	frag = document.createDocumentFragment(),
 							temp = document.createElement("div");
 						temp.innerHTML = lookaheadMatch[1];
@@ -1454,7 +1449,7 @@ var Wikifier = (function () {
 					this.lookaheadRegExp.lastIndex = w.matchStart;
 					var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
 					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
-						w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+						w.nextMatch = this.lookaheadRegExp.lastIndex;
 					}
 				}
 			},
@@ -1468,82 +1463,57 @@ var Wikifier = (function () {
 					var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
 					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
 						w.output.appendChild(document.createComment(lookaheadMatch[1]));
-						w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+						w.nextMatch = this.lookaheadRegExp.lastIndex;
 					}
 				}
 			},
 
 			{
-				name: "boldByChar",
-				match: "''",
-				terminator: "''",
-				element: "strong",
-				handler: Wikifier.helpers.charFormat
-			},
-
-			{
-				name: "strikeByChar",
-				match: "==",
-				terminator: "==",
-				element: "strike",
-				handler: Wikifier.helpers.charFormat
-			},
-
-			{
-				name: "underlineByChar",
-				match: "__",
-				terminator: "__",
-				element: "u",
-				handler: Wikifier.helpers.charFormat
-			},
-
-			{
-				name: "italicByChar",
-				match: "//",
-				terminator: "//",
-				element: "em",
-				handler: Wikifier.helpers.charFormat
-			},
-
-			{
-				name: "subscriptByChar",
-				match: "~~",
-				terminator: "~~",
-				element: "sub",
-				handler: Wikifier.helpers.charFormat
-			},
-
-			{
-				name: "superscriptByChar",
-				match: "\\^\\^",
-				terminator: "\\^\\^",
-				element: "sup",
-				handler: Wikifier.helpers.charFormat
-			},
-
-			{
-				name: "monospacedByChar",
-				match: "\\{\\{\\{",
-				lookahead: "\\{\\{\\{((?:.|\\n)*?)\\}\\}\\}",
+				name: "formatByChar",
+				match: "''|//|__|\\^\\^|~~|==|\\{\\{\\{",
 				handler: function (w) {
-					var lookaheadRegExp = new RegExp(this.lookahead, "gm");
-					lookaheadRegExp.lastIndex = w.matchStart;
-					var lookaheadMatch = lookaheadRegExp.exec(w.source);
-					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
-						insertElement(w.output, "code", null, null, lookaheadMatch[1]);
-						w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+					switch (w.matchText) {
+					case "''":
+						w.subWikify(insertElement(w.output, "strong"), "''");
+						break;
+					case "//":
+						w.subWikify(insertElement(w.output, "em"), "//");
+						break;
+					case "__":
+						w.subWikify(insertElement(w.output, "u"), "__");
+						break;
+					case "^^":
+						w.subWikify(insertElement(w.output, "sup"), "\\^\\^");
+						break;
+					case "~~":
+						w.subWikify(insertElement(w.output, "sub"), "~~");
+						break;
+					case "==":
+						w.subWikify(insertElement(w.output, "s"), "==");
+						break;
+					case "{{{":
+						var lookaheadRegExp = /\{\{\{((?:.|\n)*?)\}\}\}/gm;
+						lookaheadRegExp.lastIndex = w.matchStart;
+						var lookaheadMatch = lookaheadRegExp.exec(w.source);
+						if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
+							insertElement(w.output, "code", null, null, lookaheadMatch[1]);
+							w.nextMatch = lookaheadRegExp.lastIndex;
+						}
+						break;
 					}
 				}
 			},
 
 			{
-				name: "styleByChar",
+				name: "customStyle",
 				match: "@@",
 				terminator: "@@",
-				lookahead: Wikifier.textPrimitives.inlineCSS,
+				blockRegExp: /\s*\n/gm,
 				handler: function (w) {
-					var	el  = insertElement(w.output, "span"),
-						css = Wikifier.helpers.inlineCSS(w);
+					var	css = Wikifier.helpers.inlineCSS(w);
+					this.blockRegExp.lastIndex = w.nextMatch; // must follow the call to .inlineCSS()
+					var	blockMatch = this.blockRegExp.exec(w.source),
+						el         = insertElement(w.output, (blockMatch && blockMatch.index === w.nextMatch) ? "div" : "span");
 					if (css.styles.length === 0 && css.classes.length === 0) {
 						el.className = "marked";
 					} else {
