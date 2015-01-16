@@ -1073,7 +1073,7 @@ function Tale(instanceName) {
 	if (TWINE1) {
 		config.startPassage = "Start"; // set the default starting passage title
 		var	storyStylesheet,
-			storyJavaScript;
+			storyScript;
 		for (var i = 0; i < nodes.length; i++) {
 			var el = nodes[i];
 			if (el.nodeType !== 1) { continue; } // skip non-element nodes (should never be any, but…)
@@ -1086,8 +1086,8 @@ function Tale(instanceName) {
 
 			if (name === "StoryStylesheet") {
 				storyStylesheet = passage;
-			} else if (name === "StoryJavaScript") {
-				storyJavaScript = passage;
+			} else if (name === "StoryScript") {
+				storyScript = passage;
 			} else if (tags.contains("stylesheet")) {
 				this.styles.push(passage);
 			} else if (tags.contains("script")) {
@@ -1101,8 +1101,8 @@ function Tale(instanceName) {
 		if (storyStylesheet) {
 			this.styles.unshift(storyStylesheet);
 		}
-		if (storyJavaScript) {
-			this.scripts.unshift(storyJavaScript);
+		if (storyScript) {
+			this.scripts.unshift(storyScript);
 		}
 
 		if (this.passages.hasOwnProperty("StoryTitle")) {
