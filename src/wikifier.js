@@ -719,10 +719,14 @@ var Wikifier = (function () {
 						case '\n':
 							return error("unterminated wiki {0}", isLink ? "link" : "image");
 						case '"':
+							if (slurpQuote(c) === EOF) {
+								return error("unterminated double quoted string in wiki {0}", isLink ? "link" : "image");
+							}
+							break;
 						case "'":
 							/*
-							 * Ye Gods, this is a terrible kludge.  Allow unterminated quotes, thus making this
-							 * unreliable at its only job, or don't and break who knows how many links in the wild.
+							 * This is a terrible kludge.  Allow unterminated single quotes, thus making
+							 * this unreliable, or don't and break who knows how many links in the wild.
 							 */
 							var oldPos = pos;
 							if (slurpQuote(c) === EOF) {
