@@ -715,21 +715,18 @@ var Wikifier = (function () {
 				try {
 					loop: for (;;) {
 						switch ((c = peek())) {
-						case '\\':
-							pos++;
-							c = peek();
-							if (c !== EOF && c !== '\n') {
-								break;
-							}
-							/* FALL-THROUGH */
 						case EOF:
 						case '\n':
 							return error("unterminated wiki {0}", isLink ? "link" : "image");
 						case '"':
 						case "'":
+							/*
+							 * Ye Gods, this is a terrible kludge.  Allow unterminated quotes, thus making this
+							 * unreliable at its only job, or don't and break who knows how many links in the wild.
+							 */
+							var oldPos = pos;
 							if (slurpQuote(c) === EOF) {
-								return error("unterminated {0} quoted string in wiki {1}",
-									(c === '"') ? "double" : "single", isLink ? "link" : "image");
+								pos = oldPos;
 							}
 							break;
 						case '|': // core section pipe ('|') separator
