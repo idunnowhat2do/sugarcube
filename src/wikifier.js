@@ -85,7 +85,7 @@ var Wikifier = (function () {
 				var oldOutput = this.output;
 				this.output = output;
 
-				var	terminatorRegExp = terminator ? new RegExp("(" + terminator + ")", terminatorIgnoreCase ? "gim" : "gm") : null,
+				var	terminatorRegExp = terminator ? new RegExp("(?:" + terminator + ")", terminatorIgnoreCase ? "gim" : "gm") : null,
 					terminatorMatch,
 					formatterMatch;
 				do {
@@ -108,9 +108,9 @@ var Wikifier = (function () {
 
 						// Set the match parameters
 						this.matchStart  = terminatorMatch.index;
-						this.matchLength = terminatorMatch[1].length;
-						this.matchText   = terminatorMatch[1];
-						this.nextMatch   = terminatorMatch.index + terminatorMatch[1].length;
+						this.matchLength = terminatorMatch[0].length;
+						this.matchText   = terminatorMatch[0];
+						this.nextMatch   = terminatorRegExp.lastIndex;
 
 						// Restore the output pointer and exit
 						this.output = oldOutput;
@@ -488,23 +488,11 @@ var Wikifier = (function () {
 	// tier-1 primitives
 	Object.defineProperties(Wikifier.textPrimitives, {
 		anyLetter : {
-			value : _unicodeOK
-				? "[A-Za-z0-9_\\-\u00c0-\u00de\u00df-\u00ff\u0150\u0170\u0151\u0171]"
-				: "[A-Za-z0-9_\\-\u00c0-\u00de\u00df-\u00ff]"
+			value : _unicodeOK ? "[A-Za-z0-9_\\-\u00c0-\u017e]" : "[A-Za-z0-9_\\-\u00c0-\u00ff]"
 		},
 
 		url : {
 			value : "(?:file|https?|mailto|ftp|javascript|irc|news|data):[^\\s'\"]+(?:/|\\b)"
-		},
-
-		macroArg : {
-			value : "(?:" + [
-					'("(?:(?:\\\\")|[^"])+")',          // 1=double quoted
-					"('(?:(?:\\\\')|[^'])+')",          // 2=single quoted
-					"((?:\"\")|(?:''))",                // 3=empty quotes
-					"(?:(\\[\\[(?:\\s|\\S)*?\\]\\]+))", // 4=double square-bracketed
-					"([^\"'`\\s]\\S*)"                  // 5=barewords
-				].join("|") + ")"
 		}
 	});
 
@@ -1149,6 +1137,13 @@ var Wikifier = (function () {
 				name: "macro",
 				match: "<<",
 				lookaheadRegExp: /<<([^>\s]+)(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|[^>]|(?:>(?!>)))*)>>/gm,
+				argsPattern: "(?:" + [
+					'("(?:\\\\"|[^"\\\\])+")',      // 1=double quoted
+					"('(?:\\\\'|[^'\\\\])+')",      // 2=single quoted
+					"(\"\"|'')",                    // 3=empty quotes
+					"(\\[\\[(?:\\s|\\S)*?\\]\\]+)", // 4=double square-bracketed
+					"([^\"'`\\s]\\S*)"              // 5=barewords
+				].join("|") + ")",
 				working: { name: "", handler: "", arguments: "", index: 0 }, // the working parse object
 				context: null, // last execution context object (top-level macros, hierarchically, have a null context)
 				handler: function (w) {
@@ -1313,7 +1308,7 @@ var Wikifier = (function () {
 				},
 				parseArgs: function (str) {
 					// Groups: 1=double quoted | 2=single quoted | 3=empty quotes | 4=double square-bracketed | 5=barewords
-					var	re    = new RegExp(Wikifier.textPrimitives.macroArg, "gm"),
+					var	re    = new RegExp(this.argsPattern, "gm"),
 						match,
 						args  = [];
 
@@ -1592,7 +1587,6 @@ var Wikifier = (function () {
 						tag      = tagMatch && tagMatch[1],
 						tagName  = tag && tag.toLowerCase();
 
-					//if (tagName && ["html", "nowiki"].contains(tagName)) {
 					if (tagName) {
 						var	isVoid = this.voidElements.contains(tagName),
 							isNobr = this.nobrElements.contains(tagName),
