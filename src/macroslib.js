@@ -653,28 +653,26 @@ function defineStandardMacros() {
 	 * <<click>> & <<button>>
 	 */
 	macros.add(["click", "button"], {
-		version : { major : 4, minor : 1, patch : 1 },
+		version : { major : 4, minor : 2, patch : 0 },
 		tags    : null,
 		handler : function () {
-			function getWidgetArgs() {
-				var wargs;
-				if (
-					   state.active.variables.hasOwnProperty("args")
-					&& this.contextHas(function (c) { return c.self.isWidget; })
-				) {
-					wargs = state.active.variables.args;
-				}
-				return wargs;
-			}
-
 			if (this.args.length === 0) {
 				return this.error("no " + (this.name === "click" ? "link" : "button") + " text specified");
 			}
 
-			var	elText,
-				passage,
-				widgetArgs = getWidgetArgs.call(this),
-				el         = document.createElement(this.name === "click" ? "a" : "button");
+			var	widgetArgs = (function(){
+					var wargs;
+					if (
+						   state.active.variables.hasOwnProperty("args")
+						&& this.contextHas(function (c) { return c.self.isWidget; })
+					) {
+						wargs = state.active.variables.args;
+					}
+					return wargs;
+				}.call(this)),
+				el      = document.createElement(this.name === "click" ? "a" : "button"),
+				elText,
+				passage;
 
 			if (typeof this.args[0] === "object") {
 				// argument was in wiki link syntax
@@ -689,46 +687,16 @@ function defineStandardMacros() {
 			el.classList.add("link-" + (passage ? (tale.has(passage) ? "internal" : "broken") : "internal"));
 			el.classList.add("link-" + this.name);
 			insertText(el, elText);
-			jQuery(el).click(function (self, contents, widgetArgs) {
-				return function () {
-					if (contents !== "") {
-						if (widgetArgs !== undefined) {
-							// store existing $args variables
-							if (state.active.variables.hasOwnProperty("args")) {
-								if (!self.hasOwnProperty("_argsStack")) {
-									self._argsStack = [];
-								}
-								self._argsStack.push(state.active.variables.args);
-							}
-
-							// setup the $args variable
-							state.active.variables.args = widgetArgs;
-						}
-
-						// wikify the contents and discard any output, unless there were errors
-						Wikifier.wikifyEval(contents);
-
-						if (widgetArgs !== undefined) {
-							// teardown the $args variable
-							delete state.active.variables.args;
-
-							// restore existing $args variables
-							if (self.hasOwnProperty("_argsStack")) {
-								state.active.variables.args = self._argsStack.pop();
-								if (self._argsStack.length === 0) {
-									// teardown the stack
-									delete self._argsStack;
-								}
-							}
-						}
-					}
-
-					// go to the specified passage (if any)
-					if (passage !== undefined) {
-						state.display(passage, el);
-					}
-				};
-			}(this.self, this.payload[0].contents.trim(), widgetArgs));
+			macros.getHandler("bind", "bindEvent")({
+				self       : this.self,
+				targets    : jQuery(el),
+				eventName  : "click",
+				content    : this.payload[0].contents.trim(),
+				widgetArgs : widgetArgs,
+				callback   : (passage !== undefined)
+					? function () { state.display(passage, el); }
+					: undefined
+			});
 			this.output.appendChild(el);
 		}
 	});
@@ -737,7 +705,7 @@ function defineStandardMacros() {
 	 * <<textbox>>
 	 */
 	macros.add("textbox", {
-		version : { major : 5, minor : 0, patch : 0 },
+		version : { major : 5, minor : 0, patch : 1 },
 		handler : function () {
 			if (this.args.length < 2) {
 				var errors = [];
@@ -749,9 +717,9 @@ function defineStandardMacros() {
 			var	varName      = this.args[0].trim(),
 				varId        = Util.slugify(varName),
 				defaultValue = this.args[1],
-				passage,
 				autofocus    = false,
-				el           = document.createElement("input");
+				el           = document.createElement("input"),
+				passage;
 
 			// legacy error
 			if (varName[0] !== "$") {
@@ -896,7 +864,7 @@ function defineStandardMacros() {
 	 * <<addclass>> & <<toggleclass>>
 	 */
 	macros.add(["addclass", "toggleclass"], {
-		version : { major : 2, minor : 0, patch : 0 },
+		version : { major : 2, minor : 0, patch : 1 },
 		handler : function () {
 			if (this.args.length < 2) {
 				var errors = [];
@@ -905,18 +873,18 @@ function defineStandardMacros() {
 				return this.error("no " + errors.join(" or ") + " specified");
 			}
 
-			var targets = jQuery(this.args[0]);
+			var $targets = jQuery(this.args[0]);
 
-			if (targets.length === 0) {
+			if ($targets.length === 0) {
 				return this.error('no elements matched the selector "' + this.args[0] + '"');
 			}
 
 			switch (this.name) {
 			case "addclass":
-				targets.addClass(this.args[1].trim());
+				$targets.addClass(this.args[1].trim());
 				break;
 			case "toggleclass":
-				targets.toggleClass(this.args[1].trim());
+				$targets.toggleClass(this.args[1].trim());
 				break;
 			}
 		}
@@ -926,22 +894,22 @@ function defineStandardMacros() {
 	 * <<removeclass>>
 	 */
 	macros.add("removeclass", {
-		version : { major : 1, minor : 0, patch : 0 },
+		version : { major : 1, minor : 0, patch : 1 },
 		handler : function () {
 			if (this.args.length === 0) {
 				return this.error("no selector specified");
 			}
 
-			var targets = jQuery(this.args[0]);
+			var $targets = jQuery(this.args[0]);
 
-			if (targets.length === 0) {
+			if ($targets.length === 0) {
 				return this.error('no elements matched the selector "' + this.args[0] + '"');
 			}
 
 			if (this.args.length > 1) {
-				targets.removeClass(this.args[1].trim());
+				$targets.removeClass(this.args[1].trim());
 			} else {
-				targets.removeClass();
+				$targets.removeClass();
 			}
 		}
 	});
@@ -954,31 +922,32 @@ function defineStandardMacros() {
 	 * <<append>>, <<prepend>>, & <<replace>>
 	 */
 	macros.add(["append", "prepend", "replace"], {
-		version : { major : 2, minor : 0, patch : 1 },
+		version : { major : 2, minor : 1, patch : 0 },
 		tags    : null,
 		handler : function () {
 			if (this.args.length === 0) {
 				return this.error("no selector specified");
 			}
 
-			var targets = jQuery(this.args[0]);
+			var $targets = jQuery(this.args[0]);
 
-			if (targets.length === 0) {
+			if ($targets.length === 0) {
 				return this.error('no elements matched the selector "' + this.args[0] + '"');
 			}
 
+			if (this.name === "replace") {
+				$targets.empty();
+			}
 			if (this.payload[0].contents !== "") {
 				var frag = document.createDocumentFragment();
 				new Wikifier(frag, this.payload[0].contents);
 				switch (this.name) {
 				case "replace":
-					targets.empty();
-					/* FALL-THROUGH */
 				case "append":
-					targets.append(frag);
+					$targets.append(frag);
 					break;
 				case "prepend":
-					targets.prepend(frag);
+					$targets.prepend(frag);
 					break;
 				}
 			}
@@ -989,19 +958,111 @@ function defineStandardMacros() {
 	 * <<remove>>
 	 */
 	macros.add("remove", {
-		version : { major : 1, minor : 0, patch : 0 },
+		version : { major : 1, minor : 0, patch : 1 },
 		handler : function () {
 			if (this.args.length === 0) {
 				return this.error("no selector specified");
 			}
 
-			var targets = jQuery(this.args[0]);
+			var $targets = jQuery(this.args[0]);
 
-			if (targets.length === 0) {
+			if ($targets.length === 0) {
 				return this.error('no elements matched the selector "' + this.args[0] + '"');
 			}
 
-			targets.remove();
+			$targets.remove();
+		}
+	});
+
+
+	/*******************************************************************************************************************
+	 * DOM (Events)
+	 ******************************************************************************************************************/
+	/**
+	 * <<bind>>
+	 */
+	macros.add("bind", {
+		version : { major : 1, minor : 0, patch : 0 },
+		tags    : null,
+		handler : function (nodes, callback) {
+			if (this.args.length < 2) {
+				var errors = [];
+				if (this.args.length < 1) { errors.push("selector"); }
+				if (this.args.length < 2) { errors.push("event name"); }
+				return this.error("no " + errors.join(" or ") + " specified");
+			}
+
+			var $targets = jQuery(this.args[0]);
+
+			if ($targets.length === 0) {
+				return this.error('no elements matched the selector "' + this.args[0] + '"');
+			}
+
+			var	eventName  = this.args[1],
+				fireOnce   = this.args.length === 3 ? this.args[2] === "once" : false,
+				widgetArgs = (function(){
+					var wargs;
+					if (
+						   state.active.variables.hasOwnProperty("args")
+						&& this.contextHas(function (c) { return c.self.isWidget; })
+					) {
+						wargs = state.active.variables.args;
+					}
+					return wargs;
+				}.call(this));
+
+			this.self.bindEvent({
+				self       : this.self,
+				targets    : $targets,
+				eventName  : eventName,
+				fireOnce   : fireOnce,
+				content    : this.payload[0].contents.trim(),
+				widgetArgs : widgetArgs
+			});
+		},
+		bindEvent : function (options) {
+			options.targets.addClass("event-" + Util.slugify(options.eventName));
+			options.targets.addClass("event-bind");
+			options.targets[!!options.fireOnce ? "one" : "on"](options.eventName, (function (self, content, widgetArgs, callback) {
+				return function () {
+					if (content !== "") {
+						if (widgetArgs !== undefined) {
+							// store existing $args variables
+							if (state.active.variables.hasOwnProperty("args")) {
+								if (!self.hasOwnProperty("_argsStack")) {
+									self._argsStack = [];
+								}
+								self._argsStack.push(state.active.variables.args);
+							}
+
+							// setup the $args variable
+							state.active.variables.args = widgetArgs;
+						}
+
+						// wikify the content and discard any output, unless there were errors
+						Wikifier.wikifyEval(content);
+
+						if (widgetArgs !== undefined) {
+							// teardown the $args variable
+							delete state.active.variables.args;
+
+							// restore existing $args variables
+							if (self.hasOwnProperty("_argsStack")) {
+								state.active.variables.args = self._argsStack.pop();
+								if (self._argsStack.length === 0) {
+									// teardown the stack
+									delete self._argsStack;
+								}
+							}
+						}
+					}
+
+					// call the specified callback (if any)
+					if (typeof callback === "function") {
+						callback();
+					}
+				};
+			}(options.self, options.content, options.widgetArgs, options.callback)));
 		}
 	});
 
