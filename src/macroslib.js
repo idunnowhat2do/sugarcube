@@ -52,7 +52,8 @@ function defineStandardMacros() {
 						if (typeof fn === "function") { fn(); }
 					};
 				}(passage, setFn));
-				el.classList.add("link-" + this.name);
+				el.classList.add("link-" + this.name); // DEPRECATED
+				el.classList.add("macro-" + this.name);
 			}
 		}
 	});
@@ -137,7 +138,8 @@ function defineStandardMacros() {
 
 			el = document.createElement("a");
 			el.classList.add("link-internal");
-			el.classList.add("link-" + this.name);
+			el.classList.add("link-" + this.name); // DEPRECATED
+			el.classList.add("macro-" + this.name);
 			if (steps > 0) {
 				jQuery(el).click(function () {
 					if (this.name === "back") {
@@ -225,7 +227,8 @@ function defineStandardMacros() {
 				state.active.variables["#choice"][choiceId] = true;
 				if (typeof setFn === "function") { setFn(); }
 			});
-			el.classList.add("link-" + this.name);
+			el.classList.add("link-" + this.name); // DEPRECATED
+			el.classList.add("macro-" + this.name);
 		}
 	});
 
@@ -293,7 +296,8 @@ function defineStandardMacros() {
 					if (typeof setFn === "function") { setFn(); }
 				});
 			}
-			el.classList.add("link-" + this.name);
+			el.classList.add("link-" + this.name); // DEPRECATED
+			el.classList.add("macro-" + this.name);
 		}
 	});
 
@@ -650,6 +654,116 @@ function defineStandardMacros() {
 	 * Interactive
 	 ******************************************************************************************************************/
 	/**
+	 * <<bind>> & <<unbind>>
+	 */
+	macros.add("bind", {
+		version : { major : 1, minor : 0, patch : 0 },
+		tags    : null,
+		handler : function () {
+			if (this.args.length < 2) {
+				var errors = [];
+				if (this.args.length < 1) { errors.push("selector"); }
+				if (this.args.length < 2) { errors.push("event name"); }
+				return this.error("no " + errors.join(" or ") + " specified");
+			}
+
+			var $targets = jQuery(this.args[0]);
+
+			if ($targets.length === 0) {
+				return this.error('no elements matched the selector "' + this.args[0] + '"');
+			}
+
+			var	eventName  = this.args[1],
+				fireOnce   = this.args.length === 3 ? this.args[2] === "once" : false,
+				widgetArgs = (function(){
+					var wargs;
+					if (
+						   state.active.variables.hasOwnProperty("args")
+						&& this.contextHas(function (c) { return c.self.isWidget; })
+					) {
+						wargs = state.active.variables.args;
+					}
+					return wargs;
+				}.call(this));
+
+			this.self.bindEvent({
+				self       : this.self,
+				targets    : $targets,
+				eventName  : eventName,
+				fireOnce   : fireOnce,
+				content    : this.payload[0].contents.trim(),
+				widgetArgs : widgetArgs
+			});
+		},
+		bindEvent : function (options) {
+			options.targets.addClass("event-" + Util.slugify(options.eventName));
+			options.targets.addClass("macro-bind");
+			options.targets[!!options.fireOnce ? "one" : "on"](options.eventName + ".macro-bind", (function (self, content, widgetArgs, callback) {
+				return function () {
+					if (content !== "") {
+						if (widgetArgs !== undefined) {
+							// store existing $args variables
+							if (state.active.variables.hasOwnProperty("args")) {
+								if (!self.hasOwnProperty("_argsStack")) {
+									self._argsStack = [];
+								}
+								self._argsStack.push(state.active.variables.args);
+							}
+
+							// setup the $args variable
+							state.active.variables.args = widgetArgs;
+						}
+
+						// wikify the content and discard any output, unless there were errors
+						Wikifier.wikifyEval(content);
+
+						if (widgetArgs !== undefined) {
+							// teardown the $args variable
+							delete state.active.variables.args;
+
+							// restore existing $args variables
+							if (self.hasOwnProperty("_argsStack")) {
+								state.active.variables.args = self._argsStack.pop();
+								if (self._argsStack.length === 0) {
+									// teardown the stack
+									delete self._argsStack;
+								}
+							}
+						}
+					}
+
+					// call the specified callback (if any)
+					if (typeof callback === "function") {
+						callback();
+					}
+				};
+			}(options.self, options.content, options.widgetArgs, options.callback)));
+		}
+	});
+	macros.add("unbind", {
+		version : { major : 1, minor : 0, patch : 0 },
+		tags    : null,
+		handler : function () {
+			if (this.args.length < 2) {
+				var errors = [];
+				if (this.args.length < 1) { errors.push("selector"); }
+				if (this.args.length < 2) { errors.push("event name"); }
+				return this.error("no " + errors.join(" or ") + " specified");
+			}
+
+			var $targets = jQuery(this.args[0]);
+
+			if ($targets.length === 0) {
+				return this.error('no elements matched the selector "' + this.args[0] + '"');
+			}
+
+			var eventName = this.args[1];
+
+			$targets.off(eventName + ".macro-bind");
+		}
+	});
+
+	/**
 	 * <<click>> & <<button>>
 	 */
 	macros.add(["click", "button"], {
@@ -685,7 +799,8 @@ function defineStandardMacros() {
 			}
 
 			el.classList.add("link-" + (passage ? (tale.has(passage) ? "internal" : "broken") : "internal"));
-			el.classList.add("link-" + this.name);
+			el.classList.add("link-" + this.name); // DEPRECATED
+			el.classList.add("macro-" + this.name);
 			insertText(el, elText);
 			macros.getHandler("bind", "bindEvent")({
 				self       : this.self,
@@ -971,98 +1086,6 @@ function defineStandardMacros() {
 			}
 
 			$targets.remove();
-		}
-	});
-
-
-	/*******************************************************************************************************************
-	 * DOM (Events)
-	 ******************************************************************************************************************/
-	/**
-	 * <<bind>>
-	 */
-	macros.add("bind", {
-		version : { major : 1, minor : 0, patch : 0 },
-		tags    : null,
-		handler : function (nodes, callback) {
-			if (this.args.length < 2) {
-				var errors = [];
-				if (this.args.length < 1) { errors.push("selector"); }
-				if (this.args.length < 2) { errors.push("event name"); }
-				return this.error("no " + errors.join(" or ") + " specified");
-			}
-
-			var $targets = jQuery(this.args[0]);
-
-			if ($targets.length === 0) {
-				return this.error('no elements matched the selector "' + this.args[0] + '"');
-			}
-
-			var	eventName  = this.args[1],
-				fireOnce   = this.args.length === 3 ? this.args[2] === "once" : false,
-				widgetArgs = (function(){
-					var wargs;
-					if (
-						   state.active.variables.hasOwnProperty("args")
-						&& this.contextHas(function (c) { return c.self.isWidget; })
-					) {
-						wargs = state.active.variables.args;
-					}
-					return wargs;
-				}.call(this));
-
-			this.self.bindEvent({
-				self       : this.self,
-				targets    : $targets,
-				eventName  : eventName,
-				fireOnce   : fireOnce,
-				content    : this.payload[0].contents.trim(),
-				widgetArgs : widgetArgs
-			});
-		},
-		bindEvent : function (options) {
-			options.targets.addClass("event-" + Util.slugify(options.eventName));
-			options.targets.addClass("event-bind");
-			options.targets[!!options.fireOnce ? "one" : "on"](options.eventName, (function (self, content, widgetArgs, callback) {
-				return function () {
-					if (content !== "") {
-						if (widgetArgs !== undefined) {
-							// store existing $args variables
-							if (state.active.variables.hasOwnProperty("args")) {
-								if (!self.hasOwnProperty("_argsStack")) {
-									self._argsStack = [];
-								}
-								self._argsStack.push(state.active.variables.args);
-							}
-
-							// setup the $args variable
-							state.active.variables.args = widgetArgs;
-						}
-
-						// wikify the content and discard any output, unless there were errors
-						Wikifier.wikifyEval(content);
-
-						if (widgetArgs !== undefined) {
-							// teardown the $args variable
-							delete state.active.variables.args;
-
-							// restore existing $args variables
-							if (self.hasOwnProperty("_argsStack")) {
-								state.active.variables.args = self._argsStack.pop();
-								if (self._argsStack.length === 0) {
-									// teardown the stack
-									delete self._argsStack;
-								}
-							}
-						}
-					}
-
-					// call the specified callback (if any)
-					if (typeof callback === "function") {
-						callback();
-					}
-				};
-			}(options.self, options.content, options.widgetArgs, options.callback)));
 		}
 	});
 
