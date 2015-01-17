@@ -742,7 +742,6 @@ function defineStandardMacros() {
 	});
 	macros.add("unbind", {
 		version : { major : 1, minor : 0, patch : 0 },
-		tags    : null,
 		handler : function () {
 			if (this.args.length < 2) {
 				var errors = [];
