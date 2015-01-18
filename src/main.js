@@ -10,19 +10,35 @@
 /***********************************************************************************************************************
  * Error Handling Setup
  **********************************************************************************************************************/
-function technicalAlert(where, mesg, error) {
-	var	errMesg = "Apologies! A technical problem has occurred. You may be able to continue, but some parts may not work properly.";
+function alertUser(type, where, mesg, error) {
+	var	errMesg = "Apologies!  A " + type + " problem has occurred.";
+	switch (type) {
+	case "fatal":
+		errMesg += "  Aborting.";
+		break
+	case "technical":
+		errMesg += "  You may be able to continue, but some parts may not work properly.";
+		break
+	}
 	if (where != null || mesg != null) { // use lazy equality
 		errMesg += "\n\nError";
 		if (where != null) { // use lazy equality
 			errMesg += " [" + where + "]";
 		}
 		errMesg += ": " + ((mesg != null) ? mesg.replace(/^Error:\s+/, "") : "unknown error") + "."; // use lazy equality on null check
-		if (error && error.stack) {
-			errMesg += "\n\nStack Trace:\n" + error.stack;
-		}
+	}
+	if (error && error.stack) {
+		errMesg += "\n\nStack Trace:\n" + error.stack;
 	}
 	window.alert(errMesg);
+}
+
+function fatalAlert(where, mesg, error) {
+	alertUser("fatal", where, mesg, error);
+}
+
+function technicalAlert(where, mesg, error) {
+	alertUser("technical", where, mesg, error);
 }
 
 if (!DEBUG) {
@@ -180,65 +196,70 @@ jQuery(document).ready(function () {
 	 *
 	 * The ordering of the code in this function is important, so be careful when mucking around with it.
 	 */
+	try {
 
-	// normalize the document
-	if (document.normalize) {
-		document.normalize();
-	}
-
-	// instantiate the macro object and standard macro library (this must be done before any passages are processed)
-	macros = new Macros();
-	defineStandardMacros();
-
-	// instantiate the tale, state, storage, and session objects
-	tale    = new Tale();
-	state   = new History();
-	storage = new KeyValueStore("webStorage", true, tale.domId); // params: driverName, persist, storageId
-	session = new KeyValueStore("webStorage", false, tale.domId);
-
-	// set the default saves ID
-	config.saves.id = tale.domId;
-
-	// initialize the user interface (this must be done before script passages)
-	UISystem.init();
-
-	// add the story styles
-	for (var i = 0; i < tale.styles.length; i++) {
-		addStyle(tale.styles[i].text);
-	}
-
-	// evaluate the story scripts
-	for (var i = 0; i < tale.scripts.length; i++) {
-		try {
-			eval(tale.scripts[i].text);
-		} catch (e) {
-			technicalAlert(tale.scripts[i].title, e.message);
+		// normalize the document
+		if (document.normalize) {
+			document.normalize();
 		}
-	}
 
-	// process the story widgets
-	for (var i = 0; i < tale.widgets.length; i++) {
-		try {
-			Wikifier.wikifyEval(tale.widgets[i].processText());
-		} catch (e) {
-			technicalAlert(tale.widgets[i].title, e.message);
+		// instantiate the macro object and standard macro library (this must be done before any passages are processed)
+		macros = new Macros();
+		defineStandardMacros();
+
+		// instantiate the tale, state, storage, and session objects
+		tale    = new Tale();
+		state   = new History();
+		storage = new KeyValueStore("webStorage", true, tale.domId); // params: driverName, persist, storageId
+		session = new KeyValueStore("webStorage", false, tale.domId);
+
+		// set the default saves ID
+		config.saves.id = tale.domId;
+
+		// initialize the user interface (this must be done before script passages)
+		UISystem.init();
+
+		// add the story styles
+		for (var i = 0; i < tale.styles.length; i++) {
+			addStyle(tale.styles[i].text);
 		}
+
+		// evaluate the story scripts
+		for (var i = 0; i < tale.scripts.length; i++) {
+			try {
+				eval(tale.scripts[i].text);
+			} catch (e) {
+				technicalAlert(tale.scripts[i].title, e.message);
+			}
+		}
+
+		// process the story widgets
+		for (var i = 0; i < tale.widgets.length; i++) {
+			try {
+				Wikifier.wikifyEval(tale.widgets[i].processText());
+			} catch (e) {
+				technicalAlert(tale.widgets[i].title, e.message);
+			}
+		}
+
+		// initialize the save system (this must be done after script passages and before state initialization)
+		SaveSystem.init();
+
+		// call macros' "early" init functions
+		macros.init();
+
+		// initialize our state
+		state.init(); // this could take a while, so do it late
+
+		// call macros' "late" init functions
+		macros.lateInit();
+
+		// start the user interface
+		UISystem.start();
+
+	} catch (e) {
+		return fatalAlert(null, e.message);
 	}
-
-	// initialize the save system (this must be done after script passages and before state initialization)
-	SaveSystem.init();
-
-	// call macros' "early" init functions
-	macros.init();
-
-	// initialize our state
-	state.init(); // this could take a while, so do it late
-
-	// call macros' "late" init functions
-	macros.lateInit();
-
-	// start the user interface
-	UISystem.start();
 
 	// lastly, export identifiers for debugging purposes
 	window.SugarCube = {
