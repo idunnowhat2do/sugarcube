@@ -220,10 +220,7 @@ Object.defineProperties(History.prototype, {
 				if (DEBUG) { console.log('    > display: "' + testPlay + '" (testPlay)'); }
 				this.display(testPlay);
 			} else if (config.startPassage == null || !tale.has(config.startPassage)) { // use lazy equality on null check
-				jQuery("#passages").empty().append("<h1>Starting passage "
-					+ (config.startPassage == null ? "not selected" : '("' + config.startPassage + '") not found') // use lazy equality on null check
-					+ ".  Aborting.</h1>");
-				window.scroll(0, 0);
+				throw new Error("starting passage " + (config.startPassage == null ? "not selected" : '("' + config.startPassage + '") not found'));
 			} else if (!this.restore()) {
 				// autoload the autosave, if requested and possible, else load the start passage
 				var loadStart = true;
@@ -1110,7 +1107,7 @@ function Tale(instanceName) {
 			new Wikifier(buf, this.passages.StoryTitle.processText().trim());
 			this.setTitle(buf.textContent);
 		} else {
-			this.setTitle("Untitled Story");
+			throw new Error("cannot find the StoryTitle special passage");
 		}
 	} else {
 		config.startPassage = null; // no default starting passage title
@@ -1146,12 +1143,10 @@ function Tale(instanceName) {
 			}
 		}
 
-		if (this.passages.hasOwnProperty("StoryTitle")) {
-			var buf = document.createElement("div");
-			new Wikifier(buf, this.passages.StoryTitle.processText().trim());
-			this.setTitle(buf.textContent);
+		if ("{{STORY_NAME}}" !== "") {
+			this.setTitle("{{STORY_NAME}}");
 		} else {
-			this.setTitle(("{{STORY_NAME}}" !== "") ? "{{STORY_NAME}}" : "Untitled Story");
+			throw new Error("story title not set");
 		}
 	}
 
@@ -1163,7 +1158,7 @@ function Tale(instanceName) {
 Object.defineProperties(Tale.prototype, {
 	setTitle : {
 		value : function (title) {
-			this.title = document.title = title;
+			document.title = this.title = title;
 			this.domId = Util.slugify(title);
 		}
 	},
