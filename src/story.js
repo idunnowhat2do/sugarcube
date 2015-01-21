@@ -1073,13 +1073,21 @@ function Tale(instanceName) {
 			storyScript;
 		for (var i = 0; i < nodes.length; i++) {
 			var el = nodes[i];
-			if (el.nodeType !== 1) { continue; } // skip non-element nodes (should never be any, but…)
+			if (el.nodeType !== 1) { // skip non-element nodes (should never be any, but…)
+				continue;
+			}
 
 			var name = el.hasAttribute("tiddler") ? el.getAttribute("tiddler") : "";
-			if (name === "") { continue; } // skip nameless passages (should never be any, but…)
+			if (name === "") { // skip nameless passages (should never be any, but…)
+				continue;
+			}
 
-			var	tags    = el.hasAttribute("tags") ? el.getAttribute("tags").trim().splitOrEmpty(/\s+/) : [],
-				passage = new Passage(name, el, i);
+			var tags = el.hasAttribute("tags") ? el.getAttribute("tags").trim().splitOrEmpty(/\s+/) : [];
+			if (tags.containsAny("Twine.private", "annotation")) { // skip passages with forbidden tags
+				continue;
+			}
+
+			var passage = new Passage(name, el, i);
 
 			if (name === "StoryStylesheet") {
 				storyStylesheet = passage;
@@ -1115,7 +1123,9 @@ function Tale(instanceName) {
 		nodes = nodes[0].childNodes;
 		for (var i = 0; i < nodes.length; i++) {
 			var el = nodes[i];
-			if (el.nodeType !== 1) { continue; } // skip non-element nodes (should never be any, but…)
+			if (el.nodeType !== 1) { // skip non-element nodes (should never be any, but…)
+				continue;
+			}
 
 			switch (el.nodeName.toUpperCase()) {
 			case "STYLE":
@@ -1126,14 +1136,22 @@ function Tale(instanceName) {
 				break;
 			default: // TW-PASSAGEDATA
 				var name = el.hasAttribute("name") ? el.getAttribute("name") : "";
-				if (name === "") { continue; } // skip nameless passages (should never be any, but…)
+				if (name === "") { // skip nameless passages (should never be any, but…)
+					continue;
+				}
 
-				var	tags    = el.hasAttribute("tags") ? el.getAttribute("tags").trim().splitOrEmpty(/\s+/) : [],
-					pid     = el.hasAttribute("pid") ? el.getAttribute("pid") : "",
+				var tags = el.hasAttribute("tags") ? el.getAttribute("tags").trim().splitOrEmpty(/\s+/) : [];
+				if (tags.containsAny("Twine.private", "annotation")) { // skip passages with forbidden tags
+					continue;
+				}
+
+				var	pid     = el.hasAttribute("pid") ? el.getAttribute("pid") : "",
 					passage = new Passage(name, el, +pid);
+
 				if (startNode !== "" && startNode === pid) {
 					config.startPassage = name;
 				}
+
 				if (tags.contains("widget")) {
 					this.widgets.push(passage);
 				} else {
