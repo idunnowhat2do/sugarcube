@@ -78,7 +78,7 @@ var UISystem = (function () {
 	function start() {
 		if (DEBUG) { console.log("[UISystem.start()]"); }
 
-		var html = jQuery(document.documentElement);
+		var $html = jQuery(document.documentElement);
 
 		// setup the title
 		setPageElement("story-title", "StoryTitle", tale.title);
@@ -121,18 +121,18 @@ var UISystem = (function () {
 
 		// handle the loading screen
 		if (document.readyState === "complete") {
-			html.removeClass("init-loading");
+			$html.removeClass("init-loading");
 		}
 		document.addEventListener("readystatechange", function () {
 			// readyState can be: "loading", "interactive", or "complete"
 			if (document.readyState === "complete") {
 				if (config.loadDelay > 0) {
-					setTimeout(function () { html.removeClass("init-loading"); }, config.loadDelay);
+					setTimeout(function () { $html.removeClass("init-loading"); }, config.loadDelay);
 				} else {
-					html.removeClass("init-loading");
+					$html.removeClass("init-loading");
 				}
 			} else {
-				html.addClass("init-loading");
+				$html.addClass("init-loading");
 			}
 		}, false);
 	}
@@ -421,9 +421,9 @@ var UISystem = (function () {
 							}
 
 							var windowState = History.getWindowState();
-							if (windowState.sidx < state.top.sidx) {
+							if (windowState !== null && windowState.sidx < state.top.sidx) {
 								if (DEBUG) { console.log("    > stacks out of sync; popping " + (state.top.sidx - windowState.sidx) + " states to equalize"); }
-								// stack ids are out of sync, pop our stack until
+								// stack indexes are out of sync, pop our stack until
 								// we're back in sync with the window.history
 								state.pop(state.top.sidx - windowState.sidx);
 							}
@@ -719,19 +719,19 @@ var UISystem = (function () {
 	}
 
 	function uiResizeHandler(evt) {
-		var	dialog = jQuery(_body),
-			closer = jQuery(_closer),
-			topPos = (evt && typeof evt.data !== "undefined") ? evt.data : 50;
+		var	$dialog = jQuery(_body),
+			$closer = jQuery(_closer),
+			topPos  = (evt && typeof evt.data !== "undefined") ? evt.data : 50;
 
-		if (dialog.css("display") === "block") {
+		if ($dialog.css("display") === "block") {
 			// stow the dialog and unset its positional properties (this is important!)
-			dialog.css({ display : "none", left : "", right : "", top : "", bottom : "" });
-			closer.css({ display : "none", right : "", top : "" });
+			$dialog.css({ display : "none", left : "", right : "", top : "", bottom : "" });
+			$closer.css({ display : "none", right : "", top : "" });
 
 			// restore the dialog with its new positional properties
 			var position = uiCalcPosition(topPos);
-			dialog.css(jQuery.extend({ display : "block" }, position.dialog));
-			closer.css(jQuery.extend({ display : "block" }, position.closer));
+			$dialog.css(jQuery.extend({ display : "block" }, position.dialog));
+			$closer.css(jQuery.extend({ display : "block" }, position.closer));
 		}
 	}
 
@@ -740,13 +740,13 @@ var UISystem = (function () {
 			topPos = 50;
 		}
 
-		var	parent    = jQuery(window),
-			dialog    = jQuery(_body),
+		var	$parent   = jQuery(window),
+			$dialog   = jQuery(_body),
 			dialogPos = { left : "", right : "", top : "", bottom : "" },
-			closer    = jQuery(_closer),
+			$closer   = jQuery(_closer),
 			closerPos = { right : "", top : "" },
-			horzSpace = parent.width() - dialog.outerWidth(true),
-			vertSpace = parent.height() - dialog.outerHeight(true);
+			horzSpace = $parent.width() - $dialog.outerWidth(true),
+			vertSpace = $parent.height() - $dialog.outerHeight(true);
 
 		if (horzSpace <= 32) {
 			dialogPos.left = dialogPos.right = 16;
@@ -763,8 +763,8 @@ var UISystem = (function () {
 			}
 		}
 
-		closerPos.right = (dialogPos.right - closer.outerWidth(true) + 6) + "px";
-		closerPos.top = (dialogPos.top - closer.outerHeight(true) + 6) + "px";
+		closerPos.right = (dialogPos.right - $closer.outerWidth(true) + 6) + "px";
+		closerPos.top = (dialogPos.top - $closer.outerHeight(true) + 6) + "px";
 		Object.keys(dialogPos).forEach(function (p) {
 			if (dialogPos[p] !== "") {
 				dialogPos[p] += "px";

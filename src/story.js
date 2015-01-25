@@ -265,9 +265,9 @@ Object.defineProperties(History.prototype, {
 			}
 
 			// setup the history change handlers
-			//   n.b. do not update these to use jQuery; the "popstate" event gains nothing from being wrapped in the
-			//        jQuery Event object and it would complicate either the handlers, by having to deal with it,
-			//        or the jQuery Event object, if the necessary properties were pushed onto it
+			//   n.b. do not update these to use jQuery; these events gain nothing from being wrapped in
+			//        the jQuery Event object and it would complicate either the handlers, by having to deal
+			//        with it, or the jQuery Event object, if the necessary properties were pushed onto it
 			if (config.historyMode === History.Modes.Session) {
 				window.addEventListener("popstate", History.popStateHandler_Session, false);
 			} else if (config.historyMode === History.Modes.Window) {
@@ -290,8 +290,9 @@ Object.defineProperties(History.prototype, {
 			// reset the runtime temp/scratch object
 			runtime.temp = {};
 
-			// n.b. the title parameter can either be a passage title (string) or passage ID (number), so
-			//      after loading the passage, always refer to passage.title and never the title parameter
+			// n.b. the title parameter may be either a string or a number (though using a number as
+			//      reference to a numeric title should be discouraged), so after loading the passage,
+			//      always refer to passage.title and never the title parameter
 			var	passage     = tale.get(title),
 				windowTitle = (config.displayPassageTitles && passage.title !== config.startPassage)
 					? passage.title + " | " + tale.title
@@ -369,7 +370,9 @@ Object.defineProperties(History.prototype, {
 					}
 				}
 				Object.keys(predisplay).forEach(function (task) {
-					if (typeof predisplay[task] === "function") { predisplay[task].call(this, task); }
+					if (typeof predisplay[task] === "function") {
+						predisplay[task].call(this, task);
+					}
 				}, passage);
 			}
 
@@ -390,11 +393,15 @@ Object.defineProperties(History.prototype, {
 					outgoing.classList.add("transition-out");
 					if (typeof config.passageTransitionOut === "boolean") {
 						jQuery(outgoing).on(config.transitionEndEventName, function () {
-							if (this.parentNode) { this.parentNode.removeChild(this); }
+							if (this.parentNode) {
+								this.parentNode.removeChild(this);
+							}
 						});
 					} else {
 						setTimeout(function () {
-							if (outgoing.parentNode) { outgoing.parentNode.removeChild(outgoing); }
+							if (outgoing.parentNode) {
+								outgoing.parentNode.removeChild(outgoing);
+							}
 						}, config.passageTransitionOut); // in milliseconds
 					}
 				} else {
@@ -425,7 +432,9 @@ Object.defineProperties(History.prototype, {
 					}
 				}
 				Object.keys(postdisplay).forEach(function (task) {
-					if (typeof postdisplay[task] === "function") { postdisplay[task].call(this, task); }
+					if (typeof postdisplay[task] === "function") {
+						postdisplay[task].call(this, task);
+					}
 				}, passage);
 				if (config.updatePageElements) {
 					UISystem.setPageElements();
@@ -635,7 +644,9 @@ Object.defineProperties(History, {
 			if (!History.hasWindowState(evt)) { return; }
 
 			// close any open UI dialog
-			if (UISystem.isOpen()) { UISystem.close(); }
+			if (UISystem.isOpen()) {
+				UISystem.close();
+			}
 
 			var windowState = History.getWindowState(evt);
 
@@ -661,7 +672,9 @@ Object.defineProperties(History, {
 			if (!History.hasWindowState(evt)) { return; }
 
 			// close any open UI dialog
-			if (UISystem.isOpen()) { UISystem.close(); }
+			if (UISystem.isOpen()) {
+				UISystem.close();
+			}
 
 			var windowState = History.getWindowState(evt);
 			state.unmarshal(windowState);
@@ -688,7 +701,9 @@ Object.defineProperties(History, {
 
 			if (History.hasWindowHashState()) {
 				// close any open UI dialog
-				if (UISystem.isOpen()) { UISystem.close(); }
+				if (UISystem.isOpen()) {
+					UISystem.close();
+				}
 
 				var hashState = History.getWindowHashState();
 				state.unmarshal(hashState);
@@ -959,7 +974,9 @@ Object.defineProperties(Passage.prototype, {
 
 			// execute pre-render tasks
 			Object.keys(prerender).forEach(function (task) {
-				if (typeof prerender[task] === "function") { prerender[task].call(this, content, task); }
+				if (typeof prerender[task] === "function") {
+					prerender[task].call(this, content, task);
+				}
 			}, this);
 
 			// wikify the passage into the content element
@@ -967,7 +984,9 @@ Object.defineProperties(Passage.prototype, {
 
 			// execute post-render tasks
 			Object.keys(postrender).forEach(function (task) {
-				if (typeof postrender[task] === "function") { postrender[task].call(this, content, task); }
+				if (typeof postrender[task] === "function") {
+					postrender[task].call(this, content, task);
+				}
 			}, this);
 
 			// create/update the excerpt cache to reflect the rendered text
@@ -1007,7 +1026,7 @@ Object.defineProperties(Passage, {
 			if (!node.hasChildNodes()) { return ""; }
 
 			var	excerptRe = new RegExp("(\\S+(?:\\s+\\S+){0," + (typeof count !== "undefined" ? count - 1 : 7) + "})"),
-				excerpt   = String(node.textContent).trim();
+				excerpt   = node.textContent.trim();
 			if (excerpt !== "") {
 				excerpt = excerpt
 					// compact whitespace
@@ -1185,7 +1204,7 @@ Object.defineProperties(Tale.prototype, {
 		value : function (title) {
 			switch (typeof title) {
 			case "number":
-				title = String(title);
+				title += "";
 				/* FALL-THROUGH */
 			case "string":
 				return this.passages.hasOwnProperty(title);
@@ -1199,7 +1218,7 @@ Object.defineProperties(Tale.prototype, {
 		value : function (title) {
 			switch (typeof title) {
 			case "number":
-				title = String(title);
+				title += "";
 				/* FALL-THROUGH */
 			case "string":
 				return this.passages.hasOwnProperty(title) ? this.passages[title] : new Passage(title || "(unknown)");
