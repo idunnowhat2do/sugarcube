@@ -1161,8 +1161,8 @@ var Wikifier = (function () {
 				match: "<<",
 				lookaheadRegExp: /<<([^>\s]+)(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|[^>]|(?:>(?!>)))*)>>/gm,
 				argsPattern: "(?:" + [
-					'("(?:\\\\"|[^"\\\\])+")',      // 1=double quoted
-					"('(?:\\\\'|[^'\\\\])+')",      // 2=single quoted
+					'("(?:\\\\.|[^"\\\\])+")',      // 1=double quoted
+					"('(?:\\\\.|[^'\\\\])+')",      // 2=single quoted
 					"(\"\"|'')",                    // 3=empty quotes
 					"(\\[\\[(?:\\s|\\S)*?\\]\\]+)", // 4=double square-bracketed
 					"([^\"'`\\s]\\S*)"              // 5=barewords
