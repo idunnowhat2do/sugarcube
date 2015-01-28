@@ -675,7 +675,7 @@ function defineStandardMacros() {
 
 			var	eventName  = this.args[1],
 				fireOnce   = this.args.length === 3 ? this.args[2] === "once" : false,
-				widgetArgs = (function(){
+				widgetArgs = (function () {
 					var wargs;
 					if (
 						   state.active.variables.hasOwnProperty("args")
@@ -773,7 +773,7 @@ function defineStandardMacros() {
 				return this.error("no " + (this.name === "click" ? "link" : "button") + " text specified");
 			}
 
-			var	widgetArgs = (function(){
+			var	widgetArgs = (function () {
 					var wargs;
 					if (
 						   state.active.variables.hasOwnProperty("args")
@@ -886,10 +886,59 @@ function defineStandardMacros() {
 	});
 
 	/**
+	 * <<textarea>>
+	 */
+	macros.add("textarea", {
+		version : { major : 1, minor : 0, patch : 0 },
+		handler : function () {
+			if (this.args.length < 2) {
+				var errors = [];
+				if (this.args.length < 1) { errors.push("$variable name"); }
+				if (this.args.length < 2) { errors.push("default value"); }
+				return this.error("no " + errors.join(" or ") + " specified");
+			}
+
+			var	varName      = this.args[0].trim(),
+				varId        = Util.slugify(varName),
+				defaultValue = this.args[1],
+				autofocus    = this.args[2] === "autofocus",
+				el           = document.createElement("textarea"),
+				passage;
+
+			// legacy error
+			if (varName[0] !== "$") {
+				return this.error('$variable name "' + varName + '" is missing its sigil ($)');
+			}
+
+			el.id           = "textarea-" + varId;
+			el.name         = "textarea-" + varId;
+			el.rows         = 4;
+			el.cols         = 68;
+			el.defaultValue = defaultValue;
+			if (autofocus) {
+				el.setAttribute("autofocus", "autofocus");
+			}
+			Wikifier.setValue(varName, defaultValue);
+			jQuery(el).change(function () {
+				Wikifier.setValue(varName, this.value);
+			});
+			this.output.appendChild(el);
+
+			// setup a single-use post-display task to autofocus the element, if necessary
+			if (autofocus) {
+				postdisplay["#autofocus:" + el.id] = function (task) {
+					setTimeout(function () { el.focus(); }, 1);
+					delete postdisplay[task]; // single-use task
+				};
+			}
+		}
+	});
+
+	/**
 	 * <<checkbox>>
 	 */
 	macros.add("checkbox", {
-		version : { major : 5, minor : 0, patch : 0 },
+		version : { major : 5, minor : 0, patch : 1 },
 		handler : function () {
 			if (this.args.length < 3) {
 				var errors = [];
@@ -910,19 +959,18 @@ function defineStandardMacros() {
 				return this.error('$variable name "' + varName + '" is missing its sigil ($)');
 			}
 
-			el.type  = "checkbox";
-			el.id    = this.name + "-" + varId;
-			el.name  = this.name + "-" + varId;
+			el.type = "checkbox";
+			el.id   = "checkbox-" + varId;
+			el.name = "checkbox-" + varId;
 			if (this.args.length > 3 && this.args[3] === "checked") {
 				el.checked = true;
 				Wikifier.setValue(varName, checkValue);
 			} else {
 				Wikifier.setValue(varName, uncheckValue);
 			}
-			jQuery(el)
-				.change(function () {
-					Wikifier.setValue(varName, this.checked ? checkValue : uncheckValue);
-				});
+			jQuery(el).change(function () {
+				Wikifier.setValue(varName, this.checked ? checkValue : uncheckValue);
+			});
 			this.output.appendChild(el);
 		}
 	});
@@ -931,7 +979,7 @@ function defineStandardMacros() {
 	 * <<radiobutton>>
 	 */
 	macros.add("radiobutton", {
-		version : { major : 5, minor : 0, patch : 0 },
+		version : { major : 5, minor : 0, patch : 1 },
 		handler : function () {
 			if (this.args.length < 2) {
 				var errors = [];
@@ -950,22 +998,25 @@ function defineStandardMacros() {
 				return this.error('$variable name "' + varName + '" is missing its sigil ($)');
 			}
 
-			if (!runtime.temp.hasOwnProperty("radiobutton")) { runtime.temp["radiobutton"] = {}; }
-			if (!runtime.temp["radiobutton"].hasOwnProperty(varId)) { runtime.temp["radiobutton"][varId] = 0; }
+			if (!runtime.temp.hasOwnProperty("radiobutton")) {
+				runtime.temp["radiobutton"] = {};
+			}
+			if (!runtime.temp["radiobutton"].hasOwnProperty(varId)) {
+				runtime.temp["radiobutton"][varId] = 0;
+			}
 
-			el.type  = "radio";
-			el.id    = this.name + "-" + varId + "-" + runtime.temp["radiobutton"][varId]++;
-			el.name  = this.name + "-" + varId;
+			el.type = "radio";
+			el.id   = "radiobutton-" + varId + "-" + runtime.temp["radiobutton"][varId]++;
+			el.name = "radiobutton-" + varId;
 			if (this.args.length > 2 && this.args[2] === "checked") {
 				el.checked = true;
 				Wikifier.setValue(varName, checkValue);
 			}
-			jQuery(el)
-				.change(function () {
-					if (this.checked) {
-						Wikifier.setValue(varName, checkValue);
-					}
-				});
+			jQuery(el).change(function () {
+				if (this.checked) {
+					Wikifier.setValue(varName, checkValue);
+				}
+			});
 			this.output.appendChild(el);
 		}
 	});
