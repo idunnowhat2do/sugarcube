@@ -933,7 +933,30 @@ var Wikifier = (function () {
 				match: "^!{1,6}",
 				terminator: "\\n",
 				handler: function (w) {
-					w.subWikify(insertElement(w.output, "h" + w.matchLength), this.terminator);
+					var isHeading = (function (nodes) {
+							var hasGCS = typeof window.getComputedStyle === "function";
+							for (var i = nodes.length - 1; i >= 0; i++) {
+								var node = nodes[i];
+								switch (node.nodeType) {
+								case Node.ELEMENT_NODE:
+									if (node.nodeName.toUpperCase() === "BR") {
+										return true;
+									}
+									var styles = hasGCS ? window.getComputedStyle(node, null) : node.currentStyle;
+									return (styles.display === "block");
+								case Node.COMMENT_NODE:
+									break;
+								default:
+									return false;
+								}
+							}
+							return true;
+						}(w.output.childNodes));
+					if (isHeading) {
+						w.subWikify(insertElement(w.output, "h" + w.matchLength), this.terminator);
+					} else {
+						insertText(w.output, w.matchText);
+					}
 				}
 			},
 
