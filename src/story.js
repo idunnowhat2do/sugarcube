@@ -1092,7 +1092,7 @@ function Tale(instanceName) {
 			storyScript;
 		for (var i = 0; i < nodes.length; i++) {
 			var el = nodes[i];
-			if (el.nodeType !== 1) { // skip non-element nodes (should never be any, but…)
+			if (el.nodeType !== Node.ELEMENT_NODE) { // skip non-element nodes (should never be any, but…)
 				continue;
 			}
 
@@ -1142,7 +1142,7 @@ function Tale(instanceName) {
 		nodes = nodes[0].childNodes;
 		for (var i = 0; i < nodes.length; i++) {
 			var el = nodes[i];
-			if (el.nodeType !== 1) { // skip non-element nodes (should never be any, but…)
+			if (el.nodeType !== Node.ELEMENT_NODE) { // skip non-element nodes (should never be any, but…)
 				continue;
 			}
 

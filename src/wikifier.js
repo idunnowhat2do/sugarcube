@@ -152,7 +152,7 @@ var Wikifier = (function () {
 					}
 				} else if (
 					   this.output.lastChild
-					&& this.output.lastChild.nodeType === 1 /* Element node */
+					&& this.output.lastChild.nodeType === Node.ELEMENT_NODE
 					&& this.output.lastChild.nodeName.toUpperCase() === "BR"
 				) {
 					// In case of <<break>>/<<continue>>, remove the last <br>

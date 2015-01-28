@@ -547,7 +547,7 @@ var UISystem = (function () {
 			var li = null;
 			while (temp.hasChildNodes()) {
 				var node = temp.firstChild;
-				if (node.nodeType !== 3 && (node.nodeType !== 1 || node.nodeName.toUpperCase() === "BR")) { // non-text, non-element, or <br>-element nodes
+				if (node.nodeType !== Node.TEXT_NODE && (node.nodeType !== Node.ELEMENT_NODE || node.nodeName.toUpperCase() === "BR")) { // non-text, non-element, or <br>-element nodes
 					temp.removeChild(node);
 					if (li !== null) {
 						// forget the current list item
