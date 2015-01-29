@@ -51,6 +51,9 @@ input:focus, textarea:focus {
 input:hover, textarea:hover {
 	border: 1px solid #f70;
 }
+textarea {
+	overflow: auto; /* fixes IE inanity */
+}
 button {
 	cursor: pointer;
 	padding: 4px 6px;
