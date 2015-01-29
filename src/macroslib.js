@@ -13,6 +13,51 @@
 function defineStandardMacros() {
 
 	/*******************************************************************************************************************
+	 * Utility Functions
+	 ******************************************************************************************************************/
+	function setupWikifyEvalEvent(options) {
+		options.targets.addClass("event-" + Util.slugify(options.eventName));
+		options.targets[!!options.once ? "one" : "on"](options.eventName + ".macros", function () {
+			if (options.content !== "") {
+				var argsCache;
+				// there's no catch clause because this try/finally is here simply to ensure that
+				// the $args variable is properly restored in the event that an exception is thrown
+				// during the Wikifier.wikifyEval() call
+				try {
+					if (typeof options.widgetArgs !== "undefined") {
+						// cache the existing $args variable, if any
+						if (state.active.variables.hasOwnProperty("args")) {
+							argsCache = state.active.variables.args;
+						}
+
+						// setup the $args variable
+						state.active.variables.args = options.widgetArgs;
+					}
+
+					// wikify the content and discard any output, unless there were errors
+					Wikifier.wikifyEval(options.content);
+				} finally {
+					if (typeof options.widgetArgs !== "undefined") {
+						// teardown the $args variable
+						delete state.active.variables.args;
+
+						// restore the cached $args variable, if any
+						if (typeof argsCache !== "undefined") {
+							state.active.variables.args = argsCache;
+						}
+					}
+				}
+			}
+
+			// call the specified callback (if any)
+			if (typeof options.callback === "function") {
+				options.callback();
+			}
+		});
+	}
+
+
+	/*******************************************************************************************************************
 	 * Links
 	 ******************************************************************************************************************/
 	/**
@@ -654,119 +699,10 @@ function defineStandardMacros() {
 	 * Interactive
 	 ******************************************************************************************************************/
 	/**
-	 * <<bind>> & <<unbind>>
+	 * <<button>> & <<click>>
 	 */
-	macros.add("bind", {
-		version : { major : 1, minor : 0, patch : 0 },
-		tags    : null,
-		handler : function () {
-			if (this.args.length < 2) {
-				var errors = [];
-				if (this.args.length < 1) { errors.push("selector"); }
-				if (this.args.length < 2) { errors.push("event name"); }
-				return this.error("no " + errors.join(" or ") + " specified");
-			}
-
-			var $targets = jQuery(this.args[0]);
-
-			if ($targets.length === 0) {
-				return this.error('no elements matched the selector "' + this.args[0] + '"');
-			}
-
-			var	eventName  = this.args[1],
-				fireOnce   = this.args.length === 3 ? this.args[2] === "once" : false,
-				widgetArgs = (function () {
-					var wargs;
-					if (
-						   state.active.variables.hasOwnProperty("args")
-						&& this.contextHas(function (c) { return c.self.isWidget; })
-					) {
-						wargs = state.active.variables.args;
-					}
-					return wargs;
-				}.call(this));
-
-			this.self.bindEvent({
-				self       : this.self,
-				targets    : $targets,
-				eventName  : eventName,
-				fireOnce   : fireOnce,
-				content    : this.payload[0].contents.trim(),
-				widgetArgs : widgetArgs
-			});
-		},
-		bindEvent : function (options) {
-			options.targets.addClass("event-" + Util.slugify(options.eventName));
-			options.targets.addClass("macro-bind");
-			options.targets[!!options.fireOnce ? "one" : "on"](options.eventName + ".macro-bind", (function (self, content, widgetArgs, callback) {
-				return function () {
-					if (content !== "") {
-						if (widgetArgs !== undefined) {
-							// store existing $args variables
-							if (state.active.variables.hasOwnProperty("args")) {
-								if (!self.hasOwnProperty("_argsStack")) {
-									self._argsStack = [];
-								}
-								self._argsStack.push(state.active.variables.args);
-							}
-
-							// setup the $args variable
-							state.active.variables.args = widgetArgs;
-						}
-
-						// wikify the content and discard any output, unless there were errors
-						Wikifier.wikifyEval(content);
-
-						if (widgetArgs !== undefined) {
-							// teardown the $args variable
-							delete state.active.variables.args;
-
-							// restore existing $args variables
-							if (self.hasOwnProperty("_argsStack")) {
-								state.active.variables.args = self._argsStack.pop();
-								if (self._argsStack.length === 0) {
-									// teardown the stack
-									delete self._argsStack;
-								}
-							}
-						}
-					}
-
-					// call the specified callback (if any)
-					if (typeof callback === "function") {
-						callback();
-					}
-				};
-			}(options.self, options.content, options.widgetArgs, options.callback)));
-		}
-	});
-	macros.add("unbind", {
-		version : { major : 1, minor : 0, patch : 0 },
-		handler : function () {
-			if (this.args.length < 2) {
-				var errors = [];
-				if (this.args.length < 1) { errors.push("selector"); }
-				if (this.args.length < 2) { errors.push("event name"); }
-				return this.error("no " + errors.join(" or ") + " specified");
-			}
-
-			var $targets = jQuery(this.args[0]);
-
-			if ($targets.length === 0) {
-				return this.error('no elements matched the selector "' + this.args[0] + '"');
-			}
-
-			var eventName = this.args[1];
-
-			$targets.off(eventName + ".macro-bind");
-		}
-	});
-
-	/**
-	 * <<click>> & <<button>>
-	 */
-	macros.add(["click", "button"], {
-		version : { major : 4, minor : 2, patch : 0 },
+	macros.add(["button", "click"], {
+		version : { major : 4, minor : 3, patch : 0 },
 		tags    : null,
 		handler : function () {
 			if (this.args.length === 0) {
@@ -801,8 +737,7 @@ function defineStandardMacros() {
 			el.classList.add("link-" + this.name); // DEPRECATED
 			el.classList.add("macro-" + this.name);
 			insertText(el, elText);
-			macros.getHandler("bind", "bindEvent")({
-				self       : this.self,
+			setupWikifyEvalEvent({
 				targets    : jQuery(el),
 				eventName  : "click",
 				content    : this.payload[0].contents.trim(),
@@ -816,10 +751,151 @@ function defineStandardMacros() {
 	});
 
 	/**
+	 * <<checkbox>>
+	 */
+	macros.add("checkbox", {
+		version : { major : 5, minor : 1, patch : 0 },
+		handler : function () {
+			if (this.args.length < 3) {
+				var errors = [];
+				if (this.args.length < 1) { errors.push("$variable name"); }
+				if (this.args.length < 2) { errors.push("unchecked value"); }
+				if (this.args.length < 3) { errors.push("checked value"); }
+				return this.error("no " + errors.join(" or ") + " specified");
+			}
+
+			var	varName      = this.args[0].trim(),
+				varId        = Util.slugify(varName),
+				uncheckValue = this.args[1],
+				checkValue   = this.args[2],
+				el           = document.createElement("input");
+
+			// legacy error
+			if (varName[0] !== "$") {
+				return this.error('$variable name "' + varName + '" is missing its sigil ($)');
+			}
+
+			el.type = "checkbox";
+			el.id   = "checkbox-" + varId;
+			el.name = "checkbox-" + varId;
+			el.classList.add("macro-" + this.name);
+			if (this.args.length > 3 && this.args[3] === "checked") {
+				el.checked = true;
+				Wikifier.setValue(varName, checkValue);
+			} else {
+				Wikifier.setValue(varName, uncheckValue);
+			}
+			jQuery(el).change(function () {
+				Wikifier.setValue(varName, this.checked ? checkValue : uncheckValue);
+			});
+			this.output.appendChild(el);
+		}
+	});
+
+	/**
+	 * <<radiobutton>>
+	 */
+	macros.add("radiobutton", {
+		version : { major : 5, minor : 1, patch : 0 },
+		handler : function () {
+			if (this.args.length < 2) {
+				var errors = [];
+				if (this.args.length < 1) { errors.push("$variable name"); }
+				if (this.args.length < 2) { errors.push("checked value"); }
+				return this.error("no " + errors.join(" or ") + " specified");
+			}
+
+			var	varName    = this.args[0].trim(),
+				varId      = Util.slugify(varName),
+				checkValue = this.args[1],
+				el         = document.createElement("input");
+
+			// legacy error
+			if (varName[0] !== "$") {
+				return this.error('$variable name "' + varName + '" is missing its sigil ($)');
+			}
+
+			if (!runtime.temp.hasOwnProperty("radiobutton")) {
+				runtime.temp["radiobutton"] = {};
+			}
+			if (!runtime.temp["radiobutton"].hasOwnProperty(varId)) {
+				runtime.temp["radiobutton"][varId] = 0;
+			}
+
+			el.type = "radio";
+			el.id   = "radiobutton-" + varId + "-" + runtime.temp["radiobutton"][varId]++;
+			el.name = "radiobutton-" + varId;
+			el.classList.add("macro-" + this.name);
+			if (this.args.length > 2 && this.args[2] === "checked") {
+				el.checked = true;
+				Wikifier.setValue(varName, checkValue);
+			}
+			jQuery(el).change(function () {
+				if (this.checked) {
+					Wikifier.setValue(varName, checkValue);
+				}
+			});
+			this.output.appendChild(el);
+		}
+	});
+
+	/**
+	 * <<textarea>>
+	 */
+	macros.add("textarea", {
+		version : { major : 1, minor : 0, patch : 0 },
+		handler : function () {
+			if (this.args.length < 2) {
+				var errors = [];
+				if (this.args.length < 1) { errors.push("$variable name"); }
+				if (this.args.length < 2) { errors.push("default value"); }
+				return this.error("no " + errors.join(" or ") + " specified");
+			}
+
+			var	varName      = this.args[0].trim(),
+				varId        = Util.slugify(varName),
+				defaultValue = this.args[1],
+				autofocus    = this.args[2] === "autofocus",
+				el           = document.createElement("textarea"),
+				passage;
+
+			// legacy error
+			if (varName[0] !== "$") {
+				return this.error('$variable name "' + varName + '" is missing its sigil ($)');
+			}
+
+			el.id   = "textarea-" + varId;
+			el.name = "textarea-" + varId;
+			el.rows = 4;
+			el.cols = 68;
+			// ideally, we should be setting the .defaultValue property here, but IE doesn't support
+			// it yet, so we have to use .textContent, which is equivalent to .defaultValue anyway
+			el.textContent = defaultValue;
+			if (autofocus) {
+				el.setAttribute("autofocus", "autofocus");
+			}
+			el.classList.add("macro-" + this.name);
+			Wikifier.setValue(varName, defaultValue);
+			jQuery(el).change(function () {
+				Wikifier.setValue(varName, this.value);
+			});
+			this.output.appendChild(el);
+
+			// setup a single-use post-display task to autofocus the element, if necessary
+			if (autofocus) {
+				postdisplay["#autofocus:" + el.id] = function (task) {
+					setTimeout(function () { el.focus(); }, 1);
+					delete postdisplay[task]; // single-use task
+				};
+			}
+		}
+	});
+
+	/**
 	 * <<textbox>>
 	 */
 	macros.add("textbox", {
-		version : { major : 5, minor : 0, patch : 1 },
+		version : { major : 5, minor : 1, patch : 0 },
 		handler : function () {
 			if (this.args.length < 2) {
 				var errors = [];
@@ -858,6 +934,7 @@ function defineStandardMacros() {
 			if (autofocus) {
 				el.setAttribute("autofocus", "autofocus");
 			}
+			el.classList.add("macro-" + this.name);
 			Wikifier.setValue(varName, defaultValue);
 			jQuery(el)
 				.change(function () {
@@ -882,142 +959,6 @@ function defineStandardMacros() {
 					delete postdisplay[task]; // single-use task
 				};
 			}
-		}
-	});
-
-	/**
-	 * <<textarea>>
-	 */
-	macros.add("textarea", {
-		version : { major : 1, minor : 0, patch : 0 },
-		handler : function () {
-			if (this.args.length < 2) {
-				var errors = [];
-				if (this.args.length < 1) { errors.push("$variable name"); }
-				if (this.args.length < 2) { errors.push("default value"); }
-				return this.error("no " + errors.join(" or ") + " specified");
-			}
-
-			var	varName      = this.args[0].trim(),
-				varId        = Util.slugify(varName),
-				defaultValue = this.args[1],
-				autofocus    = this.args[2] === "autofocus",
-				el           = document.createElement("textarea"),
-				passage;
-
-			// legacy error
-			if (varName[0] !== "$") {
-				return this.error('$variable name "' + varName + '" is missing its sigil ($)');
-			}
-
-			el.id           = "textarea-" + varId;
-			el.name         = "textarea-" + varId;
-			el.rows         = 4;
-			el.cols         = 68;
-			el.defaultValue = defaultValue;
-			if (autofocus) {
-				el.setAttribute("autofocus", "autofocus");
-			}
-			Wikifier.setValue(varName, defaultValue);
-			jQuery(el).change(function () {
-				Wikifier.setValue(varName, this.value);
-			});
-			this.output.appendChild(el);
-
-			// setup a single-use post-display task to autofocus the element, if necessary
-			if (autofocus) {
-				postdisplay["#autofocus:" + el.id] = function (task) {
-					setTimeout(function () { el.focus(); }, 1);
-					delete postdisplay[task]; // single-use task
-				};
-			}
-		}
-	});
-
-	/**
-	 * <<checkbox>>
-	 */
-	macros.add("checkbox", {
-		version : { major : 5, minor : 0, patch : 1 },
-		handler : function () {
-			if (this.args.length < 3) {
-				var errors = [];
-				if (this.args.length < 1) { errors.push("$variable name"); }
-				if (this.args.length < 2) { errors.push("unchecked value"); }
-				if (this.args.length < 3) { errors.push("checked value"); }
-				return this.error("no " + errors.join(" or ") + " specified");
-			}
-
-			var	varName      = this.args[0].trim(),
-				varId        = Util.slugify(varName),
-				uncheckValue = this.args[1],
-				checkValue   = this.args[2],
-				el           = document.createElement("input");
-
-			// legacy error
-			if (varName[0] !== "$") {
-				return this.error('$variable name "' + varName + '" is missing its sigil ($)');
-			}
-
-			el.type = "checkbox";
-			el.id   = "checkbox-" + varId;
-			el.name = "checkbox-" + varId;
-			if (this.args.length > 3 && this.args[3] === "checked") {
-				el.checked = true;
-				Wikifier.setValue(varName, checkValue);
-			} else {
-				Wikifier.setValue(varName, uncheckValue);
-			}
-			jQuery(el).change(function () {
-				Wikifier.setValue(varName, this.checked ? checkValue : uncheckValue);
-			});
-			this.output.appendChild(el);
-		}
-	});
-
-	/**
-	 * <<radiobutton>>
-	 */
-	macros.add("radiobutton", {
-		version : { major : 5, minor : 0, patch : 1 },
-		handler : function () {
-			if (this.args.length < 2) {
-				var errors = [];
-				if (this.args.length < 1) { errors.push("$variable name"); }
-				if (this.args.length < 2) { errors.push("checked value"); }
-				return this.error("no " + errors.join(" or ") + " specified");
-			}
-
-			var	varName    = this.args[0].trim(),
-				varId      = Util.slugify(varName),
-				checkValue = this.args[1],
-				el         = document.createElement("input");
-
-			// legacy error
-			if (varName[0] !== "$") {
-				return this.error('$variable name "' + varName + '" is missing its sigil ($)');
-			}
-
-			if (!runtime.temp.hasOwnProperty("radiobutton")) {
-				runtime.temp["radiobutton"] = {};
-			}
-			if (!runtime.temp["radiobutton"].hasOwnProperty(varId)) {
-				runtime.temp["radiobutton"][varId] = 0;
-			}
-
-			el.type = "radio";
-			el.id   = "radiobutton-" + varId + "-" + runtime.temp["radiobutton"][varId]++;
-			el.name = "radiobutton-" + varId;
-			if (this.args.length > 2 && this.args[2] === "checked") {
-				el.checked = true;
-				Wikifier.setValue(varName, checkValue);
-			}
-			jQuery(el).change(function () {
-				if (this.checked) {
-					Wikifier.setValue(varName, checkValue);
-				}
-			});
-			this.output.appendChild(el);
 		}
 	});
 
@@ -1147,7 +1088,7 @@ function defineStandardMacros() {
 	 * <<widget>>
 	 */
 	macros.add("widget", {
-		version : { major : 2, minor : 0, patch : 0 },
+		version : { major : 2, minor : 1, patch : 0 },
 		tags    : null,
 		handler : function () {
 			if (this.args.length === 0) {
@@ -1171,13 +1112,11 @@ function defineStandardMacros() {
 					isWidget : true,
 					handler  : (function (contents) {
 						return function () {
+							var argsCache;
 							try {
-								// store existing $args variables
+								// cache the existing $args variable, if any
 								if (state.active.variables.hasOwnProperty("args")) {
-									if (!this.self.hasOwnProperty("_argsStack")) {
-										this.self._argsStack = [];
-									}
-									this.self._argsStack.push(state.active.variables.args);
+									argsCache = state.active.variables.args;
 								}
 
 								// setup the widget arguments array
@@ -1213,13 +1152,9 @@ function defineStandardMacros() {
 								// teardown the widget arguments array
 								delete state.active.variables.args;
 
-								// restore existing $args variables
-								if (this.self.hasOwnProperty("_argsStack")) {
-									state.active.variables.args = this.self._argsStack.pop();
-									if (this.self._argsStack.length === 0) {
-										// teardown the widget arguments stack
-										delete this.self._argsStack;
-									}
+								// restore the cached $args variable, if any
+								if (typeof argsCache !== "undefined") {
+									state.active.variables.args = argsCache;
 								}
 							}
 						};
@@ -1239,7 +1174,7 @@ function defineStandardMacros() {
 	 * <<optionlist>> & <<optiontoggle>>
 	 */
 	macros.add(["optiontoggle", "optionlist"], {
-		version : { major : 2, minor : 0, patch : 0 },
+		version : { major : 2, minor : 1, patch : 0 },
 		tags    : [ "onchange" ],
 		handler : function () {
 			if (this.args.length === 0) {
@@ -1260,6 +1195,7 @@ function defineStandardMacros() {
 			elOption.id  = "option-body-" + propertyId;
 			elLabel.id   = "option-label-" + propertyId;
 			elControl.id = "option-control-" + propertyId;
+			elControl.classList.add("macro-" + this.name);
 
 			// setup the label
 			new Wikifier(elLabel, this.payload[0].contents.trim());
@@ -1346,7 +1282,7 @@ function defineStandardMacros() {
 	 * <<optionbar>>
 	 */
 	macros.add("optionbar", {
-		version : { major : 3, minor : 0, patch : 0 },
+		version : { major : 3, minor : 1, patch : 0 },
 		handler : function () {
 			var	elSet   = document.createElement("ul"),
 				elOK    = document.createElement("li"),
@@ -1354,6 +1290,7 @@ function defineStandardMacros() {
 
 			elSet.appendChild(elOK);
 			elSet.appendChild(elReset);
+			elSet.classList.add("macro-" + this.name);
 
 			elOK.appendChild(insertElement(null, "button", "options-ok", "ui-close", "OK"));
 			elReset.appendChild(insertElement(null, "button", "options-reset", "ui-close", "Reset to Defaults"));
