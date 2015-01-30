@@ -15,9 +15,10 @@ function defineStandardMacros() {
 	/*******************************************************************************************************************
 	 * Utility Functions
 	 ******************************************************************************************************************/
-	function setupWikifyEvalEvent(options) {
-		options.targets.addClass("event-" + Util.slugify(options.eventName));
-		options.targets[!!options.once ? "one" : "on"](options.eventName + ".macros", function () {
+	function setupWikifyEvalEvent($targets, eventName, options) {
+		options = jQuery.extend({}, options);
+		$targets.addClass("event-" + Util.slugify(eventName) + (options.once ? "-once" : ""));
+		$targets[options.once ? "one" : "on"](eventName + ".macros", function () {
 			if (options.content !== "") {
 				var argsCache;
 				// there's no catch clause because this try/finally is here simply to ensure that
@@ -49,7 +50,7 @@ function defineStandardMacros() {
 				}
 			}
 
-			// call the specified callback (if any)
+			// call the given callback function, if any
 			if (typeof options.callback === "function") {
 				options.callback();
 			}
@@ -138,7 +139,7 @@ function defineStandardMacros() {
 
 				if (this.args[0] === "go") {
 					if (isNaN(this.args[1]) || this.args[1] < 1) {
-						return this.error('the argument after "go" must be a whole number greater than zero');
+						return this.error('argument following "go" must be a whole number greater than zero');
 					}
 					steps = (this.args[1] < state.length) ? this.args[1] : state.length - 1;
 					pname = state.peek(steps).title;
@@ -149,7 +150,7 @@ function defineStandardMacros() {
 						this.args[1] = this.args[1].link;
 					}
 					if (!tale.has(this.args[1])) {
-						return this.error('the "' + this.args[1] + '" passage does not exist');
+						return this.error('passage "' + this.args[1] + '" does not exist');
 					}
 					if (this.name === "return") { // || config.disableHistoryTracking) // allow <<back>> to work like <<return>> when config.disableHistoryTracking is enabled
 						pname = this.args[1];
@@ -191,9 +192,7 @@ function defineStandardMacros() {
 						if (config.historyMode === History.Modes.Hash || config.disableHistoryControls) {
 							return function () {
 								// pop the history stack
-								//   n.b. (steps > 0) is correct, since SugarCube's history stack does not store "dirty"
-								//        (i.e. post-rendered/executed) states; in most other headers, something like
-								//        (steps >= 0) would probably be necessary
+								//   n.b. (steps > 0) is correct, since the stack only holds "clean" (i.e. non-rendered) states
 								while (steps > 0 && state.length > 1) {
 									state.pop();
 									steps--;
@@ -733,18 +732,14 @@ function defineStandardMacros() {
 				passage = this.args.length > 1 ? this.args[1] : undefined;
 			}
 
-			el.classList.add("link-" + (passage ? (tale.has(passage) ? "internal" : "broken") : "internal"));
+			el.classList.add("link-" + (passage != null ? (tale.has(passage) ? "internal" : "broken") : "internal")); // use lazy equality
 			el.classList.add("link-" + this.name); // DEPRECATED
 			el.classList.add("macro-" + this.name);
 			insertText(el, elText);
-			setupWikifyEvalEvent({
-				targets    : jQuery(el),
-				eventName  : "click",
+			setupWikifyEvalEvent(jQuery(el), "click", {
 				content    : this.payload[0].contents.trim(),
 				widgetArgs : widgetArgs,
-				callback   : (passage !== undefined)
-					? function () { state.display(passage, el); }
-					: undefined
+				callback   : passage != null ? function () { state.display(passage, el); } : undefined // use lazy equality
 			});
 			this.output.appendChild(el);
 		}
@@ -1084,6 +1079,40 @@ function defineStandardMacros() {
 	/*******************************************************************************************************************
 	 * Miscellaneous
 	 ******************************************************************************************************************/
+	/**
+	 * <<goto>>
+	 */
+	macros.add("goto", {
+		version : { major : 1, minor : 0, patch : 0 },
+		handler : function () {
+			if (this.args.length === 0) {
+				return this.error("no passage specified");
+			}
+
+			var passage;
+
+			if (typeof this.args[0] === "object") {
+				// argument was in wiki link syntax
+				passage = this.args[0].link;
+			} else {
+				// argument was simply the passage name
+				passage = this.args[0];
+			}
+			if (!tale.has(passage)) {
+				return this.error('passage "' + passage + '" does not exist');
+			}
+
+			// call state.display()
+			//   n.b. this does not terminate the current Wikifier call chain, though, ideally, it probably
+			//        should, however, doing so wouldn't be trivial and there's the question of would that
+			//        behavior be unwanted by users, who are used to the current behavior from similar macros
+			//        and constructs
+			setTimeout(function () {
+				state.display(passage);
+			}, 40); // not too short, not too long
+		}
+	});
+
 	/**
 	 * <<widget>>
 	 */
