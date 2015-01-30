@@ -895,7 +895,7 @@ Object.defineProperties(Passage.prototype, {
 		get : function () {
 			if (this.element == null) { // use lazy equality
 				return String.format('<span class="error" title="{0}">Error: this passage "{0}" does not exist</span>',
-					this.title.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"));
+					Util.entityEncode(this.title));
 			}
 			if (TWINE1) {
 				return Passage.unescape(this.element.textContent);
