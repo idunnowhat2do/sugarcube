@@ -22,7 +22,7 @@ class Header (header.Header):
 			return OrderedDict()
 
 	def storySettings(self):
-		return "SugarCube does not support the StorySettings special passage.\n\nInstead, you should use SugarCube's configuration object, config.\n    See: http://www.motoslave.net/sugarcube/docs/#config"
+		return "SugarCube does not support the StorySettings special passage.\n\nInstead, you should use SugarCube's configuration object, config.\n    See: http://www.motoslave.net/sugarcube/docs/config-object.html"
 
 	def isEndTag(self, name, tag):
 		return (name == ('/' + tag) or name == ('end' + tag))
@@ -30,20 +30,19 @@ class Header (header.Header):
 	def nestedMacros(self):
 		return [
 				# standard macros
-				'if',
-				'for',
-				'silently',
-				'nobr',
-				'script',
-				'bind',
+				'append',
 				'button',
 				'click',
-				'append',
+				'for',
+				'if',
+				'nobr',
+				'optionlist',
+				'optiontoggle',
 				'prepend',
 				'replace',
-				'widget',
-				'optiontoggle',
-				'optionlist'
+				'script',
+				'silently',
+				'widget'
 				# deprecated macros
 				# (none, yay)
 			]
