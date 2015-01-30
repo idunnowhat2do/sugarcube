@@ -423,7 +423,7 @@ var Wikifier = (function () {
 		createInternalLink : {
 			value : function (place, passage, text, callback) {
 				var el = document.createElement("a");
-				if (passage != null) { // use lazy equality; 0 is a valid ID and name, so we cannot simply evaluate passage
+				if (passage != null) { // use lazy equality
 					el.setAttribute("data-passage", passage);
 					if (tale.has(passage)) {
 						el.classList.add("link-internal");
