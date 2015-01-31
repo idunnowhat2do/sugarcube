@@ -701,7 +701,7 @@ function defineStandardMacros() {
 	 * <<button>> & <<click>>
 	 */
 	macros.add(["button", "click"], {
-		version : { major : 4, minor : 3, patch : 0 },
+		version : { major : 5, minor : 0, patch : 0 },
 		tags    : null,
 		handler : function () {
 			if (this.args.length === 0) {
@@ -719,23 +719,38 @@ function defineStandardMacros() {
 					return wargs;
 				}.call(this)),
 				el      = document.createElement(this.name === "click" ? "a" : "button"),
-				elText,
 				passage;
 
-			if (typeof this.args[0] === "object") {
-				// argument was in wiki link syntax
-				elText  = this.args[0].text;
+			if (typeof this.args[0] === "object" && this.args[0].isImage) {
+				// argument was in wiki image syntax
+				var img = insertElement(el, "img");
+				img.src = this.args[0].source;
+				if (this.args[0].hasOwnProperty("passage")) {
+					img.setAttribute("data-passage", this.args[0].passage);
+				}
+				if (this.args[0].hasOwnProperty("title")) {
+					img.title = this.args[0].title;
+				}
+				if (this.args[0].hasOwnProperty("align")) {
+					img.align = this.args[0].align;
+				}
 				passage = this.args[0].link;
 			} else {
-				// argument was simply the link text
-				elText  = this.args[0];
-				passage = this.args.length > 1 ? this.args[1] : undefined;
+				var text;
+				if (typeof this.args[0] === "object") {
+					// argument was in wiki link syntax
+					text    = this.args[0].text;
+					passage = this.args[0].link;
+				} else {
+					// argument was simply the link text
+					text    = this.args[0];
+					passage = this.args.length > 1 ? this.args[1] : undefined;
+				}
+				insertText(el, text);
 			}
-
 			el.classList.add("link-" + (passage != null ? (tale.has(passage) ? "internal" : "broken") : "internal")); // use lazy equality
 			el.classList.add("link-" + this.name); // DEPRECATED
 			el.classList.add("macro-" + this.name);
-			insertText(el, elText);
 			setupWikifyEvalEvent(jQuery(el), "click", {
 				content    : this.payload[0].contents.trim(),
 				widgetArgs : widgetArgs,
