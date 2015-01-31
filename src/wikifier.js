@@ -672,6 +672,7 @@ var Wikifier = (function () {
 				if (c === '[') {
 					// link
 					isLink = true;
+					item.isLink = true;
 				} else {
 					// image
 					isLink = false;
@@ -689,6 +690,7 @@ var Wikifier = (function () {
 						return error("malformed square-bracketed wiki markup");
 					}
 					pos += 3;
+					item.isImage = true;
 				}
 
 				// scan for sections
@@ -1159,13 +1161,13 @@ var Wikifier = (function () {
 			{
 				name: "macro",
 				match: "<<",
-				lookaheadRegExp: /<<([^>\s]+)(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|[^>]|(?:>(?!>)))*)>>/gm,
+				lookaheadRegExp: /<<([^>\s]+)(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|(?:\[(?:[<>]?[Ii][Mm][Gg])?\[[^\r\n]*?\]\]+)|[^>]|(?:>(?!>)))*)>>/gm,
 				argsPattern: "(?:" + [
-					'("(?:\\\\.|[^"\\\\])+")',      // 1=double quoted
-					"('(?:\\\\.|[^'\\\\])+')",      // 2=single quoted
-					"(\"\"|'')",                    // 3=empty quotes
-					"(\\[\\[(?:\\s|\\S)*?\\]\\]+)", // 4=double square-bracketed
-					"([^\"'`\\s]\\S*)"              // 5=barewords
+					'("(?:\\\\.|[^"\\\\])+")',                          // 1=double quoted
+					"('(?:\\\\.|[^'\\\\])+')",                          // 2=single quoted
+					"(\"\"|'')",                                        // 3=empty quotes
+					"(\\[(?:[<>]?[Ii][Mm][Gg])?\\[[^\\r\\n]*?\\]\\]+)", // 4=double square-bracketed
+					"([^\"'`\\s]\\S*)"                                  // 5=barewords
 				].join("|") + ")",
 				working: { name: "", handler: "", arguments: "", index: 0 }, // the working parse object
 				context: null, // last execution context object (top-level macros, hierarchically, have a null context)
@@ -1377,16 +1379,48 @@ var Wikifier = (function () {
 									+ arg.slice(markup.pos) + '" (pos: ' + markup.pos + ')');
 							}
 
-							// Convert to a link object
-							arg = {};
-							// text=(text), forceInternal=(~), link=link, setter=(setter)
-							arg.count      = markup.hasOwnProperty("text") ? 2 : 1;
-							arg.link       = Wikifier.helpers.evalPassageId(markup.link);
-							arg.text       = markup.hasOwnProperty("text") ? Wikifier.helpers.evalExpression(markup.text) : arg.link;
-							arg.isExternal = !markup.forceInternal && Wikifier.isExternalLink(arg.link);
-							arg.setFn      = markup.hasOwnProperty("setter")
-								? (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(markup.setter)))
-								: null;
+							// Convert to a link or image object
+							if (markup.isLink) {
+								// .isLink, [.text], [.forceInternal], .link, [.setter]
+								arg = { isLink : true };
+								arg.count      = markup.hasOwnProperty("text") ? 2 : 1;
+								arg.link       = Wikifier.helpers.evalPassageId(markup.link);
+								arg.text       = markup.hasOwnProperty("text") ? Wikifier.helpers.evalExpression(markup.text) : arg.link;
+								arg.isExternal = !markup.forceInternal && Wikifier.isExternalLink(arg.link);
+								arg.setFn      = markup.hasOwnProperty("setter")
+									? (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(markup.setter)))
+									: null;
+							} else if (markup.isImage) {
+								// .isImage, [.align], [.title], .source, [.forceInternal], [.link], [.setter]
+								arg = (function (source) {
+									var imgObj = {
+											isImage : true,
+											source  : source
+										};
+									// check for Twine 1.4 Base64 image passage transclusion
+									if (source.slice(0, 5) !== "data:" && tale.has(source)) {
+										var passage = tale.get(source);
+										if (passage.tags.contains("Twine.image")) {
+											imgObj.source  = passage.text;
+											imgObj.passage = passage.title;
+										}
+									}
+									return imgObj;
+								}(markup.source));
+								if (markup.hasOwnProperty("align")) {
+									arg.align = markup.align;
+								}
+								if (markup.hasOwnProperty("title")) {
+									arg.title = Wikifier.helpers.evalExpression(markup.title);
+								}
+								if (markup.hasOwnProperty("link")) {
+									arg.link       = Wikifier.helpers.evalPassageId(markup.link);
+									arg.isExternal = !markup.forceInternal && Wikifier.isExternalLink(arg.link);
+								}
+								arg.setFn = markup.hasOwnProperty("setter")
+									? (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(markup.setter)))
+									: null;
+							}
 						} else if (match[5]) {
 							// Barewords
 							arg = match[5];
