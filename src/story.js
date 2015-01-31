@@ -900,7 +900,7 @@ Object.defineProperties(Passage.prototype, {
 			if (TWINE1) {
 				return Passage.unescape(this.element.textContent);
 			} else {
-				return this.element.textContent;
+				return this.element.textContent.replace(/\r/g, "");
 			}
 		}
 	},
@@ -1009,13 +1009,13 @@ if (TWINE1) {
 				if (typeof str !== "string" || str === "") { return ""; }
 				return str
 					// unescape line feeds
-					.replace(/\\n/gm, "\n")
+					.replace(/\\n/g, "\n")
 					// unescape tabs, which is a Twine 1.4.1 "feature"
-					.replace(/\\t/gm, "\t")
+					.replace(/\\t/g, "\t")
 					// unescape backslashes, including "\\s" which is an old Twine "feature"
-					.replace(/\\s|\\/gm, "\\")
+					.replace(/\\s|\\/g, "\\")
 					// remove carriage returns
-					.replace(/\r/gm, "");
+					.replace(/\r/g, "");
 			}
 		}
 	});
