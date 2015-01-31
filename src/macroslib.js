@@ -65,7 +65,7 @@ function defineStandardMacros() {
 	 * <<actions>>
 	 */
 	macros.add("actions", {
-		version : { major : 2, minor : 2, patch : 0 },
+		version : { major : 3, minor : 0, patch : 0 },
 		handler : function () {
 			var list = insertElement(this.output, "ul");
 			list.classList.add(this.name);
@@ -73,31 +73,57 @@ function defineStandardMacros() {
 				state.active.variables["#actions"] = {};
 			}
 			for (var i = 0; i < this.args.length; i++) {
-				var	linkText,
-					passage,
+				var	passage,
+					text,
+					image,
 					setFn,
 					el;
 
-				if (typeof this.args[i] === "object") {
-					// argument was in wiki link syntax
-					linkText = this.args[i].text;
-					passage  = this.args[i].link;
-					setFn    = this.args[i].setFn;
+				if (typeof this.args[i] === "object" && this.args[i].isImage) {
+					// argument was in wiki image syntax
+					image = document.createElement("img");
+					image.src = this.args[i].source;
+					if (this.args[i].hasOwnProperty("passage")) {
+						image.setAttribute("data-passage", this.args[i].passage);
+					}
+					if (this.args[i].hasOwnProperty("title")) {
+						image.title = this.args[i].title;
+					}
+					if (this.args[i].hasOwnProperty("align")) {
+						image.align = this.args[i].align;
+					}
+					passage = this.args[i].link;
+					setFn   = this.args[i].setFn;
 				} else {
-					// argument was simply the passage name
-					linkText = passage = this.args[i];
+					if (typeof this.args[i] === "object") {
+						// argument was in wiki link syntax
+						text    = this.args[i].text;
+						passage = this.args[i].link;
+						setFn   = this.args[i].setFn;
+					} else {
+						// argument was simply the passage name
+						text = passage = this.args[i];
+					}
 				}
 
-				if (state.active.variables["#actions"][passage]) {
+				if (
+					   state.active.variables["#actions"].hasOwnProperty(passage)
+					&& state.active.variables["#actions"][passage]
+				) {
 					continue;
 				}
 
-				el = Wikifier.createInternalLink(insertElement(list, "li"), passage, linkText, function (p, fn) {
+				el = Wikifier.createInternalLink(insertElement(list, "li"), passage, null, (function (p, fn) {
 					return function () {
 						state.active.variables["#actions"][p] = true;
 						if (typeof fn === "function") { fn(); }
 					};
-				}(passage, setFn));
+				}(passage, setFn)));
+				if (image == null) { // use lazy equality
+					insertText(el, text);
+				} else {
+					el.appendChild(image);
+				}
 				el.classList.add("link-" + this.name); // DEPRECATED
 				el.classList.add("macro-" + this.name);
 			}
@@ -108,25 +134,46 @@ function defineStandardMacros() {
 	 * <<back>> & <<return>>
 	 */
 	macros.add(["back", "return"], {
-		version : { major : 4, minor : 2, patch : 1 },
+		version : { major : 5, minor : 0, patch : 0 },
 		handler : function () {
 			var	steps = 1,
 				pname,
-				ctext,
 				ltext = this.name[0].toUpperCase() + this.name.slice(1),
+				ctext,
+				image,
 				el;
 
-			// translate wiki link syntax into the <<back>>/<<return>> "to" syntax
+			// translate wiki link/image syntax into the <<back>>/<<return>> "to" syntax
 			if (this.args.length === 1 && typeof this.args[0] === "object") {
-				if (this.args[0].count === 1) {
-					// simple link syntax: [[...]]
-					this.args.push(this.args[0].link);
-					this.args[0] = "to"
+				if (this.args[0].isImage) {
+					// argument was in wiki image syntax
+					image = document.createElement("img");
+					image.src = this.args[0].source;
+					if (this.args[0].hasOwnProperty("passage")) {
+						image.setAttribute("data-passage", this.args[0].passage);
+					}
+					if (this.args[0].hasOwnProperty("title")) {
+						image.title = this.args[0].title;
+					}
+					if (this.args[0].hasOwnProperty("align")) {
+						image.align = this.args[0].align;
+					}
+					if (this.args[0].hasOwnProperty("link")) {
+						this.args.push("to");
+						this.args.push(this.args[0].link);
+					}
+					this.args[0] = null;
 				} else {
-					// pretty link syntax: [[...|...]]
-					this.args.push("to");
-					this.args.push(this.args[0].link);
-					this.args[0] = this.args[0].text;
+					if (this.args[0].count === 1) {
+						// simple link syntax: [[...]]
+						this.args.push(this.args[0].link);
+						this.args[0] = "to"
+					} else {
+						// pretty link syntax: [[...|...]]
+						this.args.push("to");
+						this.args.push(this.args[0].link);
+						this.args[0] = this.args[0].text;
+					}
 				}
 			}
 
@@ -165,18 +212,18 @@ function defineStandardMacros() {
 							}
 						}
 					}
-					if (pname === undefined) {
+					if (pname == null) { // use lazy equality
 						return this.error('cannot find passage "' + this.args[1] + '" in the current story history');
 					}
 				} else {
 					return this.error('"' + this.args[0] + '" is not a valid action (go|to)');
 				}
 			}
-			if (pname === undefined && state.length > 1) {
+			if (pname == null && state.length > 1) { // use lazy equality
 				pname = state.peek(steps).title;
 			}
 
-			if (pname === undefined) {
+			if (pname == null) { // use lazy equality
 				return this.error("cannot find passage");
 			} else if (steps === 0) {
 				return this.error("already at the first passage in the current story history");
@@ -216,7 +263,11 @@ function defineStandardMacros() {
 					}
 				}.call(this));
 			}
-			insertText(el, ctext || this.self.dtext || ltext);
+			if (image == null) { // use lazy equality
+				insertText(el, ctext || this.self.dtext || ltext);
+			} else {
+				el.appendChild(image);
+			}
 			this.output.appendChild(el);
 		},
 		linktext : function () {
@@ -232,45 +283,79 @@ function defineStandardMacros() {
 	 * <<choice>>
 	 */
 	macros.add("choice", {
-		version : { major : 4, minor : 0, patch : 0 },
+		version : { major : 5, minor : 0, patch : 0 },
 		handler : function () {
 			if (this.args.length === 0) {
 				return this.error("no passage specified");
 			}
 
-			var	linkText,
-				passage,
+			var	passage,
+				text,
+				image,
 				setFn,
-				choiceId  = state.active.title,
+				choiceId = state.active.title,
 				el;
 
 			if (this.args.length === 1) {
-				if (typeof this.args[0] === "object") {
-					// argument was in wiki link syntax
-					linkText = this.args[0].text;
-					passage  = this.args[0].link;
-					setFn    = this.args[0].setFn;
+				if (typeof this.args[0] === "object" && this.args[0].isImage) {
+					// argument was in wiki image syntax
+					image = document.createElement("img");
+					image.src = this.args[0].source;
+					if (this.args[0].hasOwnProperty("passage")) {
+						image.setAttribute("data-passage", this.args[0].passage);
+					}
+					if (this.args[0].hasOwnProperty("title")) {
+						image.title = this.args[0].title;
+					}
+					if (this.args[0].hasOwnProperty("align")) {
+						image.align = this.args[0].align;
+					}
+					passage = this.args[0].link;
+					setFn   = this.args[0].setFn;
 				} else {
-					// argument was simply the passage name
-					linkText = passage = this.args[0];
+					if (typeof this.args[0] === "object") {
+						// argument was in wiki link syntax
+						text    = this.args[0].text;
+						passage = this.args[0].link;
+						setFn   = this.args[0].setFn;
+					} else {
+						// argument was simply the passage name
+						text = passage = this.args[0];
+					}
 				}
 			} else {
 				// yes, the arguments are backwards
 				passage  = this.args[0];
-				linkText = this.args[1];
+				text = this.args[1];
 			}
 
 			if (!state.active.variables.hasOwnProperty("#choice")) {
 				state.active.variables["#choice"] = {};
-			} else if (state.active.variables["#choice"][choiceId]) {
-				insertElement(this.output, "span", null, "link-disabled link-" + this.name, linkText);
+			} else if (
+				   state.active.variables["#choice"].hasOwnProperty(choiceId)
+				&& state.active.variables["#choice"][choiceId]
+			) {
+				el = insertElement(this.output, "span");
+				if (image == null) { // use lazy equality
+					insertText(el, text);
+				} else {
+					el.appendChild(image);
+				}
+				el.classList.add("link-disabled");
+				el.classList.add("link-" + this.name); // DEPRECATED
+				el.classList.add("macro-" + this.name);
 				return;
 			}
 
-			el = Wikifier.createInternalLink(this.output, passage, linkText, function () {
+			el = Wikifier.createInternalLink(this.output, passage, null, function () {
 				state.active.variables["#choice"][choiceId] = true;
 				if (typeof setFn === "function") { setFn(); }
 			});
+			if (image == null) { // use lazy equality
+				insertText(el, text);
+			} else {
+				el.appendChild(image);
+			}
 			el.classList.add("link-" + this.name); // DEPRECATED
 			el.classList.add("macro-" + this.name);
 		}
@@ -280,65 +365,102 @@ function defineStandardMacros() {
 	 * <<link>>
 	 */
 	macros.add("link", {
-		version : { major : 3, minor : 4, patch : 0 },
-		handler : function () {
+		version      : { major : 4, minor : 0, patch : 0 },
+		actionRegExp : /^disable|remove|keep|once$/, // `keep` and `once` are deprecated
+		handler      : function () {
 			if (this.args.length === 0) {
 				return this.error("no link location specified");
 			}
 
-			var	linkText,
-				linkLoc,
-				isExternal,
+			var	link,
+				text,
+				image,
+				external,
 				setFn,
-				limit,
+				actionRegExp = this.self.actionRegExp,
+				action,
 				el;
 
 			if (this.args.length === 3) {
-				limit = this.args.pop();
-			} else if (this.args.length === 2 && (this.args[1] === "keep" || this.args[1] === "remove" || this.args[1] === "once")) {
-				limit = this.args.pop();
+				action = this.args.pop();
+			} else if (this.args.length === 2 && actionRegExp.test(this.args[1])) {
+				action = this.args.pop();
 			}
-			if (limit && limit !== "keep" && limit !== "remove" && limit !== "once") {
-				return this.error('"' + limit + '" is not a valid action (keep|remove)');
+			if (action != null && !actionRegExp.test(action)) { // use lazy equality on null check
+				return this.error('"' + action + '" is not a valid action (disable|remove)');
 			}
 
 			if (this.args.length === 2) {
-				linkText = this.args[0];
-				linkLoc  = this.args[1];
+				text = this.args[0];
+				link  = this.args[1];
 			} else {
-				if (typeof this.args[0] === "object") {
-					// argument was in wiki link syntax
-					linkText   = this.args[0].text;
-					linkLoc    = this.args[0].link;
-					isExternal = this.args[0].isExternal;
-					setFn      = this.args[0].setFn;
+				if (typeof this.args[0] === "object" && this.args[0].isImage) {
+					// argument was in wiki image syntax
+					image = document.createElement("img");
+					image.src = this.args[0].source;
+					if (this.args[0].hasOwnProperty("passage")) {
+						image.setAttribute("data-passage", this.args[0].passage);
+					}
+					if (this.args[0].hasOwnProperty("title")) {
+						image.title = this.args[0].title;
+					}
+					if (this.args[0].hasOwnProperty("align")) {
+						image.align = this.args[0].align;
+					}
+					link     = this.args[0].link;
+					external = this.args[0].external;
+					setFn    = this.args[0].setFn;
 				} else {
-					// argument was simply the link location
-					linkText = linkLoc = this.args[0];
+					if (typeof this.args[0] === "object") {
+						// argument was in wiki link syntax
+						text     = this.args[0].text;
+						link     = this.args[0].link;
+						external = this.args[0].external;
+						setFn    = this.args[0].setFn;
+					} else {
+						// argument was simply the link location
+						text = link = this.args[0];
+					}
 				}
 			}
-			if (isExternal === undefined) {
-				isExternal = Wikifier.isExternalLink(linkLoc);
+			if (external == null) { // use lazy equality
+				external = Wikifier.isExternalLink(link);
 			}
 
-			if (limit) {
+			if (action) {
 				if (!state.active.variables.hasOwnProperty("#link")) {
 					state.active.variables["#link"] = {};
-				} else if (state.active.variables["#link"][linkLoc]) {
-					if (limit === "keep") {
-						insertElement(this.output, "span", null, "link-disabled link-" + this.name, linkText);
+				} else if (
+					   state.active.variables["#link"].hasOwnProperty(link)
+					&& state.active.variables["#link"][link]
+				) {
+					if (action === "disable" || action === "keep") {
+						el = insertElement(this.output, "span");
+						if (image == null) { // use lazy equality
+							insertText(el, text);
+						} else {
+							el.appendChild(image);
+						}
+						el.classList.add("link-disabled");
+						el.classList.add("link-" + this.name); // DEPRECATED
+						el.classList.add("macro-" + this.name);
 					}
 					return;
 				}
 			}
 
-			if (isExternal) {
-				el = Wikifier.createExternalLink(this.output, linkLoc, linkText);
+			if (external) {
+				el = Wikifier.createExternalLink(this.output, link);
 			} else {
-				el = Wikifier.createInternalLink(this.output, linkLoc, linkText, function () {
-					if (limit) { state.active.variables["#link"][linkLoc] = true; }
+				el = Wikifier.createInternalLink(this.output, link, null, function () {
+					if (action) { state.active.variables["#link"][link] = true; }
 					if (typeof setFn === "function") { setFn(); }
 				});
+			}
+			if (image == null) { // use lazy equality
+				insertText(el, text);
+			} else {
+				el.appendChild(image);
 			}
 			el.classList.add("link-" + this.name); // DEPRECATED
 			el.classList.add("macro-" + this.name);
@@ -1251,26 +1373,26 @@ function defineStandardMacros() {
 			}
 			switch (this.name) {
 			case "optiontoggle":
-				var	linkText = this.args.length > 1 ? this.args[1] : undefined,
+				var	text     = this.args.length > 1 ? this.args[1] : undefined,
 					elInput  = document.createElement("a");
 				if (options[propertyName] === undefined) {
 					options[propertyName] = false;
 				}
 				if (options[propertyName]) {
-					insertText(elInput, linkText || "On");
+					insertText(elInput, text || "On");
 					elInput.classList.add("enabled");
 				} else {
-					insertText(elInput, linkText || "Off");
+					insertText(elInput, text || "Off");
 				}
 				jQuery(elInput).click(function () {
 					return function (evt) {
 						removeChildren(elInput);
 						if (options[propertyName]) {
-							insertText(elInput, linkText || "Off");
+							insertText(elInput, text || "Off");
 							elInput.classList.remove("enabled");
 							options[propertyName] = false;
 						} else {
-							insertText(elInput, linkText || "On");
+							insertText(elInput, text || "On");
 							elInput.classList.add("enabled");
 							options[propertyName] = true;
 						}

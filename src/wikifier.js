@@ -1383,11 +1383,11 @@ var Wikifier = (function () {
 							if (markup.isLink) {
 								// .isLink, [.text], [.forceInternal], .link, [.setter]
 								arg = { isLink : true };
-								arg.count      = markup.hasOwnProperty("text") ? 2 : 1;
-								arg.link       = Wikifier.helpers.evalPassageId(markup.link);
-								arg.text       = markup.hasOwnProperty("text") ? Wikifier.helpers.evalExpression(markup.text) : arg.link;
-								arg.isExternal = !markup.forceInternal && Wikifier.isExternalLink(arg.link);
-								arg.setFn      = markup.hasOwnProperty("setter")
+								arg.count    = markup.hasOwnProperty("text") ? 2 : 1;
+								arg.link     = Wikifier.helpers.evalPassageId(markup.link);
+								arg.text     = markup.hasOwnProperty("text") ? Wikifier.helpers.evalExpression(markup.text) : arg.link;
+								arg.external = !markup.forceInternal && Wikifier.isExternalLink(arg.link);
+								arg.setFn    = markup.hasOwnProperty("setter")
 									? (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(markup.setter)))
 									: null;
 							} else if (markup.isImage) {
@@ -1414,8 +1414,8 @@ var Wikifier = (function () {
 									arg.title = Wikifier.helpers.evalExpression(markup.title);
 								}
 								if (markup.hasOwnProperty("link")) {
-									arg.link       = Wikifier.helpers.evalPassageId(markup.link);
-									arg.isExternal = !markup.forceInternal && Wikifier.isExternalLink(arg.link);
+									arg.link     = Wikifier.helpers.evalPassageId(markup.link);
+									arg.external = !markup.forceInternal && Wikifier.isExternalLink(arg.link);
 								}
 								arg.setFn = markup.hasOwnProperty("setter")
 									? (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(markup.setter)))
