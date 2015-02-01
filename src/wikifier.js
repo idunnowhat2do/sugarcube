@@ -671,8 +671,7 @@ var Wikifier = (function () {
 				c = peek();
 				if (c === '[') {
 					// link
-					isLink = true;
-					item.isLink = true;
+					isLink = item.isLink = true;
 				} else {
 					// image
 					isLink = false;
@@ -707,18 +706,26 @@ var Wikifier = (function () {
 						case '\n':
 							return error("unterminated wiki {0}", isLink ? "link" : "image");
 						case '"':
+							/*
+							 * This is not entirely reliable within the non-setter component sections (i.e. the
+							 * sections which allow raw strings), since it's possible, however unlikely, for a raw
+							 * string to contain unpaired double quotes.  The likelihood is low enough, however,
+							 * that I'm deeming the risk acceptable, for now at least.
+							 */
 							if (slurpQuote(c) === EOF) {
 								return error("unterminated double quoted string in wiki {0}", isLink ? "link" : "image");
 							}
 							break;
 						case "'":
 							/*
-							 * This is a terrible kludge.  Allow unterminated single quotes, thus making
-							 * this unreliable, or don't and break who knows how many links in the wild.
+							 * Disallow the use of single quotes as delimiters for quoted strings within all but
+							 * the setter component section, since it's entirely possible for raw strings to contain
+							 * unpaired single quotes.
 							 */
-							var oldPos = pos;
-							if (slurpQuote(c) === EOF) {
-								pos = oldPos;
+							if (cid === 4 || (cid === 3 && isLink)) {
+								if (slurpQuote(c) === EOF) {
+									return error("unterminated single quoted string in wiki {0}", isLink ? "link" : "image");
+								}
 							}
 							break;
 						case '|': // core section pipe ('|') separator
