@@ -1251,6 +1251,8 @@ var Wikifier = (function () {
 							this.working.arguments = "";
 							this.working.index     = 0;
 						}
+					} else {
+						w.outputText(w.output, w.matchStart, w.nextMatch);
 					}
 				},
 				parseTag: function (w) {
