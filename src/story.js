@@ -894,7 +894,7 @@ Object.defineProperties(Passage.prototype, {
 	text : {
 		get : function () {
 			if (this.element == null) { // use lazy equality
-				return String.format('<span class="error" title="{0}">Error: this passage "{0}" does not exist</span>',
+				return String.format('<span class="error" title="{0}">Error: the passage "{0}" does not exist</span>',
 					Util.entityEncode(this.title));
 			}
 			if (TWINE1) {
