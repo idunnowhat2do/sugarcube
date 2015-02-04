@@ -321,8 +321,8 @@ var SaveSystem = (function () {
 			reader = new FileReader();
 
 		// capture the file information once the load is finished
-		jQuery(reader).load(function(file) {
-			return function(evt) {
+		jQuery(reader).load(function (file) {
+			return function (evt) {
 				if (DEBUG) { console.log('    > loaded: ' + escape(file.name) + '; payload: ' + evt.target.result); }
 
 				if (!evt.target.result) {

@@ -56,20 +56,20 @@ History.Modes = Object.freeze({
 Object.defineProperties(History.prototype, {
 	// getters
 	top : {
-		get : function() { return (this.history.length !== 0) ? this.history[this.history.length - 1] : null; }
+		get : function () { return (this.history.length !== 0) ? this.history[this.history.length - 1] : null; }
 	},
 
 	bottom : {
-		get : function() { return (this.history.length !== 0) ? this.history[0] : null; }
+		get : function () { return (this.history.length !== 0) ? this.history[0] : null; }
 	},
 
 	length : {
-		get : function() { return (config.historyMode === History.Modes.Session) ? this.active.sidx + 1 : this.history.length; }
+		get : function () { return (config.historyMode === History.Modes.Session) ? this.active.sidx + 1 : this.history.length; }
 	},
 
 	// methods
 	isEmpty : {
-		value : function() { return this.history.length === 0; }
+		value : function () { return this.history.length === 0; }
 	},
 
 	/*

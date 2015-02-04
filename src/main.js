@@ -67,15 +67,15 @@ var	version = Object.freeze({
 		/* /legacy */
 
 		// method properties
-		toString : function() {
+		toString : function () {
 			return this.major + "." + this.minor + "." + this.patch
 				+ (this.prerelease ? "-" + this.prerelease : "") + "+" + this.build;
 		},
-		short : function() {
+		short : function () {
 			return this.title + " (v" + this.major + "." + this.minor + "." + this.patch
 				+ (this.prerelease ? "-" + this.prerelease : "") + ")";
 		},
-		long : function() {
+		long : function () {
 			return this.title + " v" + this.toString() + " (" + this.date.toUTCString() + ")";
 		}
 	});
