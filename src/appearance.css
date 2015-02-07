@@ -29,31 +29,6 @@ a.link-broken {
 	font-weight: bold;
 	text-decoration: none;
 }
-hr {
-	height: 1px;
-	border: none;
-	background-color: #fff;
-}
-input, textarea {
-	color: #fff;
-	background-color: #333;
-	border: 1px solid #fff;
-}
-input[type="text"], textarea {
-	min-width: 16em;
-}
-input {
-	padding: 2px 3px;
-}
-input:focus, textarea:focus {
-	border: 1px solid #292;
-}
-input:hover, textarea:hover {
-	border: 1px solid #f70;
-}
-textarea {
-	overflow: auto; /* fixes IE inanity */
-}
 button {
 	cursor: pointer;
 	padding: 4px 6px;
@@ -76,6 +51,36 @@ button:hover {
 button:active {
 	background-color: #f70;
 	border-color: #f92;
+}
+button, input, textarea {
+	outline: none;
+}
+input, textarea {
+	color: #fff;
+	background-color: #111; /* cannot use inherit because of IE */
+	border: 1px solid #444;
+	padding: 0.4em;
+}
+input[type="text"], textarea {
+	min-width: 20em;
+}
+input {
+	padding: 2px 3px;
+}
+input:hover, input:focus, textarea:hover, textarea:focus {
+	background-color: #222;
+	border: 1px solid #eee;
+}
+input[type="checkbox"], input[type="radio"] {
+	cursor: pointer;
+}
+textarea {
+	overflow: auto; /* fixes IE inanity */
+}
+hr {
+	height: 1px;
+	border: none;
+	background-color: #fff;
 }
 
 .error {
@@ -101,8 +106,9 @@ button:active {
 }
 
 #ui-bar {
+	overflow: auto;
 	background-color: #222;
-	border-right: 1px solid #fff;
+	border-right: 1px solid #444;
 }
 #ui-bar header, #menu, #ui-bar footer {
 	text-align: right;
@@ -226,12 +232,15 @@ a.link-return:after {
 #ui-body {
 	opacity: 1;
 	background-color: #222;
-	border: 1px solid #fff;
+	border: 1px solid #444;
 	text-align: left;
 	line-height: 2;
 }
 #ui-body div {
 	padding: 0.2em;
+}
+#ui-body hr {
+	background-color: #444;
 }
 
 /* Default menu button styling */
@@ -317,7 +326,7 @@ a.link-return:after {
 	padding: 0.33em 0.33em 0.4em;
 }
 #ui-body.saves > div:not(:first-child) {
-	border-top: 1px solid #fff;
+	border-top: 1px solid #444;
 }
 #saves-import-label {
 	margin: 0 6px;
