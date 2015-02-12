@@ -81,7 +81,11 @@ var UISystem = (function () {
 		var $html = jQuery(document.documentElement);
 
 		// setup the title
-		setPageElement("story-title", "StoryTitle", tale.title);
+		if (TWINE1) {
+			setPageElement("story-title", "StoryTitle", tale.title);
+		} else {
+			jQuery("#story-title").empty().append(tale.title);
+		}
 
 		// setup the dynamic page elements
 		if (!tale.has("StoryCaption")) {
