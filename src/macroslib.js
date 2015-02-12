@@ -1456,6 +1456,7 @@ function defineStandardMacros() {
 
 			elSet.appendChild(elOK);
 			elSet.appendChild(elReset);
+			elSet.classList.add("buttons");
 			elSet.classList.add("macro-" + this.name);
 
 			elOK.appendChild(insertElement(null, "button", "options-ok", "ui-close", "OK"));

@@ -507,7 +507,7 @@ var UISystem = (function () {
 		jQuery(_body)
 			.empty()
 			.addClass("dialog restart")
-			.append('<p>Are you sure that you want to restart?  Unsaved progress will be lost.</p><ul><li><button id="restart-ok" class="ui-close">OK</button></li><li><button id="restart-cancel" class="ui-close">Cancel</button></li></ul>');
+			.append('<p>Are you sure that you want to restart?  Unsaved progress will be lost.</p><ul class="buttons"><li><button id="restart-ok" class="ui-close">OK</button></li><li><button id="restart-cancel" class="ui-close">Cancel</button></li></ul>');
 
 		// add an additional click handler for the OK button
 		jQuery("#ui-body #restart-ok").click(function () {
@@ -578,7 +578,7 @@ var UISystem = (function () {
 		jQuery(_body)
 			.empty()
 			.addClass("dialog alert")
-			.append('<p>' + message + '</p><ul><li><button id="alert-ok" class="ui-close">OK</button></li></ul>');
+			.append('<p>' + message + '</p><ul class="buttons"><li><button id="alert-ok" class="ui-close">OK</button></li></ul>');
 		uiOpen(options, closeFn);
 	}
 

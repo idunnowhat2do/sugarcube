@@ -253,7 +253,7 @@ a.link-return:after {
 	min-width: 280px;
 	padding: 0.33em 1em 0.66em;
 }
-#ui-body.dialog > ul {
+#ui-body.dialog ul.buttons {
 	display: block;
 	width: 100%;
 	margin: 0;
@@ -261,7 +261,7 @@ a.link-return:after {
 	list-style: none;
 	text-align: left;
 }
-#ui-body.dialog > ul li {
+#ui-body.dialog ul.buttons li {
 	display: inline-block;
 	margin: 0;
 	padding: 0.4em 0.4em 0.5em;
