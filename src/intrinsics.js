@@ -784,7 +784,7 @@ Object.defineProperty(String.prototype, "splitOrEmpty", {
 		if (this == null) { // use lazy equality
 			throw new TypeError("String.prototype.splitOrEmpty called on null or undefined");
 		}
-		if (this === "") {
+		if (String(this) === "") { // required as `this` could be a basic string, a `String` object, or the result of a `call()` or `apply()`
 			return [];
 		}
 
@@ -827,7 +827,7 @@ Object.defineProperty(String.prototype, "readBracketedList", {
 
 		// RegExp groups: Double-square-bracket quoted | Unquoted
 		var	re    = new RegExp("(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^\"'\\s]\\S*)", "gm"), //"(?:\\[\\[([^\\]]+)\\]\\])|([^\\s$]+)"
-			match
+			match,
 			names = [];
 		while ((match = re.exec(this)) !== null) {
 			if (match[1]) {
