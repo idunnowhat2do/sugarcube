@@ -954,7 +954,7 @@ Object.defineProperties(Passage.prototype, {
 
 	render : {
 		value : function () {
-			if (DEBUG) { console.log("[<Passage>.render()]"); }
+			if (DEBUG) { console.log("[<Passage>.render()] title: " + this.title); }
 
 			// create the new passage element
 			var passage = insertElement(null, "section", this.domId, "passage");
