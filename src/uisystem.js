@@ -661,6 +661,17 @@ var UISystem = (function () {
 			.css({ display : "block", opacity : 0 })
 			.fadeTo(200, options.opacity);
 
+		// add the dialog imagesLoaded handler, if requested
+		if (options.resizeOnImagesLoaded) {
+			jQuery(_body)
+				.imagesLoaded()
+				.always((function (top) {
+					return function () {
+						uiResizeHandler({ data : top });
+					};
+				}(options.top)));
+		}
+
 		// display the dialog
 		var position = uiCalcPosition(options.top);
 		jQuery(_body)
