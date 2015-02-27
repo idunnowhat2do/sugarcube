@@ -29,6 +29,9 @@ a.link-broken {
 	font-weight: bold;
 	text-decoration: none;
 }
+area {
+	cursor: pointer;
+}
 button {
 	cursor: pointer;
 	padding: 4px 6px;
