@@ -1,6 +1,6 @@
 
-#init-screen { display: none; z-index: 100000; position: fixed; top: 0px; left: 0px; height: 100%; width: 100%; color: #fff; background-color: #111; text-align: center; }
-#init-screen p { display: none; width: 75%; margin: 2em auto; font-family: verdana,"dejavu sans",tahoma,arial,sans-serif; font-size: 28px; font-weight: bold; font-style: italic; }
+#init-screen { display: none; z-index: 100000; position: fixed; top: 0px; left: 0px; height: 100%; width: 100%; font: 28px/1 Helmet, Freesans, sans-serif; color: #fff; background-color: #111; text-align: center; }
+#init-screen p { display: none; width: 75%; margin: 2em auto; font-weight: bold; font-style: italic; }
 #init-loading progress { height: 20px; /* fixes a rendering bug in Chrome on certain platforms */ }
 html.init-no-js #init-screen, html.init-lacking #init-screen, html.init-loading #init-screen { display: block; }
 html.init-no-js #init-no-js { display: block; }
