@@ -2,8 +2,9 @@
 	"author"       : "Thomas Michael Edwards <tmedwards@motoslave.net>",
 	"description"  : "Dependency install configuaration for SugarCube's Node.js-hosted build script, build.js.",
 	"dependencies" : {
-		"uglify-js" : "^2.4.13",
-		"node-getopt" : "^0.2.3"
+		"node-getopt" : "^0.2.3",
+		"uglify-js"   : "^2.4.13",
+		"clean-css"   : "^3.0.10"
 	},
 	"engine"       : {
 		"node" : "0.10.x"

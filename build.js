@@ -4,7 +4,7 @@
  *   - Description : Node.js-hosted build script for SugarCube
  *   - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
  *   - Copyright   : Copyright © 2014–2015 Thomas Michael Edwards. All rights reserved.
- *   - Version     : 1.2.2, 2015-01-01
+ *   - Version     : 1.2.3, 2015-02-28
  */
 "use strict";
 
@@ -191,10 +191,12 @@ function compileJavaScript(filenames, options) {
 
 function compileStyles(filenames) {
 	log('compiling CSS...');
+	var CleanCSS = require('clean-css');
 	return concatFiles(filenames, function (filename, contents) {
 		// at present, the CSS is returned unminified
+		var minified = new CleanCSS({ advanced : false }).minify(contents).styles;
 		return '<style id="style-' + _path.basename(filename, ".css").toLowerCase().replace(/[^a-z0-9]+/g, "-")
-			+ '" type="text/css">' + contents + '</style>';
+			+ '" type="text/css">' + minified + '</style>';
 	});
 }
 
