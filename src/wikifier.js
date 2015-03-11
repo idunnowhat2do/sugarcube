@@ -1574,7 +1574,8 @@ var Wikifier = (function () {
 					var	css = Wikifier.helpers.inlineCSS(w);
 					this.blockRegExp.lastIndex = w.nextMatch; // must follow the call to .inlineCSS()
 					var	blockMatch = this.blockRegExp.exec(w.source),
-						el         = insertElement(w.output, (blockMatch && blockMatch.index === w.nextMatch) ? "div" : "span");
+						blockLevel = blockMatch && blockMatch.index === w.nextMatch,
+						el         = insertElement(w.output, blockLevel ? "div" : "span");
 					if (css.styles.length === 0 && css.classes.length === 0) {
 						el.className = "marked";
 					} else {
@@ -1585,7 +1586,13 @@ var Wikifier = (function () {
 							el.classList.add(css.classes[i]);
 						}
 					}
-					w.subWikify(el, this.terminator);
+					if (blockLevel) {
+						// skip the leading and, if it exists, trailing newlines
+						w.nextMatch += blockMatch[0].length;
+						w.subWikify(el, "\\n?" + this.terminator);
+					} else {
+						w.subWikify(el, this.terminator);
+					}
 				}
 			},
 
