@@ -66,7 +66,7 @@ var LZString={_keyStr:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234
 	<div id="init-screen">
 		<p id="init-no-js"><noscript>Apologies! JavaScript is required. Please enable it to continue.</noscript></p>
 		<p id="init-lacking">Apologies! Your web browser lacks required capabilities. Please consider upgrading it or switching to a more modern web browser.</p>
-		<p id="init-loading">Initializing.  Please wait&hellip;<br /><progress></progress></p>
+		<p id="init-loading">Initializing. Please wait&hellip;<br /><progress></progress></p>
 	</div>
 	<div id="store-area" data-size="STORY_SIZE" hidden>"STORY"</div>
 	<script id="script-sugarcube" type="text/javascript">
