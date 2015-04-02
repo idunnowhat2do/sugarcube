@@ -236,7 +236,7 @@ Object.defineProperties(History.prototype, {
 						loadStart = false;
 						var dialog = UISystem.setup("autoload");
 						jQuery(dialog)
-							.append('<p>' + strings.saves.autoloadPrompt + '</p><ul>'
+							.append('<p>' + strings.saves.autoloadPrompt + '</p><ul class="buttons">'
 								+ '<li><button id="autoload-ok" class="ui-close">' + strings.saves.autoloadPromptOK + '</button></li>'
 								+ '<li><button id="autoload-cancel" class="ui-close">' + strings.saves.autoloadPromptCancel + '</button></li>'
 								+ '</ul>');
