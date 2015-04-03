@@ -877,10 +877,25 @@ Object.defineProperties(AudioWrapper.prototype, {
 	onEnd : {
 		value : function (callback) {
 			if (typeof callback === "function") {
-				jQuery(this.audio).one("ended.AudioWrapper:onEnd", callback);
+				jQuery(this.audio).on("ended.AudioWrapper:onEnd", callback);
 			} else {
 				jQuery(this.audio).off("ended.AudioWrapper:onEnd");
 			}
+		}
+	},
+	oneEnd : {
+		value : function (callback) {
+			if (typeof callback === "function") {
+				jQuery(this.audio).one("ended.AudioWrapper:oneEnd", callback);
+			} else {
+				jQuery(this.audio).off("ended.AudioWrapper:oneEnd");
+			}
+		}
+	},
+
+	clone : {
+		value : function () {
+			return new AudioWrapper(this.audio.cloneNode(true));
 		}
 	}
 });
