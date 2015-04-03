@@ -85,6 +85,9 @@ hr {
 	border: none;
 	background-color: #fff;
 }
+audio, canvas, progress, video {
+	max-width: 100%;
+}
 
 .error {
 	margin: 0 12px 0 3px;
