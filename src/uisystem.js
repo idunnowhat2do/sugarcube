@@ -170,7 +170,7 @@ var UISystem = (function () {
 				btn.className = bClass;
 			}
 			btn.innerHTML = bText;
-			jQuery(btn).click(bAction);
+			jQuery(btn).on("click", bAction);
 			li.appendChild(btn);
 			return li;
 		}
@@ -183,7 +183,7 @@ var UISystem = (function () {
 				}
 				btn.classList.add(bId);
 				btn.innerHTML = bText;
-				jQuery(btn).click(function (i) {
+				jQuery(btn).on("click", function (i) {
 					return function () { bAction(i); };
 				}(bSlot));
 				return btn;
@@ -218,7 +218,7 @@ var UISystem = (function () {
 					tdLoadBtn.classList.add("load");
 					tdLoadBtn.classList.add("ui-close");
 					tdLoadBtn.innerHTML = "Load";
-					jQuery(tdLoadBtn).click(SaveSystem.loadAuto);
+					jQuery(tdLoadBtn).on("click", SaveSystem.loadAuto);
 					tdLoad.appendChild(tdLoadBtn);
 
 					tdDescTxt = document.createTextNode(saves.autosave.title);
@@ -232,7 +232,7 @@ var UISystem = (function () {
 					tdDeleBtn.id = "saves-delete-autosave";
 					tdDeleBtn.classList.add("delete");
 					tdDeleBtn.innerHTML = "Delete";
-					jQuery(tdDeleBtn).click(function () {
+					jQuery(tdDeleBtn).on("click", function () {
 						SaveSystem.deleteAuto();
 						buildDialogSaves(); // rebuild the saves menu
 					});
@@ -314,7 +314,7 @@ var UISystem = (function () {
 			input.type = "file";
 			input.id   = "saves-import-file";
 			input.name = "saves-import-file";
-			jQuery(input).change(function (evt) {
+			jQuery(input).on("change", function (evt) {
 				SaveSystem.importSave(evt);
 				uiClose();
 			});
@@ -331,6 +331,7 @@ var UISystem = (function () {
 
 		jQuery(_body)
 			.empty()
+			.removeClass()
 			.addClass("saves");
 
 		if (savesOK) {
@@ -378,6 +379,7 @@ var UISystem = (function () {
 
 		jQuery(_body)
 			.empty()
+			.removeClass()
 			.addClass("dialog-list rewind")
 			.append(list);
 
@@ -387,7 +389,7 @@ var UISystem = (function () {
 				var	item = document.createElement("li"),
 					link = document.createElement("a");
 				link.classList.add("ui-close");
-				jQuery(link).click(function () {
+				jQuery(link).on("click", function () {
 					var p = i;
 					if (config.historyMode === History.Modes.Session) {
 						return function () {
@@ -506,11 +508,15 @@ var UISystem = (function () {
 
 		jQuery(_body)
 			.empty()
+			.removeClass()
 			.addClass("dialog restart")
-			.append('<p>Are you sure that you want to restart?  Unsaved progress will be lost.</p><ul class="buttons"><li><button id="restart-ok" class="ui-close">OK</button></li><li><button id="restart-cancel" class="ui-close">Cancel</button></li></ul>');
+			.append('<p>Are you sure that you want to restart?  Unsaved progress will be lost.</p><ul class="buttons">'
+				+ '<li><button id="restart-ok" class="ui-close">OK</button></li>'
+				+ '<li><button id="restart-cancel" class="ui-close">Cancel</button></li>'
+				+ '</ul>');
 
 		// add an additional click handler for the OK button
-		jQuery("#ui-body #restart-ok").click(function () {
+		jQuery("#ui-body #restart-ok").one("click", function () {
 			state.restart();
 		});
 
@@ -522,6 +528,7 @@ var UISystem = (function () {
 
 		jQuery(_body)
 			.empty()
+			.removeClass()
 			.addClass("dialog options");
 		new Wikifier(_body, tale.get("MenuOptions").processText().trim());
 
@@ -533,10 +540,35 @@ var UISystem = (function () {
 
 		jQuery(_body)
 			.empty()
+			.removeClass()
 			.addClass("dialog-list share")
 			.append(buildListFromPassage("MenuShare"));
 			//.find("a")
 			//	.addClass("ui-close");
+
+		return true;
+	}
+
+	function buildDialogAutoload() {
+		if (DEBUG) { console.log("[UISystem.buildDialogAutoload()]"); }
+
+		jQuery(_body)
+			.empty()
+			.removeClass()
+			.addClass("dialog autoload")
+			.append('<p>' + strings.saves.autoloadPrompt + '</p><ul class="buttons">'
+				+ '<li><button id="autoload-ok" class="ui-close">' + strings.saves.autoloadPromptOK + '</button></li>'
+				+ '<li><button id="autoload-cancel" class="ui-close">' + strings.saves.autoloadPromptCancel + '</button></li>'
+				+ '</ul>');
+
+		// add an additional click handler for the #autoload-* buttons
+		jQuery(document.body).one("click.autoload", ".ui-close", function (evt) {
+			if (DEBUG) { console.log('    > display/autoload: "' + SaveSystem.getAuto().title + '"'); }
+			if (evt.target.id !== "autoload-ok" || !SaveSystem.loadAuto()) {
+				if (DEBUG) { console.log('    > display: "' + config.startPassage + '"'); }
+				state.display(config.startPassage);
+			}
+		});
 
 		return true;
 	}
@@ -631,7 +663,7 @@ var UISystem = (function () {
 	}
 
 	function uiAddClickHandler(target, options, startFn, doneFn, closeFn) {
-		jQuery(target).click(function (evt) {
+		jQuery(target).on("click", function (evt) {
 			evt.preventDefault(); // does not prevent bound events, only default actions (e.g. href links)
 
 			// call the start function
@@ -804,6 +836,7 @@ var UISystem = (function () {
 		buildDialogRestart   : { value : buildDialogRestart },
 		buildDialogOptions   : { value : buildDialogOptions },
 		buildDialogShare     : { value : buildDialogShare },
+		buildDialogAutoload  : { value : buildDialogAutoload },
 		buildListFromPassage : { value : buildListFromPassage },
 		// Built-ins
 		alert                : { value : dialogAlert },
