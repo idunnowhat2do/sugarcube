@@ -234,20 +234,7 @@ Object.defineProperties(History.prototype, {
 				case "string":
 					if (config.saves.autoload === "prompt" && SaveSystem.autosaveOK() && SaveSystem.hasAuto()) {
 						loadStart = false;
-						var dialog = UISystem.setup("autoload");
-						jQuery(dialog)
-							.append('<p>' + strings.saves.autoloadPrompt + '</p><ul class="buttons">'
-								+ '<li><button id="autoload-ok" class="ui-close">' + strings.saves.autoloadPromptOK + '</button></li>'
-								+ '<li><button id="autoload-cancel" class="ui-close">' + strings.saves.autoloadPromptCancel + '</button></li>'
-								+ '</ul>');
-						jQuery(document.body).on("click.autoload", ".ui-close", function (evt) {
-							jQuery(document.body).off("click.autoload");
-							if (DEBUG) { console.log('    > display/autoload: "' + SaveSystem.getAuto().title + '"'); }
-							if (evt.target.id !== "autoload-ok" || !SaveSystem.loadAuto()) {
-								if (DEBUG) { console.log('    > display: "' + config.startPassage + '"'); }
-								state.display(config.startPassage);
-							}
-						});
+						UISystem.buildDialogAutoload();
 						UISystem.open();
 					}
 					break;
