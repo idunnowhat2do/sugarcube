@@ -660,3 +660,228 @@ Object.defineProperties(SeedablePRNG, {
 	}
 });
 
+
+/*******************************************************************************************************************
+ * AudioWrapper
+ ******************************************************************************************************************/
+// Setup the AudioWrapper constructor
+function AudioWrapper(audio) {
+	Object.defineProperties(this, {
+		audio : {
+			value : audio
+		},
+		_faderId : {
+			writable : true,
+			value    : null
+		}
+	});
+}
+
+// Setup the AudioWrapper prototype
+Object.defineProperties(AudioWrapper.prototype, {
+	// getters/setters
+	duration : {
+		get : function () {
+			return this.audio.duration;
+		}
+	},
+	time : {
+		get : function () {
+			return this.audio.currentTime;
+		},
+		set : function (time) {
+			// if we try to modify the audio clip's .currentTime property before its metadata
+			// has been loaded, it will throw an InvalidStateError (since it doesn't know its
+			// duration, allowing .currentTime to be set would be undefined behavior), so we
+			// must check its readiness first
+			if (this.hasMetadata()) {
+				this.audio.currentTime = time;
+			} else {
+				jQuery(this.audio)
+					.off("loadedmetadata.AudioWrapper:time")
+					.one("loadedmetadata.AudioWrapper:time", (function (time) {
+						return function () {
+							this.currentTime = time;
+						};
+					}(time)));
+			}
+		}
+	},
+	volume : {
+		get : function () {
+			return this.audio.volume;
+		},
+		set : function (vol) {
+			this.audio.volume = Math.clamp(vol, 0, 1);
+		}
+	},
+	controls : {
+		get : function () {
+			return this.audio.controls;
+		},
+		set : function (state) {
+			this.audio.controls = state;
+		}
+	},
+
+	// methods
+	hasMetadata : {
+		value : function () {
+			return this.audio.readyState >= HTMLAudioElement.HAVE_METADATA;
+		}
+	},
+	hasData : {
+		value : function () {
+			return this.audio.readyState >= HTMLAudioElement.HAVE_CURRENT_DATA;
+		}
+	},
+	isPlaying : {
+		value : function () {
+			return !(this.audio.ended || this.audio.paused);
+		}
+	},
+	isEnded : {
+		value : function () {
+			return this.audio.ended;
+		}
+	},
+	isPaused : {
+		value : function () {
+			return this.audio.paused;
+		}
+	},
+	isMuted : {
+		value : function () {
+			return this.audio.muted;
+		}
+	},
+	isLooped : {
+		value : function () {
+			return this.audio.loop;
+		}
+	},
+
+	load : {
+		value : function () {
+			if (this.audio.preload !== "auto") {
+				this.audio.preload = "auto";
+			}
+			this.audio.load();
+		}
+	},
+	play : {
+		value : function () {
+			if (!this.hasData()) {
+				this.load();
+			}
+			this.audio.play();
+		}
+	},
+	pause : {
+		value : function () {
+			this.audio.pause();
+		}
+	},
+	stop : {
+		value : function () {
+			this.audio.pause();
+			this.time = 0;
+		}
+	},
+
+	mute : {
+		value : function () {
+			this.audio.muted = true;
+		}
+	},
+	unmute : {
+		value : function () {
+			this.audio.muted = false;
+		}
+	},
+	loop : {
+		value : function () {
+			this.audio.loop = true;
+		}
+	},
+	unloop : {
+		value : function () {
+			this.audio.loop = false;
+		}
+	},
+
+	fadeWithDuration : {
+		value : function (duration, from, to) {
+			if (this._faderId !== null) {
+				clearInterval(this._faderId);
+				this._faderId = null;
+			}
+			from = Math.clamp(from, 0, 1);
+			to   = Math.clamp(to, 0, 1);
+			if (from === to) {
+				return;
+			}
+			if (!this.hasData()) {
+				this.load();
+			}
+
+			var interval = 25, // in milliseconds
+				delta    = (to - from) / (duration / (interval / 1000));
+			this._faderId = setInterval((function (self, delta, from, to) {
+				var min, max;
+				if (from < to) {
+					// fade in
+					min = from;
+					max = to;
+				} else {
+					// fade out
+					min = to;
+					max = from;
+				}
+				self.volume = from;
+				self.play();
+				return function () {
+					if (!self.isPlaying()) {
+						clearInterval(self._faderId);
+						self._faderId = null;
+						return;
+					}
+					self.volume = Math.clamp(self.volume + delta, min, max);
+					if (self.volume === 0) {
+						self.pause();
+					}
+					if (self.volume === to) {
+						clearInterval(self._faderId);
+						self._faderId = null;
+					}
+				};
+			}(this, delta, from, to)), interval);
+		}
+	},
+	fade : {
+		value : function (from, to) {
+			this.fadeWithDuration(5, from, to);
+		}
+	},
+	fadeIn : {
+		value : function () {
+			this.fade(this.volume, 1);
+		}
+	},
+	fadeOut : {
+		value : function () {
+			this.fade(this.volume, 0);
+		}
+	},
+
+	onEnd : {
+		value : function (callback) {
+			if (typeof callback === "function") {
+				jQuery(this.audio).one("ended.AudioWrapper:onEnd", callback);
+			} else {
+				jQuery(this.audio).off("ended.AudioWrapper:onEnd");
+			}
+		}
+	}
+});
+

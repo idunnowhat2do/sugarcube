@@ -1334,6 +1334,245 @@ function defineStandardMacros() {
 
 
 	/*******************************************************************************************************************
+	 * Audio
+	 ******************************************************************************************************************/
+	if (!has.audio) {
+		console.log("SugarCube: browser does not support HTML5 audio, audio macros will be disabled");
+	}
+
+	/**
+	 * <<audio>>
+	 */
+	macros.add(["audio"], {
+		version : { major: 1, minor: 0, revision: 0 },
+		handler : function () {
+			if (!has.audio) { return; }
+
+			if (this.args.length < 2) {
+				var errors = [];
+				if (this.args.length < 1) { errors.push("track ID"); }
+				if (this.args.length < 2) { errors.push("actions"); }
+				return this.error("no " + errors.join(" or ") + " specified");
+			}
+
+			var	tracks = macros.get("cacheaudio").tracks,
+				id     = this.args[0];
+
+			if (!tracks.hasOwnProperty(id)) {
+				return this.error("no track by ID: " + id);
+			}
+
+			var	audio   = tracks[id],
+				action,
+				volume,
+				time,
+				loop,
+				fadeTo,
+				passage,
+				raw;
+
+			// process arguments
+			var args = this.args.slice(1);
+			while (args.length > 0) {
+				var arg = args.shift();
+				switch (arg) {
+				case "play":
+				case "pause":
+				case "stop":
+					action = arg;
+					break;
+				case "fadein":
+					action = "fade";
+					fadeTo = 1;
+					break;
+				case "fadeout":
+					action = "fade";
+					fadeTo = 0;
+					break;
+				case "fadeto":
+					if (args.length === 0) {
+						return this.error("fadeto missing required level value");
+					}
+					action = "fade";
+					raw = args.shift();
+					fadeTo = parseFloat(raw);
+					if (isNaN(fadeTo) || !isFinite(fadeTo)) {
+						return this.error("cannot parse fadeto: " + raw);
+					}
+					break;
+				case "volume":
+					if (args.length === 0) {
+						return this.error("volume missing required level value");
+					}
+					raw = args.shift();
+					volume = parseFloat(raw);
+					if (isNaN(volume) || !isFinite(volume)) {
+						return this.error("cannot parse volume: " + raw);
+					}
+					break;
+				case "time":
+					if (args.length === 0) {
+						return this.error("time missing required seconds value");
+					}
+					raw = args.shift();
+					time = parseFloat(raw);
+					if (isNaN(time) || !isFinite(time)) {
+						return this.error("cannot parse time: " + raw);
+					}
+					break;
+				case "loop":
+					loop = true;
+					break;
+				case "unloop":
+					loop = false;
+					break;
+				case "goto":
+					if (args.length === 0) {
+						return this.error("goto missing required passage name");
+					}
+					raw = args.shift();
+					if (typeof raw === "object") {
+						// argument was in wiki link syntax
+						passage = raw.link;
+					} else {
+						// argument was simply the passage name
+						passage = raw;
+					}
+					if (!tale.has(passage)) {
+						return this.error('passage "' + passage + '" does not exist');
+					}
+					break;
+				default:
+					return this.error("unknown action: " + arg);
+				}
+			}
+
+			try {
+				if (volume != null) { // use lazy equality
+					audio.volume = volume;
+				}
+				if (time != null) { // use lazy equality
+					audio.time = time;
+				}
+				if (loop != null) { // use lazy equality
+					if (loop) {
+						audio.loop();
+					} else {
+						audio.unloop();
+					}
+				}
+				if (passage != null) { // use lazy equality
+					audio.onEnd(function (evt) {
+						state.display(passage);
+					});
+				}
+				switch (action) {
+				case "play":
+					audio.play();
+					break;
+				case "pause":
+					audio.pause();
+					break;
+				case "stop":
+					audio.stop();
+					break;
+				case "fade":
+					if (audio.volume === fadeTo) {
+						if (fadeTo === 0) {
+							audio.volume = 1;
+						} else if (fadeTo === 1) {
+							audio.volume = 0;
+						}
+					}
+					audio.fade(audio.volume, fadeTo);
+					break;
+				}
+			} catch (e) {
+				return this.error("error playing audio: " + e.message);
+			}
+		}
+	});
+
+	/**
+	 * <<stopallaudio>>
+	 */
+	macros.add("stopallaudio", {
+		version : { major: 1, minor: 0, revision: 0 },
+		handler : function () {
+			if (!has.audio) { return; }
+
+			var tracks = macros.get("cacheaudio").tracks;
+			Object.keys(tracks).forEach(function (id) {
+				tracks[id].stop();
+			});
+		}
+	});
+
+	/**
+	 * <<cacheaudio>>
+	 */
+	macros.add("cacheaudio", {
+		version : { major: 1, minor: 0, revision: 0 },
+		handler : function () {
+			if (!has.audio) { return; }
+
+			if (this.args.length < 2) {
+				var errors = [];
+				if (this.args.length < 1) { errors.push("track ID"); }
+				if (this.args.length < 2) { errors.push("sources"); }
+				return this.error("no " + errors.join(" or ") + " specified");
+			}
+
+			var	types   = this.self.types,
+				canPlay = this.self.canPlay,
+				audio   = document.createElement("audio"),
+				id      = this.args[0],
+				extRe   = /^.+?(?:\.([^\.\/\\]+?))$/;
+
+			for (var i = 1; i < this.args.length; i++) {
+				var	url   = this.args[i],
+					match = extRe.exec(url);
+
+				if (match === null) {
+					continue;
+				}
+
+				var	ext  = match[1].toLowerCase(),
+					type = types.hasOwnProperty(ext) ? types[ext] : "audio/" + ext;
+
+				// determine and cache the canPlay status
+				if (!canPlay.hasOwnProperty(type)) {
+					canPlay[type] = audio.canPlayType(type).replace(/^no$/i, "") !== ""; // some early implementations return "no" instead of the empty string
+				}
+
+				if (canPlay[type]) {
+					var source  = document.createElement("source");
+					source.src  = url;
+					source.type = type;
+					audio.appendChild(source);
+				}
+			}
+
+			// if it contains any <source> elements, wrap the <audio> element and add it to the tracks
+			if (audio.hasChildNodes()) {
+				audio.preload = "auto";
+				this.self.tracks[id] = new AudioWrapper(audio);
+			}
+		},
+		types : Object.freeze({
+			// define the supported audio types via MIME-type (incl. the codecs property)
+			//     n.b. Opera (pre-15?) will return a false-negative if the codecs value is quoted
+			mp3  : 'audio/mpeg; codecs=mp3',
+			ogg  : 'audio/ogg; codecs=vorbis',
+			webm : 'audio/webm; codecs=vorbis',
+			wav  : 'audio/wave; codecs=1'
+		}),
+		canPlay : {},
+		tracks : {}
+	});
+
+
+	/*******************************************************************************************************************
 	 * Options
 	 ******************************************************************************************************************/
 	/**
