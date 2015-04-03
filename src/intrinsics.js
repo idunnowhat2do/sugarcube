@@ -546,6 +546,43 @@ Object.defineProperty(Array.prototype, "count", {
 });
 
 /**
+ * Removes and returns a random value from the array in the range of lower and upper, if they are specified
+ */
+Object.defineProperty(Array.prototype, "pick", {
+	configurable : true,
+	writable     : true,
+	value        : function (lower, upper) {
+		"use strict";
+		if (this == null) { // use lazy equality
+			throw new TypeError("Array.prototype.pick called on null or undefined");
+		}
+		if (this.length === 0) {
+			return;
+		}
+
+		if (arguments.length === 1) {
+			upper = lower;
+			lower = 0;
+		}
+		if (lower == null) { // use lazy equality
+			lower = 0;
+		} else if (lower < 0) {
+			lower = 0;
+		} else if (lower >= this.length) {
+			lower = this.length - 1;
+		}
+		if (upper == null) { // use lazy equality
+			upper = this.length - 1;
+		} else if (upper < 0) {
+			upper = 0;
+		} else if (upper >= this.length) {
+			upper = this.length - 1;
+		}
+		return Array.prototype.splice.call(this, random(lower, upper), 1)[0];
+	}
+});
+
+/**
  * Returns a random value from the array in the range of lower and upper, if they are specified
  */
 Object.defineProperty(Array.prototype, "random", {
