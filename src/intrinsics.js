@@ -548,13 +548,13 @@ Object.defineProperty(Array.prototype, "count", {
 /**
  * Removes and returns a random value from the array in the range of lower and upper, if they are specified
  */
-Object.defineProperty(Array.prototype, "pick", {
+Object.defineProperty(Array.prototype, "pluck", {
 	configurable : true,
 	writable     : true,
 	value        : function (lower, upper) {
 		"use strict";
 		if (this == null) { // use lazy equality
-			throw new TypeError("Array.prototype.pick called on null or undefined");
+			throw new TypeError("Array.prototype.pluck called on null or undefined");
 		}
 		if (this.length === 0) {
 			return;
@@ -616,6 +616,31 @@ Object.defineProperty(Array.prototype, "random", {
 			upper = this.length - 1;
 		}
 		return this[random(lower, upper)];
+	}
+});
+
+/**
+ * Randomly shuffles the array
+ */
+Object.defineProperty(Array.prototype, "shuffle", {
+	configurable : true,
+	writable     : true,
+	value        : function () {
+		"use strict";
+		if (this == null) { // use lazy equality
+			throw new TypeError("Array.prototype.shuffle called on null or undefined");
+		}
+		if (this.length === 0) {
+			return;
+		}
+
+		for (var i = this.length - 1; i > 0; i--) {
+			var	j    = Math.floor(Math.random() * (i + 1)),
+				swap = this[i];
+			this[i] = this[j];
+			this[j] = swap;
+		}
+		return this;
 	}
 });
 
