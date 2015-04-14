@@ -102,9 +102,9 @@ var UISystem = (function () {
 			+     '<button id="ui-dialog-close" class="ui-close">\ue804</button>'
 			+     '<div id="ui-dialog-body"></div>'
 			+ '</div>'
-			+ '<main id="story" role="main">'
+			+ '<div id="story" role="main">'
 			+     '<div id="passages"></div>'
-			+ '</main>';
+			+ '</div>';
 		while (temp.hasChildNodes()) {
 			uiTree.appendChild(temp.firstChild);
 		}
@@ -388,7 +388,8 @@ var UISystem = (function () {
 
 		if (DEBUG) { console.log("[UISystem.buildDialogSaves()]"); }
 
-		var	savesOK = SaveSystem.OK(),
+		var	savesOK  = SaveSystem.OK(),
+			hasSaves = SaveSystem.hasAuto() || !SaveSystem.isEmpty(),
 			list,
 			btnBar;
 
@@ -406,7 +407,7 @@ var UISystem = (function () {
 		}
 
 		// add action list (export, import, and purge) and import input
-		if (savesOK || has.fileAPI) {
+		if (hasSaves || has.fileAPI) {
 			btnBar = document.createElement("ul");
 			btnBar.classList.add("buttons");
 			if (has.fileAPI) {
@@ -419,7 +420,7 @@ var UISystem = (function () {
 					}
 				}));
 			}
-			if (savesOK) {
+			if (hasSaves) {
 				btnBar.appendChild(createActionItem("purge", null, "Purge Slots", function (evt) {
 					SaveSystem.purge();
 					buildDialogSaves(); // rebuild the saves menu

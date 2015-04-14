@@ -276,6 +276,9 @@ a.link-return:after {
 #ui-overlay.open {
 	opacity: 0.8;
 }
+#ui-dialog {
+	max-width: 66em;
+}
 #ui-dialog.open {
 	opacity: 1;
 }
