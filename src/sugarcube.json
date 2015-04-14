@@ -1,7 +1,7 @@
 {
 	"title"      : "SugarCube",
-	"major"      : 1,
+	"major"      : 2,
 	"minor"      : 0,
-	"patch"      : 20,
-	"prerelease" : null
+	"patch"      : 0,
+	"prerelease" : "alpha.5"
 }

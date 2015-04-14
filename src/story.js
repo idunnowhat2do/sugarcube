@@ -364,39 +364,44 @@ Object.defineProperties(History.prototype, {
 			}
 
 			// add it to the page
-			var el = passage.render();
-			el.style.visibility = "visible";
+			var incoming = passage.render();
+			incoming.style.visibility = "visible";
 			if (updateDisplay) {
-				var	passages = document.getElementById("passages"),
-					outgoing = passages.querySelector(".passage");
-				if (
-					   outgoing !== null
-					&& (
+				var	passages = document.getElementById("passages");
+				if (passages.hasChildNodes()) {
+					if (
 						   typeof config.passageTransitionOut === "number"
-						|| (typeof config.passageTransitionOut === "boolean" && config.passageTransitionOut && config.transitionEndEventName !== "")
-					)
-				) {
-					outgoing.id = "out-" + outgoing.id;
-					outgoing.classList.add("transition-out");
-					if (typeof config.passageTransitionOut === "boolean") {
-						jQuery(outgoing).on(config.transitionEndEventName, function () {
-							if (this.parentNode) {
-								this.parentNode.removeChild(this);
+						|| (typeof config.passageTransitionOut === "string" && config.passageTransitionOut !== "" && config.transitionEndEventName !== "")
+					) {
+						var outgoing = passages.childNodes[0];
+						if (!outgoing.classList.contains("passage-out")) {
+							outgoing.id = "out-" + outgoing.id;
+							outgoing.classList.add("passage-out");
+							if (typeof config.passageTransitionOut === "string") {
+								jQuery(outgoing).on(config.transitionEndEventName, function (evt) {
+									if (evt.originalEvent.propertyName === config.passageTransitionOut && this.parentNode) {
+										this.parentNode.removeChild(this);
+									}
+								});
+							} else {
+								setTimeout(function () {
+									if (outgoing.parentNode) {
+										outgoing.parentNode.removeChild(outgoing);
+									}
+								}, config.passageTransitionOut); // in milliseconds
 							}
-						});
+						}
+						// remove additional elements (probably duplicates of the incoming passage due to multi-clicks)
+						while (passages.childNodes.length > 1) {
+							passages.removeChild(passages.lastChild);
+						}
 					} else {
-						setTimeout(function () {
-							if (outgoing.parentNode) {
-								outgoing.parentNode.removeChild(outgoing);
-							}
-						}, config.passageTransitionOut); // in milliseconds
+						removeChildren(passages);
 					}
-				} else {
-					removeChildren(passages);
 				}
-				el.classList.add("transition-in");
-				passages.appendChild(el);
-				setTimeout(function () { el.classList.remove("transition-in"); }, 1);
+				incoming.classList.add("passage-in");
+				passages.appendChild(incoming);
+				setTimeout(function () { incoming.classList.remove("passage-in"); }, 1);
 
 				if (config.displayPassageTitles && passage.title !== config.startPassage) {
 					document.title = windowTitle;
@@ -447,7 +452,7 @@ Object.defineProperties(History.prototype, {
 				break;
 			}
 
-			return el;
+			return incoming;
 		}
 	},
 
@@ -462,6 +467,11 @@ Object.defineProperties(History.prototype, {
 	restart : {
 		value : function () {
 			if (DEBUG) { console.log("[<History>.restart()]"); }
+
+			// ZUGZUG
+			//jQuery(document.body).empty().append("\u00a0"); // daft, but necessary for some browsers ???
+			// ZUGZUG
+
 			if (config.historyMode !== History.Modes.Hash) {
 				History.addWindowState(null, tale.title); // using null here is deliberate
 				window.location.reload();
@@ -846,8 +856,13 @@ function Passage(title, el, id) {
 			//     stylesheet → special tag
 			//     twine.*    → special tag
 			//     widget     → special tag
-			var	tagsToSkip = /^(?:debug|nobr|passage|script|stylesheet|widget|twine\..*)$/i,
-				tagClasses = [];
+			var	tagClasses = [],
+				tagsToSkip;
+			if (TWINE1) {
+				tagsToSkip = /^(?:debug|nobr|passage|script|stylesheet|widget|twine\..*)$/i;
+			} else {
+				tagsToSkip = /^(?:debug|nobr|passage|widget|twine\..*)$/i;
+			}
 			for (var i = 0; i < this.tags.length; i++) {
 				if (!tagsToSkip.test(this.tags[i])) {
 					tagClasses.push(Util.slugify(this.tags[i]));
@@ -954,30 +969,30 @@ Object.defineProperties(Passage.prototype, {
 				passage.classList.add(this.classes[i]);
 			}
 
-			// add the passage header, content, and footer elements
-			insertElement(passage, "header", null, "header");
-			var content = insertElement(passage, "div", null, "body content");
-			insertElement(passage, "footer", null, "footer");
-
 			// execute pre-render tasks
 			Object.keys(prerender).forEach(function (task) {
 				if (typeof prerender[task] === "function") {
-					prerender[task].call(this, content, task);
+					prerender[task].call(this, passage, task);
 				}
 			}, this);
 
-			// wikify the passage into the content element
-			new Wikifier(content, this.processText());
+			// wikify the passage into its element
+			new Wikifier(passage, this.processText());
+
+			// convert breaks to paragraphs within the output passage
+			if (config.cleanupWikifierOutput) {
+				convertBreaksToParagraphs(passage);
+			}
 
 			// execute post-render tasks
 			Object.keys(postrender).forEach(function (task) {
 				if (typeof postrender[task] === "function") {
-					postrender[task].call(this, content, task);
+					postrender[task].call(this, passage, task);
 				}
 			}, this);
 
 			// create/update the excerpt cache to reflect the rendered text
-			this._excerpt = Passage.getExcerptFromNode(content);
+			this._excerpt = Passage.getExcerptFromNode(passage);
 
 			return passage;
 		}

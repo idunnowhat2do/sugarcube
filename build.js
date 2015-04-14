@@ -4,7 +4,7 @@
  *   - Description : Node.js-hosted build script for SugarCube
  *   - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
  *   - Copyright   : Copyright © 2014–2015 Thomas Michael Edwards. All rights reserved.
- *   - Version     : 1.2.3, 2015-02-28
+ *   - Version     : 1.2.7, 2015-02-25
  */
 "use strict";
 
@@ -32,12 +32,12 @@ var CONFIG = {
 	],
 	css : [
 		// the ordering here is significant
+		"src/normalize.css",
 		"src/init-screen.css",
 		"src/fonts.css",
 		"src/structural.css",
 		"src/appearance.css",
-		"src/media-queries.css",
-		"src/media-queries-narrow.css"
+		"src/media-queries.css"
 	],
 	twine1 : {
 		build : {

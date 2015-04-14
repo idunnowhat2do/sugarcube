@@ -123,6 +123,75 @@ function removeElement(node) {
 }
 
 /**
+ * Converts <br> elements to <p> elements within the given node tree.
+ */
+function convertBreaksToParagraphs(source) {
+	var	output = document.createDocumentFragment(),
+		para   = document.createElement("p"),
+		node;
+	while ((node = source.firstChild) !== null) {
+		if (node.nodeType === Node.ELEMENT_NODE) {
+			var tagName = node.nodeName.toUpperCase();
+			switch (tagName) {
+			case "BR":
+				if (
+					   node.nextSibling !== null
+					&& node.nextSibling.nodeType === Node.ELEMENT_NODE
+					&& node.nextSibling.nodeName.toUpperCase() === "BR"
+				) {
+					source.removeChild(node.nextSibling);
+					source.removeChild(node);
+					output.appendChild(para);
+					para = document.createElement("p");
+					continue;
+				} else if (!para.hasChildNodes()) {
+					source.removeChild(node);
+					continue;
+				}
+				break;
+			case "ADDRESS":
+			case "ARTICLE":
+			case "ASIDE":
+			case "BLOCKQUOTE":
+			case "CENTER":
+			case "DIV":
+			case "DL":
+			case "FIGURE":
+			case "FOOTER":
+			case "FORM":
+			case "H1":
+			case "H2":
+			case "H3":
+			case "H4":
+			case "H5":
+			case "H6":
+			case "HEADER":
+			case "HR":
+			case "MAIN":
+			case "NAV":
+			case "OL":
+			case "P":
+			case "PRE":
+			case "SECTION":
+			case "TABLE":
+			case "UL":
+				if (para.hasChildNodes()) {
+					output.appendChild(para);
+					para = document.createElement("p");
+				}
+				output.appendChild(node);
+				continue;
+			}
+		}
+		para.appendChild(node);
+	}
+	if (para.hasChildNodes()) {
+		output.appendChild(para);
+	}
+	source.appendChild(output);
+}
+
+/**
  * Wikifies a passage into a DOM element corresponding to the passed ID and returns the element
  */
 function setPageElement(id, titles, defaultText) {

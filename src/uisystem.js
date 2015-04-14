@@ -11,9 +11,12 @@ var UISystem = (function () {
 	"use strict";
 
 	var
-		_overlay = null,
-		_body    = null,
-		_closer  = null;
+		_overlay        = null,
+		_dialog         = null,
+		_dialogTitle    = null,
+		_dialogClose    = null,
+		_dialogBody     = null,
+		_scrollbarWidth = 0;
 
 
 	/*******************************************************************************************************************
@@ -25,47 +28,100 @@ var UISystem = (function () {
 		// remove #init-no-js & #init-lacking from #init-screen
 		jQuery("#init-no-js, #init-lacking").remove();
 
+		// calculate and cache the width of scrollbars
+		_scrollbarWidth = (function () {
+			var scrollbarWidth;
+			try {
+				var inner = document.createElement("p");
+				inner.style.width  = "100%";
+				inner.style.height = "200px";
+
+				var outer = document.createElement("div");
+				outer.style.position   = "absolute";
+				outer.style.left       = "0px";
+				outer.style.top        = "0px";
+				outer.style.width      = "100px";
+				outer.style.height     = "100px";
+				outer.style.visibility = "hidden";
+				outer.style.overflow   = "hidden";
+
+				outer.appendChild(inner);
+				document.body.appendChild(outer);
+
+				var w1 = inner.offsetWidth;
+				outer.style.overflow = "auto"; // "overflow: scroll" does not work consistently with scrollbars which are styled with "::-webkit-scrollbar"
+				var w2 = inner.offsetWidth;
+				if (w1 === w2) {
+					w2 = outer.clientWidth;
+				}
+
+				document.body.removeChild(outer);
+
+				scrollbarWidth = w1 - w2;
+			} catch (e) { /* do nothing */ }
+			return (scrollbarWidth || 17); // 17px is a reasonable failover
+		}());
+
 		// generate the UI elements and add them to the page
 		var	store  = document.getElementById("store-area"),
 			uiTree = document.createDocumentFragment(),
 			temp   = document.createElement("div");
 
 		// generate the core elements
-		temp.innerHTML = tale.has("StoryFormatMarkup")
-			? tale.get("StoryFormatMarkup").text.trim()
-			:     '<div id="ui-bar">'
-				+     '<header id="title" role="banner">'
-				+         '<div id="story-banner"></div>'
-				+         '<h1 id="story-title"></h1>'
-				+         '<div id="story-subtitle"></div>'
-				+         '<div id="story-title-separator"></div>'
-				+         '<p id="story-author"></p>'
-				+     '</header>'
-				+     '<div id="story-caption"></div>'
-				+     '<nav id="menu" role="navigation">'
-				+         '<ul id="menu-story"></ul>'
-				+         '<ul id="menu-core">'
-				+             '<li id="menu-saves"><a>Saves</a></li>'
-				+             '<li id="menu-rewind"><a>Rewind</a></li>'
-				+             '<li id="menu-restart"><a>Restart</a></li>'
-				+             '<li id="menu-options"><a>Options</a></li>'
-				+             '<li id="menu-share"><a>Share</a></li>'
-				+         '</ul>'
-				+     '</nav>'
-				+     '<footer role="contentinfo">'
-				+         '<p id="credits">Made with <a href="http://twinery.org/" target="_blank">Twine</a> &amp; <a href="http://www.motoslave.net/sugarcube/" target="_blank">SugarCube</a></p>'
-				+         '<p id="version">SugarCube (v"{{BUILD_VERSION_VERSION}}")</p>'
-				+     '</footer>'
-				+ '</div>'
-				+ '<div id="passages" role="main"></div>';
+		temp.innerHTML =
+			  '<div id="ui-bar">'
+			+     '<div id="ui-bar-toggle" title="Toggle the UI bar"><a></a></div>'
+			+     '<div id="ui-bar-body">'
+			+         '<header id="title" role="banner">'
+			+             '<div id="story-banner"></div>'
+			+             '<h1 id="story-title"></h1>'
+			+             '<div id="story-subtitle"></div>'
+			+             '<div id="story-title-separator"></div>'
+			+             '<p id="story-author"></p>'
+			+         '</header>'
+			+         '<div id="story-caption"></div>'
+			+         '<nav id="menu" role="navigation">'
+			+             '<ul id="menu-story"></ul>'
+			+             '<ul id="menu-core">'
+			+                 '<li id="menu-saves"><a>Saves</a></li>'
+			+                 '<li id="menu-rewind"><a>Rewind</a></li>'
+			+                 '<li id="menu-restart"><a>Restart</a></li>'
+			+                 '<li id="menu-options"><a>Options</a></li>'
+			+                 '<li id="menu-share"><a>Share</a></li>'
+			+             '</ul>'
+			+         '</nav>'
+			+         '<footer role="contentinfo">'
+			+             '<p id="credits">Made with <a href="http://twinery.org/" target="_blank">Twine</a> &amp; <a href="http://www.motoslave.net/sugarcube/" target="_blank">SugarCube</a></p>'
+			+             '<p id="version">SugarCube (v"{{BUILD_VERSION_VERSION}}")</p>'
+			+         '</footer>'
+			+     '</div>'
+			+ '</div>'
+			+ '<div id="ui-overlay" class="ui-close"></div>'
+			+ '<div id="ui-dialog">'
+			+     '<h1 id="ui-dialog-title"></h1>'
+			+     '<button id="ui-dialog-close" class="ui-close">\ue804</button>'
+			+     '<div id="ui-dialog-body"></div>'
+			+ '</div>'
+			+ '<main id="story" role="main">'
+			+     '<div id="passages"></div>'
+			+ '</main>';
 		while (temp.hasChildNodes()) {
 			uiTree.appendChild(temp.firstChild);
 		}
 
-		// generate and cache the dialog elements
-		_overlay = insertElement(uiTree, "div", "ui-overlay", "ui-close");
-		_body    = insertElement(uiTree, "div", "ui-body");
-		_closer  = insertElement(uiTree, "a", "ui-body-close", "ui-close", "\ue002");
+		// cache the dialog elements
+		_overlay     = uiTree.querySelector("#ui-overlay");
+		_dialog      = uiTree.querySelector("#ui-dialog");
+		_dialogTitle = uiTree.querySelector("#ui-dialog-title");
+		_dialogClose = uiTree.querySelector("#ui-dialog-close");
+		_dialogBody  = uiTree.querySelector("#ui-dialog-body");
+
+		// setup the #ui-bar-toggle button handler
+		jQuery("#ui-bar-toggle a", uiTree).on("click", (function (uiBar) {
+			return function () {
+				uiBar.classList.toggle("stowed");
+			};
+		}(uiTree.querySelector("#ui-bar"))));
 
 		// insert the UI elements into the page before the store area
 		store.parentNode.insertBefore(uiTree, store);
@@ -97,28 +153,28 @@ var UISystem = (function () {
 		setPageElements();
 
 		// setup Saves menu
-		uiAddClickHandler("#menu-saves a", null, function () { buildDialogSaves(); });
+		dialogAddClickHandler("#menu-saves a", null, function () { buildDialogSaves(); });
 
 		// setup Rewind menu
 		if (!config.disableHistoryTracking && tale.lookup("tags", "bookmark").length > 0) {
-			uiAddClickHandler(jQuery("#menu-rewind a"), null, function () { buildDialogRewind(); });
+			dialogAddClickHandler(jQuery("#menu-rewind a"), null, function () { buildDialogRewind(); });
 		} else {
 			jQuery("#menu-rewind").remove();
 		}
 
 		// setup Restart menu
-		uiAddClickHandler("#menu-restart a", null, function () { buildDialogRestart(); });
+		dialogAddClickHandler("#menu-restart a", null, function () { buildDialogRestart(); });
 
 		// setup Options menu
 		if (tale.has("MenuOptions")) {
-			uiAddClickHandler(jQuery("#menu-options a"), null, function () { buildDialogOptions(); });
+			dialogAddClickHandler(jQuery("#menu-options a"), null, function () { buildDialogOptions(); });
 		} else {
 			jQuery("#menu-options").remove();
 		}
 
 		// setup Share menu
 		if (tale.has("MenuShare")) {
-			uiAddClickHandler(jQuery("#menu-share a"), null, function () { buildDialogShare(); });
+			dialogAddClickHandler(jQuery("#menu-share a"), null, function () { buildDialogShare(); });
 		} else {
 			jQuery("#menu-share").remove();
 		}
@@ -183,9 +239,9 @@ var UISystem = (function () {
 				}
 				btn.classList.add(bId);
 				btn.innerHTML = bText;
-				jQuery(btn).on("click", function (i) {
+				jQuery(btn).on("click", (function (i) {
 					return function () { bAction(i); };
-				}(bSlot));
+				}(bSlot)));
 				return btn;
 			}
 
@@ -224,7 +280,8 @@ var UISystem = (function () {
 					tdDescTxt = document.createTextNode(saves.autosave.title);
 					tdDesc.appendChild(tdDescTxt);
 					tdDesc.appendChild(document.createElement("br"));
-					tdDescTxt = document.createElement("small");
+					tdDescTxt = document.createElement("span");
+					tdDescTxt.classList.add("datestamp");
 					tdDescTxt.innerHTML = "Autosaved (" + new Date(saves.autosave.date).toLocaleString() + ")";
 					tdDesc.appendChild(tdDescTxt);
 
@@ -234,12 +291,12 @@ var UISystem = (function () {
 					tdDeleBtn.innerHTML = "Delete";
 					jQuery(tdDeleBtn).on("click", function () {
 						SaveSystem.deleteAuto();
-						buildDialogSaves(); // rebuild the saves menu
+						buildDialogSaves(); // rebuild the saves dialog
 					});
 					tdDele.appendChild(tdDeleBtn);
 				} else {
 					tdDescTxt = document.createElement("i");
-					tdDescTxt.innerHTML = "(autosave slot empty)";
+					tdDescTxt.innerHTML = "—autosave slot empty—";
 					tdDesc.appendChild(tdDescTxt);
 					tdDesc.classList.add("empty");
 				}
@@ -266,7 +323,8 @@ var UISystem = (function () {
 					tdDescTxt = document.createTextNode(saves.slots[i].title);
 					tdDesc.appendChild(tdDescTxt);
 					tdDesc.appendChild(document.createElement("br"));
-					tdDescTxt = document.createElement("small");
+					tdDescTxt = document.createElement("span");
+					tdDescTxt.classList.add("datestamp");
 					if (saves.slots[i].date) {
 						tdDescTxt.innerHTML = "Saved (" + new Date(saves.slots[i].date).toLocaleString() + ")";
 					} else {
@@ -274,9 +332,9 @@ var UISystem = (function () {
 					}
 					tdDesc.appendChild(tdDescTxt);
 
-					tdDeleBtn = createButton("delete", null, "Delete", i, function (i) {
+					tdDeleBtn = createButton("delete", null, "Del.", i, function (i) {
 						SaveSystem.delete(i);
-						buildDialogSaves(); // rebuild the saves menu
+						buildDialogSaves(); // rebuild the saves dialog
 					});
 					tdDele.appendChild(tdDeleBtn);
 				} else {
@@ -284,7 +342,7 @@ var UISystem = (function () {
 					tdLoad.appendChild(tdLoadBtn);
 
 					tdDescTxt = document.createElement("i");
-					tdDescTxt.innerHTML = "(save slot empty)";
+					tdDescTxt.innerHTML = "—save slot empty—";
 					tdDesc.appendChild(tdDescTxt);
 					tdDesc.classList.add("empty");
 				}
@@ -302,13 +360,18 @@ var UISystem = (function () {
 		}
 		function createSavesImport() {
 			var	el    = document.createElement("div"),
-				label = document.createElement("div"),
+				label = document.createElement("label"),
 				input = document.createElement("input");
 
+			el.id = "saves-import-box";
+
 			// add label
-			label.id = "saves-import-label";
+			label.id      = "saves-import-label";
+			label.htmlFor = "saves-import-file";
 			label.appendChild(document.createTextNode("Select a save file to load:"));
 			el.appendChild(label);
+
+			el.appendChild(document.createElement("br"));
 
 			// add file input
 			input.type = "file";
@@ -316,7 +379,7 @@ var UISystem = (function () {
 			input.name = "saves-import-file";
 			jQuery(input).on("change", function (evt) {
 				SaveSystem.importSave(evt);
-				uiClose();
+				dialogClose();
 			});
 			el.appendChild(input);
 
@@ -329,10 +392,7 @@ var UISystem = (function () {
 			list,
 			btnBar;
 
-		jQuery(_body)
-			.empty()
-			.removeClass()
-			.addClass("saves");
+		dialogSetup("Saves", "saves");
 
 		if (savesOK) {
 			// add saves list
@@ -342,29 +402,30 @@ var UISystem = (function () {
 				list.id = "saves-list"
 				list.innerHTML = "<i>No save slots found</i>";
 			}
-			_body.appendChild(list);
+			_dialogBody.appendChild(list);
 		}
 
 		// add action list (export, import, and purge) and import input
 		if (savesOK || has.fileAPI) {
-			btnBar = document.createElement("div");
-			list = document.createElement("ul");
+			btnBar = document.createElement("ul");
+			btnBar.classList.add("buttons");
 			if (has.fileAPI) {
-				list.appendChild(createActionItem("export", "ui-close", "Save to Disk\u2026", SaveSystem.exportSave));
-				list.appendChild(createActionItem("import", null, "Load from Disk\u2026", function (evt) {
-					if (!document.getElementById("saves-import-file")) {
-						_body.appendChild(createSavesImport());
+				btnBar.appendChild(createActionItem("export", "ui-close", "Save to Disk\u2026", SaveSystem.exportSave));
+				btnBar.appendChild(createActionItem("import", null, "Load from Disk\u2026", function (evt) {
+					if (document.getElementById("saves-import-file")) {
+						jQuery("#saves-import-box", _dialogBody).remove();
+					} else {
+						_dialogBody.appendChild(createSavesImport());
 					}
 				}));
 			}
 			if (savesOK) {
-				list.appendChild(createActionItem("purge", null, "Purge Slots", function (evt) {
+				btnBar.appendChild(createActionItem("purge", null, "Purge Slots", function (evt) {
 					SaveSystem.purge();
 					buildDialogSaves(); // rebuild the saves menu
 				}));
 			}
-			btnBar.appendChild(list);
-			_body.appendChild(btnBar);
+			_dialogBody.appendChild(btnBar);
 			return true;
 		} else {
 			dialogAlert("Apologies! Your browser either lacks some of the capabilities required to support saves or has disabled them.\n\nThe former may be solved by updating it to a newer version or by switching to a more modern browser.\n\nThe latter may be solved by loosening its security restrictions or, perhaps, by viewing the " + strings.identity + " via the HTTP protocol.");
@@ -377,10 +438,7 @@ var UISystem = (function () {
 
 		var list = document.createElement("ul");
 
-		jQuery(_body)
-			.empty()
-			.removeClass()
-			.addClass("dialog-list rewind")
+		jQuery(dialogSetup("Rewind", "rewind list"))
 			.append(list);
 
 		for (var i = 0, iend = state.length - 1; i < iend; i++) {
@@ -389,7 +447,7 @@ var UISystem = (function () {
 				var	item = document.createElement("li"),
 					link = document.createElement("a");
 				link.classList.add("ui-close");
-				jQuery(link).on("click", function () {
+				jQuery(link).one("click", (function () {
 					var p = i;
 					if (config.historyMode === History.Modes.Session) {
 						return function () {
@@ -488,7 +546,7 @@ var UISystem = (function () {
 							}
 						};
 					}
-				}());
+				}()));
 				link.appendChild(document.createTextNode("Turn " + (i + 1) + ": " + passage.description()));
 				item.appendChild(link);
 				list.appendChild(item);
@@ -506,17 +564,14 @@ var UISystem = (function () {
 	function buildDialogRestart() {
 		if (DEBUG) { console.log("[UISystem.buildDialogRestart()]"); }
 
-		jQuery(_body)
-			.empty()
-			.removeClass()
-			.addClass("dialog restart")
-			.append('<p>Are you sure that you want to restart?  Unsaved progress will be lost.</p><ul class="buttons">'
+		jQuery(dialogSetup("Restart", "restart"))
+			.append('<p>Are you sure that you want to restart? Unsaved progress will be lost.</p><ul class="buttons">'
 				+ '<li><button id="restart-ok" class="ui-close">OK</button></li>'
 				+ '<li><button id="restart-cancel" class="ui-close">Cancel</button></li>'
 				+ '</ul>');
 
 		// add an additional click handler for the OK button
-		jQuery("#ui-body #restart-ok").one("click", function () {
+		jQuery("#ui-dialog-body #restart-ok").one("click", function () {
 			state.restart();
 		});
 
@@ -526,11 +581,8 @@ var UISystem = (function () {
 	function buildDialogOptions() {
 		if (DEBUG) { console.log("[UISystem.buildDialogOptions()]"); }
 
-		jQuery(_body)
-			.empty()
-			.removeClass()
-			.addClass("dialog options");
-		new Wikifier(_body, tale.get("MenuOptions").processText().trim());
+		dialogSetup("Options", "options");
+		new Wikifier(_dialogBody, tale.get("MenuOptions").processText().trim());
 
 		return true;
 	}
@@ -538,10 +590,7 @@ var UISystem = (function () {
 	function buildDialogShare() {
 		if (DEBUG) { console.log("[UISystem.buildDialogShare()]"); }
 
-		jQuery(_body)
-			.empty()
-			.removeClass()
-			.addClass("dialog-list share")
+		jQuery(dialogSetup("Share", "share list"))
 			.append(buildListFromPassage("MenuShare"));
 			//.find("a")
 			//	.addClass("ui-close");
@@ -552,10 +601,7 @@ var UISystem = (function () {
 	function buildDialogAutoload() {
 		if (DEBUG) { console.log("[UISystem.buildDialogAutoload()]"); }
 
-		jQuery(_body)
-			.empty()
-			.removeClass()
-			.addClass("dialog autoload")
+		jQuery(dialogSetup("Autoload", "autoload"))
 			.append('<p>' + strings.saves.autoloadPrompt + '</p><ul class="buttons">'
 				+ '<li><button id="autoload-ok" class="ui-close">' + strings.saves.autoloadPromptOK + '</button></li>'
 				+ '<li><button id="autoload-cancel" class="ui-close">' + strings.saves.autoloadPromptCancel + '</button></li>'
@@ -583,7 +629,10 @@ var UISystem = (function () {
 			var li = null;
 			while (temp.hasChildNodes()) {
 				var node = temp.firstChild;
-				if (node.nodeType !== Node.TEXT_NODE && (node.nodeType !== Node.ELEMENT_NODE || node.nodeName.toUpperCase() === "BR")) { // non-text, non-element, or <br>-element nodes
+				if (
+					   node.nodeType !== Node.TEXT_NODE
+					&& (node.nodeType !== Node.ELEMENT_NODE || node.nodeName.toUpperCase() === "BR")
+				) { // non-text, non-element, or <br>-element nodes
 					temp.removeChild(node);
 					if (li !== null) {
 						// forget the current list item
@@ -607,62 +656,63 @@ var UISystem = (function () {
 	 * Built-ins
 	 ******************************************************************************************************************/
 	function dialogAlert(message, options, closeFn) {
-		jQuery(_body)
-			.empty()
-			.addClass("dialog alert")
+		jQuery(dialogSetup("Alert", "alert"))
 			.append('<p>' + message + '</p><ul class="buttons"><li><button id="alert-ok" class="ui-close">OK</button></li></ul>');
-		uiOpen(options, closeFn);
+		dialogOpen(options, closeFn);
 	}
 
 	function dialogRestart(options) {
 		buildDialogRestart();
-		uiOpen(options);
+		dialogOpen(options);
 	}
 
 	function dialogOptions(/* options, closeFn */) {
 		buildDialogOptions();
-		uiOpen.apply(null, arguments);
+		dialogOpen.apply(null, arguments);
 	}
 
 	function dialogRewind(/* options, closeFn */) {
 		buildDialogRewind();
-		uiOpen.apply(null, arguments);
+		dialogOpen.apply(null, arguments);
 	}
 
 	function dialogSaves(/* options, closeFn */) {
 		buildDialogSaves();
-		uiOpen.apply(null, arguments);
+		dialogOpen.apply(null, arguments);
 	}
 
 	function dialogShare(/* options, closeFn */) {
 		buildDialogShare();
-		uiOpen.apply(null, arguments);
+		dialogOpen.apply(null, arguments);
 	}
 
 
 	/*******************************************************************************************************************
 	 * Core
 	 ******************************************************************************************************************/
-	function uiIsOpen() {
-		return document.documentElement.classList.contains("ui-open");
+	function dialogIsOpen() {
+		return _dialog.classList.contains("open");
 	}
 
-	function uiBody() {
-		return _body;
+	function dialogBody() {
+		return _dialogBody;
 	}
 
-	function uiSetup(classNames) {
-		jQuery(_body)
+	function dialogSetup(title, classNames) {
+		jQuery(_dialogBody)
 			.empty()
-			.removeClass()
-			.addClass("dialog");
+			.removeClass();
 		if (classNames != null) { // use lazy equality
-			jQuery(_body).addClass(classNames);
+			jQuery(_dialogBody).addClass(classNames);
 		}
-		return _body;
+		title = (title == null ? "" : title + ""); // use lazy equality on null check
+		jQuery(_dialogTitle)
+			.empty()
+			.append(title === "" ? "\u00a0" : title);
+		return _dialogBody;
 	}
 
-	function uiAddClickHandler(target, options, startFn, doneFn, closeFn) {
+	function dialogAddClickHandler(target, options, startFn, doneFn, closeFn) {
 		jQuery(target).on("click", function (evt) {
 			evt.preventDefault(); // does not prevent bound events, only default actions (e.g. href links)
 
@@ -672,7 +722,7 @@ var UISystem = (function () {
 			}
 
 			// open the dialog
-			uiOpen(options, closeFn);
+			dialogOpen(options, closeFn);
 
 			// call the done function
 			if (typeof doneFn === "function") {
@@ -681,81 +731,59 @@ var UISystem = (function () {
 		});
 	}
 
-	function uiOpen(options, closeFn) {
-		options = jQuery.extend({ top : 50, opacity : 0.8 }, options);
+	function dialogOpen(options, closeFn) {
+		options = jQuery.extend({ top : 50 }, options);
 
-		// stop the body from scrolling and setup the delegated UI close handler
+		// setup the delegated UI close handler
 		jQuery(document.body)
-			.on("click.uisystem-close", ".ui-close", closeFn, uiClose);
+			.one("click.uisystem-close", ".ui-close", closeFn, dialogClose);
+
+		// add the UI isOpen class
+		jQuery(document.documentElement)
+			.addClass("ui-dialog-open");
 
 		// display the overlay
 		jQuery(_overlay)
-			.css({ display : "block", opacity : 0 })
-			.fadeTo(200, options.opacity);
+			.addClass("open");
 
-		// add the dialog imagesLoaded handler, if requested
-		if (options.resizeOnImagesLoaded) {
-			jQuery(_body)
+		// add the imagesLoaded handler to the dialog body, if necessary
+		if (_dialogBody.querySelector("img") !== null) {
+			jQuery(_dialogBody)
 				.imagesLoaded()
 				.always((function (top) {
 					return function () {
-						uiResizeHandler({ data : top });
+						dialogResizeHandler({ data : top });
 					};
 				}(options.top)));
 		}
 
 		// display the dialog
-		var position = uiCalcPosition(options.top);
-		jQuery(_body)
-			.css(jQuery.extend({ display : "block", opacity : 0 }, position.dialog))
-			.fadeTo(200, 1);
-		jQuery(_closer)
-			.css(jQuery.extend({ display : "block", opacity : 0 }, position.closer))
-			.fadeTo(50, 1);
-
-		// add the UI isOpen class
-		jQuery(document.documentElement)
-			.addClass("ui-open");
+		var position = dialogCalcPosition(options.top);
+		jQuery(_dialog)
+			.css(position)
+			.addClass("open");
 
 		// add the UI resize handler
 		jQuery(window)
-			.on("resize.uisystem", null, options.top, jQuery.debounce(40, uiResizeHandler));
+			.on("resize.uisystem", null, options.top, jQuery.throttle(40, dialogResizeHandler));
 	}
 
-	function uiClose(evt) {
-		// pretty much reverse the actions taken in uiOpen()
+	function dialogClose(evt) {
+		// largely reverse the actions taken in `dialogOpen()`
 		jQuery(window)
 			.off("resize.uisystem");
+		jQuery(_dialog)
+			.removeClass("open")
+			.css({ left : "", right : "", top : "", bottom : "" });
+		jQuery(_dialogTitle)
+			.empty();
+		jQuery(_dialogBody)
+			.empty()
+			.removeClass();
+		jQuery(_overlay)
+			.removeClass("open");
 		jQuery(document.documentElement)
-			.removeClass("ui-open");
-		jQuery(_body)
-			.css({
-				display : "none",
-				opacity : 0,
-				left    : "",
-				right   : "",
-				top     : "",
-				bottom  : ""
-			})
-			.removeClass()
-			.empty(); // .empty() here will break static menus
-		jQuery(_closer)
-			.css({
-				display : "none",
-				opacity : 0,
-				right   : "",
-				top     : ""
-			});
-		/*
-		jQuery(_overlay)
-			.css({
-				display : "none",
-				opacity : 0
-			})
-			.fadeOut(200);
-		*/
-		jQuery(_overlay)
-			.fadeOut(200);
+			.removeClass("ui-dialog-open");
 		jQuery(document.body)
 			.off("click.uisystem-close");
 
@@ -765,35 +793,41 @@ var UISystem = (function () {
 		}
 	}
 
-	function uiResizeHandler(evt) {
-		var	$dialog = jQuery(_body),
-			$closer = jQuery(_closer),
+	function dialogResizeHandler(evt) {
+		var	$dialog = jQuery(_dialog),
 			topPos  = (evt && typeof evt.data !== "undefined") ? evt.data : 50;
 
 		if ($dialog.css("display") === "block") {
-			// stow the dialog and unset its positional properties (this is important!)
-			$dialog.css({ display : "none", left : "", right : "", top : "", bottom : "" });
-			$closer.css({ display : "none", right : "", top : "" });
+			// stow the dialog
+			$dialog.css({ display : "none" });
 
 			// restore the dialog with its new positional properties
-			var position = uiCalcPosition(topPos);
-			$dialog.css(jQuery.extend({ display : "block" }, position.dialog));
-			$closer.css(jQuery.extend({ display : "block" }, position.closer));
+			var position = dialogCalcPosition(topPos);
+			$dialog.css(jQuery.extend({ display : "" }, position));
 		}
 	}
 
-	function uiCalcPosition(topPos) {
-		if (typeof topPos === "undefined") {
+	function dialogCalcPosition(topPos) {
+		if (topPos == null) { // use lazy equality
 			topPos = 50;
 		}
 
 		var	$parent   = jQuery(window),
-			$dialog   = jQuery(_body),
-			dialogPos = { left : "", right : "", top : "", bottom : "" },
-			$closer   = jQuery(_closer),
-			closerPos = { right : "", top : "" },
-			horzSpace = $parent.width() - $dialog.outerWidth(true),
-			vertSpace = $parent.height() - $dialog.outerHeight(true);
+			$dialog   = jQuery(_dialog),
+			dialogPos = { left : "", right : "", top : "", bottom : "" };
+
+		// unset the dialog's positional properties before checking its dimensions
+		$dialog.css(dialogPos);
+
+		var	horzSpace = $parent.width() - $dialog.outerWidth(true) - 1,   // -1 to address a Firefox issue
+			vertSpace = $parent.height() - $dialog.outerHeight(true) - 1; // -1 to address a Firefox issue
+
+		if (horzSpace <= (32 + _scrollbarWidth)) {
+			vertSpace -= _scrollbarWidth;
+		}
+		if (vertSpace <= (32 + _scrollbarWidth)) {
+			horzSpace -= _scrollbarWidth;
+		}
 
 		if (horzSpace <= 32) {
 			dialogPos.left = dialogPos.right = 16;
@@ -810,15 +844,13 @@ var UISystem = (function () {
 			}
 		}
 
-		closerPos.right = (dialogPos.right - $closer.outerWidth(true) + 6) + "px";
-		closerPos.top = (dialogPos.top - $closer.outerHeight(true) + 6) + "px";
 		Object.keys(dialogPos).forEach(function (p) {
 			if (dialogPos[p] !== "") {
 				dialogPos[p] += "px";
 			}
 		});
 
-		return { dialog : dialogPos, closer : closerPos };
+		return dialogPos;
 	}
 
 
@@ -846,14 +878,12 @@ var UISystem = (function () {
 		saves                : { value : dialogSaves },
 		share                : { value : dialogShare },
 		// Core
-		isOpen               : { value : uiIsOpen },
-		body                 : { value : uiBody },
-		setup                : { value : uiSetup },
-		addClickHandler      : { value : uiAddClickHandler },
-		open                 : { value : uiOpen },
-		close                : { value : uiClose },
-		// DEPRECATED
-		show                 : { value : uiOpen }
+		isOpen               : { value : dialogIsOpen },
+		body                 : { value : dialogBody },
+		setup                : { value : dialogSetup },
+		addClickHandler      : { value : dialogAddClickHandler },
+		open                 : { value : dialogOpen },
+		close                : { value : dialogClose }
 	});
 
 }());

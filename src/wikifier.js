@@ -404,15 +404,16 @@ var Wikifier = (function () {
 					while (errTrap.hasChildNodes()) {
 						var fc = errTrap.firstChild;
 						if (fc.classList && fc.classList.contains("error")) {
-							throw new Error(fc.textContent);
+							throw new Error(fc.textContent.replace(/^(?:(?:Uncaught\s+)?Error:\s+)+/, ""));
 						}
 						errTrap.removeChild(fc);
 					}
-				} catch (e) {
-					throw new Error(e.message.replace(/^Error:\s+/, ""));
 				} finally {
 					// probably unnecessary, but let's be tidy
 					removeChildren(errTrap); // remove any remaining children
+					if (typeof errTrap.remove === "function") { // use lazy equality on null check
+						errTrap.remove();
+					}
 				}
 			}
 		},
@@ -433,7 +434,7 @@ var Wikifier = (function () {
 					} else {
 						el.classList.add("link-broken");
 					}
-					jQuery(el).click(function () {
+					jQuery(el).one("click", function () {
 						if (typeof callback === "function") {
 							callback();
 						}
@@ -1741,8 +1742,10 @@ var Wikifier = (function () {
 							} else {
 								el.classList.add("link-broken");
 							}
-							jQuery(el).click(function () {
-								if (typeof callback === "function") { callback(); }
+							jQuery(el).one("click", function () {
+								if (typeof callback === "function") {
+									callback();
+								}
 								state.display(passage, el);
 							});
 						}

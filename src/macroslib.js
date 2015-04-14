@@ -134,7 +134,7 @@ function defineStandardMacros() {
 	 * <<back>> & <<return>>
 	 */
 	macros.add(["back", "return"], {
-		version : { major : 5, minor : 0, patch : 0 },
+		version : { major : 5, minor : 0, patch : 1 },
 		handler : function () {
 			var	steps = 1,
 				pname,
@@ -234,7 +234,7 @@ function defineStandardMacros() {
 			el.classList.add("link-" + this.name); // DEPRECATED
 			el.classList.add("macro-" + this.name);
 			if (steps > 0) {
-				jQuery(el).click(function () {
+				jQuery(el).one("click", (function () {
 					if (this.name === "back") {
 						if (config.historyMode === History.Modes.Hash || config.disableHistoryControls) {
 							return function () {
@@ -261,7 +261,7 @@ function defineStandardMacros() {
 							state.display(pname, el);
 						};
 					}
-				}.call(this));
+				}.call(this)));
 			}
 			if (image == null) { // use lazy equality
 				insertText(el, ctext || this.self.dtext || ltext);
@@ -392,7 +392,7 @@ function defineStandardMacros() {
 
 			if (this.args.length === 2) {
 				text = this.args[0];
-				link  = this.args[1];
+				link = this.args[1];
 			} else {
 				if (typeof this.args[0] === "object" && this.args[0].isImage) {
 					// argument was in wiki image syntax
@@ -823,7 +823,7 @@ function defineStandardMacros() {
 	 * <<button>> & <<click>>
 	 */
 	macros.add(["button", "click"], {
-		version : { major : 5, minor : 0, patch : 0 },
+		version : { major : 5, minor : 0, patch : 1 },
 		tags    : null,
 		handler : function () {
 			if (this.args.length === 0) {
@@ -876,7 +876,8 @@ function defineStandardMacros() {
 			setupWikifyEvalEvent(jQuery(el), "click", {
 				content    : this.payload[0].contents.trim(),
 				widgetArgs : widgetArgs,
-				callback   : passage != null ? function () { state.display(passage, el); } : undefined // use lazy equality
+				callback   : passage != null ? function () { state.display(passage, el); } : undefined, // use lazy equality
+				once       : passage != null // use lazy equality
 			});
 			this.output.appendChild(el);
 		}
@@ -886,7 +887,7 @@ function defineStandardMacros() {
 	 * <<checkbox>>
 	 */
 	macros.add("checkbox", {
-		version : { major : 5, minor : 1, patch : 0 },
+		version : { major : 5, minor : 1, patch : 1 },
 		handler : function () {
 			if (this.args.length < 3) {
 				var errors = [];
@@ -917,7 +918,7 @@ function defineStandardMacros() {
 			} else {
 				Wikifier.setValue(varName, uncheckValue);
 			}
-			jQuery(el).change(function () {
+			jQuery(el).on("change", function () {
 				Wikifier.setValue(varName, this.checked ? checkValue : uncheckValue);
 			});
 			this.output.appendChild(el);
@@ -928,7 +929,7 @@ function defineStandardMacros() {
 	 * <<radiobutton>>
 	 */
 	macros.add("radiobutton", {
-		version : { major : 5, minor : 1, patch : 0 },
+		version : { major : 5, minor : 1, patch : 1 },
 		handler : function () {
 			if (this.args.length < 2) {
 				var errors = [];
@@ -962,7 +963,7 @@ function defineStandardMacros() {
 				el.checked = true;
 				Wikifier.setValue(varName, checkValue);
 			}
-			jQuery(el).change(function () {
+			jQuery(el).on("change", function () {
 				if (this.checked) {
 					Wikifier.setValue(varName, checkValue);
 				}
@@ -975,7 +976,7 @@ function defineStandardMacros() {
 	 * <<textarea>>
 	 */
 	macros.add("textarea", {
-		version : { major : 1, minor : 0, patch : 0 },
+		version : { major : 1, minor : 0, patch : 1 },
 		handler : function () {
 			if (this.args.length < 2) {
 				var errors = [];
@@ -1008,7 +1009,7 @@ function defineStandardMacros() {
 			}
 			el.classList.add("macro-" + this.name);
 			Wikifier.setValue(varName, defaultValue);
-			jQuery(el).change(function () {
+			jQuery(el).on("change", function () {
 				Wikifier.setValue(varName, this.value);
 			});
 			this.output.appendChild(el);
@@ -1027,7 +1028,7 @@ function defineStandardMacros() {
 	 * <<textbox>>
 	 */
 	macros.add("textbox", {
-		version : { major : 5, minor : 1, patch : 0 },
+		version : { major : 5, minor : 1, patch : 1 },
 		handler : function () {
 			if (this.args.length < 2) {
 				var errors = [];
@@ -1069,15 +1070,15 @@ function defineStandardMacros() {
 			el.classList.add("macro-" + this.name);
 			Wikifier.setValue(varName, defaultValue);
 			jQuery(el)
-				.change(function () {
+				.on("change", function () {
 					Wikifier.setValue(varName, this.value);
 				})
-				.keypress(function (evt) {
+				.on("keypress", function (evt) {
 					// if Return/Enter is pressed, set the $variable and, optionally, forward to another passage
 					if (evt.which === 13) { // 13 is Return/Enter
 						evt.preventDefault();
 						Wikifier.setValue(varName, this.value);
-						if (typeof passage !== "undefined") {
+						if (passage != null) { // use lazy equality
 							state.display(passage, this);
 						}
 					}
@@ -1790,7 +1791,7 @@ function defineStandardMacros() {
 	 * <<optionlist>> & <<optiontoggle>>
 	 */
 	macros.add(["optiontoggle", "optionlist"], {
-		version : { major : 2, minor : 1, patch : 0 },
+		version : { major : 3, minor : 0, patch : 0 },
 		tags    : [ "onchange" ],
 		handler : function () {
 			if (this.args.length === 0) {
@@ -1823,26 +1824,25 @@ function defineStandardMacros() {
 			}
 			switch (this.name) {
 			case "optiontoggle":
-				var	text     = this.args.length > 1 ? this.args[1] : undefined,
-					elInput  = document.createElement("a");
+				var	elInput = document.createElement("a");
 				if (options[propertyName] === undefined) {
 					options[propertyName] = false;
 				}
 				if (options[propertyName]) {
-					insertText(elInput, text || "On");
+					insertText(elInput, "On");
 					elInput.classList.add("enabled");
 				} else {
-					insertText(elInput, text || "Off");
+					insertText(elInput, "Off");
 				}
-				jQuery(elInput).click(function () {
+				jQuery(elInput).on("click", (function () {
 					return function (evt) {
 						removeChildren(elInput);
 						if (options[propertyName]) {
-							insertText(elInput, text || "Off");
+							insertText(elInput, "Off");
 							elInput.classList.remove("enabled");
 							options[propertyName] = false;
 						} else {
-							insertText(elInput, text || "On");
+							insertText(elInput, "On");
 							elInput.classList.add("enabled");
 							options[propertyName] = true;
 						}
@@ -1853,7 +1853,7 @@ function defineStandardMacros() {
 							new Wikifier(document.createElement("div"), onChangeContents);
 						}
 					}
-				}());
+				}()));
 				break;
 			case "optionlist":
 				var	items   = this.args[1],
@@ -1874,7 +1874,7 @@ function defineStandardMacros() {
 					elInput.appendChild(elItem);
 				}
 				elInput.value = options[propertyName];
-				jQuery(elInput).change(function () {
+				jQuery(elInput).on("change", function () {
 					return function (evt) {
 						options[propertyName] = evt.target.value;
 						macros.get("saveoptions").handler();
@@ -1898,7 +1898,7 @@ function defineStandardMacros() {
 	 * <<optionbar>>
 	 */
 	macros.add("optionbar", {
-		version : { major : 3, minor : 1, patch : 0 },
+		version : { major : 3, minor : 1, patch : 1 },
 		handler : function () {
 			var	elSet   = document.createElement("ul"),
 				elOK    = document.createElement("li"),
@@ -1912,7 +1912,7 @@ function defineStandardMacros() {
 			elOK.appendChild(insertElement(null, "button", "options-ok", "ui-close", "OK"));
 			elReset.appendChild(insertElement(null, "button", "options-reset", "ui-close", "Reset to Defaults"));
 
-			jQuery("button", elReset).click(function (evt) {
+			jQuery("button", elReset).on("click", function (evt) {
 				macros.get("deleteoptions").handler();
 				window.location.reload();
 			});
