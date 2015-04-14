@@ -1347,7 +1347,7 @@ function defineStandardMacros() {
 		 * <<audio>>
 		 */
 		macros.add(["audio"], {
-			version : { major: 1, minor: 0, revision: 0 },
+			version : { major: 1, minor: 1, revision: 0 },
 			handler : function () {
 				if (this.args.length < 2) {
 					var errors = [];
@@ -1366,6 +1366,7 @@ function defineStandardMacros() {
 				var	audio   = tracks[id],
 					action,
 					volume,
+					mute,
 					time,
 					loop,
 					fadeTo,
@@ -1411,6 +1412,10 @@ function defineStandardMacros() {
 							return this.error("cannot parse volume: " + raw);
 						}
 						break;
+					case "mute":
+					case "unmute":
+						mute = arg === "mute";
+						break;
 					case "time":
 						if (args.length === 0) {
 							return this.error("time missing required seconds value");
@@ -1452,6 +1457,13 @@ function defineStandardMacros() {
 					}
 					if (time != null) { // use lazy equality
 						audio.time = time;
+					}
+					if (mute != null) { // use lazy equality
+						if (mute) {
+							audio.mute();
+						} else {
+							audio.unmute();
+						}
 					}
 					if (loop != null) { // use lazy equality
 						if (loop) {
@@ -1570,7 +1582,7 @@ function defineStandardMacros() {
 		 * <<playlist>>
 		 */
 		macros.add(["playlist"], {
-			version : { major: 1, minor: 0, revision: 0 },
+			version : { major: 1, minor: 1, revision: 0 },
 			handler : function () {
 				if (this.args.length === 0) {
 					return this.error("no actions specified");
@@ -1579,6 +1591,7 @@ function defineStandardMacros() {
 				var	self    = this.self,
 					action,
 					volume,
+					mute,
 					loop,
 					shuffle,
 					raw;
@@ -1603,6 +1616,10 @@ function defineStandardMacros() {
 							return this.error("cannot parse volume: " + raw);
 						}
 						break;
+					case "mute":
+					case "unmute":
+						mute = arg === "mute";
+						break;
 					case "loop":
 					case "unloop":
 						loop = arg === "loop";
@@ -1626,6 +1643,14 @@ function defineStandardMacros() {
 						}
 						for (var i = 0, length = self.tracks.length; i < length; i++) {
 							self.tracks[i].volume = volume;
+						}
+					}
+					if (mute != null) { // use lazy equality
+						self.muted = mute;
+						if (mute) {
+							self.mute();
+						} else {
+							self.unmute();
 						}
 					}
 					if (loop != null) { // use lazy equality
@@ -1669,6 +1694,16 @@ function defineStandardMacros() {
 					this.current.stop();
 				}
 			},
+			mute : function () {
+				if (this.current !== null) {
+					this.current.mute();
+				}
+			},
+			unmute : function () {
+				if (this.current !== null) {
+					this.current.unmute();
+				}
+			},
 			next : function () {
 				this.current = this.list.shift();
 			},
@@ -1681,6 +1716,9 @@ function defineStandardMacros() {
 					thisp.buildList();
 				}
 				thisp.next();
+				if (thisp.muted) {
+					thisp.mute();
+				}
 				thisp.current.play();
 			},
 			buildList : function () {
@@ -1697,6 +1735,7 @@ function defineStandardMacros() {
 			tracks : [],
 			list : [],
 			current : null,
+			muted : false,
 			loop : true,
 			shuffle : false
 		});
@@ -1705,7 +1744,7 @@ function defineStandardMacros() {
 		 * <<setplaylist>>
 		 */
 		macros.add("setplaylist", {
-			version : { major: 1, minor: 0, revision: 0 },
+			version : { major: 2, minor: 0, revision: 0 },
 			handler : function () {
 				if (this.args.length === 0) {
 					return this.error("no track ID(s) specified");
@@ -1730,9 +1769,15 @@ function defineStandardMacros() {
 						.on("ended.macros:playlist", playlist.onEnd);
 					list.push(track);
 				}
+				if (playlist.current !== null) {
+					playlist.current.pause();
+				}
 				playlist.tracks  = list;
 				playlist.list    = [];
 				playlist.current = null;
+				playlist.muted   = false;
+				playlist.loop    = true;
+				playlist.shuffle = false;
 			}
 		});
 	}
