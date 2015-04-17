@@ -1337,7 +1337,6 @@ function defineStandardMacros() {
 	 * Audio
 	 ******************************************************************************************************************/
 	if (!has.audio) {
-		console.log("SugarCube: browser does not support HTML5 audio, audio macros will be disabled");
 		macros.add(["audio", "stopallaudio", "cacheaudio", "playlist", "setplaylist"], {
 			version : { major: 1, minor: 0, revision: 0 },
 			handler : function () { /* empty */ }
