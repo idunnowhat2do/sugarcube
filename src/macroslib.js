@@ -571,7 +571,7 @@ function defineStandardMacros() {
 	 * Control
 	 ******************************************************************************************************************/
 	/**
-	 * <<if>>
+	 * <<if>>, <<elseif>>, & <<else>>
 	 */
 	macros.add("if", {
 		version  : { major : 3, minor : 2, patch : 0 },
