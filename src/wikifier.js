@@ -817,6 +817,22 @@ var Wikifier = (function () {
 	Object.defineProperty(Wikifier, "formatters", {
 		value : [
 			{
+				name: "dollarSign",
+				match: "\\${2}",
+				handler: function (w) {
+					insertText(w.output, "$");
+				}
+			},
+
+			{
+				name: "$variable",
+				match: "\\$\\w+(?:(?:\\.\\w+)|(?:\\[\\d+\\])|(?:\\[\"(?:\\\\.|[^\"\\\\])+\"\\])|(?:\\['(?:\\\\.|[^'\\\\])+'\\])|(?:\\[\\$\\w+\\]))*",
+				handler: function (w) {
+					insertText(w.output, Wikifier.getValue(w.matchText));
+				}
+			},
+
+			{
 				name: "table",
 				match: "^\\|(?:[^\\n]*)\\|(?:[fhck]?)$",
 				lookahead: "^\\|([^\\n]*)\\|([fhck]?)$",
