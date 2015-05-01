@@ -7,52 +7,6 @@
  *
  **********************************************************************************************************************/
 
-/***********************************************************************************************************************
- * Error Handling Setup
- **********************************************************************************************************************/
-function alertUser(type, where, mesg, error) {
-	var	errMesg = "Apologies!  A " + type + " problem has occurred.";
-	switch (type) {
-	case "fatal":
-		errMesg += "  Aborting.";
-		break
-	case "technical":
-		errMesg += "  You may be able to continue, but some parts may not work properly.";
-		break
-	}
-	if (where != null || mesg != null) { // use lazy equality
-		errMesg += "\n\nError";
-		if (where != null) { // use lazy equality
-			errMesg += " [" + where + "]";
-		}
-		errMesg += ": "
-			+ (mesg != null ? mesg.replace(/^(?:(?:Uncaught\s+)?Error:\s+)+/, "") : "unknown error") // use lazy equality
-			+ ".";
-	}
-	if (error && error.stack) {
-		errMesg += "\n\nStack Trace:\n" + error.stack;
-	}
-	window.alert(errMesg);
-}
-
-function fatalAlert(where, mesg, error) {
-	alertUser("fatal", where, mesg, error);
-}
-
-function technicalAlert(where, mesg, error) {
-	alertUser("technical", where, mesg, error);
-}
-
-if (!DEBUG) {
-	window.onerror = function (mesg, url, lineNum, colNum, error) {
-		technicalAlert(null, mesg, error);
-	};
-}
-
-
-/***********************************************************************************************************************
- * Initialization
- **********************************************************************************************************************/
 // Global SugarCube object (contains exported identifiers for debugging, also allows scripts to detect if they're running in SugarCube (e.g. `"SugarCube" in window`))
 window.SugarCube = {};
 
@@ -83,12 +37,6 @@ var	version = Object.freeze({
 		}
 	});
 
-/* deprecated */
-// History modes enumeration
-var	HistoryMode = Object.freeze({ Hash : History.Modes.Hash, Window : History.Modes.Window, Session : History.Modes.Session }),
-	modes = Object.freeze({ hashTag : History.Modes.Hash, windowHistory : History.Modes.Window, sessionHistory : History.Modes.Session });
-/* /deprecated */
-
 // Runtime object (internal use only)
 var	runtime = Object.defineProperties({}, {
 		flags : {
@@ -107,20 +55,6 @@ var	runtime = Object.defineProperties({}, {
 
 // Config object (author/developer use)
 var	config = {
-		/* deprecated */
-		// capability properties
-		hasPushState      : has.pushState,
-		hasLocalStorage   : has.localStorage,
-		hasSessionStorage : has.sessionStorage,
-		hasFileAPI        : has.fileAPI,
-		/* /deprecated */
-
-		/* deprecated */
-		// basic browser detection
-		userAgent : browser.userAgent,
-		browser   : browser,
-		/* /deprecated */
-
 		// general option properties
 		addVisitedLinkClass   : false,
 		altPassageDescription : undefined,
@@ -168,13 +102,7 @@ var	config = {
 			onLoad    : undefined,
 			onSave    : undefined,
 			slots     : 8
-		},
-
-		/* DEPRECATED; see strings.js */
-		// error messages properties
-		errorName : undefined,
-		errors    : { /* noop */ }
-		/* /DEPRECATED */
+		}
 	};
 
 var	macros      = {}, // macros manager
@@ -186,8 +114,8 @@ var	macros      = {}, // macros manager
 	setup       = {}, // author setup variable store
 	predisplay  = {}, // pre-display task callbacks
 	postdisplay = {}, // post-display task callbacks
-	prerender   = {}, // Twine 1.4+ pre-render task callbacks
-	postrender  = {}; // Twine 1.4+ post-render task callbacks
+	prerender   = {}, // pre-render task callbacks
+	postrender  = {}; // post-render task callbacks
 
 /**
  * Main function, entry point for story startup
@@ -283,8 +211,9 @@ jQuery(document).ready(function () {
 		History  : History,
 		Passage  : Passage,
 		Tale     : Tale,
+		UI       : UI,
 		Save     : Save,
-		UI       : UI
+		Option   : Option
 	};
 });
 
