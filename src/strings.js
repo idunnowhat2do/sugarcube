@@ -17,7 +17,7 @@ var	strings = {
 			toggle  : "Toggle the UI bar"
 		},
 
-		// saves dialog
+		// saves
 		saves : {
 			title          : "Saves",
 			disallowed     : "Saving has been disallowed on this passage.",
@@ -36,14 +36,14 @@ var	strings = {
 			savedOnUnknown : "unknown"
 		},
 
-		// rewind dialog
+		// rewind
 		rewind : {
 			title       : "Rewind",
 			turn        : "Turn",
 			unavailable : "No rewind points available\u2026"
 		},
 
-		// restart dialog
+		// restart
 		restart : {
 			title        : "Restart",
 			prompt       : "Are you sure that you want to restart? Unsaved progress will be lost.",
@@ -51,7 +51,7 @@ var	strings = {
 			promptCancel : "Cancel"
 		},
 
-		// options dialog
+		// options
 		options : {
 			title       : "Options",
 			on          : "On",
@@ -60,12 +60,12 @@ var	strings = {
 			promptReset : "Reset to Defaults"
 		},
 
-		// share dialog
+		// share
 		share : {
 			title : "Share",
 		},
 
-		// autosave autoload dialog
+		// autosave autoload
 		autoload : {
 			title        : "Autoload",
 			prompt       : "There's an existing autosave. Load it now or go to the start?",
