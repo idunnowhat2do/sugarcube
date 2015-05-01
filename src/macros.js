@@ -8,10 +8,10 @@
  **********************************************************************************************************************/
 
 /***********************************************************************************************************************
- * Macros API
+ * Macro API
  **********************************************************************************************************************/
-// Setup the Macros constructor
-function Macros() {
+// Setup the Macro constructor
+function Macro() {
 	Object.defineProperties(this, {
 		definitions : {
 			value : {}
@@ -22,8 +22,8 @@ function Macros() {
 	});
 }
 
-// Setup the Macros prototype
-Object.defineProperties(Macros.prototype, {
+// Setup the Macro prototype
+Object.defineProperties(Macro.prototype, {
 	add : {
 		value : function (name, def, deep) {
 			if (Array.isArray(name)) {
@@ -235,14 +235,9 @@ Object.defineProperties(Macros.prototype, {
 	}
 });
 
-// Setup the MacrosContext constructor
-function MacrosContext(parent, macro, name, rawArgs, args, payload, parser, source) {
+// Setup the MacroContext constructor
+function MacroContext(parent, macro, name, rawArgs, args, payload, parser, source) {
 	Object.defineProperties(this, {
-		/* DEPRECATED */
-		context : {
-			value : parent
-		},
-		/* /DEPRECATED */
 		parent : {
 			value : parent
 		},
@@ -279,8 +274,8 @@ function MacrosContext(parent, macro, name, rawArgs, args, payload, parser, sour
 	});
 };
 
-// Setup the MacrosContext prototype
-Object.defineProperties(MacrosContext.prototype, {
+// Setup the MacroContext prototype
+Object.defineProperties(MacroContext.prototype, {
 	contextHas : {
 		value : function (filter) {
 			var context = this;
