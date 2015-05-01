@@ -1226,7 +1226,7 @@ var Wikifier = (function () {
 										//        the execution context is properly restored in the event that an uncaught exception
 										//        is thrown during the handler call
 										try {
-											this.context = new MacrosContext(
+											this.context = new MacroContext(
 												this.context,
 												macro,
 												name,

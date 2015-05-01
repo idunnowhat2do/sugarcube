@@ -208,7 +208,7 @@ jQuery(document).ready(function () {
 		}
 
 		// instantiate the macro object and standard macro library (this must be done before any passages are processed)
-		macros = new Macros();
+		macros = new Macro();
 		defineStandardMacros();
 
 		// instantiate the tale, state, storage, and session objects
