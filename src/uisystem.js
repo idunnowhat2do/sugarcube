@@ -7,10 +7,11 @@
  *
  **********************************************************************************************************************/
 
-var UISystem = (function () {
+var UI = (function () {
 	"use strict";
 
 	var
+		_bar            = null,
 		_overlay        = null,
 		_dialog         = null,
 		_dialogTitle    = null,
@@ -23,7 +24,7 @@ var UISystem = (function () {
 	 * Initialization
 	 ******************************************************************************************************************/
 	function init() {
-		if (DEBUG) { console.log("[UISystem.init()]"); }
+		if (DEBUG) { console.log("[UI.init()]"); }
 
 		// remove #init-no-js & #init-lacking from #init-screen
 		jQuery("#init-no-js, #init-lacking").remove();
@@ -70,7 +71,7 @@ var UISystem = (function () {
 		// generate the core elements
 		temp.innerHTML =
 			  '<div id="ui-bar">'
-			+     '<div id="ui-bar-toggle" title="Toggle the UI bar"><a></a></div>'
+			+     '<div id="ui-bar-toggle"><a></a></div>'
 			+     '<div id="ui-bar-body">'
 			+         '<header id="title" role="banner">'
 			+             '<div id="story-banner"></div>'
@@ -83,16 +84,16 @@ var UISystem = (function () {
 			+         '<nav id="menu" role="navigation">'
 			+             '<ul id="menu-story"></ul>'
 			+             '<ul id="menu-core">'
-			+                 '<li id="menu-saves"><a>Saves</a></li>'
-			+                 '<li id="menu-rewind"><a>Rewind</a></li>'
-			+                 '<li id="menu-restart"><a>Restart</a></li>'
-			+                 '<li id="menu-options"><a>Options</a></li>'
-			+                 '<li id="menu-share"><a>Share</a></li>'
+			+                 '<li id="menu-saves"><a>' + strings.saves.title + '</a></li>'
+			+                 '<li id="menu-rewind"><a>' + strings.rewind.title + '</a></li>'
+			+                 '<li id="menu-restart"><a>' + strings.restart.title + '</a></li>'
+			+                 '<li id="menu-options"><a>' + strings.options.title + '</a></li>'
+			+                 '<li id="menu-share"><a>' + strings.share.title + '</a></li>'
 			+             '</ul>'
 			+         '</nav>'
 			+         '<footer role="contentinfo">'
-			+             '<p id="credits">Made with <a href="http://twinery.org/" target="_blank">Twine</a> &amp; <a href="http://www.motoslave.net/sugarcube/" target="_blank">SugarCube</a></p>'
-			+             '<p id="version">SugarCube (v"{{BUILD_VERSION_VERSION}}")</p>'
+			+             '<p id="credits">' + strings.uiBar.credits + '</p>'
+			+             '<p id="version">' + version.short() + '</p>'
 			+         '</footer>'
 			+     '</div>'
 			+ '</div>'
@@ -109,19 +110,13 @@ var UISystem = (function () {
 			uiTree.appendChild(temp.firstChild);
 		}
 
-		// cache the dialog elements
+		// cache the main UI elements
+		_bar         = uiTree.querySelector("#ui-bar");
 		_overlay     = uiTree.querySelector("#ui-overlay");
 		_dialog      = uiTree.querySelector("#ui-dialog");
 		_dialogTitle = uiTree.querySelector("#ui-dialog-title");
 		_dialogClose = uiTree.querySelector("#ui-dialog-close");
 		_dialogBody  = uiTree.querySelector("#ui-dialog-body");
-
-		// setup the #ui-bar-toggle button handler
-		jQuery("#ui-bar-toggle a", uiTree).on("click", (function (uiBar) {
-			return function () {
-				uiBar.classList.toggle("stowed");
-			};
-		}(uiTree.querySelector("#ui-bar"))));
 
 		// insert the UI elements into the page before the store area
 		store.parentNode.insertBefore(uiTree, store);
@@ -132,9 +127,7 @@ var UISystem = (function () {
 	 * Internals
 	 ******************************************************************************************************************/
 	function start() {
-		if (DEBUG) { console.log("[UISystem.start()]"); }
-
-		var $html = jQuery(document.documentElement);
+		if (DEBUG) { console.log("[UI.start()]"); }
 
 		// setup the title
 		if (TWINE1) {
@@ -142,6 +135,17 @@ var UISystem = (function () {
 		} else {
 			jQuery("#story-title").empty().append(tale.title);
 		}
+
+		// setup the #credits
+		jQuery("#credits", _bar)
+			.html(strings.uiBar.credits);
+
+		// setup the #ui-bar-toggle button
+		jQuery("#ui-bar-toggle a")
+			.attr("title", strings.uiBar.toggle)
+			.on("click", function () {
+				_bar.classList.toggle("stowed");
+			});
 
 		// setup the dynamic page elements
 		if (!tale.has("StoryCaption")) {
@@ -152,60 +156,68 @@ var UISystem = (function () {
 		}
 		setPageElements();
 
-		// setup Saves menu
-		dialogAddClickHandler("#menu-saves a", null, function () { buildDialogSaves(); });
+		// setup the Saves menu item
+		dialogAddClickHandler("#menu-saves a", null, function () { buildDialogSaves(); })
+			.text(strings.saves.title);
 
-		// setup Rewind menu
+		// setup the Rewind menu item
 		if (!config.disableHistoryTracking && tale.lookup("tags", "bookmark").length > 0) {
-			dialogAddClickHandler(jQuery("#menu-rewind a"), null, function () { buildDialogRewind(); });
+			dialogAddClickHandler("#menu-rewind a", null, function () { buildDialogRewind(); })
+				.text(strings.rewind.title);
 		} else {
 			jQuery("#menu-rewind").remove();
 		}
 
-		// setup Restart menu
-		dialogAddClickHandler("#menu-restart a", null, function () { buildDialogRestart(); });
+		// setup the Restart menu item
+		dialogAddClickHandler("#menu-restart a", null, function () { buildDialogRestart(); })
+			.text(strings.restart.title);
 
-		// setup Options menu
+		// setup the Options menu item
 		if (tale.has("MenuOptions")) {
-			dialogAddClickHandler(jQuery("#menu-options a"), null, function () { buildDialogOptions(); });
+			dialogAddClickHandler("#menu-options a", null, function () { buildDialogOptions(); })
+				.text(strings.options.title);
 		} else {
 			jQuery("#menu-options").remove();
 		}
 
-		// setup Share menu
+		// setup the Share menu item
 		if (tale.has("MenuShare")) {
-			dialogAddClickHandler(jQuery("#menu-share a"), null, function () { buildDialogShare(); });
+			dialogAddClickHandler("#menu-share a", null, function () { buildDialogShare(); })
+				.text(strings.share.title);
 		} else {
 			jQuery("#menu-share").remove();
 		}
 
 		// handle the loading screen
 		if (document.readyState === "complete") {
-			$html.removeClass("init-loading");
+			document.documentElement.classList.remove("init-loading");
 		}
 		document.addEventListener("readystatechange", function () {
 			// readyState can be: "loading", "interactive", or "complete"
 			if (document.readyState === "complete") {
 				if (config.loadDelay > 0) {
-					setTimeout(function () { $html.removeClass("init-loading"); }, config.loadDelay);
+					setTimeout(function () {
+						document.documentElement.classList.remove("init-loading");
+					}, config.loadDelay);
 				} else {
-					$html.removeClass("init-loading");
+					document.documentElement.classList.remove("init-loading");
 				}
 			} else {
-				$html.addClass("init-loading");
+				document.documentElement.classList.add("init-loading");
 			}
 		}, false);
 	}
 
 	function setPageElements() {
-		if (DEBUG) { console.log("[UISystem.setPageElements()]"); }
+		if (DEBUG) { console.log("[UI.setPageElements()]"); }
 
-		// setup the dynamic page elements
+		// setup the (non-navigation) dynamic page elements
 		setPageElement("story-banner", "StoryBanner");
 		setPageElement("story-subtitle", "StorySubtitle");
 		setPageElement("story-author", "StoryAuthor");
 		setPageElement("story-caption", "StoryCaption");
 
+		// setup the #menu-story items
 		var menuStory = document.getElementById("menu-story");
 		if (menuStory !== null) {
 			removeChildren(menuStory);
@@ -256,14 +268,14 @@ var UISystem = (function () {
 				tdDele;
 			var	tdLoadBtn, tdDescTxt, tdDeleBtn;
 
-			if (SaveSystem.autosaveOK()) {
+			if (Save.autosaveOK()) {
 				tr     = document.createElement("tr"),
 				tdSlot = document.createElement("td"),
 				tdLoad = document.createElement("td"),
 				tdDesc = document.createElement("td"),
 				tdDele = document.createElement("td");
 
-				//tdSlot.appendChild(document.createTextNode("\u25c6"));
+				//tdSlot.appendChild(document.createTextNode("\u25c6")); // Black Diamond
 				tdDescTxt = document.createElement("b");
 				tdDescTxt.innerHTML = "A";
 				tdSlot.appendChild(tdDescTxt);
@@ -273,8 +285,8 @@ var UISystem = (function () {
 					tdLoadBtn.id = "saves-load-autosave";
 					tdLoadBtn.classList.add("load");
 					tdLoadBtn.classList.add("ui-close");
-					tdLoadBtn.innerHTML = "Load";
-					jQuery(tdLoadBtn).on("click", SaveSystem.loadAuto);
+					tdLoadBtn.innerHTML = strings.saves.slotLoad;
+					jQuery(tdLoadBtn).on("click", Save.loadAuto);
 					tdLoad.appendChild(tdLoadBtn);
 
 					tdDescTxt = document.createTextNode(saves.autosave.title);
@@ -282,21 +294,25 @@ var UISystem = (function () {
 					tdDesc.appendChild(document.createElement("br"));
 					tdDescTxt = document.createElement("span");
 					tdDescTxt.classList.add("datestamp");
-					tdDescTxt.innerHTML = "Autosaved (" + new Date(saves.autosave.date).toLocaleString() + ")";
+					if (saves.autosave.date) {
+						tdDescTxt.innerHTML = strings.saves.savedOn + " (" + new Date(saves.autosave.date).toLocaleString() + ")";
+					} else {
+						tdDescTxt.innerHTML = strings.saves.savedOn + " (<i>" + strings.saves.savedOnUnknown + "</i>)";
+					}
 					tdDesc.appendChild(tdDescTxt);
 
 					tdDeleBtn = document.createElement("button");
 					tdDeleBtn.id = "saves-delete-autosave";
 					tdDeleBtn.classList.add("delete");
-					tdDeleBtn.innerHTML = "Delete";
+					tdDeleBtn.innerHTML = strings.saves.slotDelete;
 					jQuery(tdDeleBtn).on("click", function () {
-						SaveSystem.deleteAuto();
+						Save.deleteAuto();
 						buildDialogSaves(); // rebuild the saves dialog
 					});
 					tdDele.appendChild(tdDeleBtn);
 				} else {
 					tdDescTxt = document.createElement("i");
-					tdDescTxt.innerHTML = "—autosave slot empty—";
+					tdDescTxt.innerHTML = strings.saves.autoSlotEmpty;
 					tdDesc.appendChild(tdDescTxt);
 					tdDesc.classList.add("empty");
 				}
@@ -317,7 +333,7 @@ var UISystem = (function () {
 				tdSlot.appendChild(document.createTextNode(i+1));
 
 				if (saves.slots[i] && saves.slots[i].state.mode === config.historyMode) {
-					tdLoadBtn = createButton("load", "ui-close", "Load", i, SaveSystem.load);
+					tdLoadBtn = createButton("load", "ui-close", strings.saves.slotLoad, i, Save.load);
 					tdLoad.appendChild(tdLoadBtn);
 
 					tdDescTxt = document.createTextNode(saves.slots[i].title);
@@ -326,23 +342,23 @@ var UISystem = (function () {
 					tdDescTxt = document.createElement("span");
 					tdDescTxt.classList.add("datestamp");
 					if (saves.slots[i].date) {
-						tdDescTxt.innerHTML = "Saved (" + new Date(saves.slots[i].date).toLocaleString() + ")";
+						tdDescTxt.innerHTML = strings.saves.savedOn + " (" + new Date(saves.slots[i].date).toLocaleString() + ")";
 					} else {
-						tdDescTxt.innerHTML = "Saved (<i>unknown</i>)";
+						tdDescTxt.innerHTML = strings.saves.savedOn + " (<i>" + strings.saves.savedOnUnknown + "</i>)";
 					}
 					tdDesc.appendChild(tdDescTxt);
 
-					tdDeleBtn = createButton("delete", null, "Del.", i, function (i) {
-						SaveSystem.delete(i);
+					tdDeleBtn = createButton("delete", null, strings.saves.slotDelete, i, function (i) {
+						Save.delete(i);
 						buildDialogSaves(); // rebuild the saves dialog
 					});
 					tdDele.appendChild(tdDeleBtn);
 				} else {
-					tdLoadBtn = createButton("save", "ui-close", "Save", i, SaveSystem.save);
+					tdLoadBtn = createButton("save", "ui-close", strings.saves.slotSave, i, Save.save);
 					tdLoad.appendChild(tdLoadBtn);
 
 					tdDescTxt = document.createElement("i");
-					tdDescTxt.innerHTML = "—save slot empty—";
+					tdDescTxt.innerHTML = strings.saves.slotEmpty;
 					tdDesc.appendChild(tdDescTxt);
 					tdDesc.classList.add("empty");
 				}
@@ -368,7 +384,7 @@ var UISystem = (function () {
 			// add label
 			label.id      = "saves-import-label";
 			label.htmlFor = "saves-import-file";
-			label.appendChild(document.createTextNode("Select a save file to load:"));
+			label.appendChild(document.createTextNode(strings.saves.importLabel));
 			el.appendChild(label);
 
 			el.appendChild(document.createElement("br"));
@@ -378,7 +394,7 @@ var UISystem = (function () {
 			input.id   = "saves-import-file";
 			input.name = "saves-import-file";
 			jQuery(input).on("change", function (evt) {
-				SaveSystem.importSave(evt);
+				Save.importSave(evt);
 				dialogClose();
 			});
 			el.appendChild(input);
@@ -386,14 +402,14 @@ var UISystem = (function () {
 			return el;
 		}
 
-		if (DEBUG) { console.log("[UISystem.buildDialogSaves()]"); }
+		if (DEBUG) { console.log("[UI.buildDialogSaves()]"); }
 
-		var	savesOK  = SaveSystem.OK(),
-			hasSaves = SaveSystem.hasAuto() || !SaveSystem.isEmpty(),
+		var	savesOK  = Save.OK(),
+			hasSaves = Save.hasAuto() || !Save.isEmpty(),
 			list,
 			btnBar;
 
-		dialogSetup("Saves", "saves");
+		dialogSetup(strings.saves.title, "saves");
 
 		if (savesOK) {
 			// add saves list
@@ -401,7 +417,7 @@ var UISystem = (function () {
 			if (!list) {
 				list = document.createElement("div");
 				list.id = "saves-list"
-				list.innerHTML = "<i>No save slots found</i>";
+				list.innerHTML = "<i>" + strings.saves.unavailable + "</i>";
 			}
 			_dialogBody.appendChild(list);
 		}
@@ -411,8 +427,8 @@ var UISystem = (function () {
 			btnBar = document.createElement("ul");
 			btnBar.classList.add("buttons");
 			if (has.fileAPI) {
-				btnBar.appendChild(createActionItem("export", "ui-close", "Save to Disk\u2026", SaveSystem.exportSave));
-				btnBar.appendChild(createActionItem("import", null, "Load from Disk\u2026", function (evt) {
+				btnBar.appendChild(createActionItem("export", "ui-close", strings.saves.saveToDisk, Save.exportSave));
+				btnBar.appendChild(createActionItem("import", null, strings.saves.loadFromDisk, function (evt) {
 					if (document.getElementById("saves-import-file")) {
 						jQuery("#saves-import-box", _dialogBody).remove();
 					} else {
@@ -421,28 +437,28 @@ var UISystem = (function () {
 				}));
 			}
 			if (hasSaves) {
-				btnBar.appendChild(createActionItem("purge", null, "Purge Slots", function (evt) {
-					SaveSystem.purge();
+				btnBar.appendChild(createActionItem("purge", null, strings.saves.purgeSlots, function (evt) {
+					Save.purge();
 					buildDialogSaves(); // rebuild the saves menu
 				}));
 			}
 			_dialogBody.appendChild(btnBar);
 			return true;
 		} else {
-			dialogAlert("Apologies! Your browser either lacks some of the capabilities required to support saves or has disabled them.\n\nThe former may be solved by updating it to a newer version or by switching to a more modern browser.\n\nThe latter may be solved by loosening its security restrictions or, perhaps, by viewing the " + strings.identity + " via the HTTP protocol.");
+			dialogAlert(strings.saves.incapable.replace("%identity%", strings.identity));
 			return false;
 		}
 	}
 
 	function buildDialogRewind() {
-		if (DEBUG) { console.log("[UISystem.buildDialogRewind()]"); }
+		if (DEBUG) { console.log("[UI.buildDialogRewind()]"); }
 
 		var list = document.createElement("ul");
 
-		jQuery(dialogSetup("Rewind", "rewind list"))
+		jQuery(dialogSetup(strings.rewind.title, "rewind list"))
 			.append(list);
 
-		for (var i = 0, iend = state.length - 1; i < iend; i++) {
+		for (var i = state.length - 2; i >= 0; i--) {
 			var passage = tale.get(state.history[i].title);
 			if (passage && passage.tags.contains("bookmark")) {
 				var	item = document.createElement("li"),
@@ -548,7 +564,7 @@ var UISystem = (function () {
 						};
 					}
 				}()));
-				link.appendChild(document.createTextNode("Turn " + (i + 1) + ": " + passage.description()));
+				link.appendChild(document.createTextNode(strings.rewind.turn + " " + (i + 1) + ": " + passage.description()));
 				item.appendChild(link);
 				list.appendChild(item);
 			}
@@ -556,19 +572,19 @@ var UISystem = (function () {
 		if (!list.hasChildNodes()) {
 			var	item = document.createElement("li"),
 				link = document.createElement("a");
-			link.innerHTML = "<i>No rewind points available\u2026</i>";
+			link.innerHTML = "<i>" + strings.rewind.unavailable + "</i>";
 			item.appendChild(link);
 			list.appendChild(item);
 		}
 	}
 
 	function buildDialogRestart() {
-		if (DEBUG) { console.log("[UISystem.buildDialogRestart()]"); }
+		if (DEBUG) { console.log("[UI.buildDialogRestart()]"); }
 
-		jQuery(dialogSetup("Restart", "restart"))
-			.append('<p>Are you sure that you want to restart? Unsaved progress will be lost.</p><ul class="buttons">'
-				+ '<li><button id="restart-ok" class="ui-close">OK</button></li>'
-				+ '<li><button id="restart-cancel" class="ui-close">Cancel</button></li>'
+		jQuery(dialogSetup(strings.restart.title, "restart"))
+			.append('<p>' + strings.restart.prompt + '</p><ul class="buttons">'
+				+ '<li><button id="restart-ok" class="ui-close">' + strings.restart.promptOK + '</button></li>'
+				+ '<li><button id="restart-cancel" class="ui-close">' + strings.restart.promptCancel + '</button></li>'
 				+ '</ul>');
 
 		// add an additional click handler for the OK button
@@ -580,18 +596,29 @@ var UISystem = (function () {
 	}
 
 	function buildDialogOptions() {
-		if (DEBUG) { console.log("[UISystem.buildDialogOptions()]"); }
+		if (DEBUG) { console.log("[UI.buildDialogOptions()]"); }
 
-		dialogSetup("Options", "options");
+		dialogSetup(strings.options.title, "options");
 		new Wikifier(_dialogBody, tale.get("MenuOptions").processText().trim());
+		jQuery(_dialogBody)
+			.append('<ul class="buttons">'
+				+ '<li><button id="options-ok" class="ui-close">' + strings.options.promptOK + '</button></li>'
+				+ '<li><button id="options-reset" class="ui-close">' + strings.options.promptReset + '</button></li>'
+				+ '</ul>');
+
+		// add an additional click handler for the Reset button
+		jQuery("#ui-dialog-body #options-reset").one("click", function (evt) {
+			macros.get("deleteoptions").handler();
+			window.location.reload();
+		});
 
 		return true;
 	}
 
 	function buildDialogShare() {
-		if (DEBUG) { console.log("[UISystem.buildDialogShare()]"); }
+		if (DEBUG) { console.log("[UI.buildDialogShare()]"); }
 
-		jQuery(dialogSetup("Share", "share list"))
+		jQuery(dialogSetup(strings.share.title, "share list"))
 			.append(buildListFromPassage("MenuShare"));
 			//.find("a")
 			//	.addClass("ui-close");
@@ -600,18 +627,18 @@ var UISystem = (function () {
 	}
 
 	function buildDialogAutoload() {
-		if (DEBUG) { console.log("[UISystem.buildDialogAutoload()]"); }
+		if (DEBUG) { console.log("[UI.buildDialogAutoload()]"); }
 
-		jQuery(dialogSetup("Autoload", "autoload"))
-			.append('<p>' + strings.saves.autoloadPrompt + '</p><ul class="buttons">'
-				+ '<li><button id="autoload-ok" class="ui-close">' + strings.saves.autoloadPromptOK + '</button></li>'
-				+ '<li><button id="autoload-cancel" class="ui-close">' + strings.saves.autoloadPromptCancel + '</button></li>'
+		jQuery(dialogSetup(strings.autoload.title, "autoload"))
+			.append('<p>' + strings.autoload.prompt + '</p><ul class="buttons">'
+				+ '<li><button id="autoload-ok" class="ui-close">' + strings.autoload.promptOK + '</button></li>'
+				+ '<li><button id="autoload-cancel" class="ui-close">' + strings.autoload.promptCancel + '</button></li>'
 				+ '</ul>');
 
 		// add an additional click handler for the #autoload-* buttons
 		jQuery(document.body).one("click.autoload", ".ui-close", function (evt) {
-			if (DEBUG) { console.log('    > display/autoload: "' + SaveSystem.getAuto().title + '"'); }
-			if (evt.target.id !== "autoload-ok" || !SaveSystem.loadAuto()) {
+			if (DEBUG) { console.log('    > display/autoload: "' + Save.getAuto().title + '"'); }
+			if (evt.target.id !== "autoload-ok" || !Save.loadAuto()) {
 				if (DEBUG) { console.log('    > display: "' + config.startPassage + '"'); }
 				state.display(config.startPassage);
 			}
@@ -714,7 +741,7 @@ var UISystem = (function () {
 	}
 
 	function dialogAddClickHandler(target, options, startFn, doneFn, closeFn) {
-		jQuery(target).on("click", function (evt) {
+		return jQuery(target).on("click", function (evt) {
 			evt.preventDefault(); // does not prevent bound events, only default actions (e.g. href links)
 
 			// call the start function
@@ -858,7 +885,7 @@ var UISystem = (function () {
 	/*******************************************************************************************************************
 	 * Exports
 	 ******************************************************************************************************************/
-	return Object.defineProperties({}, {
+	return Object.freeze(Object.defineProperties({}, {
 		// Initialization
 		init                 : { value : init },
 		// Internals
@@ -885,7 +912,7 @@ var UISystem = (function () {
 		addClickHandler      : { value : dialogAddClickHandler },
 		open                 : { value : dialogOpen },
 		close                : { value : dialogClose }
-	});
+	}));
 
 }());
 
