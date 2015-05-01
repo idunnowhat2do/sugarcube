@@ -1790,7 +1790,7 @@ function defineStandardMacros() {
 	 * <<optionlist>> & <<optiontoggle>>
 	 */
 	macros.add(["optiontoggle", "optionlist"], {
-		version : { major : 3, minor : 0, patch : 0 },
+		version : { major : 3, minor : 1, patch : 0 },
 		tags    : [ "onchange" ],
 		handler : function () {
 			if (this.args.length === 0) {
@@ -1828,20 +1828,20 @@ function defineStandardMacros() {
 					options[propertyName] = false;
 				}
 				if (options[propertyName]) {
-					insertText(elInput, "On");
+					insertText(elInput, strings.options.on);
 					elInput.classList.add("enabled");
 				} else {
-					insertText(elInput, "Off");
+					insertText(elInput, strings.options.off);
 				}
 				jQuery(elInput).on("click", (function () {
 					return function (evt) {
 						removeChildren(elInput);
 						if (options[propertyName]) {
-							insertText(elInput, "Off");
+							insertText(elInput, strings.options.off);
 							elInput.classList.remove("enabled");
 							options[propertyName] = false;
 						} else {
-							insertText(elInput, "On");
+							insertText(elInput, strings.options.on);
 							elInput.classList.add("enabled");
 							options[propertyName] = true;
 						}
@@ -1897,7 +1897,7 @@ function defineStandardMacros() {
 	 * <<optionbar>>
 	 */
 	macros.add("optionbar", {
-		version : { major : 3, minor : 1, patch : 1 },
+		version : { major : 3, minor : 2, patch : 0 },
 		handler : function () {
 			var	elSet   = document.createElement("ul"),
 				elOK    = document.createElement("li"),
@@ -1908,8 +1908,8 @@ function defineStandardMacros() {
 			elSet.classList.add("buttons");
 			elSet.classList.add("macro-" + this.name);
 
-			elOK.appendChild(insertElement(null, "button", "options-ok", "ui-close", "OK"));
-			elReset.appendChild(insertElement(null, "button", "options-reset", "ui-close", "Reset to Defaults"));
+			elOK.appendChild(insertElement(null, "button", "options-ok", "ui-close", strings.options.promptOK));
+			elReset.appendChild(insertElement(null, "button", "options-reset", "ui-close", strings.options.promptReset));
 
 			jQuery("button", elReset).on("click", function (evt) {
 				macros.get("deleteoptions").handler();
