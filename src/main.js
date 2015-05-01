@@ -53,7 +53,8 @@ if (!DEBUG) {
 /***********************************************************************************************************************
  * Initialization
  **********************************************************************************************************************/
-window.SugarCube = {}; // will contain exported identifiers, also allows scripts to detect if they're running in SugarCube (e.g. "SugarCube" in window)
+// Global SugarCube object (contains exported identifiers for debugging, also allows scripts to detect if they're running in SugarCube (e.g. `"SugarCube" in window`))
+window.SugarCube = {};
 
 var	version = Object.freeze({
 		// data properties
@@ -194,7 +195,7 @@ var	macros      = {}, // macros manager
 jQuery(document).ready(function () {
 	if (DEBUG) { console.log("[main()]"); }
 
-	/**
+	/*
 	 * WARNING!
 	 *
 	 * The ordering of the code in this function is important, so be careful when mucking around with it.
@@ -220,7 +221,7 @@ jQuery(document).ready(function () {
 		config.saves.id = tale.domId;
 
 		// initialize the user interface (this must be done before script passages)
-		UISystem.init();
+		UI.init();
 
 		// add the story styles
 		for (var i = 0; i < tale.styles.length; i++) {
@@ -246,7 +247,7 @@ jQuery(document).ready(function () {
 		}
 
 		// initialize the save system (this must be done after script passages and before state initialization)
-		SaveSystem.init();
+		Save.init();
 
 		// call macros' "early" init functions
 		macros.init();
@@ -258,7 +259,7 @@ jQuery(document).ready(function () {
 		macros.lateInit();
 
 		// start the user interface
-		UISystem.start();
+		UI.start();
 
 	} catch (e) {
 		return fatalAlert(null, e.message);
@@ -266,24 +267,24 @@ jQuery(document).ready(function () {
 
 	// lastly, export identifiers for debugging purposes
 	window.SugarCube = {
-		version    : version,
-		runtime    : runtime,
-		has        : has,
-		browser    : browser,
-		config     : config,
-		setup      : setup,
-		storage    : storage,
-		session    : session,
-		macros     : macros,
-		tale       : tale,
-		state      : state,
-		Wikifier   : Wikifier,
-		Util       : Util,
-		History    : History,
-		Passage    : Passage,
-		Tale       : Tale,
-		SaveSystem : SaveSystem,
-		UISystem   : UISystem
+		version  : version,
+		runtime  : runtime,
+		has      : has,
+		browser  : browser,
+		config   : config,
+		setup    : setup,
+		storage  : storage,
+		session  : session,
+		macros   : macros,
+		tale     : tale,
+		state    : state,
+		Wikifier : Wikifier,
+		Util     : Util,
+		History  : History,
+		Passage  : Passage,
+		Tale     : Tale,
+		Save     : Save,
+		UI       : UI
 	};
 });
 

@@ -226,22 +226,22 @@ Object.defineProperties(History.prototype, {
 				var loadStart = true;
 				switch (typeof config.saves.autoload) {
 				case "boolean":
-					if (config.saves.autoload && SaveSystem.autosaveOK()) {
-						if (DEBUG) { console.log('    > display/autoload: "' + SaveSystem.getAuto().title + '"'); }
-						loadStart = !SaveSystem.loadAuto();
+					if (config.saves.autoload && Save.autosaveOK()) {
+						if (DEBUG) { console.log('    > display/autoload: "' + Save.getAuto().title + '"'); }
+						loadStart = !Save.loadAuto();
 					}
 					break;
 				case "string":
-					if (config.saves.autoload === "prompt" && SaveSystem.autosaveOK() && SaveSystem.hasAuto()) {
+					if (config.saves.autoload === "prompt" && Save.autosaveOK() && Save.hasAuto()) {
 						loadStart = false;
-						UISystem.buildDialogAutoload();
-						UISystem.open();
+						UI.buildDialogAutoload();
+						UI.open();
 					}
 					break;
 				case "function":
-					if (SaveSystem.autosaveOK() && SaveSystem.hasAuto() && !!config.saves.autoload()) {
-						if (DEBUG) { console.log('    > display/autoload: "' + SaveSystem.getAuto().title + '"'); }
-						loadStart = !SaveSystem.loadAuto();
+					if (Save.autosaveOK() && Save.hasAuto() && !!config.saves.autoload()) {
+						if (DEBUG) { console.log('    > display/autoload: "' + Save.getAuto().title + '"'); }
+						loadStart = !Save.loadAuto();
 					}
 					break;
 				}
@@ -429,7 +429,7 @@ Object.defineProperties(History.prototype, {
 					}
 				}, passage);
 				if (config.updatePageElements) {
-					UISystem.setPageElements();
+					UI.setPageElements();
 				}
 			}
 
@@ -437,17 +437,17 @@ Object.defineProperties(History.prototype, {
 			switch (typeof config.saves.autosave) {
 			case "boolean":
 				if (config.saves.autosave) {
-					SaveSystem.saveAuto();
+					Save.saveAuto();
 				}
 				break;
 			case "string":
 				if (passage.tags.contains(config.saves.autosave)) {
-					SaveSystem.saveAuto();
+					Save.saveAuto();
 				}
 				break;
 			case "object":
 				if (Array.isArray(config.saves.autosave) && passage.tags.some(function (v) { return config.saves.autosave.contains(v); })) {
-					SaveSystem.saveAuto();
+					Save.saveAuto();
 				}
 				break;
 			}
@@ -641,8 +641,8 @@ Object.defineProperties(History, {
 			if (!History.hasWindowState(evt)) { return; }
 
 			// close any open UI dialog
-			if (UISystem.isOpen()) {
-				UISystem.close();
+			if (UI.isOpen()) {
+				UI.close();
 			}
 
 			var windowState = History.getWindowState(evt);
@@ -669,8 +669,8 @@ Object.defineProperties(History, {
 			if (!History.hasWindowState(evt)) { return; }
 
 			// close any open UI dialog
-			if (UISystem.isOpen()) {
-				UISystem.close();
+			if (UI.isOpen()) {
+				UI.close();
 			}
 
 			var windowState = History.getWindowState(evt);
@@ -698,8 +698,8 @@ Object.defineProperties(History, {
 
 			if (History.hasWindowHashState()) {
 				// close any open UI dialog
-				if (UISystem.isOpen()) {
-					UISystem.close();
+				if (UI.isOpen()) {
+					UI.close();
 				}
 
 				var hashState = History.getWindowHashState();
