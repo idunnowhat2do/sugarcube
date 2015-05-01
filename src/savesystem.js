@@ -7,7 +7,7 @@
  *
  **********************************************************************************************************************/
 
-var SaveSystem = (function () {
+var Save = (function () {
 	"use strict";
 
 	var
@@ -41,7 +41,7 @@ var SaveSystem = (function () {
 		}
 		/* /legacy kludges */
 
-		if (DEBUG) { console.log("[SaveSystem.init()]"); }
+		if (DEBUG) { console.log("[Save.init()]"); }
 
 		if (config.saves.slots < 0) {
 			config.saves.slots = 0;
@@ -263,7 +263,7 @@ var SaveSystem = (function () {
 
 	function saveSlot(slot, title, metadata) {
 		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed()) {
-			UISystem.alert(strings.saves.disallowed);
+			UI.alert(strings.saves.disallowed);
 			return false;
 		}
 		if (slot < 0 || slot > _slotsUBound) {
@@ -301,10 +301,10 @@ var SaveSystem = (function () {
 	 * Filesystem
 	 ******************************************************************************************************************/
 	function exportSave() {
-		if (DEBUG) { console.log("[SaveSystem.exportSave()]"); }
+		if (DEBUG) { console.log("[Save.exportSave()]"); }
 
 		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed()) {
-			UISystem.alert(strings.saves.disallowed);
+			UI.alert(strings.saves.disallowed);
 			return;
 		}
 
@@ -315,7 +315,7 @@ var SaveSystem = (function () {
 	}
 
 	function importSave(event) {
-		if (DEBUG) { console.log("[SaveSystem.importSave()]"); }
+		if (DEBUG) { console.log("[Save.importSave()]"); }
 
 		var	file   = event.target.files[0],
 			reader = new FileReader();
@@ -348,7 +348,7 @@ var SaveSystem = (function () {
 	 * Private
 	 ******************************************************************************************************************/
 	function marshal() {
-		if (DEBUG) { console.log("[SaveSystem.marshal()]"); }
+		if (DEBUG) { console.log("[Save.marshal()]"); }
 
 		var saveObj = {
 			id    : config.saves.id,
@@ -370,7 +370,7 @@ var SaveSystem = (function () {
 	}
 
 	function unmarshal(saveObj) {
-		if (DEBUG) { console.log("[SaveSystem.unmarshal()]"); }
+		if (DEBUG) { console.log("[Save.unmarshal()]"); }
 
 		try {
 			if (!saveObj || !saveObj.hasOwnProperty("id") || !saveObj.hasOwnProperty("state")) {
@@ -396,7 +396,7 @@ var SaveSystem = (function () {
 			// restore the state
 			History.unmarshalFromSave(saveObj.state);
 		} catch (e) {
-			UISystem.alert(e.message[0].toUpperCase() + e.message.slice(1) + ".\n\nAborting load.");
+			UI.alert(e.message[0].toUpperCase() + e.message.slice(1) + ".\n\nAborting load.");
 			return false;
 		}
 
@@ -407,7 +407,7 @@ var SaveSystem = (function () {
 	/*******************************************************************************************************************
 	 * Exports
 	 ******************************************************************************************************************/
-	return Object.defineProperties({}, {
+	return Object.freeze(Object.defineProperties({}, {
 		// Initialization
 		init       : { value : init },
 		// General
@@ -433,7 +433,7 @@ var SaveSystem = (function () {
 		// Filesystem
 		exportSave : { value : exportSave },
 		importSave : { value : importSave }
-	});
+	}));
 
 }());
 
