@@ -27,14 +27,14 @@ var Option = (function () {
 	 ******************************************************************************************************************/
 	/*
 	setup.pies = [ "Apple", "Blueberry", "Cherry", "Creme", "Lemon", "Pecan", "Pumpkin", "Raspberry" ];
-	Option.addToggle("immature", "Include content for immature audiences?");
-	Option.addToggle("pie", "Include extra content about pies?");
-	Option.addList("pie", "Choose a pie.", setup.pies);
+	Option.addToggle("immature", "Include content for immature audiences?", false);
+	Option.addToggle("pie", "Include extra content about pies?", false);
+	Option.addList("pie", "Choose a pie.", setup.pies, 1);
 	*/
-	function addToggle(name, label, callback) {
+	function addToggle(name, label, initial, callback) { // `initial` is boolean value, defaults to false
 	}
 
-	function addList(name, label, list, callback) {
+	function addList(name, label, list, initial, callback) { // `initial` is array index, defaults to 0
 	}
 
 
