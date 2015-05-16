@@ -199,8 +199,8 @@ audio, canvas, progress, video {
 [data-icon]:before, [data-icon-before]:before, [data-icon-after]:after,
 .error:before, a.link-back:before, a.link-return:after, a.link-external:after,
 #ui-bar-toggle a:before,
-#menu-saves a:before, #menu-rewind a:before, #menu-restart a:before, #menu-options a:before, #menu-share a:before,
-#ui-dialog-close, #ui-dialog-body.options a[id|="option-input"]:after, #ui-dialog-body.options a[id|="option-input"].enabled:after,
+#menu-saves a:before, #menu-rewind a:before, #menu-restart a:before, #menu-settings a:before, #menu-share a:before,
+#ui-dialog-close, #ui-dialog-body.settings a[id|="setting-input"]:after, #ui-dialog-body.settings a[id|="setting-input"].enabled:after,
 #ui-dialog-body.saves button[id="saves-export"]:before, #ui-dialog-body.saves button[id="saves-import"]:before, #ui-dialog-body.saves button[id="saves-purge"]:before, #ui-dialog-body.saves button[id|="saves-delete"]:before,
 .icon {
 	font-family: "tme-fa-icons";
@@ -247,7 +247,7 @@ a.link-return:after {
 #menu-restart a:before {
 	content: "\e82c\00a0";
 }
-#menu-options a:before {
+#menu-settings a:before {
 	content: "\e82d\00a0";
 }
 #menu-share a:before {
@@ -262,10 +262,10 @@ a.link-return:after {
 #ui-dialog-body.saves button[id="saves-purge"]:before, #ui-dialog-body.saves button[id|="saves-delete"]:before {
 	content: "\e827\00a0";
 }
-#ui-dialog-body.options a[id|="option-input"]:after {
+#ui-dialog-body.settings a[id|="setting-input"]:after {
 	content: "\00a0\00a0\e830";
 }
-#ui-dialog-body.options a[id|="option-input"].enabled:after {
+#ui-dialog-body.settings a[id|="setting-input"].enabled:after {
 	content: "\00a0\00a0\e831";
 }
 
@@ -409,34 +409,34 @@ a.link-return:after {
 }
 
 /* Options dialog styling */
-#ui-dialog-body.options ul.buttons {
+#ui-dialog-body.settings ul.buttons {
 	margin-top: 0.5em;
 	padding-top: 0.5em;
 	border-top: 1px solid #444;
 }
-#ui-dialog-body.options div[id|="option-body"] + div[id|="option-body"],
-#ui-dialog-body.options div[id|="option-body"] + br + div[id|="option-body"] {
+#ui-dialog-body.settings div[id|="setting-body"] + div[id|="setting-body"],
+#ui-dialog-body.settings div[id|="setting-body"] + br + div[id|="setting-body"] {
 	margin-top: 0.5em;
 }
-#ui-dialog-body.options select[id|="option-input"] {
+#ui-dialog-body.settings select[id|="setting-input"] {
 	white-space: nowrap;
 }
-#ui-dialog-body.options a[id|="option-input"] {
+#ui-dialog-body.settings a[id|="setting-input"] {
 	color: #eee;
 	border: 1px solid #444;
 	padding: 0.4em;
 	text-decoration: none;
 	white-space: nowrap;
 }
-#ui-dialog-body.options a[id|="option-input"]:hover {
+#ui-dialog-body.settings a[id|="setting-input"]:hover {
 	background-color: #333;
 	border-color: #eee;
 }
-#ui-dialog-body.options a[id|="option-input"].enabled {
+#ui-dialog-body.settings a[id|="setting-input"].enabled {
 	background-color: #282;
 	border-color: #4a4;
 }
-#ui-dialog-body.options a[id|="option-input"].enabled:hover {
+#ui-dialog-body.settings a[id|="setting-input"].enabled:hover {
 	background-color: #4a4;
 	border-color: #6c6;
 }

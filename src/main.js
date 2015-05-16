@@ -110,8 +110,8 @@ var	macros      = {}, // macros manager
 	state       = {}, // history manager
 	storage     = {}, // persistant storage manager
 	session     = {}, // session storage manager
-	options     = {}, // options variable store
-	setup       = {}, // author setup variable store
+	settings    = {}, // settings object
+	setup       = {}, // setup object
 	predisplay  = {}, // pre-display task callbacks
 	postdisplay = {}, // post-display task callbacks
 	prerender   = {}, // pre-render task callbacks
@@ -177,6 +177,9 @@ jQuery(document).ready(function () {
 		// initialize the save system (this must be done after script passages and before state initialization)
 		Save.init();
 
+		// initialize the setting system
+		Setting.init();
+
 		// call macros' "early" init functions
 		macros.init();
 
@@ -201,6 +204,7 @@ jQuery(document).ready(function () {
 		browser  : browser,
 		config   : config,
 		setup    : setup,
+		settings : settings,
 		storage  : storage,
 		session  : session,
 		macros   : macros,
@@ -213,7 +217,7 @@ jQuery(document).ready(function () {
 		Tale     : Tale,
 		UI       : UI,
 		Save     : Save,
-		Option   : Option
+		Setting  : Setting
 	};
 });
 

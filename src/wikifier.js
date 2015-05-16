@@ -1454,8 +1454,8 @@ var Wikifier = (function () {
 							if (/^\$\w+/.test(arg)) {
 								// $variable, so substitute its value
 								arg = Wikifier.getValue(arg);
-							} else if (/^(?:options|setup)[\.\[]/.test(arg)) {
-								// options or setup object, so try to evaluate it
+							} else if (/^(?:settings|setup)[\.\[]/.test(arg)) {
+								// settings or setup object, so try to evaluate it
 								try {
 									arg = Wikifier.evalExpression(arg);
 								} catch (e) {

@@ -8,7 +8,7 @@
  **********************************************************************************************************************/
 
 var	strings = {
-		// basics
+		// general
 		identity : "game",
 
 		// ui-bar
@@ -36,6 +36,15 @@ var	strings = {
 			savedOnUnknown : "unknown"
 		},
 
+		// settings
+		settings : {
+			title       : "Settings",
+			on          : "On",
+			off         : "Off",
+			promptOK    : "OK",
+			promptReset : "Reset to Defaults"
+		},
+
 		// rewind
 		rewind : {
 			title       : "Rewind",
@@ -49,15 +58,6 @@ var	strings = {
 			prompt       : "Are you sure that you want to restart? Unsaved progress will be lost.",
 			promptOK     : "OK",
 			promptCancel : "Cancel"
-		},
-
-		// options
-		options : {
-			title       : "Options",
-			on          : "On",
-			off         : "Off",
-			promptOK    : "OK",
-			promptReset : "Reset to Defaults"
 		},
 
 		// share

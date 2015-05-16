@@ -85,9 +85,9 @@ var UI = (function () {
 			+             '<ul id="menu-story"></ul>'
 			+             '<ul id="menu-core">'
 			+                 '<li id="menu-saves"><a>' + strings.saves.title + '</a></li>'
+			+                 '<li id="menu-settings"><a>' + strings.settings.title + '</a></li>'
 			+                 '<li id="menu-rewind"><a>' + strings.rewind.title + '</a></li>'
 			+                 '<li id="menu-restart"><a>' + strings.restart.title + '</a></li>'
-			+                 '<li id="menu-options"><a>' + strings.options.title + '</a></li>'
 			+                 '<li id="menu-share"><a>' + strings.share.title + '</a></li>'
 			+             '</ul>'
 			+         '</nav>'
@@ -172,12 +172,12 @@ var UI = (function () {
 		dialogAddClickHandler("#menu-restart a", null, function () { buildDialogRestart(); })
 			.text(strings.restart.title);
 
-		// setup the Options menu item
-		if (tale.has("MenuOptions")) {
-			dialogAddClickHandler("#menu-options a", null, function () { buildDialogOptions(); })
-				.text(strings.options.title);
+		// setup the Settings menu item
+		if (!Setting.isEmpty()) {
+			dialogAddClickHandler("#menu-settings a", null, function () { buildDialogSettings(); })
+				.text(strings.settings.title);
 		} else {
-			jQuery("#menu-options").remove();
+			jQuery("#menu-settings").remove();
 		}
 
 		// setup the Share menu item
@@ -593,20 +593,94 @@ var UI = (function () {
 		return true;
 	}
 
-	function buildDialogOptions() {
-		if (DEBUG) { console.log("[UI.buildDialogOptions()]"); }
+	function buildDialogSettings() {
+		if (DEBUG) { console.log("[UI.buildDialogSettings()]"); }
 
-		dialogSetup(strings.options.title, "options");
-		new Wikifier(_dialogBody, tale.get("MenuOptions").processText().trim());
+		dialogSetup(strings.settings.title, "settings");
+
+		Setting.controls.forEach(function (control) {
+			var	name      = control.name,
+				id        = Util.slugify(name),
+				elSetting = document.createElement("div"),
+				elLabel   = document.createElement("div"),
+				elControl = document.createElement("div"),
+				elInput;
+
+			elSetting.appendChild(elLabel);
+			elSetting.appendChild(elControl);
+			elSetting.id  = "setting-body-" + id;
+			elLabel.id   = "setting-label-" + id;
+			elControl.id = "setting-control-" + id;
+
+			// setup the label
+			new Wikifier(elLabel, control.label);
+
+			// setup the control
+			if (settings[name] == null) { // use lazy equality
+				settings[name] = control.default;
+			}
+			switch (control.type) {
+			case Setting.Types.Toggle:
+				elInput = document.createElement("a");
+				if (settings[name]) {
+					jQuery(elInput)
+						.addClass("enabled")
+						.text(strings.settings.on);
+				} else {
+					jQuery(elInput)
+						.text(strings.settings.off);
+				}
+				jQuery(elInput).on("click", function (evt) {
+					if (settings[name]) {
+						jQuery(this)
+							.removeClass("enabled")
+							.text(strings.settings.off);
+						settings[name] = false;
+					} else {
+						jQuery(this)
+							.addClass("enabled")
+							.text(strings.settings.on);
+						settings[name] = true;
+					}
+					Setting.save();
+					if (typeof control.callback === "function") {
+						control.callback.call(this);
+					}
+				});
+				break;
+			case Setting.Types.List:
+				elInput = document.createElement("select");
+				for (var i = 0; i < control.list.length; i++) {
+					var elItem = document.createElement("option");
+					insertText(elItem, control.list[i]);
+					elInput.appendChild(elItem);
+				}
+				elInput.value = settings[name];
+				jQuery(elInput).on("change", function (evt) {
+					settings[name] = evt.target.value;
+					Setting.save();
+					if (typeof control.callback === "function") {
+						control.callback.call(this);
+					}
+				});
+				break;
+			}
+			elInput.id = "setting-input-" + id;
+			elControl.appendChild(elInput);
+
+			_dialogBody.appendChild(elSetting);
+		});
+
+		// add the button bar
 		jQuery(_dialogBody)
 			.append('<ul class="buttons">'
-				+ '<li><button id="options-ok" class="ui-close">' + strings.options.promptOK + '</button></li>'
-				+ '<li><button id="options-reset" class="ui-close">' + strings.options.promptReset + '</button></li>'
+				+ '<li><button id="settings-ok" class="ui-close">' + strings.settings.promptOK + '</button></li>'
+				+ '<li><button id="settings-reset" class="ui-close">' + strings.settings.promptReset + '</button></li>'
 				+ '</ul>');
 
 		// add an additional click handler for the Reset button
-		jQuery("#ui-dialog-body #options-reset").one("click", function (evt) {
-			macros.get("deleteoptions").handler();
+		jQuery("#ui-dialog-body #settings-reset").one("click", function (evt) {
+			Setting.reset();
 			window.location.reload();
 		});
 
@@ -692,8 +766,8 @@ var UI = (function () {
 		dialogOpen(options);
 	}
 
-	function dialogOptions(/* options, closeFn */) {
-		buildDialogOptions();
+	function dialogSettings(/* options, closeFn */) {
+		buildDialogSettings();
 		dialogOpen.apply(null, arguments);
 	}
 
@@ -892,14 +966,14 @@ var UI = (function () {
 		buildDialogSaves     : { value : buildDialogSaves },
 		buildDialogRewind    : { value : buildDialogRewind },
 		buildDialogRestart   : { value : buildDialogRestart },
-		buildDialogOptions   : { value : buildDialogOptions },
+		buildDialogSettings  : { value : buildDialogSettings },
 		buildDialogShare     : { value : buildDialogShare },
 		buildDialogAutoload  : { value : buildDialogAutoload },
 		buildListFromPassage : { value : buildListFromPassage },
 		// Built-ins
 		alert                : { value : dialogAlert },
 		restart              : { value : dialogRestart },
-		options              : { value : dialogOptions },
+		settings             : { value : dialogSettings },
 		rewind               : { value : dialogRewind },
 		saves                : { value : dialogSaves },
 		share                : { value : dialogShare },

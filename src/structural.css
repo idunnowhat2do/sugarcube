@@ -107,15 +107,15 @@ html.ui-dialog-open body {
 }
 
 /* Options dialog styling */
-#ui-dialog-body.options [id|="option-body"] {
+#ui-dialog-body.settings [id|="setting-body"] {
 	display: table;
 	width: 100%;
 }
-#ui-dialog-body.options [id|="option-label"] {
+#ui-dialog-body.settings [id|="setting-label"] {
 	display: table-cell;
 	padding: 0.4em 2em 0.4em 0;
 }
-#ui-dialog-body.options [id|="option-control"] {
+#ui-dialog-body.settings [id|="setting-control"] {
 	display: table-cell;
 	min-width: 8em;
 	text-align: right;
@@ -136,7 +136,7 @@ html.ui-dialog-open body {
 
 /* Stop text selection on certain UI anchors & buttons */
 button, #ui-bar-toggle, #menu a,
-#ui-dialog-close, #ui-dialog-body.list a, #ui-dialog-body.options a[id|="option-input"] {
+#ui-dialog-close, #ui-dialog-body.list a, #ui-dialog-body.settings a[id|="setting-input"] {
 	-webkit-user-select: none;
 	-khtml-user-select: none;
 	-moz-user-select: none;
