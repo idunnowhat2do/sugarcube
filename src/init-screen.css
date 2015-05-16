@@ -1,3 +1,11 @@
+/***********************************************************************************************************************
+ *
+ * init-screen.css
+ *
+ * Copyright © 2014–2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
+ *
+ **********************************************************************************************************************/
 
 #init-screen { display: none; z-index: 100000; position: fixed; top: 0px; left: 0px; height: 100%; width: 100%; font-size: 28px; text-align: center; }
 #init-screen p { display: none; width: 75%; margin: 2em auto; font-weight: bold; font-style: italic; }
