@@ -114,7 +114,7 @@ html.ui-dialog-open body {
 	height: calc(100% - 2.1em - 34px); /* title(2.1em) - top/bottom borders(2px) - top/bottom gutters(32px) */
 }
 
-/* Options dialog styling */
+/* Settings dialog styling */
 #ui-dialog-body.settings [id|="setting-body"] {
 	display: table;
 	width: 100%;
