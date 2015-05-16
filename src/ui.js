@@ -151,7 +151,7 @@ var UI = (function () {
 		if (!tale.has("StoryCaption")) {
 			jQuery("#story-caption").remove();
 		}
-		if (!tale.has("StoryMenu") && !tale.has("MenuStory")) {
+		if (!tale.has("StoryMenu")) {
 			jQuery("#menu-story").remove();
 		}
 		setPageElements();
@@ -181,7 +181,7 @@ var UI = (function () {
 		}
 
 		// setup the Share menu item
-		if (tale.has("MenuShare")) {
+		if (tale.has("StoryShare")) {
 			dialogAddClickHandler("#menu-share a", null, function () { buildDialogShare(); })
 				.text(strings.share.title);
 		} else {
@@ -223,8 +223,6 @@ var UI = (function () {
 			removeChildren(menuStory);
 			if (tale.has("StoryMenu")) {
 				buildListFromPassage("StoryMenu", menuStory);
-			} else if (tale.has("MenuStory")) {
-				buildListFromPassage("MenuStory", menuStory);
 			}
 		}
 	}
@@ -619,7 +617,7 @@ var UI = (function () {
 		if (DEBUG) { console.log("[UI.buildDialogShare()]"); }
 
 		jQuery(dialogSetup(strings.share.title, "share list"))
-			.append(buildListFromPassage("MenuShare"));
+			.append(buildListFromPassage("StoryShare"));
 			//.find("a")
 			//	.addClass("ui-close");
 
