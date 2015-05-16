@@ -36,8 +36,6 @@ class Header (header.Header):
 				'for',
 				'if',
 				'nobr',
-				'optionlist',
-				'optiontoggle',
 				'prepend',
 				'replace',
 				'script',
@@ -49,13 +47,11 @@ class Header (header.Header):
 
 	def passageTitleColor(self, passage):
 		additionalSpecialPassages = [
-				'MenuOptions',
-				'MenuShare',
-				'MenuStory',
 				'PassageDone',
 				'PassageReady',
 				'StoryBanner',
-				'StoryCaption'
+				'StoryCaption',
+				'StoryShare'
 			]
 		if passage.isStylesheet() or passage.title == 'StoryStylesheet':
 			return ((111, 49, 83), (234, 123, 184))
