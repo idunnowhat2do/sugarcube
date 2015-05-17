@@ -233,10 +233,14 @@ var UI = (function () {
 				btn = document.createElement("button");
 			btn.id = "saves-" + bId;
 			if (bClass) {
-				btn.className = bClass;
+				btn.classList.add(bClass);
 			}
 			btn.innerHTML = bText;
-			jQuery(btn).on("click", bAction);
+			if (bAction) {
+				jQuery(btn).on("click", bAction);
+			} else {
+				btn.classList.add("disabled");
+			}
 			li.appendChild(btn);
 			return li;
 		}
@@ -245,13 +249,17 @@ var UI = (function () {
 				var btn = document.createElement("button");
 				btn.id = "saves-" + bId + "-" + bSlot;
 				if (bClass) {
-					btn.className = bClass;
+					btn.classList.add(bClass);
 				}
 				btn.classList.add(bId);
 				btn.innerHTML = bText;
-				jQuery(btn).on("click", (function (i) {
-					return function () { bAction(i); };
-				}(bSlot)));
+				if (bAction) {
+					jQuery(btn).on("click", bSlot === "auto"
+						? function () { bAction(); }
+						: function () { bAction(bSlot); });
+				} else {
+					btn.classList.add("disabled");
+				}
 				return btn;
 			}
 
@@ -279,12 +287,7 @@ var UI = (function () {
 				tdSlot.appendChild(tdDescTxt);
 
 				if (saves.autosave && saves.autosave.state.mode === config.historyMode) {
-					tdLoadBtn = document.createElement("button");
-					tdLoadBtn.id = "saves-load-autosave";
-					tdLoadBtn.classList.add("load");
-					tdLoadBtn.classList.add("ui-close");
-					tdLoadBtn.innerHTML = strings.saves.slotLoad;
-					jQuery(tdLoadBtn).on("click", Save.loadAuto);
+					tdLoadBtn = createButton("load", "ui-close", strings.saves.slotLoad, "auto", Save.loadAuto);
 					tdLoad.appendChild(tdLoadBtn);
 
 					tdDescTxt = document.createTextNode(saves.autosave.title);
@@ -299,20 +302,22 @@ var UI = (function () {
 					}
 					tdDesc.appendChild(tdDescTxt);
 
-					tdDeleBtn = document.createElement("button");
-					tdDeleBtn.id = "saves-delete-autosave";
-					tdDeleBtn.classList.add("delete");
-					tdDeleBtn.innerHTML = strings.saves.slotDelete;
-					jQuery(tdDeleBtn).on("click", function () {
+					tdDeleBtn = createButton("delete", null, strings.saves.slotDelete, "auto", function () {
 						Save.deleteAuto();
 						buildDialogSaves(); // rebuild the saves dialog
 					});
 					tdDele.appendChild(tdDeleBtn);
 				} else {
+					tdLoadBtn = createButton("load", null, strings.saves.slotLoad, "auto");
+					tdLoad.appendChild(tdLoadBtn);
+
 					tdDescTxt = document.createElement("i");
 					tdDescTxt.innerHTML = strings.saves.autoSlotEmpty;
 					tdDesc.appendChild(tdDescTxt);
 					tdDesc.classList.add("empty");
+
+					tdDeleBtn = createButton("delete", null, strings.saves.slotDelete, "auto");
+					tdDele.appendChild(tdDeleBtn);
 				}
 
 				tr.appendChild(tdSlot);
@@ -359,6 +364,9 @@ var UI = (function () {
 					tdDescTxt.innerHTML = strings.saves.slotEmpty;
 					tdDesc.appendChild(tdDescTxt);
 					tdDesc.classList.add("empty");
+
+					tdDeleBtn = createButton("delete", null, strings.saves.slotDelete, i);
+					tdDele.appendChild(tdDeleBtn);
 				}
 
 				tr.appendChild(tdSlot);
