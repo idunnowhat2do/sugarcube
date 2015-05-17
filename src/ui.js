@@ -86,7 +86,7 @@ var UI = (function () {
 			+             '<ul id="menu-core">'
 			+                 '<li id="menu-saves"><a>' + strings.saves.title + '</a></li>'
 			+                 '<li id="menu-settings"><a>' + strings.settings.title + '</a></li>'
-			+                 '<li id="menu-rewind"><a>' + strings.rewind.title + '</a></li>'
+//			+                 '<li id="menu-rewind"><a>' + strings.rewind.title + '</a></li>'
 			+                 '<li id="menu-restart"><a>' + strings.restart.title + '</a></li>'
 			+                 '<li id="menu-share"><a>' + strings.share.title + '</a></li>'
 			+             '</ul>'
@@ -160,13 +160,13 @@ var UI = (function () {
 		dialogAddClickHandler("#menu-saves a", null, function () { buildDialogSaves(); })
 			.text(strings.saves.title);
 
-		// setup the Rewind menu item
-		if (!config.disableHistoryTracking && tale.lookup("tags", "bookmark").length > 0) {
-			dialogAddClickHandler("#menu-rewind a", null, function () { buildDialogRewind(); })
-				.text(strings.rewind.title);
-		} else {
-			jQuery("#menu-rewind").remove();
-		}
+//		// setup the Rewind menu item
+//		if (!config.disableHistoryTracking && tale.lookup("tags", "bookmark").length > 0) {
+//			dialogAddClickHandler("#menu-rewind a", null, function () { buildDialogRewind(); })
+//				.text(strings.rewind.title);
+//		} else {
+//			jQuery("#menu-rewind").remove();
+//		}
 
 		// setup the Restart menu item
 		dialogAddClickHandler("#menu-restart a", null, function () { buildDialogRestart(); })
@@ -456,133 +456,133 @@ var UI = (function () {
 		}
 	}
 
-	function buildDialogRewind() {
-		if (DEBUG) { console.log("[UI.buildDialogRewind()]"); }
-
-		var list = document.createElement("ul");
-
-		jQuery(dialogSetup(strings.rewind.title, "rewind list"))
-			.append(list);
-
-		for (var i = state.length - 2; i >= 0; i--) {
-			var passage = tale.get(state.history[i].title);
-			if (passage && passage.tags.contains("bookmark")) {
-				var	item = document.createElement("li"),
-					link = document.createElement("a");
-				link.classList.add("ui-close");
-				jQuery(link).one("click", (function () {
-					var p = i;
-					if (config.historyMode === History.Modes.Session) {
-						return function () {
-							if (DEBUG) { console.log("[rewind:click() @Session]"); }
-
-							// necessary?
-							document.title = tale.title;
-
-							// regenerate the state history suid
-							state.regenerateSuid();
-
-							// push the history states in order
-							if (config.disableHistoryControls) {
-								if (DEBUG) { console.log("    > pushing: " + p + " (" + state.history[p].title + ")"); }
-
-								// load the state into the window history
-								History.replaceWindowState(
-									{ suid : state.suid, sidx : state.history[p].sidx },
-									(config.displayPassageTitles && state.history[p].title !== config.startPassage)
-										? tale.title + ": " + state.history[p].title
-										: tale.title
-								);
-							} else {
-								for (var i = 0, end = p; i <= end; i++) {
-									if (DEBUG) { console.log("    > pushing: " + i + " (" + state.history[i].title + ")"); }
-
-									// load the state into the window history
-									History.addWindowState(
-										{ suid : state.suid, sidx : state.history[i].sidx },
-										(config.displayPassageTitles && state.history[i].title !== config.startPassage)
-											? tale.title + ": " + state.history[i].title
-											: tale.title
-									);
-								}
-							}
-
-							var windowState = History.getWindowState();
-							if (windowState !== null && windowState.sidx < state.top.sidx) {
-								if (DEBUG) { console.log("    > stacks out of sync; popping " + (state.top.sidx - windowState.sidx) + " states to equalize"); }
-								// stack indexes are out of sync, pop our stack until
-								// we're back in sync with the window.history
-								state.pop(state.top.sidx - windowState.sidx);
-							}
-
-							// activate the current top
-							state.setActiveState(state.top);
-
-							// display the passage
-							state.display(state.active.title, null, "replace");
-						};
-					} else if (config.historyMode === History.Modes.Window) {
-						return function () {
-							if (DEBUG) { console.log("[rewind:click() @Window]"); }
-
-							// necessary?
-							document.title = tale.title;
-
-							// push the history states in order
-							if (!config.disableHistoryControls) {
-								for (var i = 0, end = p; i <= end; i++) {
-									if (DEBUG) { console.log("    > pushing: " + i + " (" + state.history[i].title + ")"); }
-
-									// load the state into the window history
-									var stateObj = { history : state.history.slice(0, i + 1) };
-									if (state.hasOwnProperty("prng")) {
-										stateObj.rseed = state.prng.seed;
-									}
-									History.addWindowState(
-										stateObj,
-										(config.displayPassageTitles && state.history[i].title !== config.startPassage)
-											? tale.title + ": " + state.history[i].title
-											: tale.title
-									);
-								}
-							}
-
-							// stack ids are out of sync, pop our stack until
-							// we're back in sync with the window.history
-							state.pop(state.length - (p + 1));
-
-							// activate the current top
-							state.setActiveState(state.top);
-
-							// display the passage
-							state.display(state.active.title, null, "replace");
-						};
-					} else { // History.Modes.Hash
-						return function () {
-							if (DEBUG) { console.log("[rewind:click() @Hash]"); }
-
-							if (!config.disableHistoryControls) {
-								window.location.hash = state.history[p].hash;
-							} else {
-								session.setItem("activeHash", state.history[p].hash);
-								window.location.reload();
-							}
-						};
-					}
-				}()));
-				link.appendChild(document.createTextNode(strings.rewind.turn + " " + (i + 1) + ": " + passage.description()));
-				item.appendChild(link);
-				list.appendChild(item);
-			}
-		}
-		if (!list.hasChildNodes()) {
-			var	item = document.createElement("li"),
-				link = document.createElement("a");
-			link.innerHTML = "<i>" + strings.rewind.unavailable + "</i>";
-			item.appendChild(link);
-			list.appendChild(item);
-		}
-	}
+//	function buildDialogRewind() {
+//		if (DEBUG) { console.log("[UI.buildDialogRewind()]"); }
+//
+//		var list = document.createElement("ul");
+//
+//		jQuery(dialogSetup(strings.rewind.title, "rewind list"))
+//			.append(list);
+//
+//		for (var i = state.length - 2; i >= 0; i--) {
+//			var passage = tale.get(state.history[i].title);
+//			if (passage && passage.tags.contains("bookmark")) {
+//				var	item = document.createElement("li"),
+//					link = document.createElement("a");
+//				link.classList.add("ui-close");
+//				jQuery(link).one("click", (function () {
+//					var p = i;
+//					if (config.historyMode === History.Modes.Session) {
+//						return function () {
+//							if (DEBUG) { console.log("[rewind:click() @Session]"); }
+//
+//							// necessary?
+//							document.title = tale.title;
+//
+//							// regenerate the state history suid
+//							state.regenerateSuid();
+//
+//							// push the history states in order
+//							if (config.disableHistoryControls) {
+//								if (DEBUG) { console.log("    > pushing: " + p + " (" + state.history[p].title + ")"); }
+//
+//								// load the state into the window history
+//								History.replaceWindowState(
+//									{ suid : state.suid, sidx : state.history[p].sidx },
+//									(config.displayPassageTitles && state.history[p].title !== config.startPassage)
+//										? tale.title + ": " + state.history[p].title
+//										: tale.title
+//								);
+//							} else {
+//								for (var i = 0, end = p; i <= end; i++) {
+//									if (DEBUG) { console.log("    > pushing: " + i + " (" + state.history[i].title + ")"); }
+//
+//									// load the state into the window history
+//									History.addWindowState(
+//										{ suid : state.suid, sidx : state.history[i].sidx },
+//										(config.displayPassageTitles && state.history[i].title !== config.startPassage)
+//											? tale.title + ": " + state.history[i].title
+//											: tale.title
+//									);
+//								}
+//							}
+//
+//							var windowState = History.getWindowState();
+//							if (windowState !== null && windowState.sidx < state.top.sidx) {
+//								if (DEBUG) { console.log("    > stacks out of sync; popping " + (state.top.sidx - windowState.sidx) + " states to equalize"); }
+//								// stack indexes are out of sync, pop our stack until
+//								// we're back in sync with the window.history
+//								state.pop(state.top.sidx - windowState.sidx);
+//							}
+//
+//							// activate the current top
+//							state.setActiveState(state.top);
+//
+//							// display the passage
+//							state.display(state.active.title, null, "replace");
+//						};
+//					} else if (config.historyMode === History.Modes.Window) {
+//						return function () {
+//							if (DEBUG) { console.log("[rewind:click() @Window]"); }
+//
+//							// necessary?
+//							document.title = tale.title;
+//
+//							// push the history states in order
+//							if (!config.disableHistoryControls) {
+//								for (var i = 0, end = p; i <= end; i++) {
+//									if (DEBUG) { console.log("    > pushing: " + i + " (" + state.history[i].title + ")"); }
+//
+//									// load the state into the window history
+//									var stateObj = { history : state.history.slice(0, i + 1) };
+//									if (state.hasOwnProperty("prng")) {
+//										stateObj.rseed = state.prng.seed;
+//									}
+//									History.addWindowState(
+//										stateObj,
+//										(config.displayPassageTitles && state.history[i].title !== config.startPassage)
+//											? tale.title + ": " + state.history[i].title
+//											: tale.title
+//									);
+//								}
+//							}
+//
+//							// stack ids are out of sync, pop our stack until
+//							// we're back in sync with the window.history
+//							state.pop(state.length - (p + 1));
+//
+//							// activate the current top
+//							state.setActiveState(state.top);
+//
+//							// display the passage
+//							state.display(state.active.title, null, "replace");
+//						};
+//					} else { // History.Modes.Hash
+//						return function () {
+//							if (DEBUG) { console.log("[rewind:click() @Hash]"); }
+//
+//							if (!config.disableHistoryControls) {
+//								window.location.hash = state.history[p].hash;
+//							} else {
+//								session.setItem("activeHash", state.history[p].hash);
+//								window.location.reload();
+//							}
+//						};
+//					}
+//				}()));
+//				link.appendChild(document.createTextNode(strings.rewind.turn + " " + (i + 1) + ": " + passage.description()));
+//				item.appendChild(link);
+//				list.appendChild(item);
+//			}
+//		}
+//		if (!list.hasChildNodes()) {
+//			var	item = document.createElement("li"),
+//				link = document.createElement("a");
+//			link.innerHTML = "<i>" + strings.rewind.unavailable + "</i>";
+//			item.appendChild(link);
+//			list.appendChild(item);
+//		}
+//	}
 
 	function buildDialogRestart() {
 		if (DEBUG) { console.log("[UI.buildDialogRestart()]"); }
@@ -781,10 +781,10 @@ var UI = (function () {
 		dialogOpen.apply(null, arguments);
 	}
 
-	function dialogRewind(/* options, closeFn */) {
-		buildDialogRewind();
-		dialogOpen.apply(null, arguments);
-	}
+//	function dialogRewind(/* options, closeFn */) {
+//		buildDialogRewind();
+//		dialogOpen.apply(null, arguments);
+//	}
 
 	function dialogSaves(/* options, closeFn */) {
 		buildDialogSaves();
@@ -974,7 +974,7 @@ var UI = (function () {
 		start                : { value : start },
 		setPageElements      : { value : setPageElements },
 		buildDialogSaves     : { value : buildDialogSaves },
-		buildDialogRewind    : { value : buildDialogRewind },
+//		buildDialogRewind    : { value : buildDialogRewind },
 		buildDialogRestart   : { value : buildDialogRestart },
 		buildDialogSettings  : { value : buildDialogSettings },
 		buildDialogShare     : { value : buildDialogShare },
@@ -984,7 +984,7 @@ var UI = (function () {
 		alert                : { value : dialogAlert },
 		restart              : { value : dialogRestart },
 		settings             : { value : dialogSettings },
-		rewind               : { value : dialogRewind },
+//		rewind               : { value : dialogRewind },
 		saves                : { value : dialogSaves },
 		share                : { value : dialogShare },
 		// Core
