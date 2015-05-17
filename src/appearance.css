@@ -59,6 +59,11 @@ button:hover {
 	background-color: #57c;
 	border-color: #79e;
 }
+button.disabled {
+	cursor: not-allowed;
+	background-color: #444;
+	border: 1px solid #666;
+}
 button, input, select, textarea {
 	outline: none;
 }
