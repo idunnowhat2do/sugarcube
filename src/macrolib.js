@@ -134,11 +134,10 @@ function defineStandardMacros() {
 	 * <<back>> & <<return>>
 	 */
 	macros.add(["back", "return"], {
-		version : { major : 5, minor : 0, patch : 1 },
+		version : { major : 5, minor : 1, patch : 0 },
 		handler : function () {
 			var	steps = 1,
 				pname,
-				ltext = this.name[0].toUpperCase() + this.name.slice(1),
 				ctext,
 				image,
 				el;
@@ -190,7 +189,6 @@ function defineStandardMacros() {
 					}
 					steps = (this.args[1] < state.length) ? this.args[1] : state.length - 1;
 					pname = state.peek(steps).title;
-					ltext += " (go " + steps + ")";
 				} else if (this.args[0] === "to") {
 					if (typeof this.args[1] === "object") {
 						// argument was in wiki link syntax
@@ -201,13 +199,11 @@ function defineStandardMacros() {
 					}
 					if (this.name === "return") { // || config.disableHistoryTracking) // allow <<back>> to work like <<return>> when config.disableHistoryTracking is enabled
 						pname = this.args[1];
-						ltext += ' (to "' + pname + '")';
 					} else {
 						for (var i = state.length - 1; i >= 0; i--) {
 							if (state.history[i].title === this.args[1]) {
 								steps = (state.length - 1) - i;
 								pname = this.args[1];
-								ltext += ' (to "' + pname + '")';
 								break;
 							}
 						}
@@ -264,18 +260,11 @@ function defineStandardMacros() {
 				}.call(this)));
 			}
 			if (image == null) { // use lazy equality
-				insertText(el, ctext || this.self.dtext || ltext);
+				insertText(el, ctext || strings.macros[this.name].label);
 			} else {
 				el.appendChild(image);
 			}
 			this.output.appendChild(el);
-		},
-		linktext : function () {
-			if (this.args.length === 0) {
-				delete this.self.dtext;
-			} else {
-				this.self.dtext = this.args[0];
-			}
 		}
 	}, true);
 

@@ -71,6 +71,16 @@ var	strings = {
 			prompt       : "There's an existing autosave. Load it now or go to the start?",
 			promptOK     : "Load autosave",
 			promptCancel : "Go to start"
+		},
+
+		// macros
+		macros : {
+			back : {
+				label : "Back"
+			},
+			return : {
+				label : "Return"
+			}
 		}
 	};
 
