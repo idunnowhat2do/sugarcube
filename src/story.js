@@ -266,7 +266,7 @@ Object.defineProperties(History.prototype, {
 	},
 
 	display : {
-		writable : true,
+		//writable : true, // the addition of `prehistory` should make this obsolete
 		value    : function (title, link, option) {
 			if (DEBUG) { console.log("[<History>.display()]"); }
 
@@ -284,6 +284,13 @@ Object.defineProperties(History.prototype, {
 				windowTitle = (config.displayPassageTitles && passage.title !== config.startPassage)
 					? passage.title + " | " + tale.title
 					: tale.title;
+
+			// execute the pre-history tasks
+			Object.keys(prehistory).forEach(function (task) {
+				if (typeof prehistory[task] === "function") {
+					prehistory[task].call(this, task);
+				}
+			}, passage);
 
 			// ensure that this.active is set if we have history
 			if (this.active.init && !this.isEmpty()) {
@@ -349,6 +356,11 @@ Object.defineProperties(History.prototype, {
 				if (document.body.className) {
 					document.body.className = "";
 				}
+				Object.keys(predisplay).forEach(function (task) {
+					if (typeof predisplay[task] === "function") {
+						predisplay[task].call(this, task);
+					}
+				}, passage);
 				if (tale.has("PassageReady")) {
 					try {
 						Wikifier.wikifyEval(tale.get("PassageReady").text);
@@ -356,11 +368,6 @@ Object.defineProperties(History.prototype, {
 						technicalAlert("PassageReady", e.message);
 					}
 				}
-				Object.keys(predisplay).forEach(function (task) {
-					if (typeof predisplay[task] === "function") {
-						predisplay[task].call(this, task);
-					}
-				}, passage);
 			}
 
 			// add it to the page

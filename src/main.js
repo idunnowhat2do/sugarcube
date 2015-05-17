@@ -112,6 +112,7 @@ var	macros      = {}, // macros manager
 	session     = {}, // session storage manager
 	settings    = {}, // settings object
 	setup       = {}, // setup object
+	prehistory  = {}, // pre-history task callbacks
 	predisplay  = {}, // pre-display task callbacks
 	postdisplay = {}, // post-display task callbacks
 	prerender   = {}, // pre-render task callbacks
