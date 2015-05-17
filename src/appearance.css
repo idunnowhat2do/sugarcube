@@ -422,6 +422,7 @@ a.link-return:after {
 }
 
 /* Settings dialog styling */
+/*
 #ui-dialog-body.settings ul.buttons {
 	margin-top: 0.5em;
 	padding-top: 0.5em;
@@ -430,6 +431,9 @@ a.link-return:after {
 #ui-dialog-body.settings div[id|="setting-body"] + div[id|="setting-body"],
 #ui-dialog-body.settings div[id|="setting-body"] + br + div[id|="setting-body"] {
 	margin-top: 0.5em;
+*/
+#ui-dialog-body.settings div[id|="setting-body"] + div[id|="setting-body"] {
+	margin: 0.5em 0;
 }
 #ui-dialog-body.settings select[id|="setting-input"] {
 	white-space: nowrap;
