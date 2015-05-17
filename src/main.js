@@ -180,6 +180,7 @@ var	macros      = {},         // macros manager
 	session     = {},         // session storage manager
 	options     = {},         // options variable store
 	setup       = {},         // author setup variable store
+	prehistory  = {},         // pre-history task callbacks
 	predisplay  = {},         // pre-display task callbacks
 	postdisplay = {},         // post-display task callbacks
 	prerender   = {},         // Twine 1.4+ pre-render task callbacks
