@@ -643,8 +643,9 @@ var UISystem = (function () {
 	/*******************************************************************************************************************
 	 * Core
 	 ******************************************************************************************************************/
-	function uiIsOpen() {
-		return document.documentElement.classList.contains("ui-open");
+	function uiIsOpen(classNames) {
+		return document.documentElement.classList.contains("ui-open")
+			&& (!classNames ? true : _body.classList.contains(classNames));
 	}
 
 	function uiBody() {
