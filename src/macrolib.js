@@ -260,7 +260,7 @@ function defineStandardMacros() {
 				}.call(this)));
 			}
 			if (image == null) { // use lazy equality
-				insertText(el, ctext || strings.macros[this.name].label);
+				insertText(el, ctext || strings.macros[this.name].text);
 			} else {
 				el.appendChild(image);
 			}

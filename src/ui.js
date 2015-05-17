@@ -298,7 +298,7 @@ var UI = (function () {
 					if (saves.autosave.date) {
 						tdDescTxt.innerHTML = strings.saves.savedOn + " (" + new Date(saves.autosave.date).toLocaleString() + ")";
 					} else {
-						tdDescTxt.innerHTML = strings.saves.savedOn + " (<i>" + strings.saves.savedOnUnknown + "</i>)";
+						tdDescTxt.innerHTML = strings.saves.savedOn + " (<i>" + strings.saves.unknownDate + "</i>)";
 					}
 					tdDesc.appendChild(tdDescTxt);
 
@@ -312,7 +312,7 @@ var UI = (function () {
 					tdLoad.appendChild(tdLoadBtn);
 
 					tdDescTxt = document.createElement("i");
-					tdDescTxt.innerHTML = strings.saves.autoSlotEmpty;
+					tdDescTxt.innerHTML = strings.saves.slotEmpty;
 					tdDesc.appendChild(tdDescTxt);
 					tdDesc.classList.add("empty");
 
@@ -347,7 +347,7 @@ var UI = (function () {
 					if (saves.slots[i].date) {
 						tdDescTxt.innerHTML = strings.saves.savedOn + " (" + new Date(saves.slots[i].date).toLocaleString() + ")";
 					} else {
-						tdDescTxt.innerHTML = strings.saves.savedOn + " (<i>" + strings.saves.savedOnUnknown + "</i>)";
+						tdDescTxt.innerHTML = strings.saves.savedOn + " (<i>" + strings.saves.unknownDate + "</i>)";
 					}
 					tdDesc.appendChild(tdDescTxt);
 
@@ -433,8 +433,8 @@ var UI = (function () {
 			btnBar = document.createElement("ul");
 			btnBar.classList.add("buttons");
 			if (has.fileAPI) {
-				btnBar.appendChild(createActionItem("export", "ui-close", strings.saves.saveToDisk, Save.exportSave));
-				btnBar.appendChild(createActionItem("import", null, strings.saves.loadFromDisk, function (evt) {
+				btnBar.appendChild(createActionItem("export", "ui-close", strings.saves.diskSave, Save.exportSave));
+				btnBar.appendChild(createActionItem("import", null, strings.saves.diskLoad, function (evt) {
 					if (document.getElementById("saves-import-file")) {
 						jQuery("#saves-import-box", _dialogBody).remove();
 					} else {
@@ -443,7 +443,7 @@ var UI = (function () {
 				}));
 			}
 			if (hasSaves) {
-				btnBar.appendChild(createActionItem("purge", null, strings.saves.purgeSlots, function (evt) {
+				btnBar.appendChild(createActionItem("purge", null, strings.saves.slotsPurge, function (evt) {
 					Save.purge();
 					buildDialogSaves(); // rebuild the saves menu
 				}));
@@ -589,8 +589,8 @@ var UI = (function () {
 
 		jQuery(dialogSetup(strings.restart.title, "restart"))
 			.append('<p>' + strings.restart.prompt + '</p><ul class="buttons">'
-				+ '<li><button id="restart-ok" class="ui-close">' + strings.restart.promptOK + '</button></li>'
-				+ '<li><button id="restart-cancel" class="ui-close">' + strings.restart.promptCancel + '</button></li>'
+				+ '<li><button id="restart-ok" class="ui-close">' + (strings.restart.ok || strings.ok) + '</button></li>'
+				+ '<li><button id="restart-cancel" class="ui-close">' + (strings.restart.cancel || strings.cancel) + '</button></li>'
 				+ '</ul>');
 
 		// add an additional click handler for the OK button
@@ -616,7 +616,7 @@ var UI = (function () {
 
 			elSetting.appendChild(elLabel);
 			elSetting.appendChild(elControl);
-			elSetting.id  = "setting-body-" + id;
+			elSetting.id = "setting-body-" + id;
 			elLabel.id   = "setting-label-" + id;
 			elControl.id = "setting-control-" + id;
 
@@ -682,8 +682,8 @@ var UI = (function () {
 		// add the button bar
 		jQuery(_dialogBody)
 			.append('<ul class="buttons">'
-				+ '<li><button id="settings-ok" class="ui-close">' + strings.settings.promptOK + '</button></li>'
-				+ '<li><button id="settings-reset" class="ui-close">' + strings.settings.promptReset + '</button></li>'
+				+ '<li><button id="settings-ok" class="ui-close">' + (strings.settings.ok || strings.ok) + '</button></li>'
+				+ '<li><button id="settings-reset" class="ui-close">' + strings.settings.reset + '</button></li>'
 				+ '</ul>');
 
 		// add an additional click handler for the Reset button
@@ -711,8 +711,8 @@ var UI = (function () {
 
 		jQuery(dialogSetup(strings.autoload.title, "autoload"))
 			.append('<p>' + strings.autoload.prompt + '</p><ul class="buttons">'
-				+ '<li><button id="autoload-ok" class="ui-close">' + strings.autoload.promptOK + '</button></li>'
-				+ '<li><button id="autoload-cancel" class="ui-close">' + strings.autoload.promptCancel + '</button></li>'
+				+ '<li><button id="autoload-ok" class="ui-close">' + (strings.autoload.ok || strings.ok) + '</button></li>'
+				+ '<li><button id="autoload-cancel" class="ui-close">' + (strings.autoload.cancel || strings.cancel) + '</button></li>'
 				+ '</ul>');
 
 		// add an additional click handler for the #autoload-* buttons
@@ -765,7 +765,9 @@ var UI = (function () {
 	 ******************************************************************************************************************/
 	function dialogAlert(message, options, closeFn) {
 		jQuery(dialogSetup("Alert", "alert"))
-			.append('<p>' + message + '</p><ul class="buttons"><li><button id="alert-ok" class="ui-close">OK</button></li></ul>');
+			.append('<p>' + message + '</p><ul class="buttons">'
+				+ '<li><button id="alert-ok" class="ui-close">' + (strings.alert.ok || strings.ok) + '</button></li>'
+				+ '</ul>');
 		dialogOpen(options, closeFn);
 	}
 
