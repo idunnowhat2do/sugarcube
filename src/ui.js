@@ -790,8 +790,8 @@ var UI = (function () {
 	/*******************************************************************************************************************
 	 * Core
 	 ******************************************************************************************************************/
-	function dialogIsOpen() {
-		return _dialog.classList.contains("open");
+	function dialogIsOpen(classNames) {
+		return _dialog.classList.contains("open") && (!classNames ? true : _dialogBody.classList.contains(classNames));
 	}
 
 	function dialogBody() {
