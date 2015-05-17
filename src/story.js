@@ -285,6 +285,13 @@ Object.defineProperties(History.prototype, {
 					? passage.title + " | " + tale.title
 					: tale.title;
 
+			// execute the pre-history tasks
+			Object.keys(prehistory).forEach(function (task) {
+				if (typeof prehistory[task] === "function") {
+					prehistory[task].call(this, task);
+				}
+			}, passage);
+
 			// ensure that this.active is set if we have history
 			if (this.active.init && !this.isEmpty()) {
 				if (config.historyMode === History.Modes.Session) {
@@ -349,6 +356,11 @@ Object.defineProperties(History.prototype, {
 				if (document.body.className) {
 					document.body.className = "";
 				}
+				Object.keys(predisplay).forEach(function (task) {
+					if (typeof predisplay[task] === "function") {
+						predisplay[task].call(this, task);
+					}
+				}, passage);
 				if (tale.has("PassageReady")) {
 					try {
 						Wikifier.wikifyEval(tale.get("PassageReady").text);
@@ -356,11 +368,6 @@ Object.defineProperties(History.prototype, {
 						technicalAlert("PassageReady", e.message);
 					}
 				}
-				Object.keys(predisplay).forEach(function (task) {
-					if (typeof predisplay[task] === "function") {
-						predisplay[task].call(this, task);
-					}
-				}, passage);
 			}
 
 			// add it to the page
