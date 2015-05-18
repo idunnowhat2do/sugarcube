@@ -17,37 +17,11 @@ From the main repository's *Downloads* page, go to the *Tags* tab and download o
 
 ### Cloning the repository ###
 This requires you to have the [Mercurial (`hg`)](http://mercurial.selenic.com/ "http://mercurial.selenic.com/") source control management tool installed (knowing how to use it also helps).  If you go this route, know that there are several active branches, so be sure to update your local clone to the branch you wish to work on by issuing the appropriate `hg update` command.  The current permanent branches are:
-<table>
-	<thead>
-		<tr>
-			<th>Branch</th>
-			<th>ID</th>
-			<th>Command</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td>v2 development branch</td>
-			<td><code>default</code></td>
-			<td><code>hg update default</code></td>
-		</tr>
-		<tr>
-			<td>v2 release branch</td>
-			<td><code>v2-release</code></td>
-			<td><code>hg update v2-release</code></td>
-		</tr>
-		<tr>
-			<td>v1 development branch</td>
-			<td><code>v1-devel</code></td>
-			<td><code>hg update v1-devel</code></td>
-		</tr>
-		<tr>
-			<td>v1 release branch</td>
-			<td><code>v1-release</code></td>
-			<td><code>hg update v1-release</code></td>
-		</tr>
-	</tbody>
-</table>
+
+- `default`: The v2 development branch
+- `v2-release`: The v2 release branch
+- `v1-devel`: The v1 development branch
+- `v1-release`: The v1 release branch
 
 ## Building ##
 If you want to build SugarCube from scratch, rather than grabbing one of the pre-built packages off of its website, then these instructions are for you.
