@@ -64,6 +64,53 @@ function clone(orig) {
 }
 
 /**
+ * Returns the given DOM element after making it an accessible clickable (ARIA compatibility)
+ */
+function addAccessibleClickHandler(el, handler, once, namespace) {
+	if (namespace == null) { // use lazy equality
+		namespace = "";
+	} else if (typeof namespace !== "string") {
+		throw new Error("addAccessibleClickHandler namespace parameter must be a string");
+	} else if (namespace[0] !== ".") {
+		throw new Error("addAccessibleClickHandler namespace parameter value is malformed: " + namespace);
+	}
+
+	var	tagName = el.tagName.toUpperCase(),
+		$el     = jQuery(el);
+
+	// set its role to button, if it's not an <a> or <button>
+	if (tagName !== "A" && tagName !== "BUTTON") {
+		$el.attr("role", "button");
+	}
+
+	// set its tabindex to 0 to make it focusable
+	$el.attr("tabindex", 0);
+
+	// set some classes
+	$el.addClass("event-click" + (once ? "-once" : ""))
+
+	// set its click handler
+	$el[once ? "one" : "on"]("click" + namespace, handler);
+
+	// set its keypress handler, if it's not a <button>
+	if (tagName !== "BUTTON") {
+		// we cannot use `one()` here, since any key may be pressed and we need
+		// to trigger a click event only for Enter/Return and Space
+		$el.on("keypress", function (evt) {
+			// 13 is Enter/Return, 32 is Space
+			if (evt.which === 13 || evt.which === 32) {
+				if (once) { // once only, so remove the event handler
+					$(this).off(evt);
+				}
+				$(this).trigger("click");
+			}
+		});
+	}
+
+	return el;
+}
+
+/**
  * Returns the new DOM element, optionally appending it to the passed DOM element (if any)
  */
 function insertElement(place, type, id, classNames, text, title) {
