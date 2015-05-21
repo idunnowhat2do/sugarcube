@@ -55,11 +55,11 @@ button {
 	-moz-transition-duration: 200ms;
 	transition-duration: 200ms;
 }
-button:hover {
+button:focus, button:hover {
 	background-color: #57c;
 	border-color: #79e;
 }
-button.disabled {
+button:disabled {
 	cursor: not-allowed;
 	background-color: #444;
 	border: 1px solid #666;
@@ -132,7 +132,7 @@ audio, canvas, progress, video {
 	top: 0.2em;
 	right: 0;
 }
-#ui-bar-toggle a {
+#ui-bar-toggle span {
 	display: block;
 	font-size: 1.2em;
 	color: #eee;
@@ -142,10 +142,10 @@ audio, canvas, progress, video {
 	padding: 0.3em 0.45em 0.25em;
 	text-decoration: none;
 }
-#ui-bar.stowed #ui-bar-toggle a {
+#ui-bar.stowed #ui-bar-toggle span {
 	padding: 0.3em 0.35em 0.25em 0.55em;
 }
-#ui-bar-toggle a:hover {
+#ui-bar-toggle span:focus, #ui-bar-toggle span:hover {
 	background-color: #444;
 	border-color: #eee;
 }
@@ -210,8 +210,8 @@ audio, canvas, progress, video {
 }
 
 [data-icon]:before, [data-icon-before]:before, [data-icon-after]:after,
-.error:before, a.link-back:before, a.link-return:after, a.link-external:after,
-#ui-bar-toggle a:before,
+.error:before, a.macro-back:before, a.macro-return:after, a.link-external:after,
+#ui-bar-toggle span:before,
 #menu-saves a:before, #menu-rewind a:before, #menu-restart a:before, #menu-settings a:before, #menu-share a:before,
 #ui-dialog-close, #ui-dialog-body.settings a[id|="setting-input"]:after, #ui-dialog-body.settings a[id|="setting-input"].enabled:after,
 #ui-dialog-body.saves button[id="saves-export"]:before, #ui-dialog-body.saves button[id="saves-import"]:before, #ui-dialog-body.saves button[id="saves-purge"]:before, #ui-dialog-body.saves button[id|="saves-delete"]:before,
@@ -236,19 +236,19 @@ audio, canvas, progress, video {
 .error:before {
 	content: "\00a0\e80d\00a0\00a0";
 }
-a.link-back:before {
+a.macro-back:before {
 	content: "\e821\00a0";
 }
-a.link-return:after {
+a.macro-return:after {
 	content: "\00a0\e822";
 }
 #passages a.link-external:after {
 	content: "\00a0\e80e";
 }
-#ui-bar-toggle a:before {
+#ui-bar-toggle span:before {
 	content: "\e81d";
 }
-#ui-bar.stowed #ui-bar-toggle a:before {
+#ui-bar.stowed #ui-bar-toggle span:before {
 	content: "\e81e";
 }
 #menu-saves a:before {
