@@ -29,6 +29,9 @@ var UI = (function () {
 		// remove #init-no-js & #init-lacking from #init-screen
 		jQuery("#init-no-js, #init-lacking").remove();
 
+		// add `tabindex=-1` to <body>
+		jQuery(document.body).attr("tabindex", -1);
+
 		// calculate and cache the width of scrollbars
 		_scrollbarWidth = (function () {
 			var scrollbarWidth;
@@ -70,9 +73,9 @@ var UI = (function () {
 
 		// generate the core elements
 		temp.innerHTML =
-			  '<div id="ui-bar">'
-			+     '<div id="ui-bar-toggle"><a></a></div>'
-			+     '<div id="ui-bar-body">'
+			  '<div id="ui-bar" tabindex="-1">'
+			+     '<div id="ui-bar-toggle"><span role="button" tabindex="0" aria-label="' + strings.uiBar.toggle + '"></span></div>'
+			+     '<div id="ui-bar-body" tabindex="-1">'
 			+         '<header id="title" role="banner">'
 			+             '<div id="story-banner"></div>'
 			+             '<h1 id="story-title"></h1>'
@@ -84,11 +87,11 @@ var UI = (function () {
 			+         '<nav id="menu" role="navigation">'
 			+             '<ul id="menu-story"></ul>'
 			+             '<ul id="menu-core">'
-			+                 '<li id="menu-saves"><a>' + strings.saves.title + '</a></li>'
-			+                 '<li id="menu-settings"><a>' + strings.settings.title + '</a></li>'
-//			+                 '<li id="menu-rewind"><a>' + strings.rewind.title + '</a></li>'
-			+                 '<li id="menu-restart"><a>' + strings.restart.title + '</a></li>'
-			+                 '<li id="menu-share"><a>' + strings.share.title + '</a></li>'
+			+                 '<li id="menu-saves"><a role="menuitem" tabindex="0">' + strings.saves.title + '</a></li>'
+			+                 '<li id="menu-settings"><a role="menuitem" tabindex="0">' + strings.settings.title + '</a></li>'
+//			+                 '<li id="menu-rewind"><a role="menuitem" tabindex="0">' + strings.rewind.title + '</a></li>'
+			+                 '<li id="menu-restart"><a role="menuitem" tabindex="0">' + strings.restart.title + '</a></li>'
+			+                 '<li id="menu-share"><a role="menuitem" tabindex="0">' + strings.share.title + '</a></li>'
 			+             '</ul>'
 			+         '</nav>'
 			+         '<footer role="contentinfo">'
@@ -98,9 +101,9 @@ var UI = (function () {
 			+     '</div>'
 			+ '</div>'
 			+ '<div id="ui-overlay" class="ui-close"></div>'
-			+ '<div id="ui-dialog">'
+			+ '<div id="ui-dialog" tabindex="0" role="dialog" aria-labelledby="ui-dialog-title">'
 			+     '<h1 id="ui-dialog-title"></h1>'
-			+     '<button id="ui-dialog-close" class="ui-close">\ue804</button>'
+			+     '<button id="ui-dialog-close" class="ui-close" role="button" tabindex="0" aria-label="' + strings.close + '">\ue804</button>'
 			+     '<div id="ui-dialog-body"></div>'
 			+ '</div>'
 			+ '<div id="story" role="main">'
@@ -140,9 +143,14 @@ var UI = (function () {
 		jQuery("#credits", _bar)
 			.html(strings.uiBar.credits);
 
-		// setup the #ui-bar-toggle button
-		jQuery("#ui-bar-toggle a")
-			.attr("title", strings.uiBar.toggle)
+		// setup the #ui-bar-toggle widget
+		jQuery("#ui-bar-toggle>span")
+			.on("keypress", function (evt) {
+				// 13 is Return/Enter, 32 is Space
+				if (evt.which === 13 || evt.which === 32) {
+					$(this).trigger("click");
+				}
+			})
 			.on("click", function () {
 				_bar.classList.toggle("stowed");
 			});
