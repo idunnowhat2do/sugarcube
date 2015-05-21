@@ -226,35 +226,34 @@ function defineStandardMacros() {
 			el.classList.add("link-internal");
 			el.classList.add("macro-" + this.name);
 			if (steps > 0) {
-				el.setAttribute("tabindex", 0);
-				jQuery(el).one("click", (function () {
-					if (this.name === "back") {
-						if (config.historyMode === History.Modes.Hash || config.disableHistoryControls) {
-							return function () {
-								// pop the history stack
-								//   n.b. (steps > 0) is correct, since the stack only holds "clean" (i.e. non-rendered) states
-								while (steps > 0 && state.length > 1) {
-									state.pop();
-									steps--;
-								}
-								// activate the new top since we popped the stack
-								state.setActiveState(state.top);
-								// display the passage
-								state.display(pname, el, "replace");
-							};
-						} else {
-							return function () {
-								if (state.length > 1) {
-									window.history.go(-(steps));
-								}
-							};
-						}
+				var	callback;
+				if (this.name === "back") {
+					if (config.historyMode === History.Modes.Hash || config.disableHistoryControls) {
+						callback = function () {
+							// pop the history stack
+							//   n.b. (steps > 0) is correct, since the stack only holds "clean" (i.e. non-rendered) states
+							while (steps > 0 && state.length > 1) {
+								state.pop();
+								steps--;
+							}
+							// activate the new top since we popped the stack
+							state.setActiveState(state.top);
+							// display the passage
+							state.display(pname, el, "replace");
+						};
 					} else {
-						return function () {
-							state.display(pname, el);
+						callback = function () {
+							if (state.length > 1) {
+								window.history.go(-(steps));
+							}
 						};
 					}
-				}.call(this)));
+				} else {
+					callback = function () {
+						state.display(pname, el);
+					};
+				}
+				addAccessibleClickHandler(el, callback, true);
 			}
 			if (image == null) { // use lazy equality
 				insertText(el, ctext || strings.macros[this.name].text);
@@ -329,6 +328,7 @@ function defineStandardMacros() {
 				}
 				el.classList.add("link-disabled");
 				el.classList.add("macro-" + this.name);
+				el.setAttribute("tabindex", -1);
 				return;
 			}
 
@@ -427,6 +427,7 @@ function defineStandardMacros() {
 						}
 						el.classList.add("link-disabled");
 						el.classList.add("macro-" + this.name);
+						el.setAttribute("tabindex", -1);
 					}
 					return;
 				}
