@@ -32,13 +32,13 @@ a.link-disabled, a.link-disabled:hover, span.link-disabled, span.link-disabled:h
 	color: #999;
 }
 a.link-broken {
-	color: #b22;
+	color: #c22;
 }
 a.link-internal:hover, a.link-external:hover, a.link-broken:hover {
 	text-decoration: underline;
 }
 a.link-broken:hover {
-	color: #d44;
+	color: #e44;
 }
 area {
 	cursor: pointer;
@@ -91,9 +91,15 @@ input[type="checkbox"], input[type="file"], input[type="radio"], select {
 	cursor: pointer;
 }
 hr {
+	display: block;
 	height: 1px;
 	border: none;
-	background-color: #eee;
+	border-top: 1px solid #eee;
+	margin: 1em 0;
+	padding: 0;
+}
+textarea {
+	resize: vertical;
 }
 audio, canvas, progress, video {
 	max-width: 100%;
@@ -102,7 +108,7 @@ audio, canvas, progress, video {
 .error {
 	padding: 0.4em;
 	background-color: #511;
-	border-left: 0.5em solid #d22;
+	border-left: 0.5em solid #c22;
 }
 .error[title] {
 	cursor: help;
