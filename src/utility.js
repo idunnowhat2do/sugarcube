@@ -64,9 +64,9 @@ function clone(orig) {
 }
 
 /**
- * Returns the given DOM element after making it an accessible clickable (ARIA compatibility)
+ * Returns the jQuery-wrapped target element(s) after making them accessible clickables (ARIA compatibility)
  */
-function addAccessibleClickHandler(el, handler, once, namespace) {
+function addAccessibleClickHandler(targets, handler, once, namespace) {
 	if (namespace == null) { // use lazy equality
 		namespace = "";
 	} else if (typeof namespace !== "string") {
@@ -75,39 +75,44 @@ function addAccessibleClickHandler(el, handler, once, namespace) {
 		throw new Error("addAccessibleClickHandler namespace parameter value is malformed: " + namespace);
 	}
 
-	var	tagName = el.tagName.toUpperCase(),
-		$el     = jQuery(el);
+	var	$targets = jQuery(targets);
 
-	// set its role to button, if it's not an <a> or <button>
-	if (tagName !== "A" && tagName !== "BUTTON") {
-		$el.attr("role", "button");
-	}
+	// set `role` to `button`, for non-<a>/-<button> elements
+	$targets.not("a,button").attr("role", "button");
 
-	// set its tabindex to 0 to make it focusable
-	$el.attr("tabindex", 0);
+	// set `tabindex` to `0` to make them focusable
+	$targets.attr("tabindex", 0);
 
 	// set some classes
-	$el.addClass("event-click" + (once ? "-once" : ""))
+	$targets.addClass("event-click" + (once ? "-once" : ""));
 
-	// set its click handler
-	$el[once ? "one" : "on"]("click" + namespace, handler);
+	// set the keypress handlers, for non-<button> elements
+	//   n.b. for the single-use case, the click handler will also remove this handler
+	$targets.not("button").on("keypress.accessible-click", function (evt) {
+		// 13 is Enter/Return, 32 is Space
+		if (evt.which === 13 || evt.which === 32) {
+			$(this).trigger("click");
+		}
+	});
 
-	// set its keypress handler, if it's not a <button>
-	if (tagName !== "BUTTON") {
-		// we cannot use `one()` here, since any key may be pressed and we need
-		// to trigger a click event only for Enter/Return and Space
-		$el.on("keypress", function (evt) {
-			// 13 is Enter/Return, 32 is Space
-			if (evt.which === 13 || evt.which === 32) {
-				if (once) { // once only, so remove the event handler
-					$(this).off(evt);
-				}
-				$(this).trigger("click");
-			}
-		});
-	}
+	// set the click handlers
+	//   n.b. to ensure both handlers are properly removed, `one()` must not be used here
+	$targets.on("click.accessible-click" + namespace, function (evt) {
+		if (once) {
+			// single-use, so remove both event handlers and the other components
+			$(this)
+				.off(".accessible-click")
+				.removeClass("event-click-once")
+				.removeAttr("tabindex")
+				.not("a,button")
+					.removeAttr("role");
+		}
+		if (typeof handler === "function") {
+			handler.call(this, evt);
+		}
+	});
 
-	return el;
+	return $targets;
 }
 
 /**
