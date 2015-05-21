@@ -239,7 +239,7 @@ var UI = (function () {
 			if (bAction) {
 				jQuery(btn).on("click", bAction);
 			} else {
-				btn.classList.add("disabled");
+				btn.disabled = true;
 			}
 			li.appendChild(btn);
 			return li;
@@ -258,7 +258,7 @@ var UI = (function () {
 						? function () { bAction(); }
 						: function () { bAction(bSlot); });
 				} else {
-					btn.classList.add("disabled");
+					btn.disabled = true;
 				}
 				return btn;
 			}
@@ -296,9 +296,9 @@ var UI = (function () {
 					tdDescTxt = document.createElement("span");
 					tdDescTxt.classList.add("datestamp");
 					if (saves.autosave.date) {
-						tdDescTxt.innerHTML = strings.saves.savedOn + " (" + new Date(saves.autosave.date).toLocaleString() + ")";
+						tdDescTxt.innerHTML = strings.saves.savedOn + " " + new Date(saves.autosave.date).toLocaleString();
 					} else {
-						tdDescTxt.innerHTML = strings.saves.savedOn + " (<i>" + strings.saves.unknownDate + "</i>)";
+						tdDescTxt.innerHTML = strings.saves.savedOn + " <em>" + strings.saves.unknownDate + "</em>";
 					}
 					tdDesc.appendChild(tdDescTxt);
 
@@ -345,9 +345,9 @@ var UI = (function () {
 					tdDescTxt = document.createElement("span");
 					tdDescTxt.classList.add("datestamp");
 					if (saves.slots[i].date) {
-						tdDescTxt.innerHTML = strings.saves.savedOn + " (" + new Date(saves.slots[i].date).toLocaleString() + ")";
+						tdDescTxt.innerHTML = strings.saves.savedOn + " " + new Date(saves.slots[i].date).toLocaleString();
 					} else {
-						tdDescTxt.innerHTML = strings.saves.savedOn + " (<i>" + strings.saves.unknownDate + "</i>)";
+						tdDescTxt.innerHTML = strings.saves.savedOn + " <em>" + strings.saves.unknownDate + "</em>";
 					}
 					tdDesc.appendChild(tdDescTxt);
 
