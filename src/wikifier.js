@@ -434,12 +434,12 @@ var Wikifier = (function () {
 					} else {
 						el.classList.add("link-broken");
 					}
-					jQuery(el).one("click", function () {
+					addAccessibleClickHandler(el, function () {
 						if (typeof callback === "function") {
 							callback();
 						}
 						state.display(passage, el);
-					});
+					}, true);
 				}
 				if (text) {
 					insertText(el, text);
@@ -460,6 +460,7 @@ var Wikifier = (function () {
 				el.target = "_blank";
 				if (url != null) { // use lazy equality
 					el.href = url;
+					el.setAttribute("tabindex", 0); // for accessiblity
 				}
 				return el;
 			}
@@ -1759,12 +1760,12 @@ var Wikifier = (function () {
 							} else {
 								el.classList.add("link-broken");
 							}
-							jQuery(el).one("click", function () {
+							addAccessibleClickHandler(el, function () {
 								if (typeof callback === "function") {
-									callback();
+									callback.call(this);
 								}
 								state.display(passage, el);
-							});
+							}, true);
 						}
 					}
 				}
