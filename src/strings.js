@@ -12,11 +12,12 @@ var	strings = {
 		identity : "game",
 		ok       : "OK",
 		cancel   : "Cancel",
+		close    : "Close",
 
 		// ui-bar
 		uiBar : {
-			credits : 'Made with <a href="http://twinery.org/" target="_blank">Twine</a> &amp; <a href="http://www.motoslave.net/sugarcube/" target="_blank">SugarCube</a>',
-			toggle  : "Toggle the UI bar"
+			toggle  : "Hide/show the UI bar",
+			credits : 'Made with <a href="http://twinery.org/" target="_blank" tabindex="-1">Twine</a> &amp; <a href="http://www.motoslave.net/sugarcube/" target="_blank" tabindex="-1">SugarCube</a>'
 		},
 
 		// saves
@@ -24,13 +25,13 @@ var	strings = {
 			title       : "Saves",
 			disallowed  : "Saving has been disallowed on this passage.",
 			importLabel : "Select a save file to load:",
-			incapable   : "Apologies! Your browser either lacks some of the capabilities required to support saves or has disabled them. The former may be solved by updating it to a newer version or by switching to a more modern browser. The latter may be solved by loosening its security restrictions or, perhaps, by viewing this %identity% via the HTTP protocol.",
+			incapable   : 'Apologies! Your browser either lacks some of the capabilities required to support saves or has disabled them. The former can probably be solved by <a href="http://browsehappy.com/">upgrading your browser</a>. The latter may be solved by loosening its security restrictions or, perhaps, by viewing this %identity% via the HTTP protocol (if you are not already doing so).',
 			unavailable : "No save slots found\u2026",
 			slotEmpty   : "— slot empty —",
 			slotSave    : "Save",
 			slotLoad    : "Load",
 			slotDelete  : "Del.",
-			savedOn     : "Saved",
+			savedOn     : "Saved on",
 			unknownDate : "unknown",
 			diskSave    : "Save to Disk\u2026",
 			diskLoad    : "Load from Disk\u2026",
