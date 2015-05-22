@@ -87,11 +87,11 @@ var UI = (function () {
 			+         '<nav id="menu" role="navigation">'
 			+             '<ul id="menu-story"></ul>'
 			+             '<ul id="menu-core">'
-			+                 '<li id="menu-saves"><a role="menuitem" tabindex="0">' + strings.saves.title + '</a></li>'
-			+                 '<li id="menu-settings"><a role="menuitem" tabindex="0">' + strings.settings.title + '</a></li>'
-//			+                 '<li id="menu-rewind"><a role="menuitem" tabindex="0">' + strings.rewind.title + '</a></li>'
-			+                 '<li id="menu-restart"><a role="menuitem" tabindex="0">' + strings.restart.title + '</a></li>'
-			+                 '<li id="menu-share"><a role="menuitem" tabindex="0">' + strings.share.title + '</a></li>'
+			+                 '<li id="menu-saves"><a tabindex="0">' + strings.saves.title + '</a></li>'
+			+                 '<li id="menu-settings"><a tabindex="0">' + strings.settings.title + '</a></li>'
+//			+                 '<li id="menu-rewind"><a tabindex="0">' + strings.rewind.title + '</a></li>'
+			+                 '<li id="menu-restart"><a tabindex="0">' + strings.restart.title + '</a></li>'
+			+                 '<li id="menu-share"><a tabindex="0">' + strings.share.title + '</a></li>'
 			+             '</ul>'
 			+         '</nav>'
 			+         '<footer role="contentinfo">'
@@ -682,6 +682,7 @@ var UI = (function () {
 				break;
 			}
 			elInput.id = "setting-input-" + id;
+			elInput.setAttribute("tabindex", 0);
 			elControl.appendChild(elInput);
 
 			_dialogBody.appendChild(elSetting);
@@ -830,8 +831,8 @@ var UI = (function () {
 		return _dialogBody;
 	}
 
-	function dialogAddClickHandler(target, options, startFn, doneFn, closeFn) {
-		return jQuery(target).on("click", function (evt) {
+	function dialogAddClickHandler(targets, options, startFn, doneFn, closeFn) {
+		return addAccessibleClickHandler(targets, function (evt) {
 			evt.preventDefault(); // does not prevent bound events, only default actions (e.g. href links)
 
 			// call the start function
@@ -852,10 +853,6 @@ var UI = (function () {
 	function dialogOpen(options, closeFn) {
 		options = jQuery.extend({ top : 50 }, options);
 
-		// setup the delegated UI close handler
-		jQuery(document.body)
-			.one("click.uisystem-close", ".ui-close", closeFn, dialogClose);
-
 		// add the UI isOpen class
 		jQuery(document.documentElement)
 			.addClass("ui-dialog-open");
@@ -875,24 +872,61 @@ var UI = (function () {
 				}(options.top)));
 		}
 
+		// EXPERIMENTAL
+		// add `aria-hidden=true` to all direct non-dialog-children of <body>
+		jQuery("body>:not(script,#store-area,#ui-bar,#ui-overlay,#ui-dialog)")
+			//.attr("aria-hidden", true)
+			//.attr("aria-disabled", true)
+			.attr("tabindex", -3);
+		jQuery("#story [tabindex]:not([tabindex^=-])")
+			//.attr("aria-hidden", true)
+			//.prop("disabled", true)
+			//.attr("aria-disabled", true)
+			.attr("tabindex", -2);
+		// /EXPERIMENTAL
+
 		// display the dialog
 		var position = dialogCalcPosition(options.top);
 		jQuery(_dialog)
 			.css(position)
-			.addClass("open");
+			.addClass("open")
+			.focus();
 
 		// add the UI resize handler
 		jQuery(window)
-			.on("resize.uisystem", null, options.top, jQuery.throttle(40, dialogResizeHandler));
+			.on("resize.ui-resize", null, options.top, jQuery.throttle(40, dialogResizeHandler));
+
+		// setup the delegated UI close handler
+		jQuery(document.body)
+			.on("click.ui-close", ".ui-close", closeFn, dialogClose) // yes, namespace and class have the same name
+			.on("keypress.ui-close", ".ui-close", function (evt) {
+				// 13 is Enter/Return, 32 is Space
+				if (evt.which === 13 || evt.which === 32) {
+					$(this).trigger("click");
+				}
+			});
 	}
 
 	function dialogClose(evt) {
 		// largely reverse the actions taken in `dialogOpen()`
+		jQuery(document.body)
+			.off(".ui-close"); // namespace, not to be confused with the class by the same name
 		jQuery(window)
-			.off("resize.uisystem");
+			.off("resize.ui-resize");
 		jQuery(_dialog)
 			.removeClass("open")
 			.css({ left : "", right : "", top : "", bottom : "" });
+
+		// EXPERIMENTAL
+		jQuery("#story [tabindex=-2]")
+			.attr("tabindex", 0);
+		//jQuery("body>:not(script,#store-area,#ui-bar,#ui-overlay,#ui-dialog)")
+		jQuery("body>[tabindex=-3]")
+			//.removeAttr("aria-disabled")
+			//.removeAttr("aria-hidden")
+			.removeAttr("tabindex");
+		// /EXPERIMENTAL
+
 		jQuery(_dialogTitle)
 			.empty();
 		jQuery(_dialogBody)
@@ -902,8 +936,6 @@ var UI = (function () {
 			.removeClass("open");
 		jQuery(document.documentElement)
 			.removeClass("ui-dialog-open");
-		jQuery(document.body)
-			.off("click.uisystem-close");
 
 		// call the given "on close" callback function, if any
 		if (evt && typeof evt.data === "function") {
