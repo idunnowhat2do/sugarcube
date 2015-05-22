@@ -245,6 +245,7 @@ var UI = (function () {
 			}
 			btn.innerHTML = bText;
 			if (bAction) {
+				btn.setAttribute("tabindex", 0);
 				jQuery(btn).on("click", bAction);
 			} else {
 				btn.disabled = true;
@@ -262,9 +263,14 @@ var UI = (function () {
 				btn.classList.add(bId);
 				btn.innerHTML = bText;
 				if (bAction) {
-					jQuery(btn).on("click", bSlot === "auto"
-						? function () { bAction(); }
-						: function () { bAction(bSlot); });
+					btn.setAttribute("tabindex", 0);
+					if (bSlot === "auto") {
+						jQuery(btn).on("click", function () { bAction(); });
+						btn.title = bText + " " + strings.saves.labelAuto;
+					} else {
+						jQuery(btn).on("click", function () { bAction(bSlot); });
+						btn.title = bText + " " + strings.saves.labelSlot + " " + (bSlot+1);
+					}
 				} else {
 					btn.disabled = true;
 				}
@@ -289,19 +295,21 @@ var UI = (function () {
 				tdDesc = document.createElement("td"),
 				tdDele = document.createElement("td");
 
-				//tdSlot.appendChild(document.createTextNode("\u25c6")); // Black Diamond
+				//tdDescTxt = document.createElement("span");
+				//tdDescTxt.innerHTML = "\u25c6"; // Black Diamond
 				tdDescTxt = document.createElement("b");
 				tdDescTxt.innerHTML = "A";
+				tdDescTxt.title = strings.saves.labelAuto;
 				tdSlot.appendChild(tdDescTxt);
 
 				if (saves.autosave && saves.autosave.state.mode === config.historyMode) {
-					tdLoadBtn = createButton("load", "ui-close", strings.saves.slotLoad, "auto", Save.loadAuto);
+					tdLoadBtn = createButton("load", "ui-close", strings.saves.labelLoad, "auto", Save.loadAuto);
 					tdLoad.appendChild(tdLoadBtn);
 
-					tdDescTxt = document.createTextNode(saves.autosave.title);
+					tdDescTxt = document.createElement("div");
+					tdDescTxt.appendChild(document.createTextNode(saves.autosave.title));
 					tdDesc.appendChild(tdDescTxt);
-					tdDesc.appendChild(document.createElement("br"));
-					tdDescTxt = document.createElement("span");
+					tdDescTxt = document.createElement("div");
 					tdDescTxt.classList.add("datestamp");
 					if (saves.autosave.date) {
 						tdDescTxt.innerHTML = strings.saves.savedOn + " " + new Date(saves.autosave.date).toLocaleString();
@@ -310,21 +318,21 @@ var UI = (function () {
 					}
 					tdDesc.appendChild(tdDescTxt);
 
-					tdDeleBtn = createButton("delete", null, strings.saves.slotDelete, "auto", function () {
+					tdDeleBtn = createButton("delete", null, strings.saves.labelDelete, "auto", function () {
 						Save.deleteAuto();
 						buildDialogSaves(); // rebuild the saves dialog
 					});
 					tdDele.appendChild(tdDeleBtn);
 				} else {
-					tdLoadBtn = createButton("load", null, strings.saves.slotLoad, "auto");
+					tdLoadBtn = createButton("load", null, strings.saves.labelLoad, "auto");
 					tdLoad.appendChild(tdLoadBtn);
 
 					tdDescTxt = document.createElement("i");
-					tdDescTxt.innerHTML = strings.saves.slotEmpty;
+					tdDescTxt.innerHTML = strings.saves.emptySlot;
 					tdDesc.appendChild(tdDescTxt);
 					tdDesc.classList.add("empty");
 
-					tdDeleBtn = createButton("delete", null, strings.saves.slotDelete, "auto");
+					tdDeleBtn = createButton("delete", null, strings.saves.labelDelete, "auto");
 					tdDele.appendChild(tdDeleBtn);
 				}
 
@@ -344,13 +352,13 @@ var UI = (function () {
 				tdSlot.appendChild(document.createTextNode(i+1));
 
 				if (saves.slots[i] && saves.slots[i].state.mode === config.historyMode) {
-					tdLoadBtn = createButton("load", "ui-close", strings.saves.slotLoad, i, Save.load);
+					tdLoadBtn = createButton("load", "ui-close", strings.saves.labelLoad, i, Save.load);
 					tdLoad.appendChild(tdLoadBtn);
 
-					tdDescTxt = document.createTextNode(saves.slots[i].title);
+					tdDescTxt = document.createElement("div");
+					tdDescTxt.appendChild(document.createTextNode(saves.slots[i].title));
 					tdDesc.appendChild(tdDescTxt);
-					tdDesc.appendChild(document.createElement("br"));
-					tdDescTxt = document.createElement("span");
+					tdDescTxt = document.createElement("div");
 					tdDescTxt.classList.add("datestamp");
 					if (saves.slots[i].date) {
 						tdDescTxt.innerHTML = strings.saves.savedOn + " " + new Date(saves.slots[i].date).toLocaleString();
@@ -359,21 +367,21 @@ var UI = (function () {
 					}
 					tdDesc.appendChild(tdDescTxt);
 
-					tdDeleBtn = createButton("delete", null, strings.saves.slotDelete, i, function (i) {
+					tdDeleBtn = createButton("delete", null, strings.saves.labelDelete, i, function (i) {
 						Save.delete(i);
 						buildDialogSaves(); // rebuild the saves dialog
 					});
 					tdDele.appendChild(tdDeleBtn);
 				} else {
-					tdLoadBtn = createButton("save", "ui-close", strings.saves.slotSave, i, Save.save);
+					tdLoadBtn = createButton("save", "ui-close", strings.saves.labelSave, i, Save.save);
 					tdLoad.appendChild(tdLoadBtn);
 
 					tdDescTxt = document.createElement("i");
-					tdDescTxt.innerHTML = strings.saves.slotEmpty;
+					tdDescTxt.innerHTML = strings.saves.emptySlot;
 					tdDesc.appendChild(tdDescTxt);
 					tdDesc.classList.add("empty");
 
-					tdDeleBtn = createButton("delete", null, strings.saves.slotDelete, i);
+					tdDeleBtn = createButton("delete", null, strings.saves.labelDelete, i);
 					tdDele.appendChild(tdDeleBtn);
 				}
 
