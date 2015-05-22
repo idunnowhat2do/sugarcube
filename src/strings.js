@@ -10,9 +10,9 @@
 var	strings = {
 		// general
 		identity : "game",
-		ok       : "OK",
 		cancel   : "Cancel",
 		close    : "Close",
+		ok       : "OK",
 
 		// ui-bar
 		uiBar : {
@@ -24,25 +24,27 @@ var	strings = {
 		saves : {
 			title       : "Saves",
 			disallowed  : "Saving has been disallowed on this passage.",
+			diskLoad    : "Load from Disk\u2026",
+			diskSave    : "Save to Disk\u2026",
+			emptySlot   : "— slot empty —",
 			importLabel : "Select a save file to load:",
 			incapable   : 'Apologies! Your browser either lacks some of the capabilities required to support saves or has disabled them. The former can probably be solved by <a href="http://browsehappy.com/">upgrading your browser</a>. The latter may be solved by loosening its security restrictions or, perhaps, by viewing this %identity% via the HTTP protocol (if you are not already doing so).',
-			unavailable : "No save slots found\u2026",
-			slotEmpty   : "— slot empty —",
-			slotSave    : "Save",
-			slotLoad    : "Load",
-			slotDelete  : "Del.",
+			labelAuto   : "Autosave",
+			labelSlot   : "Slot",
+			labelDelete : "Delete",
+			labelLoad   : "Load",
+			labelSave   : "Save",
 			savedOn     : "Saved on",
-			unknownDate : "unknown",
-			diskSave    : "Save to Disk\u2026",
-			diskLoad    : "Load from Disk\u2026",
-			slotsPurge  : "Purge Slots"
+			slotsPurge  : "Purge Slots",
+			unavailable : "No save slots found\u2026",
+			unknownDate : "unknown"
 		},
 
 		// settings
 		settings : {
 			title : "Settings",
-			on    : "On",
 			off   : "Off",
+			on    : "On",
 			reset : "Reset to Defaults"
 		},
 
@@ -71,9 +73,9 @@ var	strings = {
 		// autosave autoload
 		autoload : {
 			title  : "Autoload",
-			prompt : "There's an existing autosave. Load it now or go to the start?",
+			cancel : "Go to start",
 			ok     : "Load autosave",
-			cancel : "Go to start"
+			prompt : "There's an existing autosave. Load it now or go to the start?"
 		},
 
 		// macros
