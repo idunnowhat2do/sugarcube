@@ -278,7 +278,7 @@ a.macro-return:after {
 #ui-dialog-body.saves button[id="saves-import"]:before {
 	content: "\e82a\00a0";
 }
-#ui-dialog-body.saves button[id="saves-purge"]:before, #ui-dialog-body.saves button[id|="saves-delete"]:before {
+#ui-dialog-body.saves button[id="saves-purge"]:before {
 	content: "\e827\00a0";
 }
 #ui-dialog-body.settings a[id|="setting-input"]:after {
