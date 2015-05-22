@@ -440,6 +440,18 @@ Object.defineProperties(History.prototype, {
 				}
 			}
 
+			// last second post-processing for accessibility and other things
+			//   n.b. perhaps this should be limited to the incoming passage and,
+			//        if so, maybe before its contents are added to the DOM ?
+			jQuery("#story")
+				.find("a[href]:not(.link-external)")
+					.addClass("link-external")
+					.end()
+				.find("a,link,button,input,select,textarea")
+//					.filter(":not([tabindex])")
+					.not("[tabindex]")
+						.attr("tabindex", 0);
+
 			// handle autosaves
 			switch (typeof config.saves.autosave) {
 			case "boolean":
