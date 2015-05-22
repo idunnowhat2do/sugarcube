@@ -169,7 +169,7 @@ function removeChildren(node) {
 function removeElement(node) {
 	if (typeof node.remove === "function") {
 		node.remove();
-	} else if (el.parentNode) {
+	} else if (node.parentNode) {
 		node.parentNode.removeChild(node);
 	}
 }
@@ -247,7 +247,7 @@ function convertBreaksToParagraphs(source) {
  * Wikifies a passage into a DOM element corresponding to the passed ID and returns the element
  */
 function setPageElement(id, titles, defaultText) {
-	var el = (typeof id === "object") ? id : document.getElementById(id);
+	var el = typeof id === "object" ? id : document.getElementById(id);
 	if (el == null) { // use lazy equality
 		return null;
 	}
@@ -332,8 +332,8 @@ function fade(el, options) {
 	function tick() {
 		current += 0.05 * direction;
 		setOpacity(proxy, Math.easeInOut(current));
-		if (((direction === 1) && (current >= 1)) || ((direction === -1) && (current <= 0))) {
-			el.style.visibility = (options.fade === "in") ? "visible" : "hidden";
+		if ((direction === 1 && current >= 1) || (direction === -1 && current <= 0)) {
+			el.style.visibility = options.fade === "in" ? "visible" : "hidden";
 			proxy.parentNode.replaceChild(el, proxy);
 			proxy = null;
 			window.clearInterval(intervalId);
@@ -355,7 +355,7 @@ function fade(el, options) {
 
 	var	current,
 		proxy      = el.cloneNode(true),
-		direction  = (options.fade === "in") ? 1 : -1,
+		direction  = options.fade === "in" ? 1 : -1,
 		intervalId;
 	el.parentNode.replaceChild(proxy, el);
 	if (options.fade === "in") {
@@ -427,7 +427,7 @@ function scrollWindowTo(el, increment) {
 		end        = ensureVisible(el),
 		distance   = Math.abs(start - end),
 		progress   = 0,
-		direction  = (start > end) ? -1 : 1,
+		direction  = start > end ? -1 : 1,
 		intervalId = window.setInterval(tick, 25);
 }
 
@@ -553,7 +553,7 @@ var Util = Object.defineProperties({}, {
 		value : function (orig, dest) /* diff object */ {
 			"use strict";
 			var	keys    = [].concat(Object.keys(orig), Object.keys(dest))
-					        .sort().filter(function (v, i, a) { return (i === 0 || a[i-1] !== v); }),
+					        .sort().filter(function (v, i, a) { return i === 0 || a[i-1] !== v; }),
 				diff    = {},
 				isArray = Array.isArray(orig),
 				aOpRef;
@@ -587,7 +587,7 @@ var Util = Object.defineProperties({}, {
 									// values are objects of the same prototype
 									if (origPType === "[object Date]") {
 										// special case: Date object
-										if ((+origP) !== (+destP)) {
+										if (+origP !== +destP) {
 											diff[p] = [ Util.DiffOp.CopyDate, +destP ];
 										}
 									} else if (origPType === "[object RegExp]") {
@@ -608,7 +608,7 @@ var Util = Object.defineProperties({}, {
 							}
 						} else {
 							// values are of different types
-							diff[p] = [ Util.DiffOp.Copy, (typeof destP !== "object" || destP === null) ? destP : clone(destP) ];
+							diff[p] = [ Util.DiffOp.Copy, typeof destP !== "object" || destP === null ? destP : clone(destP) ];
 						}
 					} else {
 						// key only exists in orig
@@ -633,10 +633,10 @@ var Util = Object.defineProperties({}, {
 					}
 				} else {
 					// key only exists in dest
-					diff[p] = [ Util.DiffOp.Copy, (typeof destP !== "object" || destP === null) ? destP : clone(destP) ];
+					diff[p] = [ Util.DiffOp.Copy, typeof destP !== "object" || destP === null ? destP : clone(destP) ];
 				}
 			}
-			return (Object.keys(diff).length !== 0) ? diff : null;
+			return Object.keys(diff).length !== 0 ? diff : null;
 		}
 	},
 
