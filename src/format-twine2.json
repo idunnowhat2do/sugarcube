@@ -1,7 +1,7 @@
 {
 	"name"        : "SugarCube",
 	"version"     : null,
-	"description" : "A Twine 2 port of the Twine 1 story format by the same name.  See its <a href=\"http://www.motoslave.net/sugarcube/#documentation\" target=\"_blank\">documentation</a>.",
+	"description" : "A Twine 2 port of the Twine 1 story format by the same name.  See its <a href=\"http://www.motoslave.net/sugarcube/\"{{BUILD_VERSION_MAJOR}}\"/#documentation\" target=\"_blank\">documentation</a>.",
 	"author"      : "Thomas Michael Edwards",
 	"image"       : "icon.svg",
 	"url"         : "http://www.motoslave.net/sugarcube/",
