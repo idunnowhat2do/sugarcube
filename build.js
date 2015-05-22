@@ -4,7 +4,7 @@
  *   - Description : Node.js-hosted build script for SugarCube
  *   - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
  *   - Copyright   : Copyright © 2014–2015 Thomas Michael Edwards. All rights reserved.
- *   - Version     : 1.2.9, 2015-05-16
+ *   - Version     : 1.2.10, 2015-05-22
  */
 "use strict";
 
@@ -325,8 +325,9 @@ if (_opt.options.build) {
 				var output = require("./" + _path.normalize(this.build.json)); // "./" prefixing the relative path is important here
 
 				// merge data into the output format
-				output.version = this.version.toString();
-				output.source  = input;
+				output.description = output.description.replace(/\"\{\{BUILD_VERSION_MAJOR\}\}\"/g, this.version.major);
+				output.version     = this.version.toString();
+				output.source      = input;
 
 				// wrap the output in the storyFormat() function
 				output = "window.storyFormat(" + JSON.stringify(output) + ");";
