@@ -1,0 +1,45 @@
+{
+    "rules" : {
+        "consistent-return"           : 0,
+        "eol-last"                    : 2,
+        "indent"                      : [ 2, "tab" ],
+        "quotes"                      : [ 0, "double" ],
+        "linebreak-style"             : [ 2, "unix" ],
+        "semi"                        : [ 2, "always" ],
+        "strict"                      : [ 0, "global" ],
+        "radix"                       : 2,
+        "max-len"                     : [ 1, 140, 4 ],
+        "no-console"                  : 0,
+        "no-extra-parens"             : 1,
+        "no-loop-func"                : 0,
+        "no-mixed-spaces-and-tabs"    : [ 0, "smart-tabs" ],
+        "no-multi-spaces"             : 0,
+        "no-multiple-empty-lines"     : [ 2, { "max" : 2 } ],
+        "no-new"                      : 0,
+        "no-sequences"                : 2,
+        "no-trailing-spaces"          : [ 2, { "skipBlankLines" : true } ],
+        "no-underscore-dangle"        : 0,
+        "no-unneeded-ternary"         : 2,
+        "no-use-before-define"        : [ 2, "nofunc"],
+        "key-spacing"                 : [ 2, { "align" : "colon", "beforeColon" : true, "afterColon" : true } ],
+        "space-after-keywords"        : [ 2, "always"],
+        "space-before-blocks"         : "always",
+        "space-before-function-paren" : {"anonymous" : "always", "named" : "never"},
+        "space-unary-ops"             : [ 1, { "words" : true, "nonwords": false } ],
+        "spaced-line-comment"         : [ "always", { "exceptions" : [ "-" ] } ],
+        "wrap-iife"                   : [ 2, "outside" ],
+        "yoda"                        : [ 2, "never", { "exceptRange" : true } ]
+    },
+	"globals": {
+		"DEBUG"            : false,
+		"TWINE1"           : false,
+		"LZString"         : false,
+		"UUID"             : false,
+		"Audio"            : false,
+		"HTMLAudioElement" : false
+	},
+    "env" : {
+        "browser" : true,
+        "jquery"  : true
+    }
+}
