@@ -12,27 +12,31 @@ function alertUser(type, where, mesg, error) {
 	switch (type) {
 	case "fatal":
 		errMesg += "  Aborting.";
-		break
+		break;
 	case "technical":
 		errMesg += "  You may be able to continue, but some parts may not work properly.";
-		break
+		break;
 	}
-	if (where != null || mesg != null) { // use lazy equality
+	if (where != null || mesg != null) { // lazy equality for null
 		errMesg += "\n\nError";
-		if (where != null) { // use lazy equality
+		if (where != null) { // lazy equality for null
 			errMesg += " [" + where + "]";
 		}
 		errMesg += ": "
-			+ (mesg != null ? mesg.replace(/^(?:(?:Uncaught\s+)?Error:\s+)+/, "") : "unknown error") // use lazy equality
+			+ (mesg != null /* lazy equality for null */
+				? mesg.replace(/^(?:(?:Uncaught\s+)?Error:\s+)+/, "")
+				: "unknown error")
 			+ ".";
 	}
 	if (error && error.stack) {
 		errMesg += "\n\nStack Trace:\n" + error.stack;
 	}
+	/* eslint-disable no-alert */
 	window.alert(errMesg);
+	/* eslint-enable no-alert */
 }
 
-function fatalAlert(where, mesg, error) {
+function fatalAlert(where, mesg, error) { // eslint-disable-line no-unused-vars
 	alertUser("fatal", where, mesg, error);
 }
 

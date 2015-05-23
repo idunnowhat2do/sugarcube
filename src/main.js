@@ -6,8 +6,15 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
+/*
+	global History, KeyValueStore, Macro, Passage, Save, Setting, Tale, UI, Util, Wikifier, addStyle, browser,
+	       defineStandardMacros, fatalAlert, has, technicalAlert
+*/
 
-// Global SugarCube object (contains exported identifiers for debugging, also allows scripts to detect if they're running in SugarCube (e.g. `"SugarCube" in window`))
+/*
+	Global SugarCube object which contains exported identifiers for debugging.  This also allows
+	scripts to detect whether they're running in SugarCube (e.g. `"SugarCube" in window`).
+*/
 window.SugarCube = {};
 
 var	version = Object.freeze({
@@ -67,7 +74,9 @@ var	config = {
 		// history option properties
 		disableHistoryControls : false,
 		disableHistoryTracking : false,
-		historyMode            : (has.pushState ? (has.sessionStorage ? History.Modes.Session : History.Modes.Window) : History.Modes.Hash),
+		historyMode            : has.pushState
+			? has.sessionStorage ? History.Modes.Session : History.Modes.Window
+			: History.Modes.Hash,
 
 		// transition properties
 		passageTransitionOut   : undefined,
@@ -105,6 +114,7 @@ var	config = {
 		}
 	};
 
+/* eslint-disable no-unused-vars */
 var	macros      = {}, // macros manager
 	tale        = {}, // story manager
 	state       = {}, // history manager
@@ -117,18 +127,18 @@ var	macros      = {}, // macros manager
 	postdisplay = {}, // post-display task callbacks
 	prerender   = {}, // pre-render task callbacks
 	postrender  = {}; // post-render task callbacks
+/* eslint-enable no-unused-vars */
 
 /**
- * Main function, entry point for story startup
- */
+	Main function, entry point for story startup
+*/
 jQuery(document).ready(function () {
 	if (DEBUG) { console.log("[main()]"); }
 
 	/*
-	 * WARNING!
-	 *
-	 * The ordering of the code in this function is important, so be careful when mucking around with it.
-	 */
+		[WARNING!]
+		The ordering of the code in this function is important, so be careful when mucking around with it.
+	*/
 	try {
 
 		// normalize the document
@@ -136,7 +146,7 @@ jQuery(document).ready(function () {
 			document.normalize();
 		}
 
-		// instantiate the macro object and standard macro library (this must be done before any passages are processed)
+		// instantiate the macro object and standard macro library (this must be done before any passage processing)
 		macros = new Macro();
 		defineStandardMacros();
 
@@ -158,16 +168,16 @@ jQuery(document).ready(function () {
 		}
 
 		// evaluate the story scripts
-		for (var i = 0; i < tale.scripts.length; i++) {
+		for (var i = 0; i < tale.scripts.length; i++) { // eslint-disable-line no-redeclare
 			try {
-				eval(tale.scripts[i].text);
+				eval(tale.scripts[i].text); // eslint-disable-line no-eval
 			} catch (e) {
 				technicalAlert(tale.scripts[i].title, e.message);
 			}
 		}
 
 		// process the story widgets
-		for (var i = 0; i < tale.widgets.length; i++) {
+		for (var i = 0; i < tale.widgets.length; i++) { // eslint-disable-line no-redeclare
 			try {
 				Wikifier.wikifyEval(tale.widgets[i].processText());
 			} catch (e) {

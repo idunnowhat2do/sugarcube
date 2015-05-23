@@ -6,15 +6,21 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
+/*
+	global Save, SeedablePRNG, UI, Util, Wikifier, clone, config, convertBreaksToParagraphs, insertElement,
+	       postdisplay, postrender, predisplay, prehistory, prerender, removeChildren, runtime, session,
+	       state:true, tale, technicalAlert
+*/
 
 /***********************************************************************************************************************
  * History API
  **********************************************************************************************************************/
 // Setup the History constructor
 function History(instanceName) {
+	/* eslint-disable max-len */
 	if (DEBUG) {
 		console.log("[History()]");
-		console.log("    > config.historyMode: " + (config.historyMode === History.Modes.Hash ? "Hash" : (config.historyMode === History.Modes.Window ? "Window" : "Session")));
+		console.log("    > config.historyMode: " + (config.historyMode === History.Modes.Hash ? "Hash" : config.historyMode === History.Modes.Window ? "Window" : "Session"));
 		if (History.getWindowState()) {
 			if (config.historyMode === History.Modes.Session) {
 				console.log("    > History.getWindowState(): " + History.getWindowState().sidx + " / " + History.getWindowState().suid);
@@ -23,9 +29,10 @@ function History(instanceName) {
 				console.log("    > History.getWindowState(): " + History.getWindowState().delta.length);
 			}
 		} else {
-				console.log("    > History.getWindowState(): " + History.getWindowState());
+			console.log("    > History.getWindowState(): " + History.getWindowState());
 		}
 	}
+	/* eslint-enable max-len */
 
 	// currently active/displayed state
 	this.active = { init : true, variables : {} }; // allows macro initialization to set variables at startup
@@ -56,20 +63,34 @@ History.Modes = Object.freeze({
 Object.defineProperties(History.prototype, {
 	// getters
 	top : {
-		get : function () { return (this.history.length !== 0) ? this.history[this.history.length - 1] : null; }
+		get : function () {
+			return this.history.length !== 0 ? this.history[this.history.length - 1] : null;
+		}
 	},
 
 	bottom : {
-		get : function () { return (this.history.length !== 0) ? this.history[0] : null; }
+		get : function () {
+			return this.history.length !== 0 ? this.history[0] : null;
+		}
 	},
 
 	length : {
-		get : function () { return (config.historyMode === History.Modes.Session) ? this.active.sidx + 1 : this.history.length; }
+		get : function () {
+			return config.historyMode === History.Modes.Session ? this.active.sidx + 1 : this.history.length;
+		}
+	},
+
+	variables : {
+		get : function () {
+			return this.active.variables;
+		}
 	},
 
 	// methods
 	isEmpty : {
-		value : function () { return this.history.length === 0; }
+		value : function () {
+			return this.history.length === 0;
+		}
 	},
 
 	/*
@@ -92,7 +113,9 @@ Object.defineProperties(History.prototype, {
 	marshal : {
 		value : function (upto) {
 			var stateObj = {
-				delta : History.deltaEncodeHistory(upto != null ? this.history.slice(0, upto) : this.history) // use lazy equality on null check
+				delta : History.deltaEncodeHistory(upto != null /* lazy equality for null */
+					? this.history.slice(0, upto)
+					: this.history)
 			};
 			if (this.hasOwnProperty("prng")) {
 				stateObj.rseed = this.prng.seed;
@@ -103,7 +126,7 @@ Object.defineProperties(History.prototype, {
 
 	unmarshal : {
 		value : function (stateObj) {
-			if (stateObj == null) { // use lazy equality
+			if (stateObj == null) { // lazy equality for null
 				throw new Error("History.prototype.unmarshal stateObj parameter is null or undefined");
 			}
 			if (!stateObj.hasOwnProperty("delta") || stateObj.delta.length === 0) {
@@ -120,7 +143,7 @@ Object.defineProperties(History.prototype, {
 	has : {
 		value : function (title) {
 			if (this.isEmpty()) { return false; }
-			if (arguments.length === 0 || title == null || title === "") { return false; } // use lazy equality on null check
+			if (arguments.length === 0 || title == null || title === "") { return false; } // lazy equality for null
 
 			return this.history.slice(0, this.length).some(function (o) { return o.title === title; });
 		}
@@ -166,14 +189,16 @@ Object.defineProperties(History.prototype, {
 			num = num ? Math.abs(num) : 1;
 			//if (num > this.history.length) { return []; }
 
-			return (num === 1) ? this.history.pop() : this.history.splice(this.history.length - num, num);
+			return num === 1 ? this.history.pop() : this.history.splice(this.history.length - num, num);
 		}
 	},
 
 	setActiveState : {
 		value : function (state) {
 			if (arguments.length === 0) { return; } // maybe throw?
-			if (state == null) { throw new Error("state activation attempted with null or undefined"); } // use lazy equality
+			if (state == null) { // lazy equality for null
+				throw new Error("state activation attempted with null or undefined");
+			}
 
 			if (typeof state === "object") {
 				this.active = clone(state);
@@ -219,27 +244,28 @@ Object.defineProperties(History.prototype, {
 				// enables the Twine 1.4+ "Test Play From Here" feature
 				if (DEBUG) { console.log('    > display: "' + testPlay + '" (testPlay)'); }
 				this.display(testPlay);
-			} else if (config.startPassage == null || !tale.has(config.startPassage)) { // use lazy equality on null check
-				throw new Error("starting passage " + (config.startPassage == null ? "not selected" : '("' + config.startPassage + '") not found'));
+			} else if (config.startPassage == null || !tale.has(config.startPassage)) { // lazy equality for null
+				throw new Error("starting passage "
+					+ (config.startPassage == null ? "not selected" : '("' + config.startPassage + '") not found'));
 			} else if (!this.restore()) {
 				// autoload the autosave, if requested and possible, else load the start passage
 				var loadStart = true;
 				switch (typeof config.saves.autoload) {
 				case "boolean":
-					if (config.saves.autoload && Save.autosaveOK()) {
+					if (config.saves.autoload && Save.autosaveOk()) {
 						if (DEBUG) { console.log('    > display/autoload: "' + Save.getAuto().title + '"'); }
 						loadStart = !Save.loadAuto();
 					}
 					break;
 				case "string":
-					if (config.saves.autoload === "prompt" && Save.autosaveOK() && Save.hasAuto()) {
+					if (config.saves.autoload === "prompt" && Save.autosaveOk() && Save.hasAuto()) {
 						loadStart = false;
 						UI.buildDialogAutoload();
 						UI.open();
 					}
 					break;
 				case "function":
-					if (Save.autosaveOK() && Save.hasAuto() && !!config.saves.autoload()) {
+					if (Save.autosaveOk() && Save.hasAuto() && !!config.saves.autoload()) {
 						if (DEBUG) { console.log('    > display/autoload: "' + Save.getAuto().title + '"'); }
 						loadStart = !Save.loadAuto();
 					}
@@ -256,9 +282,9 @@ Object.defineProperties(History.prototype, {
 			//        the jQuery Event object and it would complicate either the handlers, by having to deal
 			//        with it, or the jQuery Event object, if the necessary properties were pushed onto it
 			if (config.historyMode === History.Modes.Session) {
-				window.addEventListener("popstate", History.popStateHandler_Session, false);
+				window.addEventListener("popstate", History.popStateHandlerSession, false);
 			} else if (config.historyMode === History.Modes.Window) {
-				window.addEventListener("popstate", History.popStateHandler_Window, false);
+				window.addEventListener("popstate", History.popStateHandlerWindow, false);
 			} else {
 				window.addEventListener("hashchange", History.hashChangeHandler, false);
 			}
@@ -267,12 +293,30 @@ Object.defineProperties(History.prototype, {
 
 	display : {
 		//writable : true, // the addition of `prehistory` should make this obsolete
-		value    : function (title, link, option) {
+		value : function (title, link, option) {
 			if (DEBUG) { console.log("[<History>.display()]"); }
 
 			// process option
-			var	updateDisplay = (option === "hidden" || option === "offscreen" || option === "quietly" || option === false) ? false : true,
-				updateHistory = (option === "replace" || option === "back") ? false : true;
+			var	updateDisplay,
+				updateHistory;
+			switch (option) {
+			case "hidden":
+			case "offscreen":
+			case "quietly":
+			case false:
+				updateDisplay = false;
+				updateHistory = true;
+				break;
+			case "replace":
+			case "back":
+				updateDisplay = true;
+				updateHistory = false;
+				break;
+			default:
+				updateDisplay = true;
+				updateHistory = true;
+				break;
+			}
 
 			// reset the runtime temp/scratch object
 			runtime.temp = {};
@@ -281,7 +325,7 @@ Object.defineProperties(History.prototype, {
 			//      reference to a numeric title should be discouraged), so after loading the passage,
 			//      always refer to passage.title and never the title parameter
 			var	passage     = tale.get(title),
-				windowTitle = (config.displayPassageTitles && passage.title !== config.startPassage)
+				windowTitle = config.displayPassageTitles && passage.title !== config.startPassage
 					? passage.title + " | " + tale.title
 					: tale.title;
 
@@ -297,7 +341,9 @@ Object.defineProperties(History.prototype, {
 				if (config.historyMode === History.Modes.Session) {
 					if (DEBUG) {
 						console.log("    [S]> state.active.init && !state.isEmpty(); activating: "
-							+ (History.hasWindowState() ? "History.getWindowState().sidx = " + History.getWindowState().sidx : "state.top"));
+							+ (History.hasWindowState()
+								? "History.getWindowState().sidx = " + History.getWindowState().sidx
+								: "state.top"));
 					}
 					this.setActiveState(History.hasWindowState() ? History.getWindowState().sidx : this.top);
 				} else {
@@ -320,7 +366,10 @@ Object.defineProperties(History.prototype, {
 					} else if (config.historyMode === History.Modes.Session) {
 						var windowState = History.getWindowState();
 						if (windowState !== null && windowState.sidx < this.top.sidx) {
-							if (DEBUG) { console.log("    > stacks out of sync; popping " + (this.top.sidx - windowState.sidx) + " states to equalize"); }
+							if (DEBUG) {
+								console.log("    > stacks out of sync; popping "
+									+ (this.top.sidx - windowState.sidx) + " states to equalize");
+							}
 							// stack indexes are out of sync, pop our stack until we're back in
 							// sync with the window.history
 							this.pop(this.top.sidx - windowState.sidx);
@@ -335,16 +384,19 @@ Object.defineProperties(History.prototype, {
 				this.setActiveState(this.top);
 			}
 			if ((updateHistory || config.disableHistoryControls) && config.historyMode !== History.Modes.Hash) {
-				if (DEBUG) { console.log("    > typeof History.getWindowState(): " + typeof History.getWindowState()); }
+				if (DEBUG) {
+					console.log("    > typeof History.getWindowState(): " + typeof History.getWindowState());
+				}
 				var stateObj;
 				if (config.historyMode === History.Modes.Session) {
 					stateObj = { suid : this.suid, sidx : this.active.sidx };
 				} else { // History.Modes.Window
 					stateObj = this.marshal();
 				}
-				History[(!History.hasWindowState() || config.disableHistoryControls)
-					? "replaceWindowState"
-					: "addWindowState"
+				History[
+					!History.hasWindowState() || config.disableHistoryControls
+						? "replaceWindowState"
+						: "addWindowState"
 				](stateObj, windowTitle);
 			}
 			if (config.historyMode !== History.Modes.Window) {
@@ -377,8 +429,14 @@ Object.defineProperties(History.prototype, {
 				var	passages = document.getElementById("passages");
 				if (passages.hasChildNodes()) {
 					if (
+						/* eslint-disable no-extra-parens */
 						   typeof config.passageTransitionOut === "number"
-						|| (typeof config.passageTransitionOut === "string" && config.passageTransitionOut !== "" && config.transitionEndEventName !== "")
+						|| (
+							   typeof config.passageTransitionOut === "string"
+							&& config.passageTransitionOut !== ""
+							&& config.transitionEndEventName !== ""
+						)
+						/* eslint-enable no-extra-parens */
 					) {
 						var outgoing = passages.childNodes[0];
 						if (!outgoing.classList.contains("passage-out")) {
@@ -386,7 +444,10 @@ Object.defineProperties(History.prototype, {
 							outgoing.classList.add("passage-out");
 							if (typeof config.passageTransitionOut === "string") {
 								jQuery(outgoing).on(config.transitionEndEventName, function (evt) {
-									if (evt.originalEvent.propertyName === config.passageTransitionOut && this.parentNode) {
+									if (
+										   this.parentNode
+										&& evt.originalEvent.propertyName === config.passageTransitionOut
+									) {
 										this.parentNode.removeChild(this);
 									}
 								});
@@ -398,7 +459,7 @@ Object.defineProperties(History.prototype, {
 								}, config.passageTransitionOut); // in milliseconds
 							}
 						}
-						// remove additional elements (probably duplicates of the incoming passage due to multi-clicks)
+						// remove additional elements (possibly duplicates of the incoming passage due to multi-clicks)
 						while (passages.childNodes.length > 1) {
 							passages.removeChild(passages.lastChild);
 						}
@@ -421,7 +482,8 @@ Object.defineProperties(History.prototype, {
 				window.scroll(0, 0);
 			}
 
-			// execute the PassageDone passage and post-display tasks, then update the non-passage page elements, if enabled
+			// execute the PassageDone passage and post-display tasks, then update
+			// the non-passage page elements, if enabled
 			if (updateDisplay) {
 				if (tale.has("PassageDone")) {
 					try {
@@ -465,7 +527,10 @@ Object.defineProperties(History.prototype, {
 				}
 				break;
 			case "object":
-				if (Array.isArray(config.saves.autosave) && passage.tags.some(function (v) { return config.saves.autosave.contains(v); })) {
+				if (
+					   Array.isArray(config.saves.autosave)
+					&& passage.tags.some(function (v) { return config.saves.autosave.contains(v); })
+				) {
 					Save.saveAuto();
 				}
 				break;
@@ -529,7 +594,8 @@ Object.defineProperties(History.prototype, {
 					var	stateObj = session.getItem("history." + this.suid),
 						sidx     = History.getWindowState().sidx;
 					if (DEBUG) {
-						console.log("    > History.getWindowState(): " + History.getWindowState().sidx + " / " + History.getWindowState().suid);
+						console.log("    > History.getWindowState(): " + History.getWindowState().sidx
+							+ " / " + History.getWindowState().suid);
 						console.log("    > history." + this.suid + ": " + JSON.stringify(stateObj));
 					}
 
@@ -586,44 +652,57 @@ Object.defineProperties(History, {
 	hasWindowState : {
 		value : function (obj) {
 			if (arguments.length === 0) { obj = window.history; }
-			return obj.state != null; // use lazy equality
+			return obj.state != null; // lazy equality for null
 		}
 	},
 
 	getWindowState : {
 		value : function (obj) {
 			if (arguments.length === 0) { obj = window.history; }
-			return (obj.state != null) ? History.deserializeWindowState(obj.state) : null; // use lazy equality on null check
+			return obj.state != null ? History.deserializeWindowState(obj.state) : null; // lazy equality for null
 		}
 	},
 
 	addWindowState : {
 		value : function (obj, title, url) {
-			// required by IE (if you pass undefined as the URL, IE will happily set it to that, so you must not pass it at all in that case)
-			if (url != null) { // use lazy equality
-				window.history.pushState((obj != null) ? History.serializeWindowState(obj) : null, title, url); // use lazy equality on null check
+			// required by IE (if you pass undefined as the URL, IE will happily set it
+			// to exactly that, so you must not pass it at all in that case)
+			if (url != null) { // lazy equality for null
+				window.history.pushState(obj != null /* lazy equality for null */
+					? History.serializeWindowState(obj)
+					: null,
+					title, url);
 			} else {
-				window.history.pushState((obj != null) ? History.serializeWindowState(obj) : null, title); // use lazy equality on null check
+				window.history.pushState(obj != null /* lazy equality for null */
+					? History.serializeWindowState(obj)
+					: null,
+					title);
 			}
 		}
 	},
 
 	replaceWindowState : {
 		value : function (obj, title, url) {
-			// required by IE (if you pass undefined as the URL, IE will happily set it to that, so you must not pass it at all in that case)
-			if (url != null) { // use lazy equality
-				window.history.replaceState((obj != null) ? History.serializeWindowState(obj) : null, title, url); // use lazy equality on null check
+			// required by IE (if you pass undefined as the URL, IE will happily set it
+			// to exactly that, so you must not pass it at all in that case)
+			if (url != null) { // lazy equality for null
+				window.history.replaceState(obj != null /* lazy equality for null */
+					? History.serializeWindowState(obj)
+					: null,
+					title, url);
 			} else {
-				window.history.replaceState((obj != null) ? History.serializeWindowState(obj) : null, title); // use lazy equality on null check
+				window.history.replaceState(obj != null /* lazy equality for null */
+					? History.serializeWindowState(obj)
+					: null,
+					title);
 			}
 		}
 	},
 
 	serializeWindowHashState : {
 		value : function (obj) {
-			return "#" + (LZString.compressToBase64(JSON.stringify(obj))
-				.replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, ".")
-			);
+			return "#" + LZString.compressToBase64(JSON.stringify(obj))
+				.replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, ".");
 		}
 	},
 
@@ -638,21 +717,21 @@ Object.defineProperties(History, {
 	hasWindowHashState : {
 		value : function (hash) {
 			if (arguments.length === 0) { hash = window.location.hash; }
-			return (hash !== "" && hash !== "#");
+			return hash !== "" && hash !== "#";
 		}
 	},
 
 	getWindowHashState : {
 		value : function (hash) {
 			if (arguments.length === 0) { hash = window.location.hash; }
-			return (hash !== "" && hash !== "#") ? History.deserializeWindowHashState(hash) : null;
+			return hash !== "" && hash !== "#" ? History.deserializeWindowHashState(hash) : null;
 		}
 	},
 
-	popStateHandler_Session : {
+	popStateHandlerSession : {
 		value : function (evt) {
 			if (DEBUG) {
-				console.log("[History.popStateHandler_Session()]");
+				console.log("[History.popStateHandlerSession()]");
 				if (!History.hasWindowState(evt)) { console.log("    > evt.state: null; no-op"); }
 			}
 
@@ -677,10 +756,10 @@ Object.defineProperties(History, {
 		}
 	},
 
-	popStateHandler_Window : {
+	popStateHandlerWindow : {
 		value : function (evt) {
 			if (DEBUG) {
-				console.log("[History.popStateHandler_Window()]");
+				console.log("[History.popStateHandlerWindow()]");
 				if (!History.hasWindowState(evt)) { console.log("    > evt.state: null; no-op"); }
 			}
 
@@ -699,12 +778,12 @@ Object.defineProperties(History, {
 	},
 
 	hashChangeHandler : {
-		value : function (evt) {
+		value : function (/* evt */) {
 			if (DEBUG) {
 				console.log("[History.hashChangeHandler()]");
 				//console.log("    > evt:", evt);
 				if (window.location.hash === state.hash) {
-					console.log("    > noop (window.location.hash === state.hash)");
+					console.log("    > no-op (window.location.hash === state.hash)");
 				} else {
 					console.log("    > process hash (window.location.hash !== state.hash)");
 				}
@@ -758,7 +837,7 @@ Object.defineProperties(History, {
 
 			var delta = [ clone(hist[0]) ];
 			for (var i = 1, iend = hist.length; i < iend; i++) {
-				delta.push(Util.diff(hist[i-1], hist[i]));
+				delta.push(Util.diff(hist[i - 1], hist[i]));
 			}
 			return delta;
 		}
@@ -771,7 +850,7 @@ Object.defineProperties(History, {
 
 			var hist = [ clone(delta[0]) ];
 			for (var i = 1, iend = delta.length; i < iend; i++) {
-				hist.push(Util.patch(hist[i-1], delta[i]));
+				hist.push(Util.patch(hist[i - 1], delta[i]));
 			}
 			return hist;
 		}
@@ -798,7 +877,11 @@ Object.defineProperties(History, {
 		value : function (stateObj) {
 			if (DEBUG) { console.log("[History.unmarshalFromSave()]"); }
 
-			if (!stateObj || !stateObj.hasOwnProperty("mode") || !(stateObj.hasOwnProperty("history") || stateObj.hasOwnProperty("delta"))) {
+			if (
+				   !stateObj
+				|| !stateObj.hasOwnProperty("mode")
+				|| !(stateObj.hasOwnProperty("history") || stateObj.hasOwnProperty("delta"))
+			) {
 				throw new Error("state object is missing required data");
 			}
 			if (stateObj.mode !== config.historyMode) {
@@ -824,11 +907,14 @@ Object.defineProperties(History, {
 			// restore the window history states (in order)
 			if (config.historyMode !== History.Modes.Hash && !config.disableHistoryControls) {
 				for (var i = 0, iend = state.history.length; i < iend; i++) {
-					if (DEBUG) { console.log("    > loading state into window history: " + i + " (" + state.history[i].title + ")"); }
+					if (DEBUG) {
+						console.log("    > loading state into window history: "
+							+ i + " (" + state.history[i].title + ")");
+					}
 
 					// load the state into the window history
 					var	windowState,
-						windowTitle = (config.displayPassageTitles && state.history[i].title !== config.startPassage)
+						windowTitle = config.displayPassageTitles && state.history[i].title !== config.startPassage
 							? state.history[i].title + " | " + tale.title
 							: tale.title;
 					switch (config.historyMode) {
@@ -871,8 +957,8 @@ function Passage(title, el, id) {
 			//     debug      → special tag
 			//     nobr       → special tag
 			//     passage    → the default class
-			//     script     → special tag
-			//     stylesheet → special tag
+			//     script     → special tag (only in Twine 1)
+			//     stylesheet → special tag (only in Twine 1)
 			//     twine.*    → special tag
 			//     widget     → special tag
 			var	tagClasses = [],
@@ -892,7 +978,9 @@ function Passage(title, el, id) {
 					tagClasses = tagClasses.concat(el.className.split(/\s+/));
 				}
 				// sort and filter out non-uniques
-				this.classes = tagClasses.sort().filter(function (val, i, aref) { return (i === 0 || aref[i-1] !== val); });
+				this.classes = tagClasses.sort().filter(function (val, i, aref) { // eslint-disable-line no-shadow
+					return i === 0 || aref[i - 1] !== val;
+				});
 			}
 		}
 	} else {
@@ -914,7 +1002,7 @@ Object.defineProperties(Passage.prototype, {
 
 	text : {
 		get : function () {
-			if (this.element == null) { // use lazy equality
+			if (this.element == null) { // lazy equality for null
 				return String.format('<span class="error" title="{0}">Error: the passage "{0}" does not exist</span>',
 					Util.entityEncode(this.title));
 			}
@@ -929,7 +1017,7 @@ Object.defineProperties(Passage.prototype, {
 	// methods
 	description : {
 		value : function () {
-			if (config.altPassageDescription != null) { // use lazy equality
+			if (config.altPassageDescription != null) { // lazy equality for null
 				switch (typeof config.altPassageDescription) {
 				case "boolean":
 					if (config.altPassageDescription) {
@@ -943,7 +1031,7 @@ Object.defineProperties(Passage.prototype, {
 					break;
 				case "function":
 					var result = config.altPassageDescription.call(this);
-					if (!!result) {
+					if (result) {
 						return result;
 					}
 					break;
@@ -951,7 +1039,7 @@ Object.defineProperties(Passage.prototype, {
 					throw new TypeError("config.altPassageDescription must be a boolean, object, or function");
 				}
 			}
-			if (this._excerpt == null) { // use lazy equality
+			if (this._excerpt == null) { // lazy equality for null
 				return Passage.getExcerptFromText(this.text);
 			}
 			return this._excerpt;
@@ -1046,7 +1134,7 @@ Object.defineProperties(Passage, {
 		value : function (node, count) {
 			if (!node.hasChildNodes()) { return ""; }
 
-			var	excerptRe = new RegExp("(\\S+(?:\\s+\\S+){0," + (typeof count !== "undefined" ? count - 1 : 7) + "})"),
+			var	excerptRe = new RegExp("(\\S+(?:\\s+\\S+){0," + (count > 0 ? count - 1 : 7) + "})"),
 				excerpt   = node.textContent.trim();
 			if (excerpt !== "") {
 				excerpt = excerpt
@@ -1055,7 +1143,7 @@ Object.defineProperties(Passage, {
 					// attempt to match the excerpt regexp
 					.match(excerptRe);
 			}
-			return (excerpt ? excerpt[1] + "\u2026" : "\u2026"); // horizontal ellipsis
+			return excerpt ? excerpt[1] + "\u2026" : "\u2026"; // horizontal ellipsis
 		}
 	},
 
@@ -1063,7 +1151,7 @@ Object.defineProperties(Passage, {
 		value : function (text, count) {
 			if (text === "") { return ""; }
 
-			var	excerptRe = new RegExp("(\\S+(?:\\s+\\S+){0," + (typeof count !== 'undefined' ? count - 1 : 7) + "})"),
+			var	excerptRe = new RegExp("(\\S+(?:\\s+\\S+){0," + (count > 0 ? count - 1 : 7) + "})"),
 				excerpt   = text
 					// strip macro tags (replace with a space)
 					.replace(/<<.*?>>/g, " ")
@@ -1087,7 +1175,7 @@ Object.defineProperties(Passage, {
 					.replace(/\s+/g, " ")
 					// attempt to match the excerpt regexp
 					.match(excerptRe);
-			return (excerpt ? excerpt[1] + "\u2026" : "\u2026"); // horizontal ellipsis
+			return excerpt ? excerpt[1] + "\u2026" : "\u2026"; // horizontal ellipsis
 		}
 	}
 });
@@ -1105,29 +1193,30 @@ function Tale(instanceName) {
 	this.scripts  = [];
 	this.widgets  = [];
 
-	var nodes = document.getElementById("store-area").childNodes;
+	var	nodes = document.getElementById("store-area").childNodes;
+	var	el, name, tags, passage;
 
 	if (TWINE1) {
 		config.startPassage = "Start"; // set the default starting passage title
 		var	storyStylesheet,
 			storyScript;
 		for (var i = 0; i < nodes.length; i++) {
-			var el = nodes[i];
+			el = nodes[i];
 			if (el.nodeType !== Node.ELEMENT_NODE) { // skip non-element nodes (should never be any, but…)
 				continue;
 			}
 
-			var name = el.hasAttribute("tiddler") ? el.getAttribute("tiddler") : "";
+			name = el.hasAttribute("tiddler") ? el.getAttribute("tiddler") : "";
 			if (name === "") { // skip nameless passages (should never be any, but…)
 				continue;
 			}
 
-			var tags = el.hasAttribute("tags") ? el.getAttribute("tags").trim().splitOrEmpty(/\s+/) : [];
+			tags = el.hasAttribute("tags") ? el.getAttribute("tags").trim().splitOrEmpty(/\s+/) : [];
 			if (tags.containsAny("Twine.private", "annotation")) { // skip passages with forbidden tags
 				continue;
 			}
 
-			var passage = new Passage(name, el, i);
+			passage = new Passage(name, el, i);
 
 			if (name === "StoryStylesheet") {
 				storyStylesheet = passage;
@@ -1161,8 +1250,8 @@ function Tale(instanceName) {
 		config.startPassage = null; // no default starting passage title
 		var startNode = nodes[0].hasAttribute("startnode") ? nodes[0].getAttribute("startnode") : "";
 		nodes = nodes[0].childNodes;
-		for (var i = 0; i < nodes.length; i++) {
-			var el = nodes[i];
+		for (var i = 0; i < nodes.length; i++) { // eslint-disable-line no-redeclare
+			el = nodes[i];
 			if (el.nodeType !== Node.ELEMENT_NODE) { // skip non-element nodes (should never be any, but…)
 				continue;
 			}
@@ -1175,18 +1264,18 @@ function Tale(instanceName) {
 				this.scripts.push(new Passage("user-script-node-" + i, el, -i));
 				break;
 			default: // TW-PASSAGEDATA
-				var name = el.hasAttribute("name") ? el.getAttribute("name") : "";
+				name = el.hasAttribute("name") ? el.getAttribute("name") : "";
 				if (name === "") { // skip nameless passages (should never be any, but…)
 					continue;
 				}
 
-				var tags = el.hasAttribute("tags") ? el.getAttribute("tags").trim().splitOrEmpty(/\s+/) : [];
+				tags = el.hasAttribute("tags") ? el.getAttribute("tags").trim().splitOrEmpty(/\s+/) : [];
 				if (tags.containsAny("Twine.private", "annotation")) { // skip passages with forbidden tags
 					continue;
 				}
 
-				var	pid     = el.hasAttribute("pid") ? el.getAttribute("pid") : "",
-					passage = new Passage(name, el, +pid);
+				var	pid = el.hasAttribute("pid") ? el.getAttribute("pid") : "";
+				passage = new Passage(name, el, +pid);
 
 				if (startNode !== "" && startNode === pid) {
 					config.startPassage = name;
@@ -1201,7 +1290,7 @@ function Tale(instanceName) {
 			}
 		}
 
-		if ("{{STORY_NAME}}" !== "") {
+		if ("{{STORY_NAME}}" !== "") { // eslint-disable-line no-constant-condition, yoda
 			this.setTitle("{{STORY_NAME}}");
 		} else {
 			throw new Error("story title not set");
@@ -1226,7 +1315,7 @@ Object.defineProperties(Tale.prototype, {
 			switch (typeof title) {
 			case "number":
 				title += "";
-				/* FALL-THROUGH */
+				/* falls through */
 			case "string":
 				return this.passages.hasOwnProperty(title);
 			default:
@@ -1240,7 +1329,7 @@ Object.defineProperties(Tale.prototype, {
 			switch (typeof title) {
 			case "number":
 				title += "";
-				/* FALL-THROUGH */
+				/* falls through */
 			case "string":
 				return this.passages.hasOwnProperty(title) ? this.passages[title] : new Passage(title || "(unknown)");
 			default:
@@ -1260,31 +1349,37 @@ Object.defineProperties(Tale.prototype, {
 				if (passage.hasOwnProperty(key)) {
 					switch (typeof passage[key]) {
 					case "undefined":
-						/* noop */
+						/* no-op */
 						break;
 					case "object":
 						// currently, we assume that the only properties which are objects
 						// will be either arrays or array-like-objects
 						for (var j = 0, jend = passage[key].length; j < jend; j++) {
-							if (passage[key][j] == value) { // use lazy equality
+							/* eslint-disable eqeqeq */
+							if (passage[key][j] == value) { // lazy equality for null
 								results.push(passage);
 								break;
 							}
+							/* eslint-enable eqeqeq */
 						}
 						break;
 					default:
-						if (passage[key] == value) { // use lazy equality
+						/* eslint-disable eqeqeq */
+						if (passage[key] == value) { // lazy equality for null
 							results.push(passage);
 						}
+						/* eslint-enable eqeqeq */
 						break;
 					}
 				}
 			}
 
 			results.sort(function (a, b) {
-				return (a[sortKey] == b[sortKey]) // use lazy equality
+				/* eslint-disable eqeqeq */
+				return a[sortKey] == b[sortKey] /* lazy equality for null */
 					? 0
-					: ((a[sortKey] < b[sortKey]) ? -1 : +1);
+					: a[sortKey] < b[sortKey] ? -1 : +1;
+				/* eslint-enable eqeqeq */
 			});
 
 			return results;

@@ -6,6 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
+/* global Wikifier, clone, throwError */
 
 /***********************************************************************************************************************
  * Macro API
@@ -53,19 +54,20 @@ Object.defineProperties(Macro.prototype, {
 				Object.defineProperty(this.definitions, name, { writable : false });
 
 				/* legacy kludges */
-				this.definitions[name]["_USE_MACROS_API"] = true;
+				this.definitions[name]._USE_MACROS_API = true;
 				/* /legacy kludges */
 			} catch (e) {
 				if (e.name === "TypeError") {
 					throw new Error("cannot clobber protected macro <<" + name + ">>");
 				} else {
-					throw new Error("unknown error when attempting to add macro <<" + name + ">>: [" + e.name + "] " + e.message);
+					throw new Error("unknown error when attempting to add macro <<" + name + ">>: [" + e.name + "] "
+						+ e.message);
 				}
 			}
 
 			// tags post-processing
 			if (this.definitions[name].hasOwnProperty("tags")) {
-				if (this.definitions[name].tags == null) { // use lazy equality
+				if (this.definitions[name].tags == null) { // lazy equality for null
 					this.registerTags(name);
 				} else if (Array.isArray(this.definitions[name].tags)) {
 					this.registerTags(name, this.definitions[name].tags);
@@ -111,9 +113,9 @@ Object.defineProperties(Macro.prototype, {
 	get : {
 		value : function (name) {
 			var macro = null;
-			if (this.definitions.hasOwnProperty(name) && typeof this.definitions[name]["handler"] === "function") {
+			if (this.definitions.hasOwnProperty(name) && typeof this.definitions[name].handler === "function") {
 				macro = this.definitions[name];
-			} else if (this.hasOwnProperty(name) && typeof this[name]["handler"] === "function") {
+			} else if (this.hasOwnProperty(name) && typeof this[name].handler === "function") {
 				macro = this[name];
 			}
 			return macro;
@@ -126,7 +128,9 @@ Object.defineProperties(Macro.prototype, {
 			if (!handler) {
 				handler = "handler";
 			}
-			return (macro && macro.hasOwnProperty(handler) && typeof macro[handler] === "function") ? macro[handler] : null;
+			return macro && macro.hasOwnProperty(handler) && typeof macro[handler] === "function"
+				? macro[handler]
+				: null;
 		}
 	},
 
@@ -134,12 +138,14 @@ Object.defineProperties(Macro.prototype, {
 		value : function (statements, thisp) {
 			"use strict";
 			try {
-				eval((thisp == null) /* use lazy equality */
+				/* eslint-disable no-eval */
+				eval(thisp == null /* lazy equality for null */
 					? 'var output = document.createElement("div");(function(){' + statements + '\n}());'
 					: "var output = thisp.output;(function(){" + statements + "\n}.call(thisp));");
+				/* eslint-enable no-eval */
 				return true;
 			} catch (e) {
-				if (thisp == null) { // use lazy equality
+				if (thisp == null) { // lazy equality for null
 					throw e;
 				}
 				return thisp.error("bad evaluation: " + e.message);
@@ -272,7 +278,7 @@ function MacroContext(parent, macro, name, rawArgs, args, payload, parser, sourc
 			value : Wikifier.parse(rawArgs)
 		}
 	});
-};
+}
 
 // Setup the MacroContext prototype
 Object.defineProperties(MacroContext.prototype, {

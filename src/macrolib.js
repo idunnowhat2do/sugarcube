@@ -6,11 +6,15 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
+/*
+	global AudioWrapper, History, Util, Wikifier, addAccessibleClickHandler, config, has, insertElement, insertText,
+	       macros, postdisplay, runtime, state, storage, strings, tale
+*/
 
 /***********************************************************************************************************************
  * Standard Macro Definitions
  **********************************************************************************************************************/
-function defineStandardMacros() {
+function defineStandardMacros() { // eslint-disable-line no-unused-vars
 
 	/*******************************************************************************************************************
 	 * Utility Functions
@@ -117,7 +121,7 @@ function defineStandardMacros() {
 						if (typeof fn === "function") { fn(); }
 					};
 				}(passage, setFn)));
-				if (image == null) { // use lazy equality
+				if (image == null) { // lazy equality for null
 					insertText(el, text);
 				} else {
 					el.appendChild(image);
@@ -163,7 +167,7 @@ function defineStandardMacros() {
 					if (this.args[0].count === 1) {
 						// simple link syntax: [[...]]
 						this.args.push(this.args[0].link);
-						this.args[0] = "to"
+						this.args[0] = "to";
 					} else {
 						// pretty link syntax: [[...|...]]
 						this.args.push("to");
@@ -184,7 +188,7 @@ function defineStandardMacros() {
 					if (isNaN(this.args[1]) || this.args[1] < 1) {
 						return this.error('argument following "go" must be a whole number greater than zero');
 					}
-					steps = (this.args[1] < state.length) ? this.args[1] : state.length - 1;
+					steps = this.args[1] < state.length ? this.args[1] : state.length - 1;
 					pname = state.peek(steps).title;
 				} else if (this.args[0] === "to") {
 					if (typeof this.args[1] === "object") {
@@ -194,29 +198,33 @@ function defineStandardMacros() {
 					if (!tale.has(this.args[1])) {
 						return this.error('passage "' + this.args[1] + '" does not exist');
 					}
-					if (this.name === "return") { // || config.disableHistoryTracking) // allow <<back>> to work like <<return>> when config.disableHistoryTracking is enabled
+					/*
+					 * this.name === "return" || config.disableHistoryTracking)
+					 * allow <<back>> to work like <<return>> when config.disableHistoryTracking is enabled
+					 */
+					if (this.name === "return") {
 						pname = this.args[1];
 					} else {
 						for (var i = state.length - 1; i >= 0; i--) {
 							if (state.history[i].title === this.args[1]) {
-								steps = (state.length - 1) - i;
+								steps = state.length - 1 - i;
 								pname = this.args[1];
 								break;
 							}
 						}
 					}
-					if (pname == null) { // use lazy equality
+					if (pname == null) { // lazy equality for null
 						return this.error('cannot find passage "' + this.args[1] + '" in the current story history');
 					}
 				} else {
 					return this.error('"' + this.args[0] + '" is not a valid action (go|to)');
 				}
 			}
-			if (pname == null && state.length > 1) { // use lazy equality
+			if (pname == null && state.length > 1) { // lazy equality for null
 				pname = state.peek(steps).title;
 			}
 
-			if (pname == null) { // use lazy equality
+			if (pname == null) { // lazy equality for null
 				return this.error("cannot find passage");
 			} else if (steps === 0) {
 				return this.error("already at the first passage in the current story history");
@@ -231,7 +239,7 @@ function defineStandardMacros() {
 					if (config.historyMode === History.Modes.Hash || config.disableHistoryControls) {
 						callback = function () {
 							// pop the history stack
-							//   n.b. (steps > 0) is correct, since the stack only holds "clean" (i.e. non-rendered) states
+							//   n.b. (steps > 0) is correct, since the stack only holds clean/non-rendered states
 							while (steps > 0 && state.length > 1) {
 								state.pop();
 								steps--;
@@ -244,7 +252,7 @@ function defineStandardMacros() {
 					} else {
 						callback = function () {
 							if (state.length > 1) {
-								window.history.go(-(steps));
+								window.history.go(-steps);
 							}
 						};
 					}
@@ -255,7 +263,7 @@ function defineStandardMacros() {
 				}
 				addAccessibleClickHandler(el, callback, true);
 			}
-			if (image == null) { // use lazy equality
+			if (image == null) { // lazy equality for null
 				insertText(el, ctext || strings.macros[this.name].text);
 			} else {
 				el.appendChild(image);
@@ -321,7 +329,7 @@ function defineStandardMacros() {
 				&& state.active.variables["#choice"][choiceId]
 			) {
 				el = insertElement(this.output, "span");
-				if (image == null) { // use lazy equality
+				if (image == null) { // lazy equality for null
 					insertText(el, text);
 				} else {
 					el.appendChild(image);
@@ -336,7 +344,7 @@ function defineStandardMacros() {
 				state.active.variables["#choice"][choiceId] = true;
 				if (typeof setFn === "function") { setFn(); }
 			});
-			if (image == null) { // use lazy equality
+			if (image == null) { // lazy equality for null
 				insertText(el, text);
 			} else {
 				el.appendChild(image);
@@ -370,7 +378,7 @@ function defineStandardMacros() {
 			} else if (this.args.length === 2 && actionRegExp.test(this.args[1])) {
 				action = this.args.pop();
 			}
-			if (action != null && !actionRegExp.test(action)) { // use lazy equality on null check
+			if (action != null && !actionRegExp.test(action)) { // lazy equality for null
 				return this.error('"' + action + '" is not a valid action (disable|remove)');
 			}
 
@@ -407,7 +415,7 @@ function defineStandardMacros() {
 					}
 				}
 			}
-			if (external == null) { // use lazy equality
+			if (external == null) { // lazy equality for null
 				external = Wikifier.isExternalLink(link);
 			}
 
@@ -420,7 +428,7 @@ function defineStandardMacros() {
 				) {
 					if (action === "disable" || action === "keep") {
 						el = insertElement(this.output, "span");
-						if (image == null) { // use lazy equality
+						if (image == null) { // lazy equality for null
 							insertText(el, text);
 						} else {
 							el.appendChild(image);
@@ -441,7 +449,7 @@ function defineStandardMacros() {
 					if (typeof setFn === "function") { setFn(); }
 				});
 			}
-			if (image == null) { // use lazy equality
+			if (image == null) { // lazy equality for null
 				insertText(el, text);
 			} else {
 				el.appendChild(image);
@@ -514,7 +522,7 @@ function defineStandardMacros() {
 
 			try {
 				var result = Util.evalExpression(this.args.full);
-				if (result != null && (typeof result !== "number" || !isNaN(result))) { // use lazy equality on null check
+				if (result != null && (typeof result !== "number" || !isNaN(result))) { // lazy equality for null
 					new Wikifier(this.output, result.toString());
 				}
 			} catch (e) {
@@ -544,7 +552,8 @@ function defineStandardMacros() {
 				errTrap.removeChild(fc);
 			}
 			if (errList.length > 0) {
-				return this.error("error" + (errList.length === 1 ? "" : "s") + " within contents (" + errList.join('; ') + ")");
+				return this.error("error" + (errList.length === 1 ? "" : "s") + " within contents ("
+					+ errList.join('; ') + ")");
 			}
 		}
 	});
@@ -564,12 +573,23 @@ function defineStandardMacros() {
 			try {
 				for (var i = 0, len = this.payload.length; i < len; i++) {
 					if (this.payload[i].name !== "else" && this.payload[i].arguments.length === 0) {
-						return this.error("no conditional expression specified for <<" + this.payload[i].name + ">> clause" + (i > 0 ? " (#" + i + ")" : ""));
+						return this.error(
+							"no conditional expression specified for <<" + this.payload[i].name
+							+ ">> clause" + (i > 0 ? " (#" + i + ")" : "")
+						);
 					} else if (this.payload[i].name === "else" && this.payload[i].arguments.length !== 0) {
 						if (/^\s*if\b/i.test(this.payload[i].arguments)) {
-							return this.error('whitespace is not allowed between the "else" and "if" in <<elseif>> clause' + (i > 0 ? " (#" + i + ")" : ""));
+							return this.error(
+								'whitespace is not allowed between the "else" and "if" in <<elseif>> clause'
+								+ (i > 0 ? " (#" + i + ")" : "")
+							);
 						}
-						return this.error("<<else>> does not accept a conditional expression (perhaps you meant to use <<elseif>> instead), invalid: " + this.payload[i].arguments);
+						/* eslint-disable max-len */
+						return this.error(
+							"<<else>> does not accept a conditional expression (perhaps you meant to use <<elseif>> instead), invalid: "
+							+ this.payload[i].arguments
+						);
+						/* eslint-enable max-len */
 					}
 					if (this.payload[i].name === "else" || !!Wikifier.evalExpression(this.payload[i].arguments)) {
 						new Wikifier(this.output, this.payload[i].contents);
@@ -577,7 +597,10 @@ function defineStandardMacros() {
 					}
 				}
 			} catch (e) {
-				return this.error("bad conditional expression in <<" + (i === 0 ? "if" : "elseif") + ">> clause" + (i > 0 ? " (#" + i + ")" : "") + ": " + e.message);
+				return this.error(
+					"bad conditional expression in <<" + (i === 0 ? "if" : "elseif") + ">> clause"
+					+ (i > 0 ? " (#" + i + ")" : "") + ": " + e.message
+				);
 			}
 		}
 	});
@@ -619,15 +642,16 @@ function defineStandardMacros() {
 						return this.error("bad init expression: " + e.message);
 					}
 				}
-				while (!!Util.evalExpression(condition)) {
+				while (Util.evalExpression(condition)) {
 					if (--safety < 0) {
-						return this.error("exceeded configured maximum loop iterations (" + config.macros.maxLoopIterations + ")");
+						return this.error("exceeded configured maximum loop iterations ("
+							+ config.macros.maxLoopIterations + ")");
 					}
 					new Wikifier(this.output, first ? payload.replace(/^\n/, "") : payload);
 					if (first) {
 						first = false;
 					}
-					if (runtime.temp.break != null) { // use lazy equality
+					if (runtime.temp.break != null) { // lazy equality for null
 						if (runtime.temp.break === 1) {
 							runtime.temp.break = null;
 						} else if (runtime.temp.break === 2) {
@@ -655,7 +679,7 @@ function defineStandardMacros() {
 		skipArgs : true,
 		handler  : function () {
 			if (this.contextHas(function (c) { return c.name === "for"; })) {
-				runtime.temp.break = (this.name === "continue") ? 1 : 2;
+				runtime.temp.break = this.name === "continue" ? 1 : 2;
 			} else {
 				return this.error("must only be used in conjunction with its parent macro <<for>>");
 			}
@@ -813,7 +837,7 @@ function defineStandardMacros() {
 				return this.error("no " + (this.name === "click" ? "link" : "button") + " text specified");
 			}
 
-			var	widgetArgs = (function () {
+			var	widgetArgs = (function () { // eslint-disable-line no-extra-parens
 					var wargs;
 					if (
 						   state.active.variables.hasOwnProperty("args")
@@ -853,12 +877,16 @@ function defineStandardMacros() {
 				}
 				insertText(el, text);
 			}
-			el.classList.add("link-" + (passage != null ? (tale.has(passage) ? "internal" : "broken") : "internal")); // use lazy equality
+			el.classList.add("link-" + (
+				passage != null /* lazy equality for null */
+					? tale.has(passage) ? "internal" : "broken"
+					: "internal"
+			));
 			el.classList.add("macro-" + this.name);
 			addAccessibleClickHandler(el, getWikifyEvalHandler(
 				this.payload[0].contents.trim(),
 				widgetArgs,
-				passage != null ? function () { state.display(passage, el); } : undefined // use lazy equality
+				passage != null ? function () { state.display(passage, el); } : undefined // lazy equality for null
 			), passage != null, ".macros");
 			//jQuery(el).addClass("event-click" + (passage != null ? "-once" : ""));
 			this.output.appendChild(el);
@@ -932,14 +960,14 @@ function defineStandardMacros() {
 			}
 
 			if (!runtime.temp.hasOwnProperty("radiobutton")) {
-				runtime.temp["radiobutton"] = {};
+				runtime.temp.radiobutton = {};
 			}
-			if (!runtime.temp["radiobutton"].hasOwnProperty(varId)) {
-				runtime.temp["radiobutton"][varId] = 0;
+			if (!runtime.temp.radiobutton.hasOwnProperty(varId)) {
+				runtime.temp.radiobutton[varId] = 0;
 			}
 
 			el.type = "radio";
-			el.id   = "radiobutton-" + varId + "-" + runtime.temp["radiobutton"][varId]++;
+			el.id   = "radiobutton-" + varId + "-" + runtime.temp.radiobutton[varId]++;
 			el.name = "radiobutton-" + varId;
 			el.classList.add("macro-" + this.name);
 			el.setAttribute("tabindex", 0); // for accessiblity
@@ -973,8 +1001,7 @@ function defineStandardMacros() {
 				varId        = Util.slugify(varName),
 				defaultValue = this.args[1],
 				autofocus    = this.args[2] === "autofocus",
-				el           = document.createElement("textarea"),
-				passage;
+				el           = document.createElement("textarea");
 
 			// legacy error
 			if (varName[0] !== "$") {
@@ -1036,7 +1063,7 @@ function defineStandardMacros() {
 
 			if (this.args.length > 3) {
 				passage   = this.args[2];
-				autofocus = (this.args[3] === "autofocus");
+				autofocus = this.args[3] === "autofocus";
 			} else if (this.args.length > 2) {
 				if (this.args[2] === "autofocus") {
 					autofocus = true;
@@ -1064,7 +1091,7 @@ function defineStandardMacros() {
 					if (evt.which === 13) { // 13 is Return/Enter
 						evt.preventDefault();
 						Wikifier.setValue(varName, this.value);
-						if (passage != null) { // use lazy equality
+						if (passage != null) { // lazy equality for null
 							state.display(passage, this);
 						}
 					}
@@ -1291,13 +1318,16 @@ function defineStandardMacros() {
 								// carry over the output, unless there were errors
 								while (resFrag.hasChildNodes()) {
 									var fc = resFrag.firstChild;
-									if (fc.classList && fc.classList.contains("error")) { errList.push(fc.textContent); }
+									if (fc.classList && fc.classList.contains("error")) {
+										errList.push(fc.textContent);
+									}
 									outFrag.appendChild(fc);
 								}
 								if (errList.length === 0) {
 									this.output.appendChild(outFrag);
 								} else {
-									return this.error("error" + (errList.length === 1 ? "" : "s") + " within widget contents (" + errList.join('; ') + ")");
+									return this.error("error" + (errList.length === 1 ? "" : "s")
+										+ " within widget contents (" + errList.join('; ') + ")");
 								}
 							} catch (e) {
 								return this.error("cannot execute widget: " + e.message);
@@ -1325,7 +1355,7 @@ function defineStandardMacros() {
 	 ******************************************************************************************************************/
 	if (!has.audio) {
 		macros.add(["audio", "stopallaudio", "cacheaudio", "playlist", "setplaylist"], {
-			version : { major: 1, minor: 0, revision: 0 },
+			version : { major : 1, minor : 0, revision : 0 },
 			handler : function () { /* empty */ }
 		});
 	} else {
@@ -1333,7 +1363,7 @@ function defineStandardMacros() {
 		 * <<audio>>
 		 */
 		macros.add(["audio"], {
-			version : { major: 1, minor: 1, revision: 0 },
+			version : { major : 1, minor : 1, revision : 0 },
 			handler : function () {
 				if (this.args.length < 2) {
 					var errors = [];
@@ -1438,28 +1468,28 @@ function defineStandardMacros() {
 				}
 
 				try {
-					if (volume != null) { // use lazy equality
+					if (volume != null) { // lazy equality for null
 						audio.volume = volume;
 					}
-					if (time != null) { // use lazy equality
+					if (time != null) { // lazy equality for null
 						audio.time = time;
 					}
-					if (mute != null) { // use lazy equality
+					if (mute != null) { // lazy equality for null
 						if (mute) {
 							audio.mute();
 						} else {
 							audio.unmute();
 						}
 					}
-					if (loop != null) { // use lazy equality
+					if (loop != null) { // lazy equality for null
 						if (loop) {
 							audio.loop();
 						} else {
 							audio.unloop();
 						}
 					}
-					if (passage != null) { // use lazy equality
-						audio.oneEnd(function (evt) { // execute the callback once only
+					if (passage != null) { // lazy equality for null
+						audio.oneEnd(function () { // execute the callback once only
 							state.display(passage);
 						});
 					}
@@ -1494,7 +1524,7 @@ function defineStandardMacros() {
 		 * <<stopallaudio>>
 		 */
 		macros.add("stopallaudio", {
-			version : { major: 1, minor: 0, revision: 0 },
+			version : { major : 1, minor : 0, revision : 0 },
 			handler : function () {
 				var tracks = macros.get("cacheaudio").tracks;
 				Object.keys(tracks).forEach(function (id) {
@@ -1507,7 +1537,7 @@ function defineStandardMacros() {
 		 * <<cacheaudio>>
 		 */
 		macros.add("cacheaudio", {
-			version : { major: 1, minor: 0, revision: 0 },
+			version : { major : 1, minor : 0, revision : 0 },
 			handler : function () {
 				if (this.args.length < 2) {
 					var errors = [];
@@ -1535,7 +1565,8 @@ function defineStandardMacros() {
 
 					// determine and cache the canPlay status
 					if (!canPlay.hasOwnProperty(type)) {
-						canPlay[type] = audio.canPlayType(type).replace(/^no$/i, "") !== ""; // some early implementations return "no" instead of the empty string
+						// some early implementations return "no" instead of the empty string
+						canPlay[type] = audio.canPlayType(type).replace(/^no$/i, "") !== "";
 					}
 
 					if (canPlay[type]) {
@@ -1561,14 +1592,14 @@ function defineStandardMacros() {
 				wav  : 'audio/wave; codecs=1'
 			}),
 			canPlay : {},
-			tracks : {}
+			tracks  : {}
 		});
 
 		/**
 		 * <<playlist>>
 		 */
 		macros.add(["playlist"], {
-			version : { major: 1, minor: 1, revision: 0 },
+			version : { major : 1, minor : 1, revision : 0 },
 			handler : function () {
 				if (this.args.length === 0) {
 					return this.error("no actions specified");
@@ -1620,18 +1651,20 @@ function defineStandardMacros() {
 				}
 
 				try {
-					if (volume != null) { // use lazy equality
+					if (volume != null) { // lazy equality for null
 						if (self.current !== null) {
 							self.current.volume = volume;
 						}
 						for (var i = 0, length = self.list.length; i < length; i++) {
 							self.list[i].volume = volume;
 						}
+						/* eslint-disable no-redeclare */
 						for (var i = 0, length = self.tracks.length; i < length; i++) {
 							self.tracks[i].volume = volume;
 						}
+						/* eslint-enable no-redeclare */
 					}
-					if (mute != null) { // use lazy equality
+					if (mute != null) { // lazy equality for null
 						self.muted = mute;
 						if (mute) {
 							self.mute();
@@ -1639,10 +1672,10 @@ function defineStandardMacros() {
 							self.unmute();
 						}
 					}
-					if (loop != null) { // use lazy equality
+					if (loop != null) { // lazy equality for null
 						self.loop = loop;
 					}
-					if (shuffle != null) { // use lazy equality
+					if (shuffle != null) { // lazy equality for null
 						self.shuffle = shuffle;
 						self.buildList();
 					}
@@ -1693,7 +1726,7 @@ function defineStandardMacros() {
 			next : function () {
 				this.current = this.list.shift();
 			},
-			onEnd : function (evt) {
+			onEnd : function () {
 				var	thisp = macros.get("playlist");
 				if (thisp.list.length === 0) {
 					if (!thisp.loop) {
@@ -1718,11 +1751,11 @@ function defineStandardMacros() {
 					}
 				}
 			},
-			tracks : [],
-			list : [],
+			tracks  : [],
+			list    : [],
 			current : null,
-			muted : false,
-			loop : true,
+			muted   : false,
+			loop    : true,
 			shuffle : false
 		});
 
@@ -1730,7 +1763,7 @@ function defineStandardMacros() {
 		 * <<setplaylist>>
 		 */
 		macros.add("setplaylist", {
-			version : { major: 2, minor: 0, revision: 0 },
+			version : { major : 2, minor : 0, revision : 0 },
 			handler : function () {
 				if (this.args.length === 0) {
 					return this.error("no track ID(s) specified");

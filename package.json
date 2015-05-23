@@ -3,8 +3,9 @@
 	"description"  : "Dependency install configuaration for SugarCube's Node.js-hosted build script, build.js.",
 	"dependencies" : {
 		"node-getopt" : "^0.2.3",
-		"uglify-js"   : "^2.4.13",
-		"clean-css"   : "^3.0.10"
+		"eslint"      : "^0.21.2",
+		"uglify-js"   : "^2.4.23",
+		"clean-css"   : "^3.2.10"
 	},
 	"engine"       : {
 		"node" : "0.10.x"

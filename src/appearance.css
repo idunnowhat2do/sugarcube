@@ -18,11 +18,9 @@ a {
 	-moz-transition-duration: 200ms;
 	transition-duration: 200ms;
 }
-a:hover {
-	text-decoration: underline;
-}
-a:hover {
+a:focus, a:hover {
 	color: #8af;
+	text-decoration: underline;
 }
 a.link-internal, a.link-external, a.link-disabled, a.link-broken {
 	text-decoration: none;
@@ -34,10 +32,11 @@ a.link-disabled, a.link-disabled:hover, span.link-disabled, span.link-disabled:h
 a.link-broken {
 	color: #c22;
 }
+a.link-internal:focus, a.link-external:focus, a.link-broken:focus,
 a.link-internal:hover, a.link-external:hover, a.link-broken:hover {
 	text-decoration: underline;
 }
-a.link-broken:hover {
+a.link-broken:focus, a.link-broken:hover {
 	color: #e44;
 }
 area {
@@ -83,7 +82,8 @@ input[type="text"], textarea {
 	*/
 	min-width: 20em;
 }
-input:hover, input:focus, select:hover, select:focus, textarea:hover, textarea:focus {
+input:focus, select:focus, textarea:focus, 
+input:hover, select:hover, textarea:hover {
 	background-color: #333;
 	border-color: #eee;
 }
@@ -187,7 +187,7 @@ audio, canvas, progress, video {
 	text-decoration: none;
 	text-transform: uppercase;
 }
-#menu li a:hover {
+#menu li a:focus, #menu li a:hover {
 	background-color: #444;
 	border-color: #eee;
 }
@@ -211,7 +211,7 @@ audio, canvas, progress, video {
 #ui-bar footer a {
 	color: #bbb;
 }
-#ui-bar footer a:hover {
+#ui-bar footer a:focus, #ui-bar footer a:hover {
 	color: #eee;
 }
 
@@ -219,7 +219,7 @@ audio, canvas, progress, video {
 .error:before, a.macro-back:before, a.macro-return:after, a.link-external:after,
 #ui-bar-toggle span:before,
 #menu-saves a:before, #menu-rewind a:before, #menu-restart a:before, #menu-settings a:before, #menu-share a:before,
-#ui-dialog-close, #ui-dialog-body.settings a[id|="setting-input"]:after, #ui-dialog-body.settings a[id|="setting-input"].enabled:after,
+#ui-dialog-close, #ui-dialog-body.settings span[id|="setting-input"]:after, #ui-dialog-body.settings span[id|="setting-input"].enabled:after,
 #ui-dialog-body.saves button[id="saves-export"]:before, #ui-dialog-body.saves button[id="saves-import"]:before, #ui-dialog-body.saves button[id="saves-purge"]:before, #ui-dialog-body.saves button[id|="saves-delete"]:before,
 .icon {
 	font-family: "tme-fa-icons";
@@ -281,10 +281,10 @@ a.macro-return:after {
 #ui-dialog-body.saves button[id="saves-purge"]:before {
 	content: "\e827\00a0";
 }
-#ui-dialog-body.settings a[id|="setting-input"]:after {
+#ui-dialog-body.settings span[id|="setting-input"]:after {
 	content: "\00a0\00a0\e830";
 }
-#ui-dialog-body.settings a[id|="setting-input"].enabled:after {
+#ui-dialog-body.settings span[id|="setting-input"].enabled:after {
 	content: "\00a0\00a0\e831";
 }
 
@@ -325,7 +325,7 @@ a.macro-return:after {
 	-moz-transition-duration: 200ms;
 	transition-duration: 200ms;
 }
-#ui-dialog-close:hover {
+#ui-dialog-close:focus, #ui-dialog-close:hover {
 	background-color: #b44;
 	border-color: #d66;
 }
@@ -381,7 +381,7 @@ a.macro-return:after {
 	color: #eee;
 	text-decoration: none;
 }
-#ui-dialog-body.list li a:hover {
+#ui-dialog-body.list li a:focus, #ui-dialog-body.list li a:hover {
 	background-color: #333;
 	border-color: #eee;
 }
@@ -441,25 +441,26 @@ a.macro-return:after {
 #ui-dialog-body.settings div[id|="setting-body"] + div[id|="setting-body"] {
 	margin: 0.5em 0;
 }
-#ui-dialog-body.settings select[id|="setting-input"] {
+#ui-dialog-body.settings [id|="setting-input"] {
 	white-space: nowrap;
 }
-#ui-dialog-body.settings a[id|="setting-input"] {
+#ui-dialog-body.settings span[id|="setting-input"] {
 	color: #eee;
 	border: 1px solid #444;
 	padding: 0.4em;
 	text-decoration: none;
-	white-space: nowrap;
 }
-#ui-dialog-body.settings a[id|="setting-input"]:hover {
+#ui-dialog-body.settings span[id|="setting-input"]:focus,
+#ui-dialog-body.settings span[id|="setting-input"]:hover {
 	background-color: #333;
 	border-color: #eee;
 }
-#ui-dialog-body.settings a[id|="setting-input"].enabled {
+#ui-dialog-body.settings span[id|="setting-input"].enabled {
 	background-color: #282;
 	border-color: #4a4;
 }
-#ui-dialog-body.settings a[id|="setting-input"].enabled:hover {
+#ui-dialog-body.settings span[id|="setting-input"].enabled:focus,
+#ui-dialog-body.settings span[id|="setting-input"].enabled:hover {
 	background-color: #4a4;
 	border-color: #6c6;
 }

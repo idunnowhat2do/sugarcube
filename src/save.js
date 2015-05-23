@@ -6,8 +6,9 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
+/* global History, UI, config, escape, saveAs, state, storage, strings, tale */
 
-var Save = (function () {
+var Save = (function () { // eslint-disable-line no-unused-vars
 	"use strict";
 
 	var
@@ -20,7 +21,7 @@ var Save = (function () {
 	 ******************************************************************************************************************/
 	function init() {
 		function appendSlots(array, num) {
-			for (var i = 0; i < num; i++) {
+			for (var i = 0; i < num; i++) { // eslint-disable-line no-shadow
 				array.push(null);
 			}
 			return array;
@@ -123,8 +124,8 @@ var Save = (function () {
 	/*******************************************************************************************************************
 	 * General
 	 ******************************************************************************************************************/
-	function OK() {
-		return autosaveOK() || slotsOK();
+	function ok() {
+		return autosaveOk() || slotsOk();
 	}
 
 	function purge() {
@@ -136,7 +137,7 @@ var Save = (function () {
 	/*******************************************************************************************************************
 	 * Autosave
 	 ******************************************************************************************************************/
-	function autosaveOK() {
+	function autosaveOk() {
 		return !_badStore && typeof config.saves.autosave !== "undefined";
 	}
 
@@ -176,7 +177,7 @@ var Save = (function () {
 		saves.autosave = marshal();
 		saves.autosave.title = title || tale.get(state.active.title).description();
 		saves.autosave.date = Date.now();
-		if (metadata != null) { // use lazy equality
+		if (metadata != null) { // lazy equality for null
 			saves.autosave.metadata = metadata;
 		}
 		return storage.setItem("saves", saves);
@@ -195,7 +196,7 @@ var Save = (function () {
 	/*******************************************************************************************************************
 	 * Slots
 	 ******************************************************************************************************************/
-	function slotsOK() {
+	function slotsOk() {
 		return !_badStore && _slotsUBound !== -1;
 	}
 
@@ -204,7 +205,7 @@ var Save = (function () {
 	}
 
 	function slotsCount() {
-		if (!slotsOK()) {
+		if (!slotsOk()) {
 			return 0;
 		}
 
@@ -277,7 +278,7 @@ var Save = (function () {
 		saves.slots[slot] = marshal();
 		saves.slots[slot].title = title || tale.get(state.active.title).description();
 		saves.slots[slot].date = Date.now();
-		if (metadata != null) { // use lazy equality
+		if (metadata != null) { // lazy equality for null
 			saves.slots[slot].metadata = metadata;
 		}
 		return storage.setItem("saves", saves);
@@ -321,23 +322,23 @@ var Save = (function () {
 			reader = new FileReader();
 
 		// capture the file information once the load is finished
-		jQuery(reader).on("load", function (file) {
-			return function (evt) {
-				if (DEBUG) { console.log('    > loaded: ' + escape(file.name) + '; payload: ' + evt.target.result); }
+		jQuery(reader).on("load", function (evt) {
+			if (DEBUG) { console.log('    > loaded: ' + escape(file.name) + '; payload: ' + evt.target.result); }
 
-				if (!evt.target.result) {
-					return;
-				}
+			if (!evt.target.result) {
+				return;
+			}
 
-				var saveObj;
-				try {
-					saveObj = JSON.parse((/\.json$/i.test(file.name) || /^\{/.test(evt.target.result))
+			var saveObj;
+			try {
+				saveObj = JSON.parse(
+					/\.json$/i.test(file.name) || /^\{/.test(evt.target.result)
 						? evt.target.result
-						: LZString.decompressFromBase64(evt.target.result));
-				} catch (e) { /* noop, unmarshal() will handle the error */ }
-				unmarshal(saveObj);
-			};
-		}(file));
+						: LZString.decompressFromBase64(evt.target.result)
+				);
+			} catch (e) { /* no-op, unmarshal() will handle the error */ }
+			unmarshal(saveObj);
+		});
 
 		// initiate the file load
 		reader.readAsText(file);
@@ -374,8 +375,14 @@ var Save = (function () {
 
 		try {
 			if (!saveObj || !saveObj.hasOwnProperty("id") || !saveObj.hasOwnProperty("state")) {
-				if (!saveObj || !saveObj.hasOwnProperty("mode") || !saveObj.hasOwnProperty("id") || !saveObj.hasOwnProperty("data")) {
-					throw new Error("save is missing required data; either you've loaded a file which isn't a save, or the save has become corrupted");
+				if (
+					   !saveObj
+					|| !saveObj.hasOwnProperty("mode")
+					|| !saveObj.hasOwnProperty("id")
+					|| !saveObj.hasOwnProperty("data")
+				) {
+					throw new Error("save is missing required data;"
+						+ " either you've loaded a file which isn't a save, or the save has become corrupted");
 				} else {
 					throw new Error("old-style saves seen during unmarshal");
 				}
@@ -411,17 +418,17 @@ var Save = (function () {
 		// Initialization
 		init       : { value : init },
 		// General
-		OK         : { value : OK },
+		ok         : { value : ok },
 		purge      : { value : purge },
 		// Autosave
-		autosaveOK : { value : autosaveOK },
+		autosaveOk : { value : autosaveOk },
 		hasAuto    : { value : hasAuto },
 		getAuto    : { value : getAuto },
 		loadAuto   : { value : loadAuto },
 		saveAuto   : { value : saveAuto },
 		deleteAuto : { value : deleteAuto },
 		// Slots
-		slotsOK    : { value : slotsOK },
+		slotsOk    : { value : slotsOk },
 		length     : { value : slotsLength },
 		isEmpty    : { value : slotsIsEmpty },
 		count      : { value : slotsCount },

@@ -6,28 +6,23 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-
-/***********************************************************************************************************************
- * Libraries
- **********************************************************************************************************************/
-/*! @source http://purl.eligrey.com/github/FileSaver.js/blob/master/FileSaver.js */
-var saveAs=saveAs||navigator.msSaveBlob&&navigator.msSaveBlob.bind(navigator)||function(e){"use strict";var t=e.document,n=function(){return e.URL||e.webkitURL||e},r=e.URL||e.webkitURL||e,i=t.createElementNS("http://www.w3.org/1999/xhtml","a"),s="download"in i,o=function(n){var r=t.createEvent("MouseEvents");r.initMouseEvent("click",true,false,e,0,0,0,0,0,false,false,false,false,0,null);n.dispatchEvent(r)},u=e.webkitRequestFileSystem,a=e.requestFileSystem||u||e.mozRequestFileSystem,f=function(t){(e.setImmediate||e.setTimeout)(function(){throw t},0)},l="application/octet-stream",c=0,h=[],p=function(){var e=h.length;while(e--){var t=h[e];if(typeof t==="string"){r.revokeObjectURL(t)}else{t.remove()}}h.length=0},d=function(e,t,n){t=[].concat(t);var r=t.length;while(r--){var i=e["on"+t[r]];if(typeof i==="function"){try{i.call(e,n||e)}catch(s){f(s)}}}},v=function(t,r){var f=this,p=t.type,v=false,m,g,y=function(){var e=n().createObjectURL(t);h.push(e);return e},b=function(){d(f,"writestart progress write writeend".split(" "))},w=function(){if(v||!m){m=y(t)}if(g){g.location.href=m}else{window.open(m,"_blank")}f.readyState=f.DONE;b()},E=function(e){return function(){if(f.readyState!==f.DONE){return e.apply(this,arguments)}}},S={create:true,exclusive:false},x;f.readyState=f.INIT;if(!r){r="download"}if(s){m=y(t);i.href=m;i.download=r;o(i);f.readyState=f.DONE;b();return}if(e.chrome&&p&&p!==l){x=t.slice||t.webkitSlice;t=x.call(t,0,t.size,l);v=true}if(u&&r!=="download"){r+=".download"}if(p===l||u){g=e}if(!a){w();return}c+=t.size;a(e.TEMPORARY,c,E(function(e){e.root.getDirectory("saved",S,E(function(e){var n=function(){e.getFile(r,S,E(function(e){e.createWriter(E(function(n){n.onwriteend=function(t){g.location.href=e.toURL();h.push(e);f.readyState=f.DONE;d(f,"writeend",t)};n.onerror=function(){var e=n.error;if(e.code!==e.ABORT_ERR){w()}};"writestart progress write abort".split(" ").forEach(function(e){n["on"+e]=f["on"+e]});n.write(t);f.abort=function(){n.abort();f.readyState=f.DONE};f.readyState=f.WRITING}),w)}),w)};e.getFile(r,{create:false},E(function(e){e.remove();n()}),E(function(e){if(e.code===e.NOT_FOUND_ERR){n()}else{w()}}))}),w)}),w)},m=v.prototype,g=function(e,t){return new v(e,t)};m.abort=function(){var e=this;e.readyState=e.DONE;d(e,"abort")};m.readyState=m.INIT=0;m.WRITING=1;m.DONE=2;m.error=m.onwritestart=m.onprogress=m.onwrite=m.onabort=m.onerror=m.onwriteend=null;e.addEventListener("unload",p,false);return g}(self);
-
+/* global Wikifier, tale */
 
 /***********************************************************************************************************************
  * Utility Functions
  **********************************************************************************************************************/
 /**
- * Returns a deep copy of the passed object
- *   n.b. 1. clone() does not clone functions, however, since function definitions are immutable, the only possible
- *           issues are with expando properties and scope.  The former should not be done (seriously, WTH).  The latter
- *           is problematic either way (damned if you do, damned if you don't).
- *        2. clone() does not maintain referential relationships (e.g. multiple references to the same object will,
- *           post-cloning, refer to different equivalent objects; i.e. each reference will get its own clone of the
- *           original object).
- */
+ 	Returns a deep copy of the passed object
+
+	n.b. 1. clone() does not clone functions, however, since function definitions are immutable,
+	        the only issues are with expando properties and scope.  The former really should not
+	        be done.  The latter is problematic either way (damned if you do, damned if you don't).
+	     2. clone() does not maintain referential relationships (e.g. multiple references to the
+	        same object will, post-cloning, refer to different equivalent objects; i.e. each
+	        reference will get its own clone of the original object).
+*/
 function clone(orig) {
-	if (typeof orig !== "object" || orig == null) { // use lazy equality on null check
+	if (typeof orig !== "object" || orig == null) { // lazy equality for null
 		return orig;
 	}
 
@@ -53,10 +48,10 @@ function clone(orig) {
 		copy = proto ? Object.create(proto) : orig.constructor.prototype;
 	}
 
-	// duplicate the original's own properties; this also handles expando properties on non-generic objects
+	// duplicate the original's own properties (includes expando properties on non-generic objects)
 	Object.keys(orig).forEach(function (name) {
-		// this does not preserve ES5 property attributes, however, neither does the delta coding and serialization
-		// code, so it's not really an issue
+		// this does not preserve ES5 property attributes, however, neither does the
+		// delta coding and serialization code, so it's not really an issue
 		copy[name] = clone(orig[name]);
 	});
 
@@ -64,10 +59,10 @@ function clone(orig) {
 }
 
 /**
- * Returns the jQuery-wrapped target element(s) after making them accessible clickables (ARIA compatibility)
- */
-function addAccessibleClickHandler(targets, handler, once, namespace) {
-	if (namespace == null) { // use lazy equality
+	Returns the jQuery-wrapped target element(s) after making them accessible clickables (ARIA compatibility)
+*/
+function addAccessibleClickHandler(targets, handler, once, namespace) { // eslint-disable-line no-unused-vars
+	if (namespace == null) { // lazy equality for null
 		namespace = "";
 	} else if (typeof namespace !== "string") {
 		throw new Error("addAccessibleClickHandler namespace parameter must be a string");
@@ -166,7 +161,7 @@ function removeChildren(node) {
 /**
  * Removes the passed DOM node
  */
-function removeElement(node) {
+function removeElement(node) { // eslint-disable-line no-unused-vars
 	if (typeof node.remove === "function") {
 		node.remove();
 	} else if (node.parentNode) {
@@ -177,7 +172,7 @@ function removeElement(node) {
 /**
  * Converts <br> elements to <p> elements within the given node tree.
  */
-function convertBreaksToParagraphs(source) {
+function convertBreaksToParagraphs(source) { // eslint-disable-line no-unused-vars
 	var	output = document.createDocumentFragment(),
 		para   = document.createElement("p"),
 		node;
@@ -246,9 +241,9 @@ function convertBreaksToParagraphs(source) {
 /**
  * Wikifies a passage into a DOM element corresponding to the passed ID and returns the element
  */
-function setPageElement(id, titles, defaultText) {
+function setPageElement(id, titles, defaultText) { // eslint-disable-line no-unused-vars
 	var el = typeof id === "object" ? id : document.getElementById(id);
-	if (el == null) { // use lazy equality
+	if (el == null) { // lazy equality for null
 		return null;
 	}
 
@@ -262,7 +257,7 @@ function setPageElement(id, titles, defaultText) {
 			return el;
 		}
 	}
-	if (defaultText != null) { // use lazy equality
+	if (defaultText != null) { // lazy equality for null
 		defaultText = defaultText.trim();
 		if (defaultText !== "") {
 			new Wikifier(el, defaultText);
@@ -274,7 +269,7 @@ function setPageElement(id, titles, defaultText) {
 /**
  * Appends a new <style> element to the document's <head>
  */
-function addStyle(css) {
+function addStyle(css) { // eslint-disable-line no-unused-vars
 	var style = document.getElementById("style-story");
 	if (style === null) {
 		style      = document.createElement("style");
@@ -319,7 +314,7 @@ function addStyle(css) {
 /**
  * Appends an error message to the passed DOM element
  */
-function throwError(place, message, title) {
+function throwError(place, message, title) { // eslint-disable-line no-unused-vars
 	insertElement(place, "span", null, "error", "Error: " + message, title);
 	return false;
 }
@@ -328,11 +323,12 @@ function throwError(place, message, title) {
  * Fades a DOM element in or out
  *   n.b. Unused, included only for compatibility
  */
-function fade(el, options) {
+function fade(el, options) { // eslint-disable-line no-unused-vars
+	/* eslint-disable no-use-before-define */
 	function tick() {
 		current += 0.05 * direction;
 		setOpacity(proxy, Math.easeInOut(current));
-		if ((direction === 1 && current >= 1) || (direction === -1 && current <= 0)) {
+		if (direction === 1 && current >= 1 || direction === -1 && current <= 0) {
 			el.style.visibility = options.fade === "in" ? "visible" : "hidden";
 			proxy.parentNode.replaceChild(el, proxy);
 			proxy = null;
@@ -342,7 +338,7 @@ function fade(el, options) {
 			}
 		}
 	}
-	function setOpacity(el, opacity) {
+	function setOpacity(el, opacity) { // eslint-disable-line no-shadow
 		var l = Math.floor(opacity * 100);
 
 		// old IE
@@ -366,13 +362,15 @@ function fade(el, options) {
 	}
 	setOpacity(proxy, current);
 	intervalId = window.setInterval(tick, 25);
+	/* eslint-enable no-use-before-define */
 }
 
 /**
  * Scrolls the browser window to ensure that a DOM element is in view
  *   n.b. Unused, included only for compatibility
  */
-function scrollWindowTo(el, increment) {
+function scrollWindowTo(el, increment) { // eslint-disable-line no-unused-vars
+	/* eslint-disable no-use-before-define */
 	function tick() {
 		progress += increment;
 		window.scroll(0, start + direction * (distance * Math.easeInOut(progress)));
@@ -380,7 +378,7 @@ function scrollWindowTo(el, increment) {
 			window.clearInterval(intervalId);
 		}
 	}
-	function findPosY(el) {
+	function findPosY(el) { // eslint-disable-line no-shadow
 		var curtop = 0;
 		while (el.offsetParent) {
 			curtop += el.offsetTop;
@@ -388,7 +386,7 @@ function scrollWindowTo(el, increment) {
 		}
 		return curtop;
 	}
-	function ensureVisible(el) {
+	function ensureVisible(el) { // eslint-disable-line no-shadow
 		var	posTop    = findPosY(el),
 			posBottom = posTop + el.offsetHeight,
 			winTop    = window.scrollY ? window.scrollY : document.body.scrollTop,
@@ -399,7 +397,7 @@ function scrollWindowTo(el, increment) {
 		} else {
 			if (posBottom > winBottom) {
 				if (el.offsetHeight < winHeight) {
-					return (posTop - (winHeight - el.offsetHeight) + 20);
+					return posTop - (winHeight - el.offsetHeight) + 20;
 				} else {
 					return posTop;
 				}
@@ -410,7 +408,7 @@ function scrollWindowTo(el, increment) {
 	}
 
 	// normalize increment
-	if (increment == null) { // use lazy equality
+	if (increment == null) { // lazy equality for null
 		increment = 0.1;
 	} else {
 		if (typeof increment !== "number") {
@@ -429,6 +427,7 @@ function scrollWindowTo(el, increment) {
 		progress   = 0,
 		direction  = start > end ? -1 : 1,
 		intervalId = window.setInterval(tick, 25);
+	/* eslint-enable no-use-before-define */
 }
 
 
@@ -451,7 +450,7 @@ var Util = Object.defineProperties({}, {
 		value : function (obj) {
 			switch (typeof obj) {
 			case "number":
-				/* noop */
+				/* no-op */
 				break;
 			case "string":
 				obj = Number(obj);
@@ -468,7 +467,7 @@ var Util = Object.defineProperties({}, {
 	 */
 	isBoolean : {
 		value : function (obj) {
-			return typeof obj === "boolean" || (typeof obj === "string" && (obj === "true" || obj === "false"));
+			return typeof obj === "boolean" || typeof obj === "string" && (obj === "true" || obj === "false");
 		}
 	},
 
@@ -518,7 +517,7 @@ var Util = Object.defineProperties({}, {
 		value : function (expression) {
 			"use strict";
 			// the parens are to protect object literals from being confused with block statements
-			return eval("(" + expression + ")");
+			return eval("(" + expression + ")"); // eslint-disable-line no-eval
 		}
 	},
 
@@ -529,7 +528,7 @@ var Util = Object.defineProperties({}, {
 		value : function (statements) {
 			"use strict";
 			// the enclosing anonymous function is to isolate the passed code within its own scope
-			eval("(function(){" + statements + "\n}());");
+			eval("(function(){" + statements + "\n}());"); // eslint-disable-line no-eval
 			return true;
 		}
 	},
@@ -553,7 +552,9 @@ var Util = Object.defineProperties({}, {
 		value : function (orig, dest) /* diff object */ {
 			"use strict";
 			var	keys    = [].concat(Object.keys(orig), Object.keys(dest))
-					        .sort().filter(function (v, i, a) { return i === 0 || a[i-1] !== v; }),
+					        .sort().filter(function (v, i, a) { // eslint-disable-line no-shadow
+								return i === 0 || a[i - 1] !== v;
+							}),
 				diff    = {},
 				isArray = Array.isArray(orig),
 				aOpRef;
@@ -608,7 +609,10 @@ var Util = Object.defineProperties({}, {
 							}
 						} else {
 							// values are of different types
-							diff[p] = [ Util.DiffOp.Copy, typeof destP !== "object" || destP === null ? destP : clone(destP) ];
+							diff[p] = [
+								Util.DiffOp.Copy,
+								typeof destP !== "object" || destP === null ? destP : clone(destP)
+							];
 						}
 					} else {
 						// key only exists in orig
@@ -618,7 +622,7 @@ var Util = Object.defineProperties({}, {
 								aOpRef = "";
 								do {
 									aOpRef += "~";
-								} while (keys.some(function (v) { return v === this.val; }, { val: aOpRef }));
+								} while (keys.some(function (v) { return v === this.val; }, { val : aOpRef }));
 								diff[aOpRef] = [ Util.DiffOp.SpliceArray, np, np ];
 							}
 							if (np < diff[aOpRef][1]) {
@@ -633,7 +637,10 @@ var Util = Object.defineProperties({}, {
 					}
 				} else {
 					// key only exists in dest
-					diff[p] = [ Util.DiffOp.Copy, typeof destP !== "object" || destP === null ? destP : clone(destP) ];
+					diff[p] = [
+						Util.DiffOp.Copy,
+						typeof destP !== "object" || destP === null ? destP : clone(destP)
+					];
 				}
 			}
 			return Object.keys(diff).length !== 0 ? diff : null;
@@ -725,6 +732,7 @@ var Util = Object.defineProperties({}, {
  **********************************************************************************************************************/
 // Setup the SeedablePRNG constructor
 function SeedablePRNG(seed, useEntropy) {
+	/* eslint-disable no-shadow, new-cap */
 	Object.defineProperties(this, new Math.seedrandom(seed, useEntropy, function (prng, seed) {
 		return {
 			_prng : {
@@ -746,6 +754,7 @@ function SeedablePRNG(seed, useEntropy) {
 			}
 		};
 	}));
+	/* eslint-enable no-shadow, new-cap */
 }
 
 // Setup the SeedablePRNG static methods
@@ -800,7 +809,9 @@ function AudioWrapper(audio) {
 
 // Setup the AudioWrapper prototype
 Object.defineProperties(AudioWrapper.prototype, {
-	// getters/setters
+	/*
+		Getters/Setters
+	*/
 	duration : {
 		get : function () {
 			return this.audio.duration;
@@ -811,20 +822,20 @@ Object.defineProperties(AudioWrapper.prototype, {
 			return this.audio.currentTime;
 		},
 		set : function (time) {
-			// if we try to modify the audio clip's .currentTime property before its metadata
-			// has been loaded, it will throw an InvalidStateError (since it doesn't know its
-			// duration, allowing .currentTime to be set would be undefined behavior), so we
-			// must check its readiness first
+			/*
+				If we try to modify the audio clip's `.currentTime` property before its metadata
+				has been loaded, it will throw an `InvalidStateError` (since it doesn't know its
+				duration, allowing `.currentTime` to be set would be undefined behavior), so we
+				must check its readiness first.
+			*/
 			if (this.hasMetadata()) {
 				this.audio.currentTime = time;
 			} else {
 				jQuery(this.audio)
 					.off("loadedmetadata.AudioWrapper:time")
-					.one("loadedmetadata.AudioWrapper:time", (function (time) {
-						return function () {
-							this.currentTime = time;
-						};
-					}(time)));
+					.one("loadedmetadata.AudioWrapper:time", function () {
+						this.currentTime = time;
+					});
 			}
 		}
 	},
@@ -841,11 +852,13 @@ Object.defineProperties(AudioWrapper.prototype, {
 			return this.audio.controls;
 		},
 		set : function (state) {
-			this.audio.controls = state;
+			this.audio.controls = !!state;
 		}
 	},
 
-	// methods
+	/*
+		Methods
+	*/
 	hasMetadata : {
 		value : function () {
 			return this.audio.readyState >= HTMLAudioElement.HAVE_METADATA;
@@ -948,7 +961,7 @@ Object.defineProperties(AudioWrapper.prototype, {
 
 			var interval = 25, // in milliseconds
 				delta    = (to - from) / (duration / (interval / 1000));
-			this._faderId = setInterval((function (self, delta, from, to) {
+			this._faderId = setInterval((function (self) {
 				var min, max;
 				if (from < to) {
 					// fade in
@@ -976,7 +989,7 @@ Object.defineProperties(AudioWrapper.prototype, {
 						self._faderId = null;
 					}
 				};
-			}(this, delta, from, to)), interval);
+			}(this)), interval);
 		}
 	},
 	fade : {

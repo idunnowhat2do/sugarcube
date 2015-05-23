@@ -6,14 +6,15 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
+/* global state, tale */
 
 /***********************************************************************************************************************
  * User Utility Functions
  **********************************************************************************************************************/
 /**
- * Returns a random value from its given arguments.
- */
-function either(/* variadic */) {
+	Returns a random value from its given arguments.
+*/
+function either(/* variadic */) { // eslint-disable-line no-unused-vars
 	if (arguments.length === 0) {
 		return;
 	}
@@ -21,16 +22,17 @@ function either(/* variadic */) {
 }
 
 /**
- * Returns the number of turns that have passed since the last instance of the given passage occurred within the story
- * history or `-1` if it does not exist.  If multiple passages are given, returns the lowest count (which can be `-1`).
- */
-function lastVisited(/* variadic */) {
+	Returns the number of turns that have passed since the last instance of the given passage
+	occurred within the story history or `-1` if it does not exist.  If multiple passages are
+	given, returns the lowest count (which can be `-1`).
+*/
+function lastVisited(/* variadic */) { // eslint-disable-line no-unused-vars
 	if (state.isEmpty() || arguments.length === 0) {
 		return -1;
 	}
 
 	var	passages = Array.prototype.concat.apply([], arguments),
-		turns;
+		turns; // eslint-disable-line no-shadow
 	if (passages.length > 1) {
 		turns = state.length;
 		for (var i = 0, iend = passages.length; i < iend; i++) {
@@ -50,23 +52,24 @@ function lastVisited(/* variadic */) {
 }
 
 /**
- * Returns the title of the current passage.
- */
-function passage() {
+	Returns the title of the current passage.
+*/
+function passage() { // eslint-disable-line no-unused-vars
 	return state.active.title;
 }
 
 /**
- * Returns the title of a previous passage, either the most recent one whose title does not match that of the active
- * passage or the one at the optional offset, or an empty string, if there is no such passage.
- */
-function previous(offset) {
+	Returns the title of a previous passage, either the most recent one whose title does not
+	match that of the active passage or the one at the optional offset, or an empty string,
+	if there is no such passage.
+*/
+function previous(offset) { // eslint-disable-line no-unused-vars
 	// legacy behavior with an offset
 	if (arguments.length !== 0) {
 		if (offset < 1) {
 			throw new RangeError("previous offset parameter must be a positive integer greater than zero");
 		}
-		return (state.length > offset) ? state.peek(offset).title : "";
+		return state.length > offset ? state.peek(offset).title : "";
 	}
 
 	// new behavior without offset
@@ -82,10 +85,11 @@ function previous(offset) {
 }
 
 /**
- * Returns a pseudo-random whole number (integer) within the range of the given bounds.
- *   n.b. Using `Math.round()` will yield a non-uniform distribution!
- */
-function random(/* inclusive */ min, /* inclusive */ max) {
+	Returns a pseudo-random whole number (integer) within the range of the given bounds.
+
+	n.b. Using `Math.round()` will yield a non-uniform distribution!
+*/
+function random(/* inclusive */ min, /* inclusive */ max) { // eslint-disable-line no-unused-vars
 	if (arguments.length === 0) {
 		throw new Error("random called with insufficient arguments");
 	} else if (arguments.length === 1) {
@@ -102,11 +106,12 @@ function random(/* inclusive */ min, /* inclusive */ max) {
 }
 
 /**
- * Returns a pseudo-random real number (floating-point) within the range of the given bounds.
- *   n.b. Unlike with its sibling function `random()`, the `max` parameter is exclusive, not inclusive
- *        (i.e. the range goes to, but does not include, the given value).
- */
-function randomFloat(/* inclusive */ min, /* exclusive */ max) {
+	Returns a pseudo-random real number (floating-point) within the range of the given bounds.
+
+	n.b. Unlike with its sibling function `random()`, the `max` parameter is exclusive, not
+	     inclusive (i.e. the range goes to, but does not include, the given value).
+*/
+function randomFloat(/* inclusive */ min, /* exclusive */ max) { // eslint-disable-line no-unused-vars
 	if (arguments.length === 0) {
 		throw new Error("randomFloat called with insufficient arguments");
 	} else if (arguments.length === 1) {
@@ -119,19 +124,19 @@ function randomFloat(/* inclusive */ min, /* exclusive */ max) {
 		min = swap;
 	}
 
-	return (Math.random() * (max - min)) + min;
+	return Math.random() * (max - min) + min;
 }
 
 /**
- * Returns a new array consisting of all of the tags of the given passages.
- */
-function tags(/* variadic */) {
+	Returns a new array consisting of all of the tags of the given passages.
+*/
+function tags(/* variadic */) { // eslint-disable-line no-unused-vars
 	if (arguments.length === 0) {
 		return tale.get(state.active.title).tags.slice(0);
 	}
 
 	var	passages = Array.prototype.concat.apply([], arguments),
-		tags     = [];
+		tags     = []; // eslint-disable-line no-shadow
 	for (var i = 0, iend = passages.length; i < iend; i++) {
 		tags = tags.concat(tale.get(passages[i]).tags);
 	}
@@ -139,24 +144,33 @@ function tags(/* variadic */) {
 }
 
 /**
- * Returns the number of passages that the player has moved through (incl. the Start passage).
- *   n.b. Passages that were visited, but have been unwound (e.g. via the browser's `Back` button or the
- *        `<<back>>` macro) are no longer part of the story history and thus do not count toward the total.
- */
-function turns() {
+	Returns the number of passages that the player has moved through (incl. the starting passage).
+
+	n.b. Passages that were visited, but have been unwound (e.g. via the browser's `Back`
+	     button or the `<<back>>` macro) are no longer part of the story history and thus
+	     do not count toward the total.
+*/
+function turns() { // eslint-disable-line no-unused-vars
 	return state.length;
 }
 
 /**
- * Returns the number of times that the passage with the given title exists within the story history.
- * If multiple passage titles are given, returns the lowest count.
- */
-function visited(/* variadic */) {
+	Returns a reference to the current $variables store.
+*/
+function variables() { // eslint-disable-line no-unused-vars
+	return state.active.variables;
+}
+
+/**
+	Returns the number of times that the passage with the given title exists within the story
+	history.  If multiple passage titles are given, returns the lowest count.
+*/
+function visited(/* variadic */) { // eslint-disable-line no-unused-vars
 	if (state.isEmpty()) {
 		return 0;
 	}
 
-	var	passages = Array.prototype.concat.apply([], (arguments.length === 0) ? [state.active.title] : arguments),
+	var	passages = Array.prototype.concat.apply([], arguments.length === 0 ? [state.active.title] : arguments),
 		count;
 	if (passages.length > 1) {
 		count = state.length;
@@ -167,7 +181,7 @@ function visited(/* variadic */) {
 		var	hist  = state.history,
 			title = passages[0];
 		count = 0;
-		for (var i = 0, iend = state.length; i < iend; i++) {
+		for (var i = 0, iend = state.length; i < iend; i++) { // eslint-disable-line no-redeclare
 			if (hist[i].title === title) { count++; }
 		}
 	}
@@ -175,8 +189,8 @@ function visited(/* variadic */) {
 }
 
 /**
- * Returns the number of passages within the story history which are tagged with *all* of the given tags.
- */
+	Returns the number of passages within the story history which are tagged with *all* of the given tags.
+*/
 function visitedTags(/* variadic */) {
 	if (arguments.length === 0) {
 		return 0;
@@ -186,7 +200,7 @@ function visitedTags(/* variadic */) {
 		llen  = list.length,
 		count = 0;
 	for (var i = 0, iend = state.length; i < iend; i++) {
-		var tags = tale.get(state.history[i].title).tags;
+		var tags = tale.get(state.history[i].title).tags; // eslint-disable-line no-shadow
 		if (tags.length !== 0) {
 			var found = 0;
 			for (var j = 0; j < llen; j++) {
@@ -198,5 +212,5 @@ function visitedTags(/* variadic */) {
 	return count;
 }
 // Vanilla story format compatibility shim
-function visitedTag(/* variadic */) { return visitedTags.apply(null, arguments); }
+var visitedTag = visitedTags; // eslint-disable-line no-unused-vars
 

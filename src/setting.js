@@ -6,8 +6,9 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
+/* global settings:true, storage */
 
-var Setting = (function () {
+var Setting = (function () { // eslint-disable-line no-unused-vars
 	"use strict";
 
 	var
@@ -71,7 +72,7 @@ var Setting = (function () {
 		var control = {
 			name  : name,
 			type  : type,
-			label : definition.label == null ? "" : String(definition.label).trim() // use lazy equality on null check
+			label : definition.label == null ? "" : String(definition.label).trim() // lazy equality for null
 		};
 		switch (type) {
 		case Types.Toggle:
@@ -86,7 +87,7 @@ var Setting = (function () {
 				throw new Error("list must not be empty");
 			}
 			control.list = definition.list;
-			if (definition.default == null) { // use lazy equality
+			if (definition.default == null) { // lazy equality for null
 				control.default = definition.list[0];
 			} else {
 				var defaultIndex = definition.list.indexOf(definition.default);

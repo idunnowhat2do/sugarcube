@@ -7,7 +7,8 @@
  *
  **********************************************************************************************************************/
 
-var	strings = {
+/* eslint-disable max-len */
+var	strings = { // eslint-disable-line no-unused-vars
 		// general
 		identity : "game",
 		cancel   : "Cancel",
@@ -63,7 +64,7 @@ var	strings = {
 
 		// share
 		share : {
-			title : "Share",
+			title : "Share"
 		},
 
 		// alert
@@ -88,4 +89,5 @@ var	strings = {
 			}
 		}
 	};
+/* eslint-enable max-len */
 

@@ -42,12 +42,17 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  **********************************************************************************************************************/
+/*
+	global MacroContext, Util, addAccessibleClickHandler, config, insertElement, insertText, macros, removeChildren,
+	       removeElement, runtime, state, tale, throwError
+*/
 
-var Wikifier = (function () {
+/* eslint-disable max-len */
+var Wikifier = (function () { // eslint-disable-line no-unused-vars
 
 	var
 		_formatterCache, // the Wikifier formatter object cache
-		_unicodeOK      = /[\u0150\u0170]/g.test("\u0150"); // some versions of Safari do not handle Unicode properly
+		_unicodeOk      = /[\u0150\u0170]/g.test("\u0150"); // some versions of Safari do not handle Unicode properly
 
 
 	/*******************************************************************************************************************
@@ -56,7 +61,7 @@ var Wikifier = (function () {
 	function Wikifier(place, source) {
 		// general Wikifier properties
 		this.formatter = _formatterCache || Wikifier.compileFormatters();
-		this.output    = (place != null) ? place : document.createElement("div"); // use lazy equality on null check
+		this.output    = place != null ? place : document.createElement("div"); // lazy equality for null
 		this.source    = source;
 		this.nextMatch = 0;
 
@@ -69,7 +74,7 @@ var Wikifier = (function () {
 
 		// remove the temp output buffer element; unnecessary, as the browser will eventually GC the element,
 		// however, it's better to clean up after ourselves and not generate garbage in the first place
-		if (place == null && typeof this.output.remove === "function") { // use lazy equality on null check
+		if (place == null && typeof this.output.remove === "function") { // lazy equality for null
 			this.output.remove();
 		}
 	}
@@ -139,12 +144,12 @@ var Wikifier = (function () {
 						// Call the formatter
 						if (matchingFormatter !== -1) {
 							this.formatter.formatters[matchingFormatter].handler(this);
-							if (runtime.temp.break != null) { break; } // use lazy equality
+							if (runtime.temp.break != null) { break; } // lazy equality for null
 						}
 					}
 				} while (terminatorMatch || formatterMatch);
 
-				if (runtime.temp.break == null) { // use lazy equality
+				if (runtime.temp.break == null) { // lazy equality for null
 					// Output any text after the last match
 					if (this.nextMatch < this.source.length) {
 						this.outputText(this.output, this.nextMatch, this.source.length);
@@ -207,10 +212,11 @@ var Wikifier = (function () {
 				for (var i = 0, iend = formatters.length; i < iend; i++) {
 					patterns.push("(" + formatters[i].match + ")");
 				}
-				return _formatterCache = {
+				_formatterCache = {
 					"formatters"      : formatters,
 					"formatterRegExp" : new RegExp(patterns.join("|"), "gm")
 				};
+				return _formatterCache;
 			}
 		},
 
@@ -247,7 +253,7 @@ var Wikifier = (function () {
 					};
 
 				while ((match = re.exec(expression)) !== null) {
-					// noop: Double quoted | Single quoted | Empty quotes | Operator delimiters
+					// no-op: Double quoted | Single quoted | Empty quotes | Operator delimiters
 
 					// Barewords & Sigil
 					if (match[5]) {
@@ -294,7 +300,7 @@ var Wikifier = (function () {
 		getValue : {
 			value : function (storyVar) {
 				var	pNames = Wikifier.parseStoryVariable(storyVar),
-					retVal = undefined;
+					retVal;
 
 				if (pNames.length !== 0) {
 					retVal = state.active.variables;
@@ -371,7 +377,7 @@ var Wikifier = (function () {
 						pNames.push(Number(match[6]));
 					}
 				}
-				return (varText === "") ? pNames : [];
+				return varText === "" ? pNames : [];
 			}
 		},
 
@@ -411,7 +417,7 @@ var Wikifier = (function () {
 				} finally {
 					// probably unnecessary, but let's be tidy
 					removeChildren(errTrap); // remove any remaining children
-					if (typeof errTrap.remove === "function") { // use lazy equality on null check
+					if (typeof errTrap.remove === "function") { // lazy equality for null
 						errTrap.remove();
 					}
 				}
@@ -424,7 +430,7 @@ var Wikifier = (function () {
 		createInternalLink : {
 			value : function (place, passage, text, callback) {
 				var el = document.createElement("a");
-				if (passage != null) { // use lazy equality
+				if (passage != null) { // lazy equality for null
 					el.setAttribute("data-passage", passage);
 					if (tale.has(passage)) {
 						el.classList.add("link-internal");
@@ -458,7 +464,7 @@ var Wikifier = (function () {
 			value : function (place, url, text) {
 				var el = insertElement(place, "a", null, "link-external", text);
 				el.target = "_blank";
-				if (url != null) { // use lazy equality
+				if (url != null) { // lazy equality for null
 					el.href = url;
 					el.setAttribute("tabindex", 0); // for accessiblity
 				}
@@ -476,7 +482,7 @@ var Wikifier = (function () {
 				}
 
 				var urlRegExp = new RegExp("^" + Wikifier.textPrimitives.url, "gim");
-				return (urlRegExp.test(link) || /[\.\/\\#]/.test(link));
+				return urlRegExp.test(link) || /[\.\/\\#]/.test(link);
 			}
 		}
 	});
@@ -490,7 +496,7 @@ var Wikifier = (function () {
 	// tier-1 primitives
 	Object.defineProperties(Wikifier.textPrimitives, {
 		anyLetter : {
-			value : _unicodeOK ? "[A-Za-z0-9_\\-\u00c0-\u017e]" : "[A-Za-z0-9_\\-\u00c0-\u00ff]"
+			value : _unicodeOk ? "[A-Za-z0-9_\\-\u00c0-\u017e]" : "[A-Za-z0-9_\\-\u00c0-\u00ff]"
 		},
 
 		url : {
@@ -525,11 +531,12 @@ var Wikifier = (function () {
 		inlineCSS : {
 			value : function (w) {
 				var	css             = { styles : [], classes : [] },
-					lookaheadRegExp = new RegExp(Wikifier.textPrimitives.inlineCSS, "gm");
+					lookaheadRegExp = new RegExp(Wikifier.textPrimitives.inlineCSS, "gm"),
+					matched;
 				do {
 					lookaheadRegExp.lastIndex = w.nextMatch;
-					var	lookaheadMatch = lookaheadRegExp.exec(w.source),
-						matched        = (lookaheadMatch && lookaheadMatch.index === w.nextMatch);
+					var	lookaheadMatch = lookaheadRegExp.exec(w.source);
+					matched = lookaheadMatch && lookaheadMatch.index === w.nextMatch;
 					if (matched) {
 						if (lookaheadMatch[1]) {
 							css.styles.push({
@@ -587,7 +594,7 @@ var Wikifier = (function () {
 
 		evalPassageId : {
 			value : function (passage) {
-				if (passage != null && !tale.has(passage)) { // use lazy equality; 0 is a valid ID and name, so we cannot simply evaluate passage
+				if (passage != null && !tale.has(passage)) { // lazy equality for null; 0 is a valid ID and name, so we cannot simply evaluate passage
 					passage = Wikifier.helpers.evalExpression(passage);
 				}
 				return passage;
@@ -595,6 +602,7 @@ var Wikifier = (function () {
 		},
 
 		parseSquareBracketedMarkup : {
+			/* eslint-disable no-use-before-define, no-labels */
 			value : function (w) {
 				var	next = function () {
 						if (pos >= w.source.length) {
@@ -629,8 +637,8 @@ var Wikifier = (function () {
 							throw new Error("malformed wiki " + (isLink ? "link" : "image") + ", empty " + type + " component");
 						}
 						if (type === "link" && text[0] === '~') {
-							item["forceInternal"] = true;
-							item["link"] = text.slice(1);
+							item.forceInternal = true;
+							item.link = text.slice(1);
 						} else {
 							item[type] = text;
 						}
@@ -642,11 +650,11 @@ var Wikifier = (function () {
 							switch (peek()) {
 							case '\\':
 								pos++;
-								var c = peek();
+								var c = peek(); // eslint-disable-line no-shadow
 								if (c !== EOF && c !== '\n') {
 									break;
 								}
-								/* FALL-THROUGH */
+								/* falls through */
 							case EOF:
 							case '\n':
 								return EOF;
@@ -703,28 +711,28 @@ var Wikifier = (function () {
 				ignore();
 				try {
 					loop: for (;;) {
-						switch ((c = peek())) {
+						switch ((c = peek())) { // eslint-disable-line no-extra-parens
 						case EOF:
 						case '\n':
 							return error("unterminated wiki {0}", isLink ? "link" : "image");
 						case '"':
 							/*
-							 * This is not entirely reliable within the non-setter component sections (i.e. the
-							 * sections which allow raw strings), since it's possible, however unlikely, for a raw
-							 * string to contain unpaired double quotes.  The likelihood is low enough, however,
-							 * that I'm deeming the risk acceptable, for now at least.
-							 */
+								This is not entirely reliable within the non-setter component sections (i.e. the
+								sections which allow raw strings), since it's possible, however unlikely, for a raw
+								string to contain unpaired double quotes.  The likelihood is low enough, however,
+								that I'm deeming the risk acceptable, for now at least.
+							*/
 							if (slurpQuote(c) === EOF) {
 								return error("unterminated double quoted string in wiki {0}", isLink ? "link" : "image");
 							}
 							break;
 						case "'":
 							/*
-							 * Disallow the use of single quotes as delimiters for quoted strings within all but
-							 * the setter component section, since it's entirely possible for raw strings to contain
-							 * unpaired single quotes.
-							 */
-							if (cid === 4 || (cid === 3 && isLink)) {
+								Disallow the use of single quotes as delimiters for quoted strings within all but
+								the setter component section, since it's entirely possible for raw strings to contain
+								unpaired single quotes.
+							*/
+							if (cid === 4 || cid === 3 && isLink) {
 								if (slurpQuote(c) === EOF) {
 									return error("unterminated single quoted string in wiki {0}", isLink ? "link" : "image");
 								}
@@ -804,10 +812,11 @@ var Wikifier = (function () {
 				} catch (e) {
 					return error(e.message);
 				}
-				item["pos"] = pos;
+				item.pos = pos;
 
 				return item;
 			}
+			/* eslint-enable no-use-before-define, no-labels */
 		}
 	});
 
@@ -818,31 +827,31 @@ var Wikifier = (function () {
 	Object.defineProperty(Wikifier, "formatters", {
 		value : [
 			{
-				name: "dollarSign",
-				match: "\\${2}",
-				handler: function (w) {
+				name    : "dollarSign",
+				match   : "\\${2}",
+				handler : function (w) {
 					insertText(w.output, "$");
 				}
 			},
 
 			{
-				name: "$variable",
-				match: "\\$\\w+(?:(?:\\.[A-Za-z_$]\\w*)|(?:\\[\\d+\\])|(?:\\[\"(?:\\\\.|[^\"\\\\])+\"\\])|(?:\\['(?:\\\\.|[^'\\\\])+'\\])|(?:\\[\\$\\w+\\]))*",
-				handler: function (w) {
+				name    : "$variable",
+				match   : "\\$\\w+(?:(?:\\.[A-Za-z_$]\\w*)|(?:\\[\\d+\\])|(?:\\[\"(?:\\\\.|[^\"\\\\])+\"\\])|(?:\\['(?:\\\\.|[^'\\\\])+'\\])|(?:\\[\\$\\w+\\]))*",
+				handler : function (w) {
 					var	result = Wikifier.getValue(w.matchText);
 					insertText(w.output, /^string|number|boolean$/.test(typeof result) ? result : w.matchText);
 				}
 			},
 
 			{
-				name: "table",
-				match: "^\\|(?:[^\\n]*)\\|(?:[fhck]?)$",
-				lookahead: "^\\|([^\\n]*)\\|([fhck]?)$",
-				rowTerminator: "\\|(?:[fhck]?)$\\n?",
-				cellPattern: "(?:\\|([^\\n\\|]*)\\|)|(\\|[fhck]?$\\n?)",
-				cellTerminator: "(?:\\x20*)\\|",
-				rowTypes: { "c": "caption", "h": "thead", "": "tbody", "f": "tfoot" },
-				handler: function (w) {
+				name           : "table",
+				match          : "^\\|(?:[^\\n]*)\\|(?:[fhck]?)$",
+				lookahead      : "^\\|([^\\n]*)\\|([fhck]?)$",
+				rowTerminator  : "\\|(?:[fhck]?)$\\n?",
+				cellPattern    : "(?:\\|([^\\n\\|]*)\\|)|(\\|[fhck]?$\\n?)",
+				cellTerminator : "(?:\\x20*)\\|",
+				rowTypes       : { "c" : "caption", "h" : "thead", "" : "tbody", "f" : "tfoot" },
+				handler        : function (w) {
 					var	table           = insertElement(w.output, "table"),
 						lookaheadRegExp = new RegExp(this.lookahead, "gm"),
 						curRowType      = null,
@@ -850,12 +859,13 @@ var Wikifier = (function () {
 						rowContainer,
 						rowElement,
 						prevColumns     = [],
-						rowCount        = 0;
+						rowCount        = 0,
+						matched;
 					w.nextMatch = w.matchStart;
 					do {
 						lookaheadRegExp.lastIndex = w.nextMatch;
-						var	lookaheadMatch = lookaheadRegExp.exec(w.source),
-							matched        = lookaheadMatch && lookaheadMatch.index === w.nextMatch;
+						var	lookaheadMatch = lookaheadRegExp.exec(w.source);
+						matched = lookaheadMatch && lookaheadMatch.index === w.nextMatch;
 						if (matched) {
 							nextRowType = lookaheadMatch[2];
 							if (nextRowType === "k") {
@@ -883,14 +893,15 @@ var Wikifier = (function () {
 						}
 					} while (matched);
 				},
-				rowHandler: function (w, e, prevColumns) {
+				rowHandler : function (w, e, prevColumns) {
 					var	col          = 0,
 						curColCount  = 1,
-						cellRegExp   = new RegExp(this.cellPattern, "gm");
+						cellRegExp   = new RegExp(this.cellPattern, "gm"),
+						matched;
 					do {
 						cellRegExp.lastIndex = w.nextMatch;
-						var	cellMatch = cellRegExp.exec(w.source),
-							matched   = cellMatch && cellMatch.index === w.nextMatch;
+						var	cellMatch = cellRegExp.exec(w.source);
+						matched = cellMatch && cellMatch.index === w.nextMatch;
 						if (matched) {
 							if (cellMatch[1] === "~") {
 								var last = prevColumns[col];
@@ -923,9 +934,11 @@ var Wikifier = (function () {
 								} else {
 									cell = insertElement(e, "td");
 								}
-								prevColumns[col] = { rowCount: 1, element: cell };
+								prevColumns[col] = { rowCount : 1, element : cell };
+								/* UNUSED?
 								var	lastColCount   = 1,
 									lastColElement = cell;
+								*/
 								if (curColCount > 1) {
 									cell.setAttribute("colSpan", curColCount);
 									cell.setAttribute("colspan", curColCount);
@@ -934,7 +947,7 @@ var Wikifier = (function () {
 								for (var i = 0; i < css.styles.length; i++) {
 									cell.style[css.styles[i].style] = css.styles[i].value;
 								}
-								for (var i = 0; i < css.classes.length; i++) {
+								for (var i = 0; i < css.classes.length; i++) { // eslint-disable-line no-redeclare
 									cell.classList.add(css.classes[i]);
 								}
 								w.subWikify(cell, this.cellTerminator);
@@ -957,10 +970,10 @@ var Wikifier = (function () {
 			},
 
 			{
-				name: "heading",
-				match: "^!{1,6}",
-				terminator: "\\n",
-				handler: function (w) {
+				name       : "heading",
+				match      : "^!{1,6}",
+				terminator : "\\n",
+				handler    : function (w) {
 					var isHeading = (function (nodes) {
 							var hasGCS = typeof window.getComputedStyle === "function";
 							for (var i = nodes.length - 1; i >= 0; i++) {
@@ -971,7 +984,7 @@ var Wikifier = (function () {
 										return true;
 									}
 									var styles = hasGCS ? window.getComputedStyle(node, null) : node.currentStyle;
-									return (styles.display === "block");
+									return styles.display === "block";
 								case Node.COMMENT_NODE:
 									break;
 								default:
@@ -989,13 +1002,13 @@ var Wikifier = (function () {
 			},
 
 			{
-				name: "list",
-				match: "^(?:(?:\\*+)|(?:#+))",
-				lookahead: "^(?:(\\*+)|(#+))",
-				terminator: "\\n",
-				outerElement: "ul",
-				itemElement: "li",
-				handler: function (w) {
+				name         : "list",
+				match        : "^(?:(?:\\*+)|(?:#+))",
+				lookahead    : "^(?:(\\*+)|(#+))",
+				terminator   : "\\n",
+				outerElement : "ul",
+				itemElement  : "li",
+				handler      : function (w) {
 					w.nextMatch = w.matchStart;
 					var	lookaheadRegExp = new RegExp(this.lookahead, "gm"),
 						placeStack      = [w.output],
@@ -1003,11 +1016,12 @@ var Wikifier = (function () {
 						newType,
 						curLevel        = 0,
 						newLevel,
+						matched,
 						i;
 					do {
 						lookaheadRegExp.lastIndex = w.nextMatch;
-						var	lookaheadMatch = lookaheadRegExp.exec(w.source),
-							matched        = lookaheadMatch && lookaheadMatch.index === w.nextMatch;
+						var	lookaheadMatch = lookaheadRegExp.exec(w.source);
+						matched = lookaheadMatch && lookaheadMatch.index === w.nextMatch;
 						if (matched) {
 							if (lookaheadMatch[2]) {
 								newType = "ol";
@@ -1037,24 +1051,25 @@ var Wikifier = (function () {
 			},
 
 			{
-				name: "quoteByBlock",
-				match: "^<<<\\n",
-				terminator: "^<<<\\n",
-				handler: function (w) {
+				name       : "quoteByBlock",
+				match      : "^<<<\\n",
+				terminator : "^<<<\\n",
+				handler    : function (w) {
 					w.subWikify(insertElement(w.output, "blockquote"), this.terminator);
 				}
 			},
 
 			{
-				name: "quoteByLine",
-				match: "^>+",
-				terminator: "\\n",
-				element: "blockquote",
-				handler: function (w) {
+				name       : "quoteByLine",
+				match      : "^>+",
+				terminator : "\\n",
+				element    : "blockquote",
+				handler    : function (w) {
 					var	lookaheadRegExp = new RegExp(this.match, "gm"),
 						placeStack      = [w.output],
 						curLevel        = 0,
 						newLevel        = w.matchLength,
+						matched,
 						i;
 					do {
 						if (newLevel > curLevel) {
@@ -1072,8 +1087,8 @@ var Wikifier = (function () {
 						w.subWikify(placeStack[placeStack.length - 1], this.terminator);
 						insertElement(placeStack[placeStack.length - 1], "br");
 						lookaheadRegExp.lastIndex = w.nextMatch;
-						var	lookaheadMatch = lookaheadRegExp.exec(w.source),
-							matched        = lookaheadMatch && lookaheadMatch.index === w.nextMatch;
+						var	lookaheadMatch = lookaheadRegExp.exec(w.source);
+						matched = lookaheadMatch && lookaheadMatch.index === w.nextMatch;
 						if (matched) {
 							newLevel = lookaheadMatch[0].length;
 							w.nextMatch += lookaheadMatch[0].length;
@@ -1083,18 +1098,18 @@ var Wikifier = (function () {
 			},
 
 			{
-				name: "rule",
-				match: "^----+$\\n?|<hr ?/?>\\n?",
-				handler: function (w) {
+				name    : "rule",
+				match   : "^----+$\\n?|<hr ?/?>\\n?",
+				handler : function (w) {
 					insertElement(w.output, "hr");
 				}
 			},
 
 			{
-				name: "monospacedByLine",
-				match: "^\\{\\{\\{\\n",
-				lookahead: "^\\{\\{\\{\\n((?:^[^\\n]*\\n)+?)(^\\}\\}\\}$\\n?)",
-				handler: function (w) {
+				name      : "monospacedByLine",
+				match     : "^\\{\\{\\{\\n",
+				lookahead : "^\\{\\{\\{\\n((?:^[^\\n]*\\n)+?)(^\\}\\}\\}$\\n?)",
+				handler   : function (w) {
 					var lookaheadRegExp = new RegExp(this.lookahead, "gm");
 					lookaheadRegExp.lastIndex = w.matchStart;
 					var lookaheadMatch = lookaheadRegExp.exec(w.source);
@@ -1106,9 +1121,9 @@ var Wikifier = (function () {
 			},
 
 			{
-				name: "prettyLink",
-				match: "\\[\\[[^[]",
-				handler: function (w) {
+				name    : "prettyLink",
+				match   : "\\[\\[[^[]",
+				handler : function (w) {
 					var markup = Wikifier.helpers.parseSquareBracketedMarkup(w);
 					if (markup.hasOwnProperty("error")) {
 						w.outputText(w.output, w.matchStart, w.nextMatch);
@@ -1131,17 +1146,17 @@ var Wikifier = (function () {
 			},
 
 			{
-				name: "urlLink",
-				match: Wikifier.textPrimitives.url,
-				handler: function (w) {
+				name    : "urlLink",
+				match   : Wikifier.textPrimitives.url,
+				handler : function (w) {
 					w.outputText(Wikifier.createExternalLink(w.output, w.matchText), w.matchStart, w.nextMatch);
 				}
 			},
 
 			{
-				name: "image",
-				match: "\\[[<>]?[Ii][Mm][Gg]\\[",
-				handler: function (w) {
+				name    : "image",
+				match   : "\\[[<>]?[Ii][Mm][Gg]\\[",
+				handler : function (w) {
 					var markup = Wikifier.helpers.parseSquareBracketedMarkup(w);
 					if (markup.hasOwnProperty("error")) {
 						w.outputText(w.output, w.matchStart, w.nextMatch);
@@ -1185,19 +1200,19 @@ var Wikifier = (function () {
 			},
 
 			{
-				name: "macro",
-				match: "<<",
-				lookaheadRegExp: /<<([^>\s]+)(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|(?:\[(?:[<>]?[Ii][Mm][Gg])?\[[^\r\n]*?\]\]+)|[^>]|(?:>(?!>)))*)>>/gm,
-				argsPattern: "(?:" + [
+				name            : "macro",
+				match           : "<<",
+				lookaheadRegExp : /<<([^>\s]+)(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|(?:\[(?:[<>]?[Ii][Mm][Gg])?\[[^\r\n]*?\]\]+)|[^>]|(?:>(?!>)))*)>>/gm,
+				argsPattern     : "(?:" + [
 					'("(?:\\\\.|[^"\\\\])+")',                          // 1=double quoted
 					"('(?:\\\\.|[^'\\\\])+')",                          // 2=single quoted
 					"(\"\"|'')",                                        // 3=empty quotes
 					"(\\[(?:[<>]?[Ii][Mm][Gg])?\\[[^\\r\\n]*?\\]\\]+)", // 4=double square-bracketed
 					"([^\"'`\\s]\\S*)"                                  // 5=barewords
 				].join("|") + ")",
-				working: { name: "", handler: "", arguments: "", index: 0 }, // the working parse object
-				context: null, // last execution context object (top-level macros, hierarchically, have a null context)
-				handler: function (w) {
+				working : { name : "", handler : "", arguments : "", index : 0 }, // the working parse object
+				context : null, // last execution context object (top-level macros, hierarchically, have a null context)
+				handler : function (w) {
 					var matchStart = this.lookaheadRegExp.lastIndex = w.matchStart;
 					if (this.parseTag(w)) {
 						// if parseBody() is called below, it will change the current working
@@ -1219,7 +1234,7 @@ var Wikifier = (function () {
 									}
 								}
 								if (typeof macro[handler] === "function") {
-									var args = (!macro.hasOwnProperty("skipArgs") || !macro["skipArgs"]) ? this.parseArgs(rawArgs) : [];
+									var args = !macro.hasOwnProperty("skipArgs") || !macro.skipArgs ? this.parseArgs(rawArgs) : [];
 
 									// new-style macros
 									if (macro.hasOwnProperty("_USE_MACROS_API")) {
@@ -1262,7 +1277,7 @@ var Wikifier = (function () {
 								return throwError(w.output, "macro <<" + name + ">> does not exist", w.source.slice(matchStart, w.nextMatch));
 							}
 						} catch (e) {
-							return throwError(w.output, "cannot execute " + ((macro && macro.isWidget) ? "widget" : "macro") + " <<" + name + ">>: " + e.message,
+							return throwError(w.output, "cannot execute " + (macro && macro.isWidget ? "widget" : "macro") + " <<" + name + ">>: " + e.message,
 								w.source.slice(matchStart, w.nextMatch));
 						} finally {
 							this.working.name      = "";
@@ -1274,7 +1289,7 @@ var Wikifier = (function () {
 						w.outputText(w.output, w.matchStart, w.nextMatch);
 					}
 				},
-				parseTag: function (w) {
+				parseTag : function (w) {
 					var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
 					if (lookaheadMatch && lookaheadMatch.index === w.matchStart && lookaheadMatch[1]) {
 						w.nextMatch = this.lookaheadRegExp.lastIndex;
@@ -1293,7 +1308,7 @@ var Wikifier = (function () {
 					}
 					return false;
 				},
-				parseBody: function (w, tags) {
+				parseBody : function (w, tags) {
 					var	openTag      = this.working.name,
 						closeTag     = "/" + openTag,
 						closeAlt     = "end" + openTag,
@@ -1320,7 +1335,6 @@ var Wikifier = (function () {
 							break;
 
 						case closeAlt:
-							/* FALL-THROUGH */
 						case closeTag:
 							opened--;
 							break;
@@ -1359,7 +1373,7 @@ var Wikifier = (function () {
 					}
 					return null;
 				},
-				parseArgs: function (str) {
+				parseArgs : function (str) {
 					// Groups: 1=double quoted | 2=single quoted | 3=empty quotes | 4=double square-bracketed | 5=barewords
 					var	re    = new RegExp(this.argsPattern, "gm"),
 						match,
@@ -1502,10 +1516,10 @@ var Wikifier = (function () {
 			},
 
 			{
-				name: "html",
-				match: "<[Hh][Tt][Mm][Ll]>",
-				lookaheadRegExp: /<[Hh][Tt][Mm][Ll]>((?:.|\n)*?)<\/[Hh][Tt][Mm][Ll]>/gm,
-				handler: function (w) {
+				name            : "html",
+				match           : "<[Hh][Tt][Mm][Ll]>",
+				lookaheadRegExp : /<[Hh][Tt][Mm][Ll]>((?:.|\n)*?)<\/[Hh][Tt][Mm][Ll]>/gm,
+				handler         : function (w) {
 					this.lookaheadRegExp.lastIndex = w.matchStart;
 					var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
 					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
@@ -1522,10 +1536,10 @@ var Wikifier = (function () {
 			},
 
 			{
-				name: "commentByBlock",
-				match: "/(?:%|\\*)",
-				lookaheadRegExp: /\/(%|\*)((?:.|\n)*?)\1\//gm,
-				handler: function (w) {
+				name            : "commentByBlock",
+				match           : "/(?:%|\\*)",
+				lookaheadRegExp : /\/(%|\*)((?:.|\n)*?)\1\//gm,
+				handler         : function (w) {
 					this.lookaheadRegExp.lastIndex = w.matchStart;
 					var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
 					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
@@ -1535,10 +1549,10 @@ var Wikifier = (function () {
 			},
 
 			{
-				name: "htmlCommentByBlock",
-				match: "<!--",
-				lookaheadRegExp: /<!--((?:.|\\n)*?)-->/gm,
-				handler: function (w) {
+				name            : "htmlCommentByBlock",
+				match           : "<!--",
+				lookaheadRegExp : /<!--((?:.|\\n)*?)-->/gm,
+				handler         : function (w) {
 					this.lookaheadRegExp.lastIndex = w.matchStart;
 					var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
 					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
@@ -1549,9 +1563,9 @@ var Wikifier = (function () {
 			},
 
 			{
-				name: "formatByChar",
-				match: "''|//|__|\\^\\^|~~|==|\\{\\{\\{",
-				handler: function (w) {
+				name    : "formatByChar",
+				match   : "''|//|__|\\^\\^|~~|==|\\{\\{\\{",
+				handler : function (w) {
 					switch (w.matchText) {
 					case "''":
 						w.subWikify(insertElement(w.output, "strong"), "''");
@@ -1585,11 +1599,11 @@ var Wikifier = (function () {
 			},
 
 			{
-				name: "customStyle",
-				match: "@@",
-				terminator: "@@",
-				blockRegExp: /\s*\n/gm,
-				handler: function (w) {
+				name        : "customStyle",
+				match       : "@@",
+				terminator  : "@@",
+				blockRegExp : /\s*\n/gm,
+				handler     : function (w) {
 					var	css = Wikifier.helpers.inlineCSS(w);
 					this.blockRegExp.lastIndex = w.nextMatch; // must follow the call to .inlineCSS()
 					var	blockMatch = this.blockRegExp.exec(w.source),
@@ -1601,7 +1615,7 @@ var Wikifier = (function () {
 						for (var i = 0; i < css.styles.length; i++) {
 							el.style[css.styles[i].style] = css.styles[i].value;
 						}
-						for (var i = 0; i < css.classes.length; i++) {
+						for (var i = 0; i < css.classes.length; i++) { // eslint-disable-line no-redeclare
 							el.classList.add(css.classes[i]);
 						}
 					}
@@ -1616,25 +1630,25 @@ var Wikifier = (function () {
 			},
 
 			{
-				name: "emdash",
-				match: "--",
-				handler: function (w) {
+				name    : "emdash",
+				match   : "--",
+				handler : function (w) {
 					insertText(w.output, "\u2014");
 				}
 			},
 
 			{
-				name: "lineContinuation",
-				match: "\\\\[\\s\\u00a0\\u2028\\u2029]*?(?:\\n|$)", // Unicode space-character escapes required for IE < 11 (maybe < 10?)
-				handler: function (w) {
+				name    : "lineContinuation",
+				match   : "\\\\[\\s\\u00a0\\u2028\\u2029]*?(?:\\n|$)", // Unicode space-character escapes required for IE < 11 (maybe < 10?)
+				handler : function (w) {
 					w.nextMatch = w.matchStart + w.matchLength;
 				}
 			},
 
 			{
-				name: "lineBreak",
-				match: "\\n|<br ?/?>",
-				handler: function (w) {
+				name    : "lineBreak",
+				match   : "\\n|<br ?/?>",
+				handler : function (w) {
 					if (w._nobr.length === 0 || !w._nobr[0]) {
 						insertElement(w.output, "br");
 					}
@@ -1642,10 +1656,10 @@ var Wikifier = (function () {
 			},
 
 			{
-				name: "rawText",
-				match: "\"{3}|<nowiki>",
-				lookaheadRegExp: /(?:\"{3}|<nowiki>)((?:.|\n)*?)(?:\"{3}|<\/nowiki>)/gm,
-				handler: function (w) {
+				name            : "rawText",
+				match           : "\"{3}|<nowiki>",
+				lookaheadRegExp : /(?:\"{3}|<nowiki>)((?:.|\n)*?)(?:\"{3}|<\/nowiki>)/gm,
+				handler         : function (w) {
 					this.lookaheadRegExp.lastIndex = w.matchStart;
 					var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
 					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
@@ -1656,9 +1670,9 @@ var Wikifier = (function () {
 			},
 
 			{
-				name: "htmlCharacterReference",
-				match: "(?:(?:&#?[a-zA-Z0-9]{2,8};|.)(?:&#?(?:x0*(?:3[0-6][0-9a-fA-F]|1D[c-fC-F][0-9a-fA-F]|20[d-fD-F][0-9a-fA-F]|FE2[0-9a-fA-F])|0*(?:76[89]|7[7-9][0-9]|8[0-7][0-9]|761[6-9]|76[2-7][0-9]|84[0-3][0-9]|844[0-7]|6505[6-9]|6506[0-9]|6507[0-1]));)+|&#?[a-zA-Z0-9]{2,8};)",
-				handler: function (w) {
+				name    : "htmlCharacterReference",
+				match   : "(?:(?:&#?[a-zA-Z0-9]{2,8};|.)(?:&#?(?:x0*(?:3[0-6][0-9a-fA-F]|1D[c-fC-F][0-9a-fA-F]|20[d-fD-F][0-9a-fA-F]|FE2[0-9a-fA-F])|0*(?:76[89]|7[7-9][0-9]|8[0-7][0-9]|761[6-9]|76[2-7][0-9]|84[0-3][0-9]|844[0-7]|6505[6-9]|6506[0-9]|6507[0-1]));)+|&#?[a-zA-Z0-9]{2,8};)",
+				handler : function (w) {
 					var el = document.createElement("span");
 					el.innerHTML = w.matchText;
 					insertText(w.output, el.textContent);
@@ -1669,12 +1683,12 @@ var Wikifier = (function () {
 			},
 
 			{   // n.b. This formatter MUST come after any formatter which handles HTML tag-like constructs (e.g. html & rawText)
-				name: "htmlTag",
-				match: "<\\w+(?:\\s+[^\\u0000-\\u001F\\u007F-\\u009F\\s\"'>\\/=]+(?:\\s*=\\s*(?:\"[^\"]*?\"|'[^']*?'|[^\\s\"'=<>`]+))?)*\\s*\\/?>",
-				tagPattern: "<(\\w+)",
-				voidElements: [ "area", "base", "br", "col", "embed", "hr", "img", "input", "keygen", "link", "menuitem", "meta", "param", "source", "track", "wbr" ],
-				nobrElements: [ "colgroup", "datalist", "dl", "figure", "ol", "optgroup", "select", "table", "tbody", "tfoot", "thead", "tr", "ul" ],
-				handler: function (w) {
+				name         : "htmlTag",
+				match        : "<\\w+(?:\\s+[^\\u0000-\\u001F\\u007F-\\u009F\\s\"'>\\/=]+(?:\\s*=\\s*(?:\"[^\"]*?\"|'[^']*?'|[^\\s\"'=<>`]+))?)*\\s*\\/?>",
+				tagPattern   : "<(\\w+)",
+				voidElements : [ "area", "base", "br", "col", "embed", "hr", "img", "input", "keygen", "link", "menuitem", "meta", "param", "source", "track", "wbr" ],
+				nobrElements : [ "colgroup", "datalist", "dl", "figure", "ol", "optgroup", "select", "table", "tbody", "tfoot", "thead", "tr", "ul" ],
+				handler      : function (w) {
 					var	tagMatch = new RegExp(this.tagPattern).exec(w.matchText),
 						tag      = tagMatch && tagMatch[1],
 						tagName  = tag && tag.toLowerCase();
@@ -1723,11 +1737,11 @@ var Wikifier = (function () {
 						}
 					}
 				},
-				processDataAttributes: function (el) {
+				processDataAttributes : function (el) {
 					var passage = el.getAttribute("data-passage");
-					if (passage == null) { return; } // use lazy equality
+					if (passage == null) { return; } // lazy equality for null
 
-					passage = ((typeof passage !== "string") ? String(passage) : passage).trim();
+					passage = (typeof passage !== "string" ? String(passage) : passage).trim();
 					if (/^\$\w+/.test(passage)) {
 						passage = Wikifier.getValue(passage);
 						el.setAttribute("data-passage", passage);
@@ -1746,8 +1760,8 @@ var Wikifier = (function () {
 						} else {
 							var	setter   = el.getAttribute("data-setter"),
 								callback;
-							if (setter != null) { // use lazy equality
-								setter = ((typeof setter !== "string") ? String(setter) : setter).trim();
+							if (setter != null) { // lazy equality for null
+								setter = (typeof setter !== "string" ? String(setter) : setter).trim();
 								if (setter !== "") {
 									callback = (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(setter)));
 								}
@@ -1780,4 +1794,5 @@ var Wikifier = (function () {
 	return Wikifier; // export the constructor
 
 }());
+/* eslint-enable max-len */
 

@@ -6,8 +6,12 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
+/*
+	global Save, Setting, Util, Wikifier, addAccessibleClickHandler, config, has, insertText, removeChildren,
+	       setPageElement, settings, state, storage, strings, tale, version
+*/
 
-var UI = (function () {
+var UI = (function () { // eslint-disable-line no-unused-vars
 	"use strict";
 
 	var
@@ -15,7 +19,7 @@ var UI = (function () {
 		_overlay        = null,
 		_dialog         = null,
 		_dialogTitle    = null,
-		_dialogClose    = null,
+		_dialogClose    = null, // eslint-disable-line no-unused-vars
 		_dialogBody     = null,
 		_scrollbarWidth = 0;
 
@@ -53,7 +57,9 @@ var UI = (function () {
 				document.body.appendChild(outer);
 
 				var w1 = inner.offsetWidth;
-				outer.style.overflow = "auto"; // "overflow: scroll" does not work consistently with scrollbars which are styled with "::-webkit-scrollbar"
+				// "overflow: scroll" does not work consistently with scrollbars which are
+				// styled with "::-webkit-scrollbar"
+				outer.style.overflow = "auto";
 				var w2 = inner.offsetWidth;
 				if (w1 === w2) {
 					w2 = outer.clientWidth;
@@ -62,8 +68,8 @@ var UI = (function () {
 				document.body.removeChild(outer);
 
 				scrollbarWidth = w1 - w2;
-			} catch (e) { /* do nothing */ }
-			return (scrollbarWidth || 17); // 17px is a reasonable failover
+			} catch (e) { /* no-op */ }
+			return scrollbarWidth || 17; // 17px is a reasonable failover
 		}());
 
 		// generate the UI elements and add them to the page
@@ -72,6 +78,7 @@ var UI = (function () {
 			temp   = document.createElement("div");
 
 		// generate the core elements
+		/* eslint-disable max-len */
 		temp.innerHTML =
 			  '<div id="ui-bar" tabindex="-1">'
 			+     '<div id="ui-bar-toggle"><span role="button" tabindex="0" aria-label="' + strings.uiBar.toggle + '"></span></div>'
@@ -109,6 +116,7 @@ var UI = (function () {
 			+ '<div id="story" role="main">'
 			+     '<div id="passages"></div>'
 			+ '</div>';
+		/* eslint-enable max-len */
 		while (temp.hasChildNodes()) {
 			uiTree.appendChild(temp.firstChild);
 		}
@@ -269,7 +277,7 @@ var UI = (function () {
 						btn.title = bText + " " + strings.saves.labelAuto;
 					} else {
 						jQuery(btn).on("click", function () { bAction(bSlot); });
-						btn.title = bText + " " + strings.saves.labelSlot + " " + (bSlot+1);
+						btn.title = bText + " " + strings.saves.labelSlot + " " + (bSlot + 1);
 					}
 				} else {
 					btn.disabled = true;
@@ -280,19 +288,15 @@ var UI = (function () {
 			var saves = storage.getItem("saves");
 			if (saves === null) { return false; }
 
-			var	tbody  = document.createElement("tbody"),
-				tr,
-				tdSlot,
-				tdLoad,
-				tdDesc,
-				tdDele;
+			var	tbody = document.createElement("tbody");
+			var	tr, tdSlot,	tdLoad, tdDesc, tdDele;
 			var	tdLoadBtn, tdDescTxt, tdDeleBtn;
 
-			if (Save.autosaveOK()) {
-				tr     = document.createElement("tr"),
-				tdSlot = document.createElement("td"),
-				tdLoad = document.createElement("td"),
-				tdDesc = document.createElement("td"),
+			if (Save.autosaveOk()) {
+				tr     = document.createElement("tr");
+				tdSlot = document.createElement("td");
+				tdLoad = document.createElement("td");
+				tdDesc = document.createElement("td");
 				tdDele = document.createElement("td");
 
 				//tdDescTxt = document.createElement("span");
@@ -312,9 +316,11 @@ var UI = (function () {
 					tdDescTxt = document.createElement("div");
 					tdDescTxt.classList.add("datestamp");
 					if (saves.autosave.date) {
-						tdDescTxt.innerHTML = strings.saves.savedOn + " " + new Date(saves.autosave.date).toLocaleString();
+						tdDescTxt.innerHTML = strings.saves.savedOn
+							+ " " + new Date(saves.autosave.date).toLocaleString();
 					} else {
-						tdDescTxt.innerHTML = strings.saves.savedOn + " <em>" + strings.saves.unknownDate + "</em>";
+						tdDescTxt.innerHTML = strings.saves.savedOn
+							+ " <em>" + strings.saves.unknownDate + "</em>";
 					}
 					tdDesc.appendChild(tdDescTxt);
 
@@ -343,13 +349,13 @@ var UI = (function () {
 				tbody.appendChild(tr);
 			}
 			for (var i = 0; i < saves.slots.length; i++) {
-				tr     = document.createElement("tr"),
-				tdSlot = document.createElement("td"),
-				tdLoad = document.createElement("td"),
-				tdDesc = document.createElement("td"),
+				tr     = document.createElement("tr");
+				tdSlot = document.createElement("td");
+				tdLoad = document.createElement("td");
+				tdDesc = document.createElement("td");
 				tdDele = document.createElement("td");
 
-				tdSlot.appendChild(document.createTextNode(i+1));
+				tdSlot.appendChild(document.createTextNode(i + 1));
 
 				if (saves.slots[i] && saves.slots[i].state.mode === config.historyMode) {
 					tdLoadBtn = createButton("load", "ui-close", strings.saves.labelLoad, i, Save.load);
@@ -361,14 +367,16 @@ var UI = (function () {
 					tdDescTxt = document.createElement("div");
 					tdDescTxt.classList.add("datestamp");
 					if (saves.slots[i].date) {
-						tdDescTxt.innerHTML = strings.saves.savedOn + " " + new Date(saves.slots[i].date).toLocaleString();
+						tdDescTxt.innerHTML = strings.saves.savedOn
+							+ " " + new Date(saves.slots[i].date).toLocaleString();
 					} else {
-						tdDescTxt.innerHTML = strings.saves.savedOn + " <em>" + strings.saves.unknownDate + "</em>";
+						tdDescTxt.innerHTML = strings.saves.savedOn
+							+ " <em>" + strings.saves.unknownDate + "</em>";
 					}
 					tdDesc.appendChild(tdDescTxt);
 
-					tdDeleBtn = createButton("delete", null, strings.saves.labelDelete, i, function (i) {
-						Save.delete(i);
+					tdDeleBtn = createButton("delete", null, strings.saves.labelDelete, i, function (slot) {
+						Save.delete(slot);
 						buildDialogSaves(); // rebuild the saves dialog
 					});
 					tdDele.appendChild(tdDeleBtn);
@@ -426,19 +434,19 @@ var UI = (function () {
 
 		if (DEBUG) { console.log("[UI.buildDialogSaves()]"); }
 
-		var	savesOK  = Save.OK(),
+		var	savesOk  = Save.ok(),
 			hasSaves = Save.hasAuto() || !Save.isEmpty(),
 			list,
 			btnBar;
 
 		dialogSetup(strings.saves.title, "saves");
 
-		if (savesOK) {
+		if (savesOk) {
 			// add saves list
 			list = createSaveList();
 			if (!list) {
 				list = document.createElement("div");
-				list.id = "saves-list"
+				list.id = "saves-list";
 				list.innerHTML = "<i>" + strings.saves.unavailable + "</i>";
 			}
 			_dialogBody.appendChild(list);
@@ -450,7 +458,7 @@ var UI = (function () {
 			btnBar.classList.add("buttons");
 			if (has.fileAPI) {
 				btnBar.appendChild(createActionItem("export", "ui-close", strings.saves.diskSave, Save.exportSave));
-				btnBar.appendChild(createActionItem("import", null, strings.saves.diskLoad, function (evt) {
+				btnBar.appendChild(createActionItem("import", null, strings.saves.diskLoad, function () {
 					if (document.getElementById("saves-import-file")) {
 						jQuery("#saves-import-box", _dialogBody).remove();
 					} else {
@@ -459,7 +467,7 @@ var UI = (function () {
 				}));
 			}
 			if (hasSaves) {
-				btnBar.appendChild(createActionItem("purge", null, strings.saves.slotsPurge, function (evt) {
+				btnBar.appendChild(createActionItem("purge", null, strings.saves.slotsPurge, function () {
 					Save.purge();
 					buildDialogSaves(); // rebuild the saves menu
 				}));
@@ -472,6 +480,7 @@ var UI = (function () {
 		}
 	}
 
+/* eslint-disable max-len */
 //	function buildDialogRewind() {
 //		if (DEBUG) { console.log("[UI.buildDialogRewind()]"); }
 //
@@ -599,6 +608,7 @@ var UI = (function () {
 //			list.appendChild(item);
 //		}
 //	}
+/* eslint-enable max-len */
 
 	function buildDialogRestart() {
 		if (DEBUG) { console.log("[UI.buildDialogRestart()]"); }
@@ -640,12 +650,12 @@ var UI = (function () {
 			new Wikifier(elLabel, control.label);
 
 			// setup the control
-			if (settings[name] == null) { // use lazy equality
+			if (settings[name] == null) { // lazy equality for null
 				settings[name] = control.default;
 			}
 			switch (control.type) {
 			case Setting.Types.Toggle:
-				elInput = document.createElement("a");
+				elInput = document.createElement("span");
 				if (settings[name]) {
 					jQuery(elInput)
 						.addClass("enabled")
@@ -654,7 +664,7 @@ var UI = (function () {
 					jQuery(elInput)
 						.text(strings.settings.off);
 				}
-				jQuery(elInput).on("click", function (evt) {
+				addAccessibleClickHandler(elInput, function () {
 					if (settings[name]) {
 						jQuery(this)
 							.removeClass("enabled")
@@ -680,6 +690,7 @@ var UI = (function () {
 					elInput.appendChild(elItem);
 				}
 				elInput.value = settings[name];
+				elInput.setAttribute("tabindex", 0);
 				jQuery(elInput).on("change", function (evt) {
 					settings[name] = evt.target.value;
 					Setting.save();
@@ -690,7 +701,6 @@ var UI = (function () {
 				break;
 			}
 			elInput.id = "setting-input-" + id;
-			elInput.setAttribute("tabindex", 0);
 			elControl.appendChild(elInput);
 
 			_dialogBody.appendChild(elSetting);
@@ -704,7 +714,7 @@ var UI = (function () {
 				+ '</ul>');
 
 		// add an additional click handler for the Reset button
-		jQuery("#ui-dialog-body #settings-reset").one("click", function (evt) {
+		jQuery("#ui-dialog-body #settings-reset").one("click", function () {
 			Setting.reset();
 			window.location.reload();
 		});
@@ -745,7 +755,7 @@ var UI = (function () {
 	}
 
 	function buildListFromPassage(passage, list) {
-		if (list == null) { // use lazy equality
+		if (list == null) { // lazy equality for null
 			list = document.createElement("ul");
 		}
 		var temp = document.createDocumentFragment();
@@ -829,10 +839,10 @@ var UI = (function () {
 		jQuery(_dialogBody)
 			.empty()
 			.removeClass();
-		if (classNames != null) { // use lazy equality
+		if (classNames != null) { // lazy equality for null
 			jQuery(_dialogBody).addClass(classNames);
 		}
-		title = (title == null ? "" : title + ""); // use lazy equality on null check
+		title = title == null ? "" : title + ""; // lazy equality for null
 		jQuery(_dialogTitle)
 			.empty()
 			.append(title === "" ? "\u00a0" : title);
@@ -880,17 +890,16 @@ var UI = (function () {
 				}(options.top)));
 		}
 
-		// EXPERIMENTAL
+		// EXPERIMENTAL (really comment this at some point)
 		// add `aria-hidden=true` to all direct non-dialog-children of <body>
+				//.attr("aria-hidden", true)
+				//.prop("disabled", true)
+				//.attr("aria-disabled", true)
 		jQuery("body>:not(script,#store-area,#ui-bar,#ui-overlay,#ui-dialog)")
-			//.attr("aria-hidden", true)
-			//.attr("aria-disabled", true)
 			.attr("tabindex", -3);
-		jQuery("#story [tabindex]:not([tabindex^=-])")
-			//.attr("aria-hidden", true)
-			//.prop("disabled", true)
-			//.attr("aria-disabled", true)
-			.attr("tabindex", -2);
+		jQuery("#ui-bar,#story")
+			.find("[tabindex]:not([tabindex^=-])")
+				.attr("tabindex", -2);
 		// /EXPERIMENTAL
 
 		// display the dialog
@@ -926,12 +935,10 @@ var UI = (function () {
 			.css({ left : "", right : "", top : "", bottom : "" });
 
 		// EXPERIMENTAL
-		jQuery("#story [tabindex=-2]")
-			.attr("tabindex", 0);
-		//jQuery("body>:not(script,#store-area,#ui-bar,#ui-overlay,#ui-dialog)")
+		jQuery("#ui-bar,#story")
+			.find("[tabindex=-2]")
+				.attr("tabindex", 0);
 		jQuery("body>[tabindex=-3]")
-			//.removeAttr("aria-disabled")
-			//.removeAttr("aria-hidden")
 			.removeAttr("tabindex");
 		// /EXPERIMENTAL
 
@@ -953,7 +960,7 @@ var UI = (function () {
 
 	function dialogResizeHandler(evt) {
 		var	$dialog = jQuery(_dialog),
-			topPos  = (evt && typeof evt.data !== "undefined") ? evt.data : 50;
+			topPos  = evt && typeof evt.data !== "undefined" ? evt.data : 50;
 
 		if ($dialog.css("display") === "block") {
 			// stow the dialog
@@ -966,7 +973,7 @@ var UI = (function () {
 	}
 
 	function dialogCalcPosition(topPos) {
-		if (topPos == null) { // use lazy equality
+		if (topPos == null) { // lazy equality for null
 			topPos = 50;
 		}
 
@@ -980,10 +987,10 @@ var UI = (function () {
 		var	horzSpace = $parent.width() - $dialog.outerWidth(true) - 1,   // -1 to address a Firefox issue
 			vertSpace = $parent.height() - $dialog.outerHeight(true) - 1; // -1 to address a Firefox issue
 
-		if (horzSpace <= (32 + _scrollbarWidth)) {
+		if (horzSpace <= 32 + _scrollbarWidth) {
 			vertSpace -= _scrollbarWidth;
 		}
-		if (vertSpace <= (32 + _scrollbarWidth)) {
+		if (vertSpace <= 32 + _scrollbarWidth) {
 			horzSpace -= _scrollbarWidth;
 		}
 
@@ -995,7 +1002,7 @@ var UI = (function () {
 		if (vertSpace <= 32) {
 			dialogPos.top = dialogPos.bottom = 16;
 		} else {
-			if ((vertSpace / 2) > topPos) {
+			if (vertSpace / 2 > topPos) {
 				dialogPos.top = topPos;
 			} else {
 				dialogPos.top = dialogPos.bottom = ~~(vertSpace / 2);

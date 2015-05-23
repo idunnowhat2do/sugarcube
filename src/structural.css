@@ -10,8 +10,8 @@
 /* Default body styling */
 body {
 	/*
-	 * We define the base font size and line height here as they affect the
-	 * layout of the base page elements (e.g. ui-bar, ui-dialog, passage display).
+		We define the base font size and line height here as they affect the
+		layout of the base page elements (e.g. ui-bar, ui-dialog, passage display).
 	 */
 	/*
 	font: 16px/1 Verdana, "DejaVu Sans", Helmet, Freesans, sans-serif;
@@ -144,7 +144,7 @@ html.ui-dialog-open body {
 
 /* Stop text selection on certain UI anchors & buttons */
 button, #ui-bar-toggle, #menu a,
-#ui-dialog-close, #ui-dialog-body.list a, #ui-dialog-body.settings a[id|="setting-input"] {
+#ui-dialog-close, #ui-dialog-body.list a, #ui-dialog-body.settings span[id|="setting-input"] {
 	-webkit-user-select: none;
 	-khtml-user-select: none;
 	-moz-user-select: none;

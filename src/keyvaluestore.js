@@ -6,8 +6,9 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
+/* global has, technicalAlert */
 
-var KeyValueStore = (function () {
+var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 	"use strict";
 
 	/*******************************************************************************************************************
@@ -17,18 +18,17 @@ var KeyValueStore = (function () {
 		var driver = null;
 		switch (driverName) {
 		case "cookie":
-			driver = new KeyValueStore_Cookie(persist, storageId);
+			driver = new KeyValueStoreDriverCookie(persist, storageId);
 			break;
 		case "webStorage":
-			driver = new KeyValueStore_WebStorage(persist, storageId);
+			driver = new KeyValueStoreDriverWebStorage(persist, storageId);
 			if (!driver._ok) {
 				// fallback to cookies
-				driver = new KeyValueStore_Cookie(persist, storageId);
+				driver = new KeyValueStoreDriverCookie(persist, storageId);
 			}
 			break;
 		default:
 			throw new Error("unknown driver name");
-			break;
 		}
 		if (!driver._ok) {
 			throw new Error("unknown driver error");
@@ -110,7 +110,7 @@ var KeyValueStore = (function () {
 				if (DEBUG) { console.log('[<KeyValueStore>.getItem("' + key + '")]'); }
 
 				var value = this._driver.retrieve(key);
-				if (value == null) { // use lazy equality
+				if (value == null) { // lazy equality for null
 					return null;
 				}
 
@@ -189,9 +189,9 @@ var KeyValueStore = (function () {
 	 * STORAGE DRIVER: WebStorage
 	 */
 	/*******************************************************************************************************************
-	 * KeyValueStore_WebStorage Constructor
+	 * KeyValueStoreDriverWebStorage Constructor
 	 ******************************************************************************************************************/
-	function KeyValueStore_WebStorage(persist, storageId) {
+	function KeyValueStoreDriverWebStorage(persist, storageId) {
 		var	engine = null,
 			name   = null;
 		if (persist) {
@@ -231,9 +231,9 @@ var KeyValueStore = (function () {
 	}
 
 	/*******************************************************************************************************************
-	 * KeyValueStore_WebStorage Prototype Methods
+	 * KeyValueStoreDriverWebStorage Prototype Methods
 	 ******************************************************************************************************************/
-	Object.defineProperties(KeyValueStore_WebStorage.prototype, {
+	Object.defineProperties(KeyValueStoreDriverWebStorage.prototype, {
 		serialize : {
 			value : function (obj) {
 				return LZString.compressToUTF16(JSON.stringify(obj));
@@ -280,7 +280,7 @@ var KeyValueStore = (function () {
 				}
 
 				// we really should be checking keys here
-				return this._engine.getItem(this._prefix + key) != null; // use lazy equality
+				return this._engine.getItem(this._prefix + key) != null; // lazy equality for null
 			}
 		},
 
@@ -303,9 +303,9 @@ var KeyValueStore = (function () {
 					this._engine.setItem(this._prefix + key, value);
 				} catch (e) {
 					/*
-					 * Ideally, we could simply do something like:
+					 * Ideally, we could simply do:
 					 *     e.code === 22
-					 * Or, preferably, something like this:
+					 * Or, preferably, something like:
 					 *     e.code === DOMException.QUOTA_EXCEEDED_ERR
 					 * However, both of those are browser convention, not part of the standard,
 					 * and are not supported in all browsers.  So, we have to resort to pattern
@@ -314,8 +314,10 @@ var KeyValueStore = (function () {
 					 */
 					if (!quiet) {
 						technicalAlert(null, 'unable to store key "' + key + '"; '
-							+ (/quota_?(?:exceeded|reached)/i.test(e.name) ? this.name + " quota exceeded" : "unknown error")
-							, e);
+							+ (/quota_?(?:exceeded|reached)/i.test(e.name)
+								? this.name + " quota exceeded"
+								: "unknown error"),
+							e);
 					}
 					return false;
 				}
@@ -340,9 +342,9 @@ var KeyValueStore = (function () {
 	 * STORAGE DRIVER: Cookie
 	 */
 	/*******************************************************************************************************************
-	 * KeyValueStore_Cookie Constructor
+	 * KeyValueStoreDriverCookie Constructor
 	 ******************************************************************************************************************/
-	function KeyValueStore_Cookie(persist, storageId) {
+	function KeyValueStoreDriverCookie(persist, storageId) {
 		Object.defineProperties(this, {
 			_ok : {
 				value : "cookie" in document // should really try to test cookie functionality
@@ -366,17 +368,17 @@ var KeyValueStore = (function () {
 	}
 
 	/*******************************************************************************************************************
-	 * KeyValueStore_Cookie Prototype Methods
+	 * KeyValueStoreDriverCookie Prototype Methods
 	 ******************************************************************************************************************/
-	Object.defineProperties(KeyValueStore_Cookie.prototype, {
+	Object.defineProperties(KeyValueStoreDriverCookie.prototype, {
 		_setCookie : {
 			value : function (key, value, expiry) {
 				if ("cookie" in document) {
 					var payload = encodeURIComponent(this._prefix + key) + "=";
-					if (value != null) { // use lazy equality
+					if (value != null) { // lazy equality for null
 						payload += encodeURIComponent(value);
 					}
-					if (expiry != null) { // use lazy equality
+					if (expiry != null) { // lazy equality for null
 						payload += "; " + expiry;
 					}
 					payload += "; path=/";
@@ -458,7 +460,8 @@ var KeyValueStore = (function () {
 				}
 
 				try {
-					this._setCookie(key, value, this.persist ? "Tue, 19 Jan 2038 03:14:07 GMT" : undefined); // undefined expiry means a session cookie
+					// undefined expiry means a session cookie
+					this._setCookie(key, value, this.persist ? "Tue, 19 Jan 2038 03:14:07 GMT" : undefined);
 				} catch (e) {
 					if (!quiet) {
 						technicalAlert(null, 'unable to store key "' + key + '"; cookie error: ' + e.message, e);
