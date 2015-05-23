@@ -117,7 +117,7 @@ function removeChildren(node) {
 function removeElement(node) {
 	if (typeof node.remove === "function") {
 		node.remove();
-	} else if (el.parentNode) {
+	} else if (node.parentNode) {
 		node.parentNode.removeChild(node);
 	}
 }
@@ -679,7 +679,9 @@ function AudioWrapper(audio) {
 
 // Setup the AudioWrapper prototype
 Object.defineProperties(AudioWrapper.prototype, {
-	// getters/setters
+	/*
+		Getters/Setters
+	*/
 	duration : {
 		get : function () {
 			return this.audio.duration;
@@ -690,20 +692,20 @@ Object.defineProperties(AudioWrapper.prototype, {
 			return this.audio.currentTime;
 		},
 		set : function (time) {
-			// if we try to modify the audio clip's .currentTime property before its metadata
-			// has been loaded, it will throw an InvalidStateError (since it doesn't know its
-			// duration, allowing .currentTime to be set would be undefined behavior), so we
-			// must check its readiness first
+			/*
+				If we try to modify the audio clip's `.currentTime` property before its metadata
+				has been loaded, it will throw an `InvalidStateError` (since it doesn't know its
+				duration, allowing `.currentTime` to be set would be undefined behavior), so we
+				must check its readiness first.
+			*/
 			if (this.hasMetadata()) {
 				this.audio.currentTime = time;
 			} else {
 				jQuery(this.audio)
 					.off("loadedmetadata.AudioWrapper:time")
-					.one("loadedmetadata.AudioWrapper:time", (function (time) {
-						return function () {
-							this.currentTime = time;
-						};
-					}(time)));
+					.one("loadedmetadata.AudioWrapper:time", function () {
+						this.currentTime = time;
+					});
 			}
 		}
 	},
@@ -720,11 +722,13 @@ Object.defineProperties(AudioWrapper.prototype, {
 			return this.audio.controls;
 		},
 		set : function (state) {
-			this.audio.controls = state;
+			this.audio.controls = !!state;
 		}
 	},
 
-	// methods
+	/*
+		Methods
+	*/
 	hasMetadata : {
 		value : function () {
 			return this.audio.readyState >= HTMLAudioElement.HAVE_METADATA;
@@ -827,7 +831,7 @@ Object.defineProperties(AudioWrapper.prototype, {
 
 			var interval = 25, // in milliseconds
 				delta    = (to - from) / (duration / (interval / 1000));
-			this._faderId = setInterval((function (self, delta, from, to) {
+			this._faderId = setInterval((function (self) {
 				var min, max;
 				if (from < to) {
 					// fade in
@@ -855,7 +859,7 @@ Object.defineProperties(AudioWrapper.prototype, {
 						self._faderId = null;
 					}
 				};
-			}(this, delta, from, to)), interval);
+			}(this)), interval);
 		}
 	},
 	fade : {
