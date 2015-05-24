@@ -21,6 +21,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		_dialogTitle    = null,
 		_dialogClose    = null, // eslint-disable-line no-unused-vars
 		_dialogBody     = null,
+		_lastActive     = null,
 		_scrollbarWidth = 0;
 
 
@@ -34,7 +35,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		jQuery("#init-no-js, #init-lacking").remove();
 
 		// add `tabindex=-1` to <body>
-		jQuery(document.body).attr("tabindex", -1);
+		//jQuery(document.body).attr("tabindex", -1);
 
 		// calculate and cache the width of scrollbars
 		_scrollbarWidth = (function () {
@@ -80,9 +81,9 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		// generate the core elements
 		/* eslint-disable max-len */
 		temp.innerHTML =
-			  '<div id="ui-bar" tabindex="-1">'
+			  '<div id="ui-bar">'
 			+     '<div id="ui-bar-toggle"><span role="button" tabindex="0" aria-label="' + strings.uiBar.toggle + '"></span></div>'
-			+     '<div id="ui-bar-body" tabindex="-1">'
+			+     '<div id="ui-bar-body">'
 			+         '<header id="title" role="banner">'
 			+             '<div id="story-banner"></div>'
 			+             '<h1 id="story-title"></h1>'
@@ -292,7 +293,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			var	tr, tdSlot,	tdLoad, tdDesc, tdDele;
 			var	tdLoadBtn, tdDescTxt, tdDeleBtn;
 
-			if (Save.autosaveOK()) {
+			if (Save.autosave.ok()) {
 				tr     = document.createElement("tr");
 				tdSlot = document.createElement("td");
 				tdLoad = document.createElement("td");
@@ -307,7 +308,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				tdSlot.appendChild(tdDescTxt);
 
 				if (saves.autosave && saves.autosave.state.mode === config.historyMode) {
-					tdLoadBtn = createButton("load", "ui-close", strings.saves.labelLoad, "auto", Save.loadAuto);
+					tdLoadBtn = createButton("load", "ui-close", strings.saves.labelLoad, "auto", Save.autosave.load);
 					tdLoad.appendChild(tdLoadBtn);
 
 					tdDescTxt = document.createElement("div");
@@ -325,7 +326,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 					tdDesc.appendChild(tdDescTxt);
 
 					tdDeleBtn = createButton("delete", null, strings.saves.labelDelete, "auto", function () {
-						Save.deleteAuto();
+						Save.autosave.delete();
 						buildDialogSaves(); // rebuild the saves dialog
 					});
 					tdDele.appendChild(tdDeleBtn);
@@ -358,7 +359,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				tdSlot.appendChild(document.createTextNode(i + 1));
 
 				if (saves.slots[i] && saves.slots[i].state.mode === config.historyMode) {
-					tdLoadBtn = createButton("load", "ui-close", strings.saves.labelLoad, i, Save.load);
+					tdLoadBtn = createButton("load", "ui-close", strings.saves.labelLoad, i, Save.slots.load);
 					tdLoad.appendChild(tdLoadBtn);
 
 					tdDescTxt = document.createElement("div");
@@ -376,12 +377,12 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 					tdDesc.appendChild(tdDescTxt);
 
 					tdDeleBtn = createButton("delete", null, strings.saves.labelDelete, i, function (slot) {
-						Save.delete(slot);
+						Save.slots.delete(slot);
 						buildDialogSaves(); // rebuild the saves dialog
 					});
 					tdDele.appendChild(tdDeleBtn);
 				} else {
-					tdLoadBtn = createButton("save", "ui-close", strings.saves.labelSave, i, Save.save);
+					tdLoadBtn = createButton("save", "ui-close", strings.saves.labelSave, i, Save.slots.save);
 					tdLoad.appendChild(tdLoadBtn);
 
 					tdDescTxt = document.createElement("i");
@@ -404,38 +405,11 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			table.appendChild(tbody);
 			return table;
 		}
-		function createSavesImport() {
-			var	el    = document.createElement("div"),
-				label = document.createElement("label"),
-				input = document.createElement("input");
-
-			el.id = "saves-import-box";
-
-			// add label
-			label.id      = "saves-import-label";
-			label.htmlFor = "saves-import-file";
-			label.appendChild(document.createTextNode(strings.saves.importLabel));
-			el.appendChild(label);
-
-			el.appendChild(document.createElement("br"));
-
-			// add file input
-			input.type = "file";
-			input.id   = "saves-import-file";
-			input.name = "saves-import-file";
-			jQuery(input).on("change", function (evt) {
-				Save.importSave(evt);
-				dialogClose();
-			});
-			el.appendChild(input);
-
-			return el;
-		}
 
 		if (DEBUG) { console.log("[UI.buildDialogSaves()]"); }
 
 		var	savesOk  = Save.ok(),
-			hasSaves = Save.hasAuto() || !Save.isEmpty(),
+			hasSaves = Save.autosave.has() || !Save.slots.isEmpty(),
 			list,
 			btnBar;
 
@@ -452,27 +426,48 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			_dialogBody.appendChild(list);
 		}
 
-		// add action list (export, import, and purge) and import input
+		// add button bar items (export, import, and purge)
 		if (hasSaves || has.fileAPI) {
 			btnBar = document.createElement("ul");
 			btnBar.classList.add("buttons");
 			if (has.fileAPI) {
-				btnBar.appendChild(createActionItem("export", "ui-close", strings.saves.diskSave, Save.exportSave));
-				btnBar.appendChild(createActionItem("import", null, strings.saves.diskLoad, function () {
-					if (document.getElementById("saves-import-file")) {
-						jQuery("#saves-import-box", _dialogBody).remove();
-					} else {
-						_dialogBody.appendChild(createSavesImport());
-					}
+				btnBar.appendChild(createActionItem("export", "ui-close", strings.saves.labelExport, Save.export));
+				btnBar.appendChild(createActionItem("import", null, strings.saves.labelImport, function () {
+					$("#saves-import-file", _dialogBody).trigger("click");
 				}));
 			}
-			if (hasSaves) {
-				btnBar.appendChild(createActionItem("purge", null, strings.saves.slotsPurge, function () {
+			if (savesOk) {
+				btnBar.appendChild(createActionItem("purge", null, strings.saves.labelPurge, hasSaves ? function () {
 					Save.purge();
 					buildDialogSaves(); // rebuild the saves menu
-				}));
+				} : null));
 			}
 			_dialogBody.appendChild(btnBar);
+			if (has.fileAPI) {
+				// add the hidden `input[type=file]` element which will be triggered by the `#saves-import` button
+				_dialogBody.appendChild((function () {
+					var	input = document.createElement("input");
+					jQuery(input)
+						.css({
+							"display"    : "block",
+							"visibility" : "hidden",
+							"position"   : "fixed",
+							"left"       : "-9999px",
+							"top"        : "-9999px",
+							"width"      : "1px",
+							"height"     : "1px"
+						})
+						.attr("type", "file")
+						.attr("id", "saves-import-file")
+						.attr("tabindex", -1)
+						.attr("aria-hidden", true)
+						.on("change", function (evt) {
+							Save.import(evt);
+							dialogClose();
+						});
+					return input;
+				}()));
+			}
 			return true;
 		} else {
 			dialogAlert(strings.saves.incapable.replace("%identity%", strings.identity));
@@ -744,8 +739,8 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 
 		// add an additional click handler for the #autoload-* buttons
 		jQuery(document.body).one("click.autoload", ".ui-close", function (evt) {
-			if (DEBUG) { console.log('    > display/autoload: "' + Save.getAuto().title + '"'); }
-			if (evt.target.id !== "autoload-ok" || !Save.loadAuto()) {
+			if (DEBUG) { console.log('    > display/autoload: "' + Save.autosave.get().title + '"'); }
+			if (evt.target.id !== "autoload-ok" || !Save.autosave.load()) {
 				if (DEBUG) { console.log('    > display: "' + config.startPassage + '"'); }
 				state.display(config.startPassage);
 			}
@@ -871,6 +866,19 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 	function dialogOpen(options, closeFn) {
 		options = jQuery.extend({ top : 50 }, options);
 
+		// record the last active/focused non-dialog element
+		if (!dialogIsOpen()) {
+			_lastActive = (function () {
+				// IE9 contains a bug which will throw an error upon accessing `document.activeElement`
+				// under certain circumstances, so we have to allow for an exception to be thrown
+				try {
+					return document.activeElement || null;
+				} catch (e) {
+					return null;
+				}
+			}());
+		}
+
 		// add the UI isOpen class
 		jQuery(document.documentElement)
 			.addClass("ui-dialog-open");
@@ -896,10 +904,12 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				//.prop("disabled", true)
 				//.attr("aria-disabled", true)
 		jQuery("body>:not(script,#store-area,#ui-bar,#ui-overlay,#ui-dialog)")
-			.attr("tabindex", -3);
+			.attr("tabindex", -3)
+			.attr("aria-hidden", true);
 		jQuery("#ui-bar,#story")
 			.find("[tabindex]:not([tabindex^=-])")
-				.attr("tabindex", -2);
+				.attr("tabindex", -2)
+				.attr("aria-hidden", true);
 		// /EXPERIMENTAL
 
 		// display the dialog
@@ -937,8 +947,10 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		// EXPERIMENTAL
 		jQuery("#ui-bar,#story")
 			.find("[tabindex=-2]")
+				.removeAttr("aria-hidden")
 				.attr("tabindex", 0);
 		jQuery("body>[tabindex=-3]")
+			.removeAttr("aria-hidden")
 			.removeAttr("tabindex");
 		// /EXPERIMENTAL
 
@@ -951,6 +963,11 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			.removeClass("open");
 		jQuery(document.documentElement)
 			.removeClass("ui-dialog-open");
+		if (_lastActive !== null) {
+			// attempt to restore focus to whichever element had it prior to opening the dialog
+			$(_lastActive).focus();
+			_lastActive = null;
+		}
 
 		// call the given "on close" callback function, if any
 		if (evt && typeof evt.data === "function") {
