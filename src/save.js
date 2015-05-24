@@ -125,7 +125,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 	 * General
 	 ******************************************************************************************************************/
 	function ok() {
-		return autosaveOk() || slotsOk();
+		return autosaveOK() || slotsOK();
 	}
 
 	function purge() {
@@ -137,7 +137,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 	/*******************************************************************************************************************
 	 * Autosave
 	 ******************************************************************************************************************/
-	function autosaveOk() {
+	function autosaveOK() {
 		return !_badStore && typeof config.saves.autosave !== "undefined";
 	}
 
@@ -196,7 +196,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 	/*******************************************************************************************************************
 	 * Slots
 	 ******************************************************************************************************************/
-	function slotsOk() {
+	function slotsOK() {
 		return !_badStore && _slotsUBound !== -1;
 	}
 
@@ -205,7 +205,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 	}
 
 	function slotsCount() {
-		if (!slotsOk()) {
+		if (!slotsOK()) {
 			return 0;
 		}
 
@@ -421,14 +421,14 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		ok         : { value : ok },
 		purge      : { value : purge },
 		// Autosave
-		autosaveOk : { value : autosaveOk },
+		autosaveOK : { value : autosaveOK },
 		hasAuto    : { value : hasAuto },
 		getAuto    : { value : getAuto },
 		loadAuto   : { value : loadAuto },
 		saveAuto   : { value : saveAuto },
 		deleteAuto : { value : deleteAuto },
 		// Slots
-		slotsOk    : { value : slotsOk },
+		slotsOK    : { value : slotsOK },
 		length     : { value : slotsLength },
 		isEmpty    : { value : slotsIsEmpty },
 		count      : { value : slotsCount },

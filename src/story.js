@@ -252,20 +252,20 @@ Object.defineProperties(History.prototype, {
 				var loadStart = true;
 				switch (typeof config.saves.autoload) {
 				case "boolean":
-					if (config.saves.autoload && Save.autosaveOk()) {
+					if (config.saves.autoload && Save.autosaveOK()) {
 						if (DEBUG) { console.log('    > display/autoload: "' + Save.getAuto().title + '"'); }
 						loadStart = !Save.loadAuto();
 					}
 					break;
 				case "string":
-					if (config.saves.autoload === "prompt" && Save.autosaveOk() && Save.hasAuto()) {
+					if (config.saves.autoload === "prompt" && Save.autosaveOK() && Save.hasAuto()) {
 						loadStart = false;
 						UI.buildDialogAutoload();
 						UI.open();
 					}
 					break;
 				case "function":
-					if (Save.autosaveOk() && Save.hasAuto() && !!config.saves.autoload()) {
+					if (Save.autosaveOK() && Save.hasAuto() && !!config.saves.autoload()) {
 						if (DEBUG) { console.log('    > display/autoload: "' + Save.getAuto().title + '"'); }
 						loadStart = !Save.loadAuto();
 					}

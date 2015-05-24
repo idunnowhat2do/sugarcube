@@ -292,7 +292,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			var	tr, tdSlot,	tdLoad, tdDesc, tdDele;
 			var	tdLoadBtn, tdDescTxt, tdDeleBtn;
 
-			if (Save.autosaveOk()) {
+			if (Save.autosaveOK()) {
 				tr     = document.createElement("tr");
 				tdSlot = document.createElement("td");
 				tdLoad = document.createElement("td");
