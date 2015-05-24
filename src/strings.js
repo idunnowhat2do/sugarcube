@@ -9,8 +9,11 @@
 
 /* eslint-disable max-len */
 var	strings = { // eslint-disable-line no-unused-vars
-		// general
+		// identity
 		identity : "game",
+
+		// general
+		aborting : "Aborting",
 		cancel   : "Cancel",
 		close    : "Close",
 		ok       : "OK",
@@ -25,18 +28,17 @@ var	strings = { // eslint-disable-line no-unused-vars
 		saves : {
 			title       : "Saves",
 			disallowed  : "Saving has been disallowed on this passage.",
-			diskLoad    : "Load from Disk\u2026",
-			diskSave    : "Save to Disk\u2026",
 			emptySlot   : "— slot empty —",
-			importLabel : "Select a save file to load:",
 			incapable   : 'Apologies! Your browser either lacks some of the capabilities required to support saves or has disabled them. The former can probably be solved by <a href="http://browsehappy.com/">upgrading your browser</a>. The latter may be solved by loosening its security restrictions or, perhaps, by viewing this %identity% via the HTTP protocol (if you are not already doing so).',
 			labelAuto   : "Autosave",
-			labelSlot   : "Slot",
 			labelDelete : "Delete",
+			labelExport : "Save to Disk\u2026",
+			labelImport : "Load from Disk\u2026",
 			labelLoad   : "Load",
+			labelPurge  : "Delete All",
 			labelSave   : "Save",
+			labelSlot   : "Slot",
 			savedOn     : "Saved on",
-			slotsPurge  : "Purge Slots",
 			unavailable : "No save slots found\u2026",
 			unknownDate : "unknown"
 		},
