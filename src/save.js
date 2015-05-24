@@ -141,7 +141,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		return !_badStore && typeof config.saves.autosave !== "undefined";
 	}
 
-	function hasAuto() {
+	function autosaveHas() {
 		var saves = storage.getItem("saves");
 		if (saves === null || saves.autosave === null) {
 			return false;
@@ -149,7 +149,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		return true;
 	}
 
-	function getAuto() {
+	function autosaveGet() {
 		var saves = storage.getItem("saves");
 		if (saves === null) {
 			return null;
@@ -157,15 +157,15 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		return saves.autosave;
 	}
 
-	function loadAuto() {
+	function autosaveLoad() {
 		var saves = storage.getItem("saves");
 		if (saves === null || saves.autosave === null) {
 			return false;
 		}
-		return unmarshal(saves.autosave);
+		return _unmarshal(saves.autosave);
 	}
 
-	function saveAuto(title, metadata) {
+	function autosaveSave(title, metadata) {
 		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed()) {
 			return false;
 		}
@@ -174,7 +174,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		if (saves === null) {
 			return false;
 		}
-		saves.autosave = marshal();
+		saves.autosave = _marshal();
 		saves.autosave.title = title || tale.get(state.active.title).description();
 		saves.autosave.date = Date.now();
 		if (metadata != null) { // lazy equality for null
@@ -183,7 +183,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		return storage.setItem("saves", saves);
 	}
 
-	function deleteAuto() {
+	function autosaveDelete() {
 		var saves = storage.getItem("saves");
 		if (saves === null) {
 			return false;
@@ -226,7 +226,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		return slotsCount() === 0;
 	}
 
-	function hasSlot(slot) {
+	function slotsHas(slot) {
 		if (slot < 0 || slot > _slotsUBound) {
 			return false;
 		}
@@ -238,7 +238,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		return true;
 	}
 
-	function getSlot(slot) {
+	function slotsGet(slot) {
 		if (slot < 0 || slot > _slotsUBound) {
 			return null;
 		}
@@ -250,7 +250,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		return saves.slots[slot];
 	}
 
-	function loadSlot(slot) {
+	function slotsLoad(slot) {
 		if (slot < 0 || slot > _slotsUBound) {
 			return false;
 		}
@@ -259,10 +259,10 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		if (saves === null || slot >= saves.slots.length || saves.slots[slot] === null) {
 			return false;
 		}
-		return unmarshal(saves.slots[slot]);
+		return _unmarshal(saves.slots[slot]);
 	}
 
-	function saveSlot(slot, title, metadata) {
+	function slotsSave(slot, title, metadata) {
 		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed()) {
 			UI.alert(strings.saves.disallowed);
 			return false;
@@ -275,7 +275,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		if (saves === null || slot >= saves.slots.length) {
 			return false;
 		}
-		saves.slots[slot] = marshal();
+		saves.slots[slot] = _marshal();
 		saves.slots[slot].title = title || tale.get(state.active.title).description();
 		saves.slots[slot].date = Date.now();
 		if (metadata != null) { // lazy equality for null
@@ -284,7 +284,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		return storage.setItem("saves", saves);
 	}
 
-	function deleteSlot(slot) {
+	function slotsDelete(slot) {
 		if (slot < 0 || slot > _slotsUBound) {
 			return false;
 		}
@@ -302,29 +302,22 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 	 * Filesystem
 	 ******************************************************************************************************************/
 	function exportSave() {
-		if (DEBUG) { console.log("[Save.exportSave()]"); }
-
 		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed()) {
 			UI.alert(strings.saves.disallowed);
 			return;
 		}
 
 		var	saveName = tale.domId + ".save",
-			saveObj  = LZString.compressToBase64(JSON.stringify(marshal()));
-
+			saveObj  = LZString.compressToBase64(JSON.stringify(_marshal()));
 		saveAs(new Blob([saveObj], { type : "text/plain;charset=UTF-8" }), saveName);
 	}
 
 	function importSave(event) {
-		if (DEBUG) { console.log("[Save.importSave()]"); }
-
 		var	file   = event.target.files[0],
 			reader = new FileReader();
 
-		// capture the file information once the load is finished
+		// add the handler that will capture the file information once the load is finished
 		jQuery(reader).on("load", function (evt) {
-			if (DEBUG) { console.log('    > loaded: ' + escape(file.name) + '; payload: ' + evt.target.result); }
-
 			if (!evt.target.result) {
 				return;
 			}
@@ -336,8 +329,8 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 						? evt.target.result
 						: LZString.decompressFromBase64(evt.target.result)
 				);
-			} catch (e) { /* no-op, unmarshal() will handle the error */ }
-			unmarshal(saveObj);
+			} catch (e) { /* no-op, _unmarshal() will handle the error */ }
+			_unmarshal(saveObj);
 		});
 
 		// initiate the file load
@@ -348,9 +341,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 	/*******************************************************************************************************************
 	 * Private
 	 ******************************************************************************************************************/
-	function marshal() {
-		if (DEBUG) { console.log("[Save.marshal()]"); }
-
+	function _marshal() {
 		var saveObj = {
 			id    : config.saves.id,
 			state : History.marshalToSave()
@@ -370,22 +361,13 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		return saveObj;
 	}
 
-	function unmarshal(saveObj) {
-		if (DEBUG) { console.log("[Save.unmarshal()]"); }
+	function _unmarshal(saveObj) {
+		if (DEBUG) { console.log("[Save/_unmarshal()]"); }
 
 		try {
 			if (!saveObj || !saveObj.hasOwnProperty("id") || !saveObj.hasOwnProperty("state")) {
-				if (
-					   !saveObj
-					|| !saveObj.hasOwnProperty("mode")
-					|| !saveObj.hasOwnProperty("id")
-					|| !saveObj.hasOwnProperty("data")
-				) {
-					throw new Error("save is missing required data;"
-						+ " either you've loaded a file which isn't a save, or the save has become corrupted");
-				} else {
-					throw new Error("old-style saves seen during unmarshal");
-				}
+				throw new Error("save is missing required data."
+					+ " Either you've loaded a file which is not a save or the save has become corrupted");
 			}
 
 			// delta decode the state history
@@ -401,9 +383,9 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 			}
 
 			// restore the state
-			History.unmarshalFromSave(saveObj.state);
+			History.unmarshalFromSave(saveObj.state); // may also throw exceptions
 		} catch (e) {
-			UI.alert(e.message[0].toUpperCase() + e.message.slice(1) + ".\n\nAborting load.");
+			UI.alert(e.message[0].toUpperCase() + e.message.slice(1) + ".</p><p>" + strings.aborting + ".");
 			return false;
 		}
 
@@ -416,30 +398,38 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 	 ******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
 		// Initialization
-		init       : { value : init },
+		init     : { value : init },
 		// General
-		ok         : { value : ok },
-		purge      : { value : purge },
-		// Autosave
-		autosaveOK : { value : autosaveOK },
-		hasAuto    : { value : hasAuto },
-		getAuto    : { value : getAuto },
-		loadAuto   : { value : loadAuto },
-		saveAuto   : { value : saveAuto },
-		deleteAuto : { value : deleteAuto },
-		// Slots
-		slotsOK    : { value : slotsOK },
-		length     : { value : slotsLength },
-		isEmpty    : { value : slotsIsEmpty },
-		count      : { value : slotsCount },
-		has        : { value : hasSlot },
-		get        : { value : getSlot },
-		load       : { value : loadSlot },
-		save       : { value : saveSlot },
-		delete     : { value : deleteSlot },
+		ok       : { value : ok },
+		purge    : { value : purge },
 		// Filesystem
-		exportSave : { value : exportSave },
-		importSave : { value : importSave }
+		export   : { value : exportSave },
+		import   : { value : importSave },
+		// Autosave
+		autosave : {
+			value : Object.freeze(Object.defineProperties({}, {
+				ok     : { value : autosaveOK },
+				has    : { value : autosaveHas },
+				get    : { value : autosaveGet },
+				load   : { value : autosaveLoad },
+				save   : { value : autosaveSave },
+				delete : { value : autosaveDelete }
+			}))
+		},
+		// Slots
+		slots : {
+			value : Object.freeze(Object.defineProperties({}, {
+				ok      : { value : slotsOK },
+				length  : { value : slotsLength },
+				isEmpty : { value : slotsIsEmpty },
+				count   : { value : slotsCount },
+				has     : { value : slotsHas },
+				get     : { value : slotsGet },
+				load    : { value : slotsLoad },
+				save    : { value : slotsSave },
+				delete  : { value : slotsDelete }
+			}))
+		}
 	}));
 
 }());
