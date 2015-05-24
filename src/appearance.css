@@ -11,6 +11,9 @@ body {
 	color: #eee;
 	background-color: #111;
 }
+*:focus {
+	outline: thin dotted;
+}
 a {
 	cursor: pointer;
 	color: #68d;
@@ -18,25 +21,27 @@ a {
 	-moz-transition-duration: 200ms;
 	transition-duration: 200ms;
 }
-a:focus, a:hover {
+/*a:focus,*/
+a:hover {
 	color: #8af;
 	text-decoration: underline;
 }
 a.link-internal, a.link-external, a.link-disabled, a.link-broken {
 	text-decoration: none;
 }
-a.link-disabled, a.link-disabled:hover, span.link-disabled, span.link-disabled:hover {
+a.link-disabled, a.link-disabled:hover, span.link-disabled {
 	cursor: default;
 	color: #999;
 }
 a.link-broken {
 	color: #c22;
 }
-a.link-internal:focus, a.link-external:focus, a.link-broken:focus,
+/*a.link-internal:focus, a.link-external:focus, a.link-broken:focus,*/
 a.link-internal:hover, a.link-external:hover, a.link-broken:hover {
 	text-decoration: underline;
 }
-a.link-broken:focus, a.link-broken:hover {
+/*a.link-broken:focus,*/
+a.link-broken:hover {
 	color: #e44;
 }
 area {
@@ -54,7 +59,8 @@ button {
 	-moz-transition-duration: 200ms;
 	transition-duration: 200ms;
 }
-button:focus, button:hover {
+/*button:focus,*/
+button:hover {
 	background-color: #57c;
 	border-color: #79e;
 }
@@ -63,9 +69,11 @@ button:disabled {
 	background-color: #444;
 	border: 1px solid #666;
 }
+/* REMOVE
 button, input, select, textarea {
 	outline: none;
 }
+*/
 input, select, textarea {
 	color: #eee;
 	background-color: transparent;
@@ -82,7 +90,7 @@ input[type="text"], textarea {
 	*/
 	min-width: 20em;
 }
-input:focus, select:focus, textarea:focus, 
+/*input:focus, select:focus, textarea:focus,*/
 input:hover, select:hover, textarea:hover {
 	background-color: #333;
 	border-color: #eee;
@@ -151,7 +159,8 @@ audio, canvas, progress, video {
 #ui-bar.stowed #ui-bar-toggle span {
 	padding: 0.3em 0.35em 0.25em 0.55em;
 }
-#ui-bar-toggle span:focus, #ui-bar-toggle span:hover {
+/*#ui-bar-toggle span:focus,*/
+#ui-bar-toggle span:hover {
 	background-color: #444;
 	border-color: #eee;
 }
@@ -187,7 +196,8 @@ audio, canvas, progress, video {
 	text-decoration: none;
 	text-transform: uppercase;
 }
-#menu li a:focus, #menu li a:hover {
+/*#menu li a:focus,*/
+#menu li a:hover {
 	background-color: #444;
 	border-color: #eee;
 }
@@ -211,7 +221,8 @@ audio, canvas, progress, video {
 #ui-bar footer a {
 	color: #bbb;
 }
-#ui-bar footer a:focus, #ui-bar footer a:hover {
+/*#ui-bar footer a:focus,*/
+#ui-bar footer a:hover {
 	color: #eee;
 }
 
@@ -325,7 +336,8 @@ a.macro-return:after {
 	-moz-transition-duration: 200ms;
 	transition-duration: 200ms;
 }
-#ui-dialog-close:focus, #ui-dialog-close:hover {
+/*#ui-dialog-close:focus,*/
+#ui-dialog-close:hover {
 	background-color: #b44;
 	border-color: #d66;
 }
@@ -381,7 +393,8 @@ a.macro-return:after {
 	color: #eee;
 	text-decoration: none;
 }
-#ui-dialog-body.list li a:focus, #ui-dialog-body.list li a:hover {
+/*#ui-dialog-body.list li a:focus,*/
+#ui-dialog-body.list li a:hover {
 	background-color: #333;
 	border-color: #eee;
 }
@@ -428,16 +441,6 @@ a.macro-return:after {
 }
 
 /* Settings dialog styling */
-/*
-#ui-dialog-body.settings ul.buttons {
-	margin-top: 0.5em;
-	padding-top: 0.5em;
-	border-top: 1px solid #444;
-}
-#ui-dialog-body.settings div[id|="setting-body"] + div[id|="setting-body"],
-#ui-dialog-body.settings div[id|="setting-body"] + br + div[id|="setting-body"] {
-	margin-top: 0.5em;
-*/
 #ui-dialog-body.settings div[id|="setting-body"] + div[id|="setting-body"] {
 	margin: 0.5em 0;
 }
@@ -450,7 +453,7 @@ a.macro-return:after {
 	padding: 0.4em;
 	text-decoration: none;
 }
-#ui-dialog-body.settings span[id|="setting-input"]:focus,
+/*#ui-dialog-body.settings span[id|="setting-input"]:focus,*/
 #ui-dialog-body.settings span[id|="setting-input"]:hover {
 	background-color: #333;
 	border-color: #eee;
@@ -459,7 +462,7 @@ a.macro-return:after {
 	background-color: #282;
 	border-color: #4a4;
 }
-#ui-dialog-body.settings span[id|="setting-input"].enabled:focus,
+/*#ui-dialog-body.settings span[id|="setting-input"].enabled:focus,*/
 #ui-dialog-body.settings span[id|="setting-input"].enabled:hover {
 	background-color: #4a4;
 	border-color: #6c6;
