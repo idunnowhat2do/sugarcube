@@ -252,22 +252,22 @@ Object.defineProperties(History.prototype, {
 				var loadStart = true;
 				switch (typeof config.saves.autoload) {
 				case "boolean":
-					if (config.saves.autoload && Save.autosaveOK()) {
-						if (DEBUG) { console.log('    > display/autoload: "' + Save.getAuto().title + '"'); }
-						loadStart = !Save.loadAuto();
+					if (config.saves.autoload && Save.autosave.ok()) {
+						if (DEBUG) { console.log('    > display/autoload: "' + Save.autosave.get().title + '"'); }
+						loadStart = !Save.autosave.load();
 					}
 					break;
 				case "string":
-					if (config.saves.autoload === "prompt" && Save.autosaveOK() && Save.hasAuto()) {
+					if (config.saves.autoload === "prompt" && Save.autosave.ok() && Save.autosave.has()) {
 						loadStart = false;
 						UI.buildDialogAutoload();
 						UI.open();
 					}
 					break;
 				case "function":
-					if (Save.autosaveOK() && Save.hasAuto() && !!config.saves.autoload()) {
-						if (DEBUG) { console.log('    > display/autoload: "' + Save.getAuto().title + '"'); }
-						loadStart = !Save.loadAuto();
+					if (Save.autosave.ok() && Save.autosave.has() && !!config.saves.autoload()) {
+						if (DEBUG) { console.log('    > display/autoload: "' + Save.autosave.get().title + '"'); }
+						loadStart = !Save.autosave.load();
 					}
 					break;
 				}
@@ -518,12 +518,12 @@ Object.defineProperties(History.prototype, {
 			switch (typeof config.saves.autosave) {
 			case "boolean":
 				if (config.saves.autosave) {
-					Save.saveAuto();
+					Save.autosave.save();
 				}
 				break;
 			case "string":
 				if (passage.tags.contains(config.saves.autosave)) {
-					Save.saveAuto();
+					Save.autosave.save();
 				}
 				break;
 			case "object":
@@ -531,7 +531,7 @@ Object.defineProperties(History.prototype, {
 					   Array.isArray(config.saves.autosave)
 					&& passage.tags.some(function (v) { return config.saves.autosave.contains(v); })
 				) {
-					Save.saveAuto();
+					Save.autosave.save();
 				}
 				break;
 			}
@@ -877,11 +877,7 @@ Object.defineProperties(History, {
 		value : function (stateObj) {
 			if (DEBUG) { console.log("[History.unmarshalFromSave()]"); }
 
-			if (
-				   !stateObj
-				|| !stateObj.hasOwnProperty("mode")
-				|| !(stateObj.hasOwnProperty("history") || stateObj.hasOwnProperty("delta"))
-			) {
+			if (!stateObj || !stateObj.hasOwnProperty("mode") || !stateObj.hasOwnProperty("history")) {
 				throw new Error("state object is missing required data");
 			}
 			if (stateObj.mode !== config.historyMode) {
