@@ -426,7 +426,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			_dialogBody.appendChild(list);
 		}
 
-		// add button bar items (export, import, and purge)
+		// add button bar items (export, import, and clear)
 		if (hasSaves || has.fileAPI) {
 			btnBar = document.createElement("ul");
 			btnBar.classList.add("buttons");
@@ -437,8 +437,8 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				}));
 			}
 			if (savesOk) {
-				btnBar.appendChild(createActionItem("purge", null, strings.saves.labelPurge, hasSaves ? function () {
-					Save.purge();
+				btnBar.appendChild(createActionItem("clear", null, strings.saves.labelClear, hasSaves ? function () {
+					Save.clear();
 					buildDialogSaves(); // rebuild the saves menu
 				} : null));
 			}

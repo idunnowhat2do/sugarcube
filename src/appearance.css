@@ -69,11 +69,6 @@ button:disabled {
 	background-color: #444;
 	border: 1px solid #666;
 }
-/* REMOVE
-button, input, select, textarea {
-	outline: none;
-}
-*/
 input, select, textarea {
 	color: #eee;
 	background-color: transparent;
@@ -231,7 +226,7 @@ audio, canvas, progress, video {
 #ui-bar-toggle span:before,
 #menu-saves a:before, #menu-rewind a:before, #menu-restart a:before, #menu-settings a:before, #menu-share a:before,
 #ui-dialog-close, #ui-dialog-body.settings span[id|="setting-input"]:after, #ui-dialog-body.settings span[id|="setting-input"].enabled:after,
-#ui-dialog-body.saves button[id="saves-export"]:before, #ui-dialog-body.saves button[id="saves-import"]:before, #ui-dialog-body.saves button[id="saves-purge"]:before, #ui-dialog-body.saves button[id|="saves-delete"]:before,
+#ui-dialog-body.saves button[id="saves-export"]:before, #ui-dialog-body.saves button[id="saves-import"]:before, #ui-dialog-body.saves button[id="saves-clear"]:before, #ui-dialog-body.saves button[id|="saves-delete"]:before,
 .icon {
 	font-family: "tme-fa-icons";
 	font-style: normal;
@@ -289,7 +284,7 @@ a.macro-return:after {
 #ui-dialog-body.saves button[id="saves-import"]:before {
 	content: "\e82a\00a0";
 }
-#ui-dialog-body.saves button[id="saves-purge"]:before {
+#ui-dialog-body.saves button[id="saves-clear"]:before {
 	content: "\e827\00a0";
 }
 #ui-dialog-body.settings span[id|="setting-input"]:after {

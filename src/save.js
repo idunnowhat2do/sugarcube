@@ -128,7 +128,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		return autosaveOK() || slotsOK();
 	}
 
-	function purge() {
+	function clear() {
 		storage.removeItem("saves");
 		return init();
 	}
@@ -299,7 +299,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 
 
 	/*******************************************************************************************************************
-	 * Filesystem
+	 * Disk
 	 ******************************************************************************************************************/
 	function exportSave() {
 		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed()) {
@@ -401,8 +401,8 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		init     : { value : init },
 		// General
 		ok       : { value : ok },
-		purge    : { value : purge },
-		// Filesystem
+		clear    : { value : clear },
+		// Disk
 		export   : { value : exportSave },
 		import   : { value : importSave },
 		// Autosave

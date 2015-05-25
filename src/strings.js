@@ -35,7 +35,7 @@ var	strings = { // eslint-disable-line no-unused-vars
 			labelExport : "Save to Disk\u2026",
 			labelImport : "Load from Disk\u2026",
 			labelLoad   : "Load",
-			labelPurge  : "Delete All",
+			labelClear  : "Delete All",
 			labelSave   : "Save",
 			labelSlot   : "Slot",
 			savedOn     : "Saved on",
