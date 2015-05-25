@@ -123,10 +123,11 @@ html.ui-dialog-open body {
 	display: table-cell;
 	padding: 0.4em 2em 0.4em 0;
 }
-#ui-dialog-body.settings [id|="setting-control"] {
+#ui-dialog-body.settings [id|="setting-label"] + div {
 	display: table-cell;
 	min-width: 8em;
 	text-align: right;
+	vertical-align: middle;
 	white-space: nowrap;
 }
 

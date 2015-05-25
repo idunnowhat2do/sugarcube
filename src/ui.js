@@ -82,7 +82,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		/* eslint-disable max-len */
 		temp.innerHTML =
 			  '<div id="ui-bar">'
-			+     '<div id="ui-bar-toggle"><span role="button" tabindex="0" aria-label="' + strings.uiBar.toggle + '"></span></div>'
+			+     '<div id="ui-bar-toggle"><button tabindex="0" aria-label="' + strings.uiBar.toggle + '"></button></div>'
 			+     '<div id="ui-bar-body">'
 			+         '<header id="title" role="banner">'
 			+             '<div id="story-banner"></div>'
@@ -153,13 +153,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			.html(strings.uiBar.credits);
 
 		// setup the #ui-bar-toggle widget
-		jQuery("#ui-bar-toggle>span")
-			.on("keypress", function (evt) {
-				// 13 is Return/Enter, 32 is Space
-				if (evt.which === 13 || evt.which === 32) {
-					$(this).trigger("click");
-				}
-			})
+		jQuery("#ui-bar-toggle>button")
 			.on("click", function () {
 				_bar.classList.toggle("stowed");
 			});
@@ -190,7 +184,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			.text(strings.restart.title);
 
 		// setup the Settings menu item
-		if (!Setting.isEmpty()) {
+		if (!Setting.controls.isEmpty()) {
 			dialogAddClickHandler("#menu-settings a", null, function () { buildDialogSettings(); })
 				.text(strings.settings.title);
 		} else {
@@ -627,19 +621,18 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 
 		dialogSetup(strings.settings.title, "settings");
 
-		Setting.controls.forEach(function (control) {
+		Setting.controls.list().forEach(function (control) {
 			var	name      = control.name,
 				id        = Util.slugify(name),
 				elSetting = document.createElement("div"),
-				elLabel   = document.createElement("div"),
-				elControl = document.createElement("div"),
-				elInput;
+				elLabel   = document.createElement("label"),
+				elWrapper = document.createElement("div"),
+				elControl;
 
 			elSetting.appendChild(elLabel);
-			elSetting.appendChild(elControl);
+			elSetting.appendChild(elWrapper);
 			elSetting.id = "setting-body-" + id;
 			elLabel.id   = "setting-label-" + id;
-			elControl.id = "setting-control-" + id;
 
 			// setup the label
 			new Wikifier(elLabel, control.label);
@@ -650,16 +643,16 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			}
 			switch (control.type) {
 			case Setting.Types.Toggle:
-				elInput = document.createElement("span");
+				elControl = document.createElement("button");
 				if (settings[name]) {
-					jQuery(elInput)
+					jQuery(elControl)
 						.addClass("enabled")
 						.text(strings.settings.on);
 				} else {
-					jQuery(elInput)
+					jQuery(elControl)
 						.text(strings.settings.off);
 				}
-				addAccessibleClickHandler(elInput, function () {
+				addAccessibleClickHandler(elControl, function () {
 					if (settings[name]) {
 						jQuery(this)
 							.removeClass("enabled")
@@ -678,25 +671,29 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				});
 				break;
 			case Setting.Types.List:
-				elInput = document.createElement("select");
+				elControl = document.createElement("select");
 				for (var i = 0; i < control.list.length; i++) {
 					var elItem = document.createElement("option");
 					insertText(elItem, control.list[i]);
-					elInput.appendChild(elItem);
+					elControl.appendChild(elItem);
 				}
-				elInput.value = settings[name];
-				elInput.setAttribute("tabindex", 0);
-				jQuery(elInput).on("change", function (evt) {
-					settings[name] = evt.target.value;
-					Setting.save();
-					if (typeof control.callback === "function") {
-						control.callback.call(this);
-					}
-				});
+				jQuery(elControl)
+					.val(settings[name]) // doing this without jQuery is a PITA
+					.attr("tabindex", 0)
+					.on("change", function (evt) {
+						settings[name] = evt.target.value;
+						Setting.save();
+						if (typeof control.callback === "function") {
+							control.callback.call(this);
+						}
+					});
 				break;
 			}
-			elInput.id = "setting-input-" + id;
-			elControl.appendChild(elInput);
+			elControl.id = "setting-control-" + id;
+			elWrapper.appendChild(elControl);
+
+			// associate the label with the control
+			elLabel.setAttribute("for", elControl.id);
 
 			_dialogBody.appendChild(elSetting);
 		});
