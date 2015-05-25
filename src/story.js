@@ -48,6 +48,9 @@ function History(instanceName) {
 	//     Hash    [{ title : null, variables : {} }]
 	this.history = [];
 
+	// last time `this.display()` was called, in milliseconds
+	this.lastDisplay = null;
+
 	// update instance reference in SugarCube global object
 	window.SugarCube[instanceName || "state"] = this;
 }
@@ -422,9 +425,10 @@ Object.defineProperties(History.prototype, {
 				}
 			}
 
-			// add it to the page
+			// render the incoming passage and add it to the page
 			var incoming = passage.render();
 			incoming.style.visibility = "visible";
+			this.lastDisplay = Date.now();
 			if (updateDisplay) {
 				var	passages = document.getElementById("passages");
 				if (passages.hasChildNodes()) {

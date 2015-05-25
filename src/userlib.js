@@ -144,6 +144,13 @@ function tags(/* variadic */) { // eslint-disable-line no-unused-vars
 }
 
 /**
+	Returns the number of milliseconds that have passed since the current passage was rendered.
+*/
+function time() { // eslint-disable-line no-unused-vars
+	return state.lastDisplay === null ? 0 : Date.now() - state.lastDisplay;
+}
+
+/**
 	Returns the number of passages that the player has moved through (incl. the starting passage).
 
 	n.b. Passages that were visited, but have been unwound (e.g. via the browser's `Back`
