@@ -743,7 +743,7 @@ function defineStandardMacros() { // eslint-disable-line no-unused-vars
 
 			var expression = this.args.full;
 			if (macros.evalStatements(expression, this)) {
-				var	remember = storage.getItem("remember") || {},
+				var	remember = storage.get("remember") || {},
 					re       = /state\.active\.variables\.(\w+)/g,
 					match;
 
@@ -752,13 +752,13 @@ function defineStandardMacros() { // eslint-disable-line no-unused-vars
 
 					remember[name] = state.active.variables[name];
 				}
-				if (!storage.setItem("remember", remember)) {
+				if (!storage.set("remember", remember)) {
 					return this.error("unknown error, cannot remember: " + this.args.raw);
 				}
 			}
 		},
 		init : function () {
-			var remember = storage.getItem("remember");
+			var remember = storage.get("remember");
 			if (remember) {
 				Object.keys(remember).forEach(function (name) {
 					state.active.variables[name] = remember[name];
@@ -781,7 +781,7 @@ function defineStandardMacros() { // eslint-disable-line no-unused-vars
 			var	expression = this.args.full,
 				re         = /state\.active\.variables\.(\w+)/g,
 				match,
-				remember   = storage.getItem("remember"),
+				remember   = storage.get("remember"),
 				needStore  = false;
 
 			while ((match = re.exec(expression)) !== null) {
@@ -795,7 +795,7 @@ function defineStandardMacros() { // eslint-disable-line no-unused-vars
 					delete remember[name];
 				}
 			}
-			if (needStore && !storage.setItem("remember", remember)) {
+			if (needStore && !storage.set("remember", remember)) {
 				return this.error("unknown error, cannot update remember store");
 			}
 		}

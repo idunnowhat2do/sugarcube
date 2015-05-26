@@ -49,15 +49,15 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		}
 
 		// create and store the saves object, if it doesn't exist
-		if (!storage.hasItem("saves")) {
-			storage.setItem("saves", {
+		if (!storage.has("saves")) {
+			storage.set("saves", {
 				autosave : null,
 				slots    : appendSlots([], config.saves.slots)
 			});
 		}
 
 		// retrieve the saves object
-		var saves = storage.getItem("saves");
+		var saves = storage.get("saves");
 		if (saves === null) {
 			_badStore = true;
 			return false;
@@ -70,7 +70,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 				autosave : null,
 				slots    : saves
 			};
-			storage.setItem("saves", saves);
+			storage.set("saves", saves);
 		}
 		/* /legacy kludges */
 
@@ -92,7 +92,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 				// attempt to increase the number of slots
 				appendSlots(saves.slots, config.saves.slots - saves.slots.length);
 			}
-			storage.setItem("saves", saves);
+			storage.set("saves", saves);
 		}
 
 		/* legacy kludges */
@@ -112,7 +112,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 				}
 			}
 		}
-		if (needSave) { storage.setItem("saves", saves); }
+		if (needSave) { storage.set("saves", saves); }
 		/* /legacy kludges */
 
 		_slotsUBound = saves.slots.length - 1;
@@ -129,7 +129,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 	}
 
 	function clear() {
-		storage.removeItem("saves");
+		storage.delete("saves");
 		return init();
 	}
 
@@ -142,7 +142,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 	}
 
 	function autosaveHas() {
-		var saves = storage.getItem("saves");
+		var saves = storage.get("saves");
 		if (saves === null || saves.autosave === null) {
 			return false;
 		}
@@ -150,7 +150,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 	}
 
 	function autosaveGet() {
-		var saves = storage.getItem("saves");
+		var saves = storage.get("saves");
 		if (saves === null) {
 			return null;
 		}
@@ -158,7 +158,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 	}
 
 	function autosaveLoad() {
-		var saves = storage.getItem("saves");
+		var saves = storage.get("saves");
 		if (saves === null || saves.autosave === null) {
 			return false;
 		}
@@ -170,7 +170,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 			return false;
 		}
 
-		var saves = storage.getItem("saves");
+		var saves = storage.get("saves");
 		if (saves === null) {
 			return false;
 		}
@@ -180,16 +180,16 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		if (metadata != null) { // lazy equality for null
 			saves.autosave.metadata = metadata;
 		}
-		return storage.setItem("saves", saves);
+		return storage.set("saves", saves);
 	}
 
 	function autosaveDelete() {
-		var saves = storage.getItem("saves");
+		var saves = storage.get("saves");
 		if (saves === null) {
 			return false;
 		}
 		saves.autosave = null;
-		return storage.setItem("saves", saves);
+		return storage.set("saves", saves);
 	}
 
 
@@ -209,7 +209,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 			return 0;
 		}
 
-		var saves = storage.getItem("saves");
+		var saves = storage.get("saves");
 		if (saves === null) {
 			return 0;
 		}
@@ -231,7 +231,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 			return false;
 		}
 
-		var saves = storage.getItem("saves");
+		var saves = storage.get("saves");
 		if (saves === null || slot >= saves.slots.length || saves.slots[slot] === null) {
 			return false;
 		}
@@ -243,7 +243,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 			return null;
 		}
 
-		var saves = storage.getItem("saves");
+		var saves = storage.get("saves");
 		if (saves === null || slot >= saves.slots.length) {
 			return null;
 		}
@@ -255,7 +255,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 			return false;
 		}
 
-		var saves = storage.getItem("saves");
+		var saves = storage.get("saves");
 		if (saves === null || slot >= saves.slots.length || saves.slots[slot] === null) {
 			return false;
 		}
@@ -271,7 +271,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 			return false;
 		}
 
-		var saves = storage.getItem("saves");
+		var saves = storage.get("saves");
 		if (saves === null || slot >= saves.slots.length) {
 			return false;
 		}
@@ -281,7 +281,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		if (metadata != null) { // lazy equality for null
 			saves.slots[slot].metadata = metadata;
 		}
-		return storage.setItem("saves", saves);
+		return storage.set("saves", saves);
 	}
 
 	function slotsDelete(slot) {
@@ -289,12 +289,12 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 			return false;
 		}
 
-		var saves = storage.getItem("saves");
+		var saves = storage.get("saves");
 		if (saves === null || slot >= saves.slots.length) {
 			return false;
 		}
 		saves.slots[slot] = null;
-		return storage.setItem("saves", saves);
+		return storage.set("saves", saves);
 	}
 
 

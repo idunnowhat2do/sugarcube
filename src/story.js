@@ -575,7 +575,7 @@ Object.defineProperties(History.prototype, {
 			var stateObj = this.marshal();
 			if (config.historyMode === History.Modes.Session) {
 				if (DEBUG) { console.log("    > this.suid: " + this.suid); }
-				session.setItem("history." + this.suid, stateObj);
+				session.set("history." + this.suid, stateObj);
 			} else if (config.historyMode === History.Modes.Hash) {
 				this.hash = History.serializeWindowHashState(stateObj);
 			}
@@ -594,8 +594,8 @@ Object.defineProperties(History.prototype, {
 					this.suid = UUID.generate();
 					return false; // return false early to skip the session check
 				}
-				if (session.hasItem("history." + this.suid)) {
-					var	stateObj = session.getItem("history." + this.suid),
+				if (session.has("history." + this.suid)) {
+					var	stateObj = session.get("history." + this.suid),
 						sidx     = History.getWindowState().sidx;
 					if (DEBUG) {
 						console.log("    > History.getWindowState(): " + History.getWindowState().sidx

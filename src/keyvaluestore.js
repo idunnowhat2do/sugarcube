@@ -84,32 +84,32 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 
 				var keys = this.keys();
 				for (var i = 0; i < keys.length; i++) {
-					if (DEBUG) { console.log("    > removing key: " + keys[i]); }
-					this.removeItem(keys[i]);
+					if (DEBUG) { console.log("    > deleting key: " + keys[i]); }
+					this.delete(keys[i]);
 				}
 				return true;
 			}
 		},
 
-		hasItem : {
+		has : {
 			value : function (key) {
 				if (this._driver === null || !key) {
 					return false;
 				}
-				if (DEBUG) { console.log('[<KeyValueStore>.hasItem("' + key + '")]'); }
+				if (DEBUG) { console.log('[<KeyValueStore>.has("' + key + '")]'); }
 
 				return this._driver.has(key);
 			}
 		},
 
-		getItem : {
+		get : {
 			value : function (key) {
 				if (this._driver === null || !key) {
 					return null;
 				}
-				if (DEBUG) { console.log('[<KeyValueStore>.getItem("' + key + '")]'); }
+				if (DEBUG) { console.log('[<KeyValueStore>.get("' + key + '")]'); }
 
-				var value = this._driver.retrieve(key);
+				var value = this._driver.get(key);
 				if (value == null) { // lazy equality for null
 					return null;
 				}
@@ -133,7 +133,7 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 					}
 				}
 				// attempt to upgrade the legacy value
-				if (legacy && !this.setItem(key, value, true)) {
+				if (legacy && !this.set(key, value, true)) {
 					throw new Error('unable to upgrade legacy value for key "' + key + '" to new format');
 				}
 				/* /legacy */
@@ -142,41 +142,41 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 			}
 		},
 
-		setItem : {
+		set : {
 			value : function (key, value, quiet) {
 				if (this._driver === null || !key) {
 					return false;
 				}
-				if (DEBUG) { console.log('[<KeyValueStore>.setItem("' + key + '")]'); }
+				if (DEBUG) { console.log('[<KeyValueStore>.set("' + key + '")]'); }
 
-				return this._driver.store(key, this._driver.serialize(value), quiet);
+				return this._driver.set(key, this._driver.serialize(value), quiet);
 			}
 		},
 
-		removeItem : {
-			value : function (key) {
+		delete : {
+			value : function (key, quiet) {
 				if (this._driver === null || !key) {
 					return false;
 				}
-				if (DEBUG) { console.log('[<KeyValueStore>.removeItem("' + key + '")]'); }
+				if (DEBUG) { console.log('[<KeyValueStore>.delete("' + key + '")]'); }
 
-				return this._driver.remove(key);
+				return this._driver.delete(key, quiet);
 			}
 		},
 
-		removeMatchingItems : {
-			value : function (subKey) {
+		deleteMatching : {
+			value : function (subKey, quiet) {
 				if (this._driver === null || !subKey) {
 					return false;
 				}
-				if (DEBUG) { console.log('[<KeyValueStore>.removeMatchingItems("' + subKey + '")]'); }
+				if (DEBUG) { console.log('[<KeyValueStore>.deleteMatching("' + subKey + '")]'); }
 
 				var	keys = this.keys(),
 					re   = new RegExp("^" + RegExp.escape(subKey));
 				for (var i = 0; i < keys.length; i++) {
 					if (re.test(keys[i])) {
-						if (DEBUG) { console.log("    > removing key: " + keys[i]); }
-						this.removeItem(keys[i]);
+						if (DEBUG) { console.log("    > deleting key: " + keys[i]); }
+						this.delete(keys[i], quiet);
 					}
 				}
 				return true;
@@ -186,8 +186,8 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 
 
 	/*
-	 * STORAGE DRIVER: WebStorage
-	 */
+		STORAGE DRIVER: WebStorage
+	*/
 	/*******************************************************************************************************************
 	 * KeyValueStoreDriverWebStorage Constructor
 	 ******************************************************************************************************************/
@@ -249,9 +249,9 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 		length : {
 			get : function () {
 				/*
-				 * DO NOT do something like: return this._engine.length;
-				 * That will return the length of the entire store, rather than just our prefixed keys.
-				 */
+					DO NOT do something like: return this._engine.length;
+					That will return the length of the entire store, rather than just our prefixed keys.
+				*/
 				return this.keys().length;
 			}
 		},
@@ -284,7 +284,7 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 			}
 		},
 
-		retrieve : {
+		get : {
 			value : function (key) {
 				if (this._engine === null || !key) {
 					return null;
@@ -293,7 +293,7 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 			}
 		},
 
-		store : {
+		set : {
 			value : function (key, value, quiet) {
 				if (this._engine === null || !key) {
 					return false;
@@ -303,17 +303,17 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 					this._engine.setItem(this._prefix + key, value);
 				} catch (e) {
 					/*
-					 * Ideally, we could simply do:
-					 *     e.code === 22
-					 * Or, preferably, something like:
-					 *     e.code === DOMException.QUOTA_EXCEEDED_ERR
-					 * However, both of those are browser convention, not part of the standard,
-					 * and are not supported in all browsers.  So, we have to resort to pattern
-					 * matching the damn name.  I hate the parties responsible for this snafu
-					 * so much.
-					 */
+						Ideally, we could simply do:
+						    e.code === 22
+						Or, preferably, something like:
+						    e.code === DOMException.QUOTA_EXCEEDED_ERR
+						However, both of those are browser convention, not part of the standard,
+						and are not supported in all browsers.  So, we have to resort to pattern
+						matching the damn name.  I hate the parties responsible for this snafu
+						so much.
+					*/
 					if (!quiet) {
-						technicalAlert(null, 'unable to store key "' + key + '"; '
+						technicalAlert(null, 'unable to set key "' + key + '"; '
 							+ (/quota_?(?:exceeded|reached)/i.test(e.name)
 								? this.name + " quota exceeded"
 								: "unknown error"),
@@ -325,7 +325,7 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 			}
 		},
 
-		remove : {
+		delete : {
 			value : function (key) {
 				if (this._engine === null || !key) {
 					return false;
@@ -339,8 +339,8 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 
 
 	/*
-	 * STORAGE DRIVER: Cookie
-	 */
+		STORAGE DRIVER: Cookie
+	*/
 	/*******************************************************************************************************************
 	 * KeyValueStoreDriverCookie Constructor
 	 ******************************************************************************************************************/
@@ -438,7 +438,7 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 			}
 		},
 
-		retrieve : {
+		get : {
 			value : function (key) {
 				if (!key) {
 					return null;
@@ -453,7 +453,7 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 			}
 		},
 
-		store : {
+		set : {
 			value : function (key, value, quiet) {
 				if (!key) {
 					return false;
@@ -464,13 +464,13 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 					this._setCookie(key, value, this.persist ? "Tue, 19 Jan 2038 03:14:07 GMT" : undefined);
 				} catch (e) {
 					if (!quiet) {
-						technicalAlert(null, 'unable to store key "' + key + '"; cookie error: ' + e.message, e);
+						technicalAlert(null, 'unable to set key "' + key + '"; cookie error: ' + e.message, e);
 					}
 					return false;
 				}
 				if (!this.has(key)) {
 					if (!quiet) {
-						technicalAlert(null, 'unable to store key "' + key + '"; unknown cookie error');
+						technicalAlert(null, 'unable to set key "' + key + '"; unknown cookie error');
 					}
 					return false;
 				}
@@ -478,7 +478,7 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 			}
 		},
 
-		remove : {
+		delete : {
 			value : function (key, quiet) {
 				if (!key) {
 					return false;
@@ -488,13 +488,16 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 					this._setCookie(key, undefined, "Thu, 01 Jan 1970 00:00:00 GMT");
 				} catch (e) {
 					if (!quiet) {
-						technicalAlert(null, 'unable to remove key "' + key + '"; cookie error: ' + e.message, e);
+						technicalAlert(null, 'unable to delete key "' + key + '"; cookie error: ' + e.message, e);
 					}
 					return false;
 				}
-				if (this.has(key)) {
+				// seems like we cannot simply use `.has()` to test because of IE shenanigans ?
+				//if (this.has(key)) {
+				var test = this.get(key);
+				if (test !== null && test !== "") {
 					if (!quiet) {
-						technicalAlert(null, 'unable to remove key "' + key + '"; unknown cookie error');
+						technicalAlert(null, 'unable to delete key "' + key + '"; unknown cookie error');
 					}
 					return false;
 				}

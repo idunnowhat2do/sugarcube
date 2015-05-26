@@ -280,7 +280,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				return btn;
 			}
 
-			var saves = storage.getItem("saves");
+			var saves = storage.get("saves");
 			if (saves === null) { return false; }
 
 			var	tbody = document.createElement("tbody");
@@ -578,7 +578,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 //							if (!config.disableHistoryControls) {
 //								window.location.hash = state.history[p].hash;
 //							} else {
-//								session.setItem("activeHash", state.history[p].hash);
+//								session.set("activeHash", state.history[p].hash);
 //								window.location.reload();
 //							}
 //						};
