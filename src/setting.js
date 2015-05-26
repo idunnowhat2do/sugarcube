@@ -12,10 +12,10 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 	"use strict";
 
 	var
-		_controls = [],
+		_definitions = [],
 
 		// Setup the Setting Types enumeration
-		Types     = Object.freeze({
+		Types = Object.freeze({
 			Toggle : 0,
 			List   : 1
 		});
@@ -27,42 +27,44 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 	function init() {
 		/* legacy */
 		// attempt to migrate an existing `options` store to `settings`
-		if (storage.hasItem("options")) {
-			var old = storage.getItem("options");
+		if (storage.has("options")) {
+			var old = storage.get("options");
 			if (old !== null) {
-				/*
-				window.SugarCube.settings = settings = {};
-				Object.keys(old).forEach(function (name) {
-					settings[name] = old[name];
-				});
-				*/
 				window.SugarCube.settings = settings = Object.assign(settingsCreate(), old);
 			}
 			settingsSave();
-			storage.removeItem("options");
+			storage.delete("options");
 		}
 		/* /legacy */
 
+		// load existing settings
 		settingsLoad();
+
+		// execute onInit callbacks
+		_definitions.forEach(function (definition) {
+			if (definition.hasOwnProperty("onInit")) {
+				var	thisp = {
+						name    : definition.name,
+						value   : settings[definition.name],
+						default : definition.default
+					};
+				if (definition.hasOwnProperty("list")) {
+					thisp.list = definition.list;
+				}
+				definition.onInit.call(thisp);
+			}
+		});
 	}
 
 
 	/*******************************************************************************************************************
-	 * Controls Manipulation Functions
+	 * `_definitions` Object Manipulation Functions
 	 ******************************************************************************************************************/
-	function controlsList() {
-		return _controls;
+	function definitionsForEach(callback, thisp) {
+		_definitions.forEach(callback, thisp);
 	}
 
-	function controlsAdd(type, name, definition) {
-		/*
-			definition = {
-				label    : (both:string),
-				default  : (toggle:boolean) | (list:string/number), // system defaults: false or list[0],
-				list     : (list:array),
-				callback : (both:function)
-			}
-		 */
+	function definitionsAdd(type, name, def) {
 		if (arguments.length < 3) {
 			var errors = [];
 			if (arguments.length < 1) { errors.push("type"); }
@@ -70,81 +72,95 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 			if (arguments.length < 3) { errors.push("definition"); }
 			throw new Error("missing parameters, no " + errors.join(" or ") + " specified");
 		}
-		if (typeof definition !== "object") {
+		if (typeof def !== "object") {
 			throw new Error("definition parameter must be an object");
 		}
-		if (controlsHas(name)) {
+		if (definitionsHas(name)) {
 			throw new Error('cannot clobber existing setting "' + name + '"');
 		}
-		var control = {
-			name  : name,
+		/*
+			definition objects = {
+				type     : (both:Setting.Types),
+				name     : (both:string),
+				label    : (both:string),
+				default  : (toggle:boolean, list:[as array]), // if undefined (toggle:false, list:list[0])
+				list     : (list:array),
+				onInit   : (both:function),
+				onChange : (both:function)
+			}
+		*/
+		var definition = {
 			type  : type,
-			label : definition.label == null ? "" : String(definition.label).trim() // lazy equality for null
+			name  : name,
+			label : def.label == null ? "" : String(def.label).trim() // lazy equality for null
 		};
 		switch (type) {
 		case Types.Toggle:
-			control.default = !!definition.default;
+			definition.default = !!def.default;
 			break;
 		case Types.List:
-			if (!definition.hasOwnProperty("list")) {
+			if (!def.hasOwnProperty("list")) {
 				throw new Error("no list specified");
-			} else if (!Array.isArray(definition.list)) {
+			} else if (!Array.isArray(def.list)) {
 				throw new Error("list must be an array");
-			} else if (definition.list.length === 0) {
+			} else if (def.list.length === 0) {
 				throw new Error("list must not be empty");
 			}
-			control.list = definition.list;
-			if (definition.default == null) { // lazy equality for null
-				control.default = definition.list[0];
+			definition.list = Object.freeze(def.list);
+			if (def.default == null) { // lazy equality for null
+				definition.default = def.list[0];
 			} else {
-				var defaultIndex = definition.list.indexOf(definition.default);
+				var defaultIndex = def.list.indexOf(def.default);
 				if (defaultIndex === -1) {
 					throw new Error("list does not contain default");
 				}
-				control.default = definition.list[defaultIndex];
+				definition.default = def.list[defaultIndex];
 			}
 			break;
 		default:
 			throw new Error("unknown Setting type: " + type);
 		}
-		if (typeof definition.callback === "function") {
-			control.callback = definition.callback;
+		if (typeof def.onInit === "function") {
+			definition.onInit = Object.freeze(def.onInit);
 		}
-		_controls.push(control);
+		if (typeof def.onChange === "function") {
+			definition.onChange = Object.freeze(def.onChange);
+		}
+		_definitions.push(Object.freeze(definition));
 	}
 
-	function controlsAddToggle(name, label, defaultValue, callback) {
-		controlsAdd(Types.Toggle, name, {
-			label    : label,
-			default  : !!defaultValue,
-			callback : callback
-		});
+	function definitionsAddToggle(/* name, def */) {
+		definitionsAdd.apply(this, [Types.Toggle].concat(Array.from(arguments)));
 	}
 
-	function controlsAddList(name, label, list, defaultValue, callback) {
-		controlsAdd(Types.List, name, {
-			label    : label,
-			list     : list,
-			default  : defaultValue,
-			callback : callback
-		});
+	function definitionsAddList(/* name, def */) {
+		definitionsAdd.apply(this, [Types.List].concat(Array.from(arguments)));
 	}
 
-	function controlsIsEmpty() {
-		return _controls.length === 0;
+	function definitionsIsEmpty() {
+		return _definitions.length === 0;
 	}
 
-	function controlsHas(name) {
-		return _controls.some(function (control) {
-			return control.name === this;
+	function definitionsHas(name) {
+		return _definitions.some(function (definition) {
+			return definition.name === this;
 		}, name);
 	}
 
-	function controlsDelete(name) {
-		for (var i = 0; i < _controls.length; i++) {
-			if (_controls[i].name === name) {
-				_controls.splice(i, 1);
-				settingsDelete(name);
+	function definitionsGet(name) {
+		return _definitions.find(function (definition) {
+			return definition.name === this;
+		}, name);
+	}
+
+	function definitionsDelete(name) {
+		if (definitionsHas(name)) {
+			delete settings[name];
+		}
+		for (var i = 0; i < _definitions.length; i++) {
+			if (_definitions[i].name === name) {
+				_definitions.splice(i, 1);
+				definitionsDelete(name);
 				break;
 			}
 		}
@@ -154,57 +170,62 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 	/*******************************************************************************************************************
 	 * `settings` Object Manipulation Functions
 	 ******************************************************************************************************************/
+	function _settingsAllAtDefault() {
+		if (Object.keys(settings).length > 0) {
+			return !_definitions.some(function (definition) {
+				return settings[definition.name] !== definition.default;
+			});
+		}
+		return true;
+	}
+
 	function settingsCreate() {
 		return Object.create(null);
 	}
 
 	function settingsSave() {
-		return storage.setItem("settings", settings);
+		if (Object.keys(settings).length === 0 || _settingsAllAtDefault()) {
+			//if (storage.has("settings")) {
+			storage.delete("settings");
+			//}
+			return true;
+		}
+		return storage.set("settings", settings);
 	}
 
 	function settingsLoad() {
-		var obj = storage.getItem("settings");
-		if (obj !== null) {
-			/*
-			window.SugarCube.settings = settings = settingsCreate();
-			Object.keys(obj).forEach(function (name) {
-				settings[name] = obj[name];
-			});
-			*/
-			window.SugarCube.settings = settings = Object.assign(settingsCreate(), obj);
+		var loadedSettings = settingsCreate(),
+			fromStorage    = storage.get("settings");
+
+		// load the defaults
+		_definitions.forEach(function (definition) {
+			settings[definition.name] = definition.default;
+		});
+
+		// load from storage
+		if (fromStorage !== null) {
+			window.SugarCube.settings = settings = Object.assign(loadedSettings, fromStorage);
 		}
 	}
 
 	function settingsClear() {
-		if (!storage.removeItem("settings")) {
-			throw new Error("unknown error, cannot update settings store");
-		}
 		window.SugarCube.settings = settings = settingsCreate();
+		return settingsSave();
 	}
 
-	function settingsReset() {
-		settingsClear();
-		_controls.forEach(function (control) {
-			settings[control.name] = control.default;
-		});
-	}
-
-	function settingsHas(name) {
-		return settings.hasOwnProperty(name);
-	}
-
-	function settingsGet(name) {
-		return settings[name];
-	}
-
-	function settingsSet(name, value) {
-		settings[name] = value;
-	}
-
-	function settingsDelete(name) {
-		if (settingsHas(name)) {
-			delete settings[name];
+	function settingsReset(name) {
+		if (arguments.length === 0) {
+			settingsClear();
+			_definitions.forEach(function (definition) {
+				settings[definition.name] = definition.default;
+			});
+		} else {
+			if (name == null || !definitionsHas(name)) { // lazy equality for null
+				throw new Error('nonexistent setting "' + name + '"');
+			}
+			settings[name] = definitionsGet(name).default;
 		}
+		return settingsSave();
 	}
 
 
@@ -213,31 +234,24 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 	 ******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
 		// Enumeration
-		Types    : { value : Types },
+		Types     : { value : Types },
 		// Initialization
-		init     : { value : init },
-		// Controls Manipulation Functions
-		controls : {
-			value : Object.freeze(Object.defineProperties({}, {
-				list      : { value : controlsList },
-				add       : { value : controlsAdd },
-				addToggle : { value : controlsAddToggle },
-				addList   : { value : controlsAddList },
-				isEmpty   : { value : controlsIsEmpty },
-				has       : { value : controlsHas },
-				delete    : { value : controlsDelete }
-			}))
-		},
+		init      : { value : init },
+		// `_definitions` Object Manipulation Functions
+		forEach   : { value : definitionsForEach },
+		add       : { value : definitionsAdd },
+		addToggle : { value : definitionsAddToggle },
+		addList   : { value : definitionsAddList },
+		isEmpty   : { value : definitionsIsEmpty },
+		has       : { value : definitionsHas },
+		get       : { value : definitionsGet },
+		delete    : { value : definitionsDelete },
 		// `settings` Object Manipulation Functions
-		create : { value : settingsCreate },
-		save   : { value : settingsSave },
-		load   : { value : settingsLoad },
-		clear  : { value : settingsClear },
-		reset  : { value : settingsReset },
-		has    : { value : settingsHas },
-		get    : { value : settingsGet },
-		set    : { value : settingsSet },
-		delete : { value : settingsDelete }
+		create    : { value : settingsCreate },
+		save      : { value : settingsSave },
+		load      : { value : settingsLoad },
+		clear     : { value : settingsClear },
+		reset     : { value : settingsReset }
 	}));
 
 }());

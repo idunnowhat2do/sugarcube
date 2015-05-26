@@ -184,7 +184,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			.text(strings.restart.title);
 
 		// setup the Settings menu item
-		if (!Setting.controls.isEmpty()) {
+		if (!Setting.isEmpty()) {
 			dialogAddClickHandler("#menu-settings a", null, function () { buildDialogSettings(); })
 				.text(strings.settings.title);
 		} else {
@@ -621,7 +621,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 
 		dialogSetup(strings.settings.title, "settings");
 
-		Setting.controls.list().forEach(function (control) {
+		Setting.forEach(function (control) {
 			var	name      = control.name,
 				id        = Util.slugify(name),
 				elSetting = document.createElement("div"),
@@ -665,8 +665,12 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 						settings[name] = true;
 					}
 					Setting.save();
-					if (typeof control.callback === "function") {
-						control.callback.call(this);
+					if (control.hasOwnProperty("onChange")) {
+						control.onChange.call({
+							name    : name,
+							value   : settings[name],
+							default : control.default
+						});
 					}
 				});
 				break;
@@ -674,17 +678,24 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				elControl = document.createElement("select");
 				for (var i = 0; i < control.list.length; i++) {
 					var elItem = document.createElement("option");
-					insertText(elItem, control.list[i]);
+					jQuery(elItem)
+						.val(i)
+						.text(control.list[i]);
 					elControl.appendChild(elItem);
 				}
 				jQuery(elControl)
-					.val(settings[name]) // doing this without jQuery is a PITA
+					.val(control.list.indexOf(settings[name]))
 					.attr("tabindex", 0)
-					.on("change", function (evt) {
-						settings[name] = evt.target.value;
+					.on("change", function () {
+						settings[name] = control.list[+this.value];
 						Setting.save();
-						if (typeof control.callback === "function") {
-							control.callback.call(this);
+						if (control.hasOwnProperty("onChange")) {
+							control.onChange.call({
+								name    : name,
+								value   : settings[name],
+								default : control.default,
+								list    : control.list
+							});
 						}
 					});
 				break;
