@@ -6,281 +6,292 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global Wikifier, clone, throwError */
+/* global Wikifier, clone, macros, throwError */
 
-/***********************************************************************************************************************
- * Macro API
- **********************************************************************************************************************/
-// Setup the Macro constructor
-function Macro() {
-	Object.defineProperties(this, {
-		definitions : {
-			value : {}
-		},
-		tags : {
-			value : {}
+var Macro = (function () { // eslint-disable-line no-unused-vars
+	"use strict";
+
+	var
+		_macros = {},
+		_tags   = {};
+
+
+	/*******************************************************************************************************************
+	 * `_macros` Object Manipulation Functions
+	 ******************************************************************************************************************/
+	function macrosAdd(name, def, deep) {
+		if (Array.isArray(name)) {
+			name.forEach(function (n) { macrosAdd(n, def, deep); });
+			return;
 		}
-	});
-}
 
-// Setup the Macro prototype
-Object.defineProperties(Macro.prototype, {
-	add : {
-		value : function (name, def, deep) {
-			if (Array.isArray(name)) {
-				name.forEach(function (n) { this.add(n, def, deep); }, this);
-				return;
-			}
+		if (macrosHas(name)) {
+			throw new Error("cannot clobber existing macro <<" + name + ">>");
+		} else if (tagsHas(name)) {
+			throw new Error("cannot clobber child tag <<" + name + ">> of parent macro"
+				+ (_tags[name].length === 1 ? '' : 's') + " <<" + _tags[name].join(">>, <<") + ">>");
+		}
 
-			if (this.has(name)) {
-				throw new Error("cannot clobber existing macro <<" + name + ">>");
-			} else if (this.tags.hasOwnProperty(name)) {
-				throw new Error("cannot clobber child tag <<" + name + ">> of parent macro"
-					+ (this.tags[name].length === 1 ? '' : 's') + " <<" + this.tags[name].join(">>, <<") + ">>");
-			}
-
-			try {
-				if (typeof def === "object") {
-					// add the macro definition
-					this.definitions[name] = deep ? clone(def) : def;
+		try {
+			if (typeof def === "object") {
+				// add the macro definition
+				_macros[name] = deep ? clone(def) : def;
+			} else {
+				// add the macro alias
+				if (macrosHas(def)) {
+					_macros[name] = deep ? clone(_macros[def]) : _macros[def];
 				} else {
-					// add the macro alias
-					if (this.has(def)) {
-						this.definitions[name] = deep ? clone(this.definitions[def]) : this.definitions[def];
-					} else {
-						throw new Error("cannot create alias of nonexistent macro <<" + def + ">>");
-					}
-				}
-				Object.defineProperty(this.definitions, name, { writable : false });
-
-				/* legacy kludges */
-				this.definitions[name]._USE_MACROS_API = true;
-				/* /legacy kludges */
-			} catch (e) {
-				if (e.name === "TypeError") {
-					throw new Error("cannot clobber protected macro <<" + name + ">>");
-				} else {
-					throw new Error("unknown error when attempting to add macro <<" + name + ">>: [" + e.name + "] "
-						+ e.message);
+					throw new Error("cannot create alias of nonexistent macro <<" + def + ">>");
 				}
 			}
+			Object.defineProperty(_macros, name, { writable : false });
 
-			// tags post-processing
-			if (this.definitions[name].hasOwnProperty("tags")) {
-				if (this.definitions[name].tags == null) { // lazy equality for null
-					this.registerTags(name);
-				} else if (Array.isArray(this.definitions[name].tags)) {
-					this.registerTags(name, this.definitions[name].tags);
-				} else {
-					throw new Error('bad value for "tags" property of macro <<' + name + ">>");
-				}
-			}
-		}
-	},
-
-	remove : {
-		value : function (name) {
-			if (Array.isArray(name)) {
-				name.forEach(function (n) { this.remove(n); }, this);
-				return;
-			}
-
-			if (this.definitions.hasOwnProperty(name)) {
-				// tags pre-processing
-				if (this.definitions[name].hasOwnProperty("tags")) {
-					this.unregisterTags(name);
-				}
-
-				try {
-					// remove the macro definition
-					Object.defineProperty(this.definitions, name, { writable : true });
-					delete this.definitions[name];
-				} catch (e) {
-					throw new Error("unknown error removing macro <<" + name + ">>: " + e.message);
-				}
-			} else if (this.tags.hasOwnProperty(name)) {
-				throw new Error("cannot remove child tag <<" + name + ">> of parent macro <<" + this.tags[name] + ">>");
-			}
-		}
-	},
-
-	has : {
-		value : function (name, searchTags) {
-			return this.definitions.hasOwnProperty(name) || (searchTags ? this.tags.hasOwnProperty(name) : false);
-		}
-	},
-
-	get : {
-		value : function (name) {
-			var macro = null;
-			if (this.definitions.hasOwnProperty(name) && typeof this.definitions[name].handler === "function") {
-				macro = this.definitions[name];
-			} else if (this.hasOwnProperty(name) && typeof this[name].handler === "function") {
-				macro = this[name];
-			}
-			return macro;
-		}
-	},
-
-	getHandler : {
-		value : function (name, handler) {
-			var macro = this.get(name);
-			if (!handler) {
-				handler = "handler";
-			}
-			return macro && macro.hasOwnProperty(handler) && typeof macro[handler] === "function"
-				? macro[handler]
-				: null;
-		}
-	},
-
-	evalStatements : {
-		value : function (statements, thisp) {
-			"use strict";
-			try {
-				/* eslint-disable no-eval */
-				eval(thisp == null /* lazy equality for null */
-					? 'var output = document.createElement("div");(function(){' + statements + '\n}());'
-					: "var output = thisp.output;(function(){" + statements + "\n}.call(thisp));");
-				/* eslint-enable no-eval */
-				return true;
-			} catch (e) {
-				if (thisp == null) { // lazy equality for null
-					throw e;
-				}
-				return thisp.error("bad evaluation: " + e.message);
-			}
-		}
-	},
-
-	registerTags : {
-		value : function (parent, bodyTags) {
-			if (!parent) {
-				throw new Error("no parent specified");
-			}
-
-			if (!Array.isArray(bodyTags)) {
-				bodyTags = [];
-			}
-
-			var	endTags = [ "/" + parent, "end" + parent ], // automatically create the closing tags
-				allTags = [].concat(endTags, bodyTags);
-
-			for (var i = 0; i < allTags.length; i++) {
-				var tag = allTags[i];
-				if (this.definitions.hasOwnProperty(tag)) {
-					throw new Error("cannot register tag for an existing macro");
-				}
-				if (this.tags.hasOwnProperty(tag)) {
-					if (!this.tags[tag].contains(parent)) {
-						this.tags[tag].push(parent);
-						this.tags[tag].sort();
-					}
-				} else {
-					this.tags[tag] = [ parent ];
-				}
-			}
-		}
-	},
-
-	unregisterTags : {
-		value : function (parent) {
-			if (!parent) {
-				throw new Error("no parent specified");
-			}
-
-			Object.keys(this.tags).forEach(function (tag) {
-				var i = this.tags[tag].indexOf(parent);
-				if (i !== -1) {
-					if (this.tags[tag].length === 1) {
-						delete this.tags[tag];
-					} else {
-						this.tags[tag].splice(i, 1);
-					}
-				}
-			}, this);
-		}
-	},
-
-	init : {
-		value : function () {
-			Object.keys(this.definitions).forEach(function (name) {
-				var fn = this.getHandler(name, "init");
-				if (fn) {
-					fn.call(this.definitions[name], name);
-				}
-			}, this);
 			/* legacy kludges */
-			Object.keys(this).forEach(function (name) {
-				var fn = this.getHandler(name, "init");
-				if (fn) {
-					fn.call(this[name], name);
-				}
-			}, this);
+			_macros[name]._MACRO_API = true;
 			/* /legacy kludges */
+		} catch (e) {
+			if (e.name === "TypeError") {
+				throw new Error("cannot clobber protected macro <<" + name + ">>");
+			} else {
+				throw new Error("unknown error when attempting to add macro <<" + name + ">>: [" + e.name + "] "
+					+ e.message);
+			}
 		}
-	},
 
-	lateInit : {
-		value : function () {
-			Object.keys(this.definitions).forEach(function (name) {
-				var fn = this.getHandler(name, "lateInit");
-				if (fn) {
-					fn.call(this.definitions[name], name);
-				}
-			}, this);
-			/* legacy kludges */
-			Object.keys(this).forEach(function (name) {
-				var fn = this.getHandler(name, "lateInit");
-				if (fn) {
-					fn.call(this[name], name);
-				}
-			}, this);
-			/* /legacy kludges */
+		// tags post-processing
+		if (_macros[name].hasOwnProperty("tags")) {
+			if (_macros[name].tags == null) { // lazy equality for null
+				tagsRegister(name);
+			} else if (Array.isArray(_macros[name].tags)) {
+				tagsRegister(name, _macros[name].tags);
+			} else {
+				throw new Error('bad value for "tags" property of macro <<' + name + ">>");
+			}
 		}
 	}
-});
 
-// Setup the MacroContext constructor
-function MacroContext(parent, macro, name, rawArgs, args, payload, parser, source) {
+	function macrosDelete(name) {
+		if (Array.isArray(name)) {
+			name.forEach(function (n) { macrosDelete(n); });
+			return;
+		}
+
+		if (macrosHas(name)) {
+			// tags pre-processing
+			if (_macros[name].hasOwnProperty("tags")) {
+				tagsUnregister(name);
+			}
+
+			try {
+				// remove the macro definition
+				Object.defineProperty(_macros, name, { writable : true });
+				delete _macros[name];
+			} catch (e) {
+				throw new Error("unknown error removing macro <<" + name + ">>: " + e.message);
+			}
+		} else if (tagsHas(name)) {
+			throw new Error("cannot remove child tag <<" + name + ">> of parent macro <<" + _tags[name] + ">>");
+		}
+	}
+
+	function macrosIsEmpty() {
+		return Object.keys(_macros).length === 0;
+	}
+
+	function macrosHas(name) {
+		return _macros.hasOwnProperty(name);
+	}
+
+	function macrosGet(name) {
+		var macro = null;
+		if (macrosHas(name) && typeof _macros[name].handler === "function") {
+			macro = _macros[name];
+		/* legacy kludges */
+		} else if (macros.hasOwnProperty(name) && typeof macros[name].handler === "function") {
+			macro = macros[name];
+		/* /legacy kludges */
+		}
+		return macro;
+	}
+
+	/* eslint-disable no-extra-strict */
+	function macrosEvalStatements(statements, thisp) {
+		"use strict";
+		try {
+			/* eslint-disable no-eval */
+			eval(thisp == null /* lazy equality for null */
+				? 'var output = document.createElement("div");(function(){' + statements + '\n}());'
+				: "var output = thisp.output;(function(){" + statements + "\n}.call(thisp));");
+			/* eslint-enable no-eval */
+			return true;
+		} catch (e) {
+			if (thisp == null) { // lazy equality for null
+				throw e;
+			}
+			return thisp.error("bad evaluation: " + e.message);
+		}
+	}
+	/* eslint-enable no-extra-strict */
+
+	function macrosInit(handler) { // eslint-disable-line no-unused-vars
+		handler = handler || "init";
+		Object.keys(_macros).forEach(function (name) {
+			if (typeof _macros[name][handler] === "function") {
+				_macros[name][handler].call(_macros[name], name);
+			}
+		});
+		/* legacy kludges */
+		Object.keys(macros).forEach(function (name) {
+			if (typeof macros[name][handler] === "function") {
+				macros[name][handler].call(macros[name], name);
+			}
+		});
+		/* /legacy kludges */
+	}
+
+
+	/*******************************************************************************************************************
+	 * `_tags` Object Manipulation Functions
+	 ******************************************************************************************************************/
+	function tagsRegister(parent, bodyTags) {
+		if (!parent) {
+			throw new Error("no parent specified");
+		}
+
+		if (!Array.isArray(bodyTags)) {
+			bodyTags = [];
+		}
+
+		var	endTags = [ "/" + parent, "end" + parent ], // automatically create the closing tags
+			allTags = [].concat(endTags, bodyTags);
+
+		for (var i = 0; i < allTags.length; i++) {
+			var tag = allTags[i];
+			if (macrosHas(tag)) {
+				throw new Error("cannot register tag for an existing macro");
+			}
+			if (tagsHas(tag)) {
+				if (!_tags[tag].contains(parent)) {
+					_tags[tag].push(parent);
+					_tags[tag].sort();
+				}
+			} else {
+				_tags[tag] = [ parent ];
+			}
+		}
+	}
+
+	function tagsUnregister(parent) {
+		if (!parent) {
+			throw new Error("no parent specified");
+		}
+
+		Object.keys(_tags).forEach(function (tag) {
+			var i = _tags[tag].indexOf(parent);
+			if (i !== -1) {
+				if (_tags[tag].length === 1) {
+					delete _tags[tag];
+				} else {
+					_tags[tag].splice(i, 1);
+				}
+			}
+		});
+	}
+
+	function tagsHas(name) {
+		return _tags.hasOwnProperty(name);
+	}
+
+	function tagsGet(name) {
+		return tagsHas(name) ? _tags[name] : null;
+	}
+
+
+	/*******************************************************************************************************************
+	 * Exports
+	 ******************************************************************************************************************/
+	return Object.freeze(Object.defineProperties({}, {
+		add            : { value : macrosAdd },
+		delete         : { value : macrosDelete },
+		isEmpty        : { value : macrosIsEmpty },
+		has            : { value : macrosHas },
+		get            : { value : macrosGet },
+		evalStatements : { value : macrosEvalStatements },
+		init           : { value : macrosInit },
+		// Tags
+		tags : { // eslint-disable-line key-spacing
+			value : Object.freeze(Object.defineProperties({}, {
+				register   : { value : tagsRegister },
+				unregister : { value : tagsUnregister },
+				has        : { value : tagsHas },
+				get        : { value : tagsGet }
+			}))
+		}
+	}));
+
+}());
+
+
+/***********************************************************************************************************************
+ * MacroContext API
+ **********************************************************************************************************************/
+/*
+	Setup the MacroContext constructor
+*/
+function MacroContext(context) {
+	context = Object.assign({
+		parent  : null,
+		macro   : null,
+		name    : "",
+		rawArgs : "",
+		args    : [],
+		payload : null,
+		parser  : null,
+		source  : ""
+	}, context);
+	if (context.macro === null || context.name === "" || context.parser === null) {
+		throw new Error("context object missing required properties");
+	}
 	Object.defineProperties(this, {
 		parent : {
-			value : parent
+			value : context.parent
 		},
 		self : {
-			value : macro
+			value : context.macro
 		},
 		name : {
-			value : name
+			value : context.name
 		},
 		args : {
-			value : args
+			value : context.args
 		},
 		payload : {
-			value : payload
+			value : context.payload
 		},
 		parser : {
-			value : parser
+			value : context.parser
 		},
 		output : {
-			value : parser.output
+			value : context.parser.output
 		},
 		source : {
-			value : source
+			value : context.source
 		}
 	});
 	// extend the args array with the raw and full argument strings
 	Object.defineProperties(this.args, {
 		raw : {
-			value : rawArgs
+			value : context.rawArgs
 		},
 		full : {
-			value : Wikifier.parse(rawArgs)
+			value : Wikifier.parse(context.rawArgs)
 		}
 	});
 }
 
-// Setup the MacroContext prototype
+/*
+	Setup the MacroContext prototype
+*/
 Object.defineProperties(MacroContext.prototype, {
 	contextHas : {
 		value : function (filter) {

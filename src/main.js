@@ -8,7 +8,7 @@
  **********************************************************************************************************************/
 /*
 	global History, KeyValueStore, Macro, Passage, Save, Setting, Tale, UI, Util, Wikifier, addStyle, browser,
-	       defineStandardMacros, fatalAlert, has, technicalAlert
+	       fatalAlert, has, technicalAlert
 */
 
 /*
@@ -115,18 +115,18 @@ var	config = {
 	};
 
 /* eslint-disable no-unused-vars */
-var	macros      = {}, // macros manager
+var	macros      = {}, // legacy macros object
 	tale        = {}, // story manager
 	state       = {}, // history manager
 	storage     = {}, // persistant storage manager
 	session     = {}, // session storage manager
 	settings    = {}, // settings object
 	setup       = {}, // setup object
-	prehistory  = {}, // pre-history task callbacks
-	predisplay  = {}, // pre-display task callbacks
-	postdisplay = {}, // post-display task callbacks
-	prerender   = {}, // pre-render task callbacks
-	postrender  = {}; // post-render task callbacks
+	prehistory  = {}, // pre-history task callbacks object
+	predisplay  = {}, // pre-display task callbacks object
+	postdisplay = {}, // post-display task callbacks object
+	prerender   = {}, // pre-render task callbacks object
+	postrender  = {}; // post-render task callbacks object
 /* eslint-enable no-unused-vars */
 
 /**
@@ -145,10 +145,6 @@ jQuery(document).ready(function () {
 		if (document.normalize) {
 			document.normalize();
 		}
-
-		// instantiate the macro object and standard macro library (this must be done before any passage processing)
-		macros = new Macro();
-		defineStandardMacros();
 
 		// instantiate the tale, state, storage, and session objects
 		tale    = new Tale();
@@ -191,14 +187,14 @@ jQuery(document).ready(function () {
 		// initialize the setting system
 		Setting.init();
 
-		// call macros' "early" init functions
-		macros.init();
+		// call macros' init functions
+		Macro.init();
 
 		// initialize our state
 		state.init(); // this could take a while, so do it late
 
 		// call macros' "late" init functions
-		macros.lateInit();
+		//Macro.init("lateInit");
 
 		// start the user interface
 		UI.start();
@@ -222,6 +218,7 @@ jQuery(document).ready(function () {
 		tale     : tale,
 		state    : state,
 		Wikifier : Wikifier,
+		Macro    : Macro,
 		Util     : Util,
 		History  : History,
 		Passage  : Passage,

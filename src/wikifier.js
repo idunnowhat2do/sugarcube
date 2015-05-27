@@ -43,8 +43,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global MacroContext, Util, addAccessibleClickHandler, config, insertElement, insertText, macros, removeChildren,
-	       removeElement, runtime, state, tale, throwError
+	global Macro, MacroContext, Util, addAccessibleClickHandler, config, insertElement, insertText, macros,
+	       removeChildren, removeElement, runtime, state, tale, throwError
 */
 
 /* eslint-disable max-len */
@@ -1222,7 +1222,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							handler   = this.working.handler,
 							rawArgs   = this.working.arguments;
 						try {
-							var macro = macros.get(name);
+							var macro = Macro.get(name);
 							if (macro) {
 								var payload = null;
 								if (macro.hasOwnProperty("tags")) {
@@ -1237,22 +1237,25 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 									var args = !macro.hasOwnProperty("skipArgs") || !macro.skipArgs ? this.parseArgs(rawArgs) : [];
 
 									// new-style macros
-									if (macro.hasOwnProperty("_USE_MACROS_API")) {
-										// call the handler, modifying the execution context chain appropriately
-										//   n.b. there's no catch clause because this try/finally is here simply to ensure that
-										//        the execution context is properly restored in the event that an uncaught exception
-										//        is thrown during the handler call
+									if (macro.hasOwnProperty("_MACRO_API")) {
+										/*
+											Call the handler, modifying the execution context chain appropriately.
+
+											n.b. There's no catch clause because this try/finally is here simply to
+											     ensure that the execution context is properly restored in the event
+											     that an uncaught exception is thrown during the handler call.
+										*/
 										try {
-											this.context = new MacroContext(
-												this.context,
-												macro,
-												name,
-												rawArgs,
-												args,
-												payload,
-												w,
-												w.source.slice(matchStart, w.nextMatch)
-											);
+											this.context = new MacroContext({
+												parent  : this.context,
+												macro   : macro,
+												name    : name,
+												rawArgs : rawArgs,
+												args    : args,
+												payload : payload,
+												parser  : w,
+												source  : w.source.slice(matchStart, w.nextMatch)
+											});
 											macro[handler].call(this.context);
 										} finally {
 											this.context = this.context.parent;
@@ -1269,9 +1272,10 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 									return throwError(w.output, "macro <<" + name + '>> handler function "' + handler + '" '
 										+ (macro.hasOwnProperty(handler) ? "is not a function" : "does not exist"), w.source.slice(matchStart, w.nextMatch));
 								}
-							} else if (macros.tags.hasOwnProperty(name)) {
+							} else if (Macro.tags.has(name)) {
+								var tags = Macro.tags.get(name);
 								return throwError(w.output, "child tag <<" + name + ">> was found outside of a call to its parent macro"
-									+ (macros.tags[name].length === 1 ? '' : 's') + " <<" + macros.tags[name].join(">>, <<") + ">>",
+									+ (tags.length === 1 ? '' : 's') + " <<" + tags.join(">>, <<") + ">>",
 									  w.source.slice(matchStart, w.nextMatch));
 							} else {
 								return throwError(w.output, "macro <<" + name + ">> does not exist", w.source.slice(matchStart, w.nextMatch));
