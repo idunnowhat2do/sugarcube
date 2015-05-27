@@ -53,8 +53,6 @@ var
 			}
 		}(window.sessionStorage)),
 
-		indexedDB : "indexedDB" in window,
-
 		// it's probably safe to assume the existence of Blob by the existence of File
 		fileAPI : "File" in window && "FileList" in window && "FileReader" in window,
 
