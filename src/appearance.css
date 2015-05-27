@@ -420,6 +420,9 @@ a.macro-return:after {
 #ui-dialog-body.saves td:nth-child(3) {
 	line-height: 1.2;
 }
+#ui-dialog-body.saves td:last-child {
+	text-align: right;
+}
 #ui-dialog-body.saves .empty {
 	color: #999;
 }
@@ -429,11 +432,9 @@ a.macro-return:after {
 #ui-dialog-body.saves ul.buttons li {
 	padding: 0.4em;
 }
-#saves-import-label {
-	margin: 0 6px;
-}
-#saves-import-file {
-	margin: 0 6px 6px;
+#ui-dialog-body.saves ul.buttons li:last-child {
+	/* using position:absolute;right:0; here can produce poor results */
+	float: right;
 }
 
 /* Settings dialog styling */

@@ -372,7 +372,8 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 
 					tdDeleBtn = createButton("delete", null, strings.saves.labelDelete, i, function (slot) {
 						Save.slots.delete(slot);
-						buildDialogSaves(); // rebuild the saves dialog
+						buildDialogSaves();    // rebuild the saves dialog
+						dialogResizeHandler(); // manually call the resize handler
 					});
 					tdDele.appendChild(tdDeleBtn);
 				} else {
@@ -433,7 +434,8 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			if (savesOk) {
 				btnBar.appendChild(createActionItem("clear", null, strings.saves.labelClear, hasSaves ? function () {
 					Save.clear();
-					buildDialogSaves(); // rebuild the saves menu
+					buildDialogSaves();    // rebuild the saves dialog
+					dialogResizeHandler(); // manually call the resize handler
 				} : null));
 			}
 			_dialogBody.appendChild(btnBar);
