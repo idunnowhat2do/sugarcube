@@ -111,7 +111,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			+ '<div id="ui-overlay" class="ui-close"></div>'
 			+ '<div id="ui-dialog" tabindex="0" role="dialog" aria-labelledby="ui-dialog-title">'
 			+     '<h1 id="ui-dialog-title"></h1>'
-			+     '<button id="ui-dialog-close" class="ui-close" role="button" tabindex="0" aria-label="' + strings.close + '">\ue804</button>'
+			+     '<button id="ui-dialog-close" class="ui-close" tabindex="0" aria-label="' + strings.close + '">\ue804</button>'
 			+     '<div id="ui-dialog-body"></div>'
 			+ '</div>'
 			+ '<div id="story" role="main">'
