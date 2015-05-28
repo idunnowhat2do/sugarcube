@@ -214,7 +214,6 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 						}
 					}
 
-					console.log("outlineHandler:", evt);
 					switch (evt.type) {
 					case "mousedown":
 						setCSS("*:focus{outline:none}");
