@@ -8,7 +8,22 @@ SugarCube's sole requirement is a modern web browser, and by *modern* I mean one
 
 **Caveat for Internet Explorer:** SugarCube only supports  IE9+.  So, users of Windows XP (who are limited to IE8) will not be able to play/view stories built with SugarCube with their version of IE.  They would either have to use a different browser or upgrade to a less obsolescent version of Windows (Microsoft ended public support for Windows XP in April, 2014).
 
-## Building SugarCube ##
+## Getting the source ##
+You can get the SugarCube source in one of two ways, by downloading a specific tagged release or 
+by cloning the repository.  If you only wish to build the latest release in the v1 or v2 series, then the former option is probably easiest.  If you wish to hack on SugarCube at all, then the latter option is probably best.
+
+### Downloading a specific tagged release ###
+From the main repository's *Downloads* page, go to the *Tags* tab and download only the specific release you're interested in.
+
+### Cloning the repository ###
+This requires you to have the [Mercurial (`hg`)](http://mercurial.selenic.com/ "http://mercurial.selenic.com/") source control management tool installed (knowing how to use it also helps).  If you go this route, know that there are several active branches, so be sure to update your local clone to the branch you wish to work on by issuing the appropriate `hg update` command.  The current permanent branches are:
+
+- `default`: The v2 development branch
+- `v2-release`: The v2 release branch
+- `v1-devel`: The v1 development branch
+- `v1-release`: The v1 release branch
+
+## Building ##
 If you want to build SugarCube from scratch, rather than grabbing one of the pre-built packages off of its website, then these instructions are for you.
 
 SugarCube uses Node.js as the core of its build system, so the first thing you need to do is to install it if you don't already have it.
