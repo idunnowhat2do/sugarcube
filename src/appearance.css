@@ -17,6 +17,7 @@ body {
 a {
 	cursor: pointer;
 	color: #68d;
+	text-decoration: none;
 	-webkit-transition-duration: 200ms;
 	-moz-transition-duration: 200ms;
 	transition-duration: 200ms;
@@ -26,19 +27,8 @@ a:hover {
 	color: #8af;
 	text-decoration: underline;
 }
-a.link-internal, a.link-external, a.link-disabled, a.link-broken {
-	text-decoration: none;
-}
-a.link-disabled, a.link-disabled:hover, span.link-disabled {
-	cursor: default;
-	color: #999;
-}
 a.link-broken {
 	color: #c22;
-}
-/*a.link-internal:focus, a.link-external:focus, a.link-broken:focus,*/
-a.link-internal:hover, a.link-external:hover, a.link-broken:hover {
-	text-decoration: underline;
 }
 /*a.link-broken:focus,*/
 a.link-broken:hover {
@@ -54,7 +44,6 @@ button {
 	border: 1px solid #57c;
 	line-height: normal;
 	padding: 0.4em;
-	text-decoration: none;
 	-webkit-transition-duration: 200ms;
 	-moz-transition-duration: 200ms;
 	transition-duration: 200ms;
@@ -85,13 +74,13 @@ input[type="text"], textarea {
 	*/
 	min-width: 20em;
 }
-/*input:focus, select:focus, textarea:focus,*/
+input[type="checkbox"], input[type="file"], input[type="radio"], select {
+	cursor: pointer;
+}
+input:focus, select:focus, textarea:focus,
 input:hover, select:hover, textarea:hover {
 	background-color: #333;
 	border-color: #eee;
-}
-input[type="checkbox"], input[type="file"], input[type="radio"], select {
-	cursor: pointer;
 }
 hr {
 	display: block;
@@ -150,7 +139,6 @@ audio, canvas, progress, video {
 	border-right: none;
 	line-height: inherit;
 	padding: 0.3em 0.45em 0.25em;
-	text-decoration: none;
 }
 #ui-bar.stowed #ui-bar-toggle button {
 	padding: 0.3em 0.35em 0.25em 0.55em;
@@ -189,7 +177,6 @@ audio, canvas, progress, video {
 	padding: 0.25em 0.75em;
 	border: 1px solid transparent;
 	color: #eee;
-	text-decoration: none;
 	text-transform: uppercase;
 }
 /*#menu li a:focus,*/
@@ -327,7 +314,6 @@ a.macro-return:after {
 	color: #eee;
 	background-color: #922;
 	border: 1px solid #b44;
-	text-decoration: none;
 	-webkit-transition-duration: 200ms;
 	-moz-transition-duration: 200ms;
 	transition-duration: 200ms;
@@ -449,7 +435,6 @@ a.macro-return:after {
 	background-color: transparent;
 	border: 1px solid #444;
 	padding: 0.4em;
-	text-decoration: none;
 }
 /*#ui-dialog-body.settings button[id|="setting-control"]:focus,*/
 #ui-dialog-body.settings button[id|="setting-control"]:hover {
