@@ -199,6 +199,43 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			jQuery("#menu-share").remove();
 		}
 
+		// setup accessible outline handling
+		// based on: http://www.paciellogroup.com/blog/2012/04/how-to-remove-css-outlines-in-an-accessible-manner/
+		(function () {
+			var	style          = document.getElementById("style-outline-patch"),
+				outlineHandler = function (evt) {
+					function setCSS(css) {
+						if (style.styleSheet) {
+							// for IE ≤ 10
+							style.styleSheet.cssText = css;
+						} else {
+							// for everyone else
+							style.innerHTML = css;
+						}
+					}
+
+					console.log("outlineHandler:", evt);
+					switch (evt.type) {
+					case "mousedown":
+						setCSS("*:focus{outline:none}");
+						break;
+					case "keydown":
+						setCSS("");
+						break;
+					}
+				};
+			if (style === null) {
+				style      = document.createElement("style");
+				style.id   = "style-outline-patch";
+				style.type = "text/css";
+				document.head.appendChild(style);
+			}
+
+			// setup the outline handler
+			jQuery(document.body)
+				.on("mousedown.outline-handler keydown.outline-handler", outlineHandler);
+		}());
+
 		// handle the loading screen
 		if (document.readyState === "complete") {
 			document.documentElement.classList.remove("init-loading");
