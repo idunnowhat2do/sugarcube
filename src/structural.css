@@ -23,6 +23,13 @@ html.ui-dialog-open body {
 	overflow: hidden;
 }
 
+/* Special no transition styling */
+.no-transition {
+	-webkit-transition: none !important;
+	-moz-transition: none !important;
+	transition: none !important;
+}
+
 /* Default story data styling */
 #store-area, tw-storydata {
 	display: none !important;
