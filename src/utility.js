@@ -83,7 +83,7 @@ function addAccessibleClickHandler(targets, handler, once, namespace) { // eslin
 
 	// set the keypress handlers, for non-<button> elements
 	//   n.b. for the single-use case, the click handler will also remove this handler
-	$targets.not("button").on("keypress.accessible-click", function (evt) {
+	$targets.not("button").on("keypress.accessible-click" + namespace, function (evt) {
 		// 13 is Enter/Return, 32 is Space
 		if (evt.which === 13 || evt.which === 32) {
 			$(this).trigger("click");
