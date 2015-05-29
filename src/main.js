@@ -69,6 +69,7 @@ var	config = {
 		displayPassageTitles  : false,
 		loadDelay             : 0,
 		startPassage          : undefined,
+		uiBarInitialState     : "unstowed",
 		updatePageElements    : true,
 
 		// history option properties

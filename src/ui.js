@@ -148,15 +148,25 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			jQuery("#story-title").empty().append(tale.title);
 		}
 
-		// setup the #credits
-		jQuery("#credits", _bar)
-			.html(strings.uiBar.credits);
+		// setup the #ui-bar's initial state
+		if (config.uiBarInitialState === "stowed") {
+			var	$uiBarStory = jQuery("#ui-bar,#story");
+			$uiBarStory.addClass("no-transition");
+			_bar.classList.add("stowed");
+			setTimeout(function () {
+				$uiBarStory.removeClass("no-transition");
+			}, 100);
+		}
 
 		// setup the #ui-bar-toggle widget
 		jQuery("#ui-bar-toggle>button")
 			.on("click", function () {
 				_bar.classList.toggle("stowed");
 			});
+
+		// setup the #credits
+		jQuery("#credits", _bar)
+			.html(strings.uiBar.credits);
 
 		// setup the dynamic page elements
 		if (!tale.has("StoryCaption")) {
