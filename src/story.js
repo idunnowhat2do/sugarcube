@@ -234,8 +234,13 @@ Object.defineProperties(History.prototype, {
 				}
 			}
 
-			// finalize the config.disableHistoryControls setting before displaying the initial passage
-			//   n.b. we do this here to give the author every opportunity to modify config.disableHistoryTracking
+			/*
+				Finalize the `config.disableHistoryControls` setting before displaying the initial
+				passage.
+			
+				n.b. We do this here to give the author every opportunity to modify the
+				     `config.disableHistoryTracking` setting.
+			*/
 			if (config.disableHistoryTracking) {
 				config.disableHistoryControls = true;
 			}
@@ -280,10 +285,14 @@ Object.defineProperties(History.prototype, {
 				}
 			}
 
-			// setup the history change handlers
-			//   n.b. do not update these to use jQuery; these events gain nothing from being wrapped in
-			//        the jQuery Event object and it would complicate either the handlers, by having to deal
-			//        with it, or the jQuery Event object, if the necessary properties were pushed onto it
+			/*
+				Setup the history change handlers.
+
+				n.b. Do not update these to use jQuery; these events gain nothing from being wrapped
+				     in the jQuery Event object and it would complicate either the handlers, by having
+				     to deal with it, or the jQuery Event object, if the necessary properties were
+				     pushed onto it.
+			*/
 			if (config.historyMode === History.Modes.Session) {
 				window.addEventListener("popstate", History.popStateHandlerSession, false);
 			} else if (config.historyMode === History.Modes.Window) {
@@ -324,9 +333,11 @@ Object.defineProperties(History.prototype, {
 			// reset the runtime temp/scratch object
 			runtime.temp = {};
 
-			// n.b. the title parameter may be either a string or a number (though using a number as
-			//      reference to a numeric title should be discouraged), so after loading the passage,
-			//      always refer to passage.title and never the title parameter
+			/*
+				n.b. The title parameter may be either a string or a number (though using a number
+				     as reference to a numeric title should be discouraged), so after loading the
+				     passage, always refer to passage.title and never the title parameter.
+			*/
 			var	passage     = tale.get(title),
 				windowTitle = config.displayPassageTitles && passage.title !== config.startPassage
 					? passage.title + " | " + tale.title
@@ -506,9 +517,12 @@ Object.defineProperties(History.prototype, {
 				}
 			}
 
-			// last second post-processing for accessibility and other things
-			//   n.b. perhaps this should be limited to the incoming passage and,
-			//        if so, maybe before its contents are added to the DOM ?
+			/*
+				Last second post-processing for accessibility and other things.
+
+				n.b. Perhaps this should be limited to the incoming passage and, if so,
+				     maybe before its contents are added to the DOM?
+			*/
 			jQuery("#story")
 				.find("a[href]:not(.link-external)")
 					.addClass("link-external")

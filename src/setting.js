@@ -185,9 +185,7 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 
 	function settingsSave() {
 		if (Object.keys(settings).length === 0 || _settingsAllAtDefault()) {
-			//if (storage.has("settings")) {
 			storage.delete("settings");
-			//}
 			return true;
 		}
 		return storage.set("settings", settings);
