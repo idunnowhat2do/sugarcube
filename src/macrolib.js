@@ -561,17 +561,27 @@ Macro.add("silently", {
  * <<if>>, <<elseif>>, & <<else>>
  */
 Macro.add("if", {
-	version  : { major : 3, minor : 2, patch : 0 },
+	version  : { major : 4, minor : 0, patch : 0 },
 	skipArgs : true,
 	tags     : [ "elseif", "else" ],
 	handler  : function () {
 		try {
 			for (var i = 0, len = this.payload.length; i < len; i++) {
-				if (this.payload[i].name !== "else" && this.payload[i].arguments.length === 0) {
-					return this.error(
-						"no conditional expression specified for <<" + this.payload[i].name
-						+ ">> clause" + (i > 0 ? " (#" + i + ")" : "")
-					);
+				if (this.payload[i].name !== "else") {
+					if (this.payload[i].arguments.length === 0) {
+						return this.error(
+							"no conditional expression specified for <<" + this.payload[i].name
+							+ ">> clause" + (i > 0 ? " (#" + i + ")" : "")
+						);
+					} else if (!config.disableIfAssignmentError && /[^=&^|<>*/%+-]=[^=]/.test(this.payload[i].arguments)) {
+						return this.error(
+							'assignment operator "=" found within <<'
+							+ this.payload[i].name + ">> clause" + (i > 0 ? " (#" + i + ")" : "")
+							+ " (perhaps you meant to use an equality operator:"
+							+ ' ==, ===, eq, is), invalid: '
+							+ this.payload[i].arguments
+						);
+					}
 				} else if (this.payload[i].name === "else" && this.payload[i].arguments.length !== 0) {
 					if (/^\s*if\b/i.test(this.payload[i].arguments)) {
 						return this.error(
@@ -579,12 +589,11 @@ Macro.add("if", {
 							+ (i > 0 ? " (#" + i + ")" : "")
 						);
 					}
-					/* eslint-disable max-len */
 					return this.error(
-						"<<else>> does not accept a conditional expression (perhaps you meant to use <<elseif>> instead), invalid: "
+						"<<else>> does not accept a conditional expression"
+						+ " (perhaps you meant to use <<elseif>>), invalid: "
 						+ this.payload[i].arguments
 					);
-					/* eslint-enable max-len */
 				}
 				if (this.payload[i].name === "else" || !!Wikifier.evalExpression(this.payload[i].arguments)) {
 					new Wikifier(this.output, this.payload[i].contents);

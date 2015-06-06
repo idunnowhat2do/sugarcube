@@ -100,7 +100,8 @@ var	config = {
 
 		// macros option properties
 		macros : {
-			maxLoopIterations : 1000
+			disableIfAssignmentError : false,
+			maxLoopIterations        : 1000
 		},
 
 		// saves option properties
