@@ -252,9 +252,10 @@ Object.defineProperties(History.prototype, {
 				// enables the Twine 1.4+ "Test Play From Here" feature
 				if (DEBUG) { console.log('    > display: "' + testPlay + '" (testPlay)'); }
 				this.display(testPlay);
-			} else if (config.startPassage == null || !tale.has(config.startPassage)) { // lazy equality for null
-				throw new Error("starting passage "
-					+ (config.startPassage == null ? "not selected" : '("' + config.startPassage + '") not found'));
+			} else if (config.startingPassage == null) { // lazy equality for null
+				throw new Error("starting passage not selected");
+			} else if (!tale.has(config.startingPassage)) {
+				throw new Error('starting passage ("' + config.startingPassage + '") not found');
 			} else if (!this.restore()) {
 				// autoload the autosave, if requested and possible, else load the start passage
 				var loadStart = true;
@@ -280,8 +281,8 @@ Object.defineProperties(History.prototype, {
 					break;
 				}
 				if (loadStart) {
-					if (DEBUG) { console.log('    > display: "' + config.startPassage + '"'); }
-					this.display(config.startPassage);
+					if (DEBUG) { console.log('    > display: "' + config.startingPassage + '"'); }
+					this.display(config.startingPassage);
 				}
 			}
 
@@ -339,7 +340,7 @@ Object.defineProperties(History.prototype, {
 				     passage, always refer to passage.title and never the title parameter.
 			*/
 			var	passage     = tale.get(title),
-				windowTitle = config.displayPassageTitles && passage.title !== config.startPassage
+				windowTitle = config.displayPassageTitles && passage.title !== config.startingPassage
 					? passage.title + " | " + tale.title
 					: tale.title;
 
@@ -486,7 +487,7 @@ Object.defineProperties(History.prototype, {
 				passages.appendChild(incoming);
 				setTimeout(function () { incoming.classList.remove("passage-in"); }, 1);
 
-				if (config.displayPassageTitles && passage.title !== config.startPassage) {
+				if (config.displayPassageTitles && passage.title !== config.startingPassage) {
 					document.title = windowTitle;
 				}
 
@@ -928,7 +929,7 @@ Object.defineProperties(History, {
 
 					// load the state into the window history
 					var	windowState,
-						windowTitle = config.displayPassageTitles && state.history[i].title !== config.startPassage
+						windowTitle = config.displayPassageTitles && state.history[i].title !== config.startingPassage
 							? state.history[i].title + " | " + tale.title
 							: tale.title;
 					switch (config.historyMode) {
@@ -1211,7 +1212,7 @@ function Tale(instanceName) {
 	var	el, name, tags, passage;
 
 	if (TWINE1) {
-		config.startPassage = "Start"; // set the default starting passage title
+		config.startingPassage = "Start"; // set the default starting passage title
 		var	storyStylesheet,
 			storyScript;
 		for (var i = 0; i < nodes.length; i++) {
@@ -1261,7 +1262,7 @@ function Tale(instanceName) {
 			throw new Error("cannot find the StoryTitle special passage");
 		}
 	} else {
-		config.startPassage = null; // no default starting passage title
+		config.startingPassage = null; // no default starting passage title
 		var startNode = nodes[0].hasAttribute("startnode") ? nodes[0].getAttribute("startnode") : "";
 		nodes = nodes[0].childNodes;
 		for (var i = 0; i < nodes.length; i++) { // eslint-disable-line no-redeclare
@@ -1292,7 +1293,7 @@ function Tale(instanceName) {
 				passage = new Passage(name, el, +pid);
 
 				if (startNode !== "" && startNode === pid) {
-					config.startPassage = name;
+					config.startingPassage = name;
 				}
 
 				if (tags.contains("widget")) {

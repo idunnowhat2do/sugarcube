@@ -149,7 +149,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		}
 
 		// setup the #ui-bar's initial state
-		if (config.uiBarInitialState === "stowed") {
+		if (config.ui.stowBarInitially) {
 			var	$uiBarStory = jQuery("#ui-bar,#story");
 			$uiBarStory.addClass("no-transition");
 			_bar.classList.add("stowed");
@@ -549,7 +549,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 //								// load the state into the window history
 //								History.replaceWindowState(
 //									{ suid : state.suid, sidx : state.history[p].sidx },
-//									(config.displayPassageTitles && state.history[p].title !== config.startPassage)
+//									(config.displayPassageTitles && state.history[p].title !== config.startingPassage)
 //										? tale.title + ": " + state.history[p].title
 //										: tale.title
 //								);
@@ -560,7 +560,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 //									// load the state into the window history
 //									History.addWindowState(
 //										{ suid : state.suid, sidx : state.history[i].sidx },
-//										(config.displayPassageTitles && state.history[i].title !== config.startPassage)
+//										(config.displayPassageTitles && state.history[i].title !== config.startingPassage)
 //											? tale.title + ": " + state.history[i].title
 //											: tale.title
 //									);
@@ -600,7 +600,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 //									}
 //									History.addWindowState(
 //										stateObj,
-//										(config.displayPassageTitles && state.history[i].title !== config.startPassage)
+//										(config.displayPassageTitles && state.history[i].title !== config.startingPassage)
 //											? tale.title + ": " + state.history[i].title
 //											: tale.title
 //									);
@@ -795,8 +795,8 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		jQuery(document.body).one("click.autoload", ".ui-close", function (evt) {
 			if (DEBUG) { console.log('    > display/autoload: "' + Save.autosave.get().title + '"'); }
 			if (evt.target.id !== "autoload-ok" || !Save.autosave.load()) {
-				if (DEBUG) { console.log('    > display: "' + config.startPassage + '"'); }
-				state.display(config.startPassage);
+				if (DEBUG) { console.log('    > display: "' + config.startingPassage + '"'); }
+				state.display(config.startingPassage);
 			}
 		});
 

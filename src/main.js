@@ -62,17 +62,16 @@ var	runtime = Object.defineProperties({}, {
 
 // Config object (author/developer use)
 var	config = {
-		// general option properties
+		// general properties
 		addVisitedLinkClass   : false,
 		altPassageDescription : undefined,
 		cleanupWikifierOutput : false,
 		displayPassageTitles  : false,
 		loadDelay             : 0,
-		startPassage          : undefined,
-		uiBarInitialState     : "unstowed",
+		startingPassage       : undefined,
 		updatePageElements    : true,
 
-		// history option properties
+		// history properties
 		disableHistoryControls : false,
 		disableHistoryTracking : false,
 		historyMode            : has.pushState
@@ -98,13 +97,13 @@ var	config = {
 			return "";
 		}()),
 
-		// macros option properties
+		// macros properties
 		macros : {
 			disableIfAssignmentError : false,
 			maxLoopIterations        : 1000
 		},
 
-		// saves option properties
+		// saves properties
 		saves : {
 			autoload  : undefined,
 			autosave  : undefined,
@@ -113,6 +112,11 @@ var	config = {
 			onLoad    : undefined,
 			onSave    : undefined,
 			slots     : 8
+		},
+
+		// UI properties
+		ui : {
+			stowBarInitially : false
 		}
 	};
 
