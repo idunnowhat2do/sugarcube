@@ -19,7 +19,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 	 * Initialization
 	 ******************************************************************************************************************/
 	function init() {
-		/* legacy kludges */
+		/* legacy */
 		function convertOldSave(saveObj) {
 			if (saveObj.hasOwnProperty("data") && !saveObj.hasOwnProperty("state")) {
 				saveObj.state = {
@@ -33,7 +33,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 				delete saveObj.state.history;
 			}
 		}
-		/* /legacy kludges */
+		/* /legacy */
 
 		if (DEBUG) { console.log("[Save.init()]"); }
 
@@ -45,8 +45,8 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		var	saves   = savesObjGet(),
 			updated = false;
 
-		/* legacy kludges */
-		// convert an old saves array into a new saves object
+		/* legacy */
+		// convert an ancient saves array into a new saves object
 		if (Array.isArray(saves)) {
 			saves = {
 				autosave : null,
@@ -54,7 +54,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 			};
 			updated = true;
 		}
-		/* /legacy kludges */
+		/* /legacy */
 
 		// handle the author changing the number of save slots
 		if (config.saves.slots !== saves.slots.length) {
@@ -77,7 +77,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 			updated = true;
 		}
 
-		/* legacy kludges */
+		/* legacy */
 		// convert old-style saves
 		if (saves.autosave !== null) {
 			if (!saves.autosave.hasOwnProperty("state") || !saves.autosave.state.hasOwnProperty("delta")) {
@@ -93,7 +93,15 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 				}
 			}
 		}
-		/* /legacy kludges */
+		/* /legacy */
+
+		/* legacy */
+		// remove save stores which are empty
+		if (_savesObjIsEmpty(saves)) {
+			storage.delete("saves");
+			updated = false;
+		}
+		/* /legacy */
 
 		// if the saves object was updated, then update the store
 		if (updated) {
@@ -337,8 +345,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		return array;
 	}
 
-	function _savesObjSave(saves) {
-		//return storage.set("saves", saves);
+	function _savesObjIsEmpty(saves) {
 		var	isSlotsEmpty = true;
 		for (var i = 0; i < saves.slots.length; i++) {
 			if (saves.slots[i] !== null) {
@@ -346,7 +353,11 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 				break;
 			}
 		}
-		if (saves.autosave === null && isSlotsEmpty) {
+		return saves.autosave === null && isSlotsEmpty;
+	}
+
+	function _savesObjSave(saves) {
+		if (_savesObjIsEmpty(saves)) {
 			storage.delete("saves");
 			return true;
 		}
