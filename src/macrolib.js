@@ -1366,7 +1366,7 @@ if (!has.audio) {
 	/**
 	 * <<audio>>
 	 */
-	Macro.add(["audio"], {
+	Macro.add("audio", {
 		version : { major : 1, minor : 1, revision : 0 },
 		handler : function () {
 			if (this.args.length < 2) {
@@ -1602,8 +1602,8 @@ if (!has.audio) {
 	/**
 	 * <<playlist>>
 	 */
-	Macro.add(["playlist"], {
-		version : { major : 1, minor : 1, revision : 0 },
+	Macro.add("playlist", {
+		version : { major : 1, minor : 2, revision : 0 },
 		handler : function () {
 			if (this.args.length === 0) {
 				return this.error("no actions specified");
@@ -1615,6 +1615,7 @@ if (!has.audio) {
 				mute,
 				loop,
 				shuffle,
+				fadeTo,
 				raw;
 
 			// process arguments
@@ -1626,6 +1627,25 @@ if (!has.audio) {
 				case "pause":
 				case "stop":
 					action = arg;
+					break;
+				case "fadein":
+					action = "fade";
+					fadeTo = 1;
+					break;
+				case "fadeout":
+					action = "fade";
+					fadeTo = 0;
+					break;
+				case "fadeto":
+					if (args.length === 0) {
+						return this.error("fadeto missing required level value");
+					}
+					action = "fade";
+					raw = args.shift();
+					fadeTo = parseFloat(raw);
+					if (isNaN(fadeTo) || !isFinite(fadeTo)) {
+						return this.error("cannot parse fadeto: " + raw);
+					}
 					break;
 				case "volume":
 					if (args.length === 0) {
@@ -1656,17 +1676,7 @@ if (!has.audio) {
 
 			try {
 				if (volume != null) { // lazy equality for null
-					if (self.current !== null) {
-						self.current.volume = volume;
-					}
-					for (var i = 0, length = self.list.length; i < length; i++) {
-						self.list[i].volume = volume;
-					}
-					/* eslint-disable no-redeclare */
-					for (var i = 0, length = self.tracks.length; i < length; i++) {
-						self.tracks[i].volume = volume;
-					}
-					/* eslint-enable no-redeclare */
+					self.setVolume(volume);
 				}
 				if (mute != null) { // lazy equality for null
 					self.muted = mute;
@@ -1693,6 +1703,16 @@ if (!has.audio) {
 				case "stop":
 					self.stop();
 					break;
+				case "fade":
+					if (self.volume === fadeTo) {
+						if (fadeTo === 0) {
+							self.setVolume(1);
+						} else if (fadeTo === 1) {
+							self.setVolume(0);
+						}
+					}
+					self.fade(fadeTo);
+					break;
 				}
 			} catch (e) {
 				return this.error("error playing audio: " + e.message);
@@ -1717,6 +1737,18 @@ if (!has.audio) {
 				this.current.stop();
 			}
 		},
+		fade : function (to) {
+			if (this.list.length === 0) {
+				this.buildList();
+			}
+			if (this.current === null || this.current.isEnded()) {
+				this.next();
+			} else {
+				this.current.volume = this.volume;
+			}
+			this.current.fade(this.current.volume, to);
+			this.volume = to; // kludgey, but necessary
+		},
 		mute : function () {
 			if (this.current !== null) {
 				this.current.mute();
@@ -1729,6 +1761,13 @@ if (!has.audio) {
 		},
 		next : function () {
 			this.current = this.list.shift();
+			this.current.volume = this.volume;
+		},
+		setVolume : function (vol) {
+			this.volume = vol;
+			if (this.current !== null) {
+				this.current.volume = vol;
+			}
 		},
 		onEnd : function () {
 			var	thisp = Macro.get("playlist");
@@ -1758,6 +1797,7 @@ if (!has.audio) {
 		tracks  : [],
 		list    : [],
 		current : null,
+		volume  : 1,
 		muted   : false,
 		loop    : true,
 		shuffle : false
@@ -1767,7 +1807,7 @@ if (!has.audio) {
 	 * <<setplaylist>>
 	 */
 	Macro.add("setplaylist", {
-		version : { major : 2, minor : 0, revision : 0 },
+		version : { major : 2, minor : 0, revision : 1 },
 		handler : function () {
 			if (this.args.length === 0) {
 				return this.error("no track ID(s) specified");
@@ -1798,6 +1838,7 @@ if (!has.audio) {
 			playlist.tracks  = list;
 			playlist.list    = [];
 			playlist.current = null;
+			playlist.volume  = 1;
 			playlist.muted   = false;
 			playlist.loop    = true;
 			playlist.shuffle = false;
