@@ -326,12 +326,10 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				return btn;
 			}
 
-			var saves = storage.get("saves");
-			if (saves === null) { return false; }
+			var	saves = Save.get(),
+				tbody = document.createElement("tbody");
 
-			var	tbody = document.createElement("tbody");
-			var	tr, tdSlot,	tdLoad, tdDesc, tdDele;
-			var	tdLoadBtn, tdDescTxt, tdDeleBtn;
+			var	tr, tdSlot, tdLoad, tdLoadBtn, tdDesc, tdDescTxt, tdDele, tdDeleBtn;
 
 			if (Save.autosave.ok()) {
 				tr     = document.createElement("tr");
