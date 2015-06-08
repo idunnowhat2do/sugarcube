@@ -8,6 +8,14 @@
  **********************************************************************************************************************/
 
 /* eslint-disable max-len */
+/*
+	Notes:
+
+	1. The capitalization and punctuation used herein is deliberate, especially within the error strings.
+	2. The replacement patterns (%…%) are only supported for the strings in which they can be found
+	   herein.  During replacement, all instances of the patterns are replaced, so, where they are
+	   found, they may be used as many times as desired.
+*/
 var	strings = { // eslint-disable-line no-unused-vars
 		// identity
 		identity : "game",
@@ -17,6 +25,14 @@ var	strings = { // eslint-disable-line no-unused-vars
 		cancel   : "Cancel",
 		close    : "Close",
 		ok       : "OK",
+
+		// errors
+		errors : {
+			title              : "Error",
+			nonexistentPassage : 'the passage "%passage%" does not exist',
+			saveMissingData    : "save is missing required data. Either you've loaded a file which is not a save or the save has become corrupted",
+			saveIdMismatch     : "save is from the wrong %identity%"
+		},
 
 		// ui-bar
 		uiBar : {

@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global Wikifier, tale */
+/* global Wikifier, strings, tale */
 
 /***********************************************************************************************************************
  * Utility Functions
@@ -315,7 +315,7 @@ function addStyle(css) { // eslint-disable-line no-unused-vars
  * Appends an error message to the passed DOM element
  */
 function throwError(place, message, title) { // eslint-disable-line no-unused-vars
-	insertElement(place, "span", null, "error", "Error: " + message, title);
+	insertElement(place, "span", null, "error", strings.errors.title + ": " + message, title);
 	return false;
 }
 

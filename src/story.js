@@ -9,7 +9,7 @@
 /*
 	global Save, SeedablePRNG, UI, Util, Wikifier, clone, config, convertBreaksToParagraphs, insertElement,
 	       postdisplay, postrender, predisplay, prehistory, prerender, removeChildren, runtime, session,
-	       state:true, tale, technicalAlert
+	       state:true, strings, tale, technicalAlert
 */
 
 /***********************************************************************************************************************
@@ -1025,8 +1025,9 @@ Object.defineProperties(Passage.prototype, {
 	text : {
 		get : function () {
 			if (this.element == null) { // lazy equality for null
-				return String.format('<span class="error" title="{0}">Error: the passage "{0}" does not exist</span>',
-					Util.entityEncode(this.title));
+				return ('<span class="error" title="%passage%">' + strings.errors.title + ": "
+					+ strings.errors.nonexistentPassage
+					+ '</span>').replace(/%passage%/g, Util.entityEncode(this.title));
 			}
 			if (TWINE1) {
 				return Passage.unescape(this.element.textContent);

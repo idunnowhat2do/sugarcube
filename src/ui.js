@@ -510,7 +510,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			}
 			return true;
 		} else {
-			dialogAlert(strings.saves.incapable.replace("%identity%", strings.identity));
+			dialogAlert(strings.saves.incapable.replace(/%identity%/g, strings.identity));
 			return false;
 		}
 	}

@@ -389,8 +389,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 
 		try {
 			if (!saveObj || !saveObj.hasOwnProperty("id") || !saveObj.hasOwnProperty("state")) {
-				throw new Error("save is missing required data."
-					+ " Either you've loaded a file which is not a save or the save has become corrupted");
+				throw new Error(strings.errors.saveMissingData);
 			}
 
 			// delta decode the state history
@@ -402,7 +401,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 			}
 
 			if (saveObj.id !== config.saves.id) {
-				throw new Error("save is from the wrong " + strings.identity);
+				throw new Error(strings.errors.saveIdMismatch);
 			}
 
 			// restore the state
