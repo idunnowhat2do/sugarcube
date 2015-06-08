@@ -437,15 +437,15 @@ function scrollWindowTo(el, increment) { // eslint-disable-line no-unused-vars
 var Util = Object.defineProperties({}, {
 
 	/**
-	 * Backup Math.random, in case it's replaced later
-	 */
+		[DEPRECATED] Backup Math.random, in case it's replaced later
+	*/
 	random : {
 		value : Math.random
 	},
 
 	/**
-	 * Returns whether the passed value is numeric
-	 */
+		Returns whether the passed value is numeric
+	*/
 	isNumeric : {
 		value : function (obj) {
 			switch (typeof obj) {
@@ -463,8 +463,8 @@ var Util = Object.defineProperties({}, {
 	},
 
 	/**
-	 * Returns whether the passed value is boolean-ish
-	 */
+		Returns whether the passed value is boolean-ish
+	*/
 	isBoolean : {
 		value : function (obj) {
 			return typeof obj === "boolean" || typeof obj === "string" && (obj === "true" || obj === "false");
@@ -472,8 +472,8 @@ var Util = Object.defineProperties({}, {
 	},
 
 	/**
-	 * Returns a lowercased and underscore encoded version of the passed string
-	 */
+		Returns a lowercased and underscore encoded version of the passed string
+	*/
 	slugify : {
 		value : function (str) {
 			return str
@@ -485,8 +485,8 @@ var Util = Object.defineProperties({}, {
 	},
 
 	/**
-	 * Returns an entity encoded version of the passed string
-	 */
+		Returns an entity encoded version of the passed string
+	*/
 	entityEncode : {
 		value : function (str) {
 			return str
@@ -498,8 +498,8 @@ var Util = Object.defineProperties({}, {
 	},
 
 	/**
-	 * Returns a decoded version of the passed entity encoded string
-	 */
+		Returns a decoded version of the passed entity encoded string
+	*/
 	entityDecode : {
 		value : function (str) {
 			return str
@@ -511,8 +511,8 @@ var Util = Object.defineProperties({}, {
 	},
 
 	/**
-	 * Returns the evaluation of the passed expression, throwing if there were errors
-	 */
+		Returns the evaluation of the passed expression, throwing if there were errors
+	*/
 	evalExpression : {
 		value : function (expression) {
 			"use strict";
@@ -522,8 +522,8 @@ var Util = Object.defineProperties({}, {
 	},
 
 	/**
-	 * Evaluates the passed statements, throwing if there were errors
-	 */
+		Evaluates the passed statements, throwing if there were errors
+	*/
 	evalStatements : {
 		value : function (statements) {
 			"use strict";
@@ -534,8 +534,8 @@ var Util = Object.defineProperties({}, {
 	},
 
 	/**
-	 * Diff operations enumeration
-	 */
+		Diff operations enumeration
+	*/
 	DiffOp : {
 		value : Object.freeze({
 			Delete      : 0,
@@ -546,8 +546,8 @@ var Util = Object.defineProperties({}, {
 	},
 
 	/**
-	 * Returns a patch object containing the differences between the original and the destination objects
-	 */
+		Returns a patch object containing the differences between the original and the destination objects
+	*/
 	diff : {
 		value : function (orig, dest) /* diff object */ {
 			"use strict";
@@ -648,8 +648,8 @@ var Util = Object.defineProperties({}, {
 	},
 
 	/**
-	 * Returns an object resulting from updating the original object with the difference object
-	 */
+		Returns an object resulting from updating the original object with the difference object
+	*/
 	patch : {
 		value : function (orig, diff) /* patched object */ {
 			"use strict";
@@ -681,8 +681,8 @@ var Util = Object.defineProperties({}, {
 	},
 
 	/**
-	 * Returns the number of miliseconds represented by the passed CSS time string.
-	 */
+		Returns the number of miliseconds represented by the passed CSS time string.
+	*/
 	fromCSSTime : {
 		value : function (cssTime) {
 			"use strict";
@@ -700,8 +700,8 @@ var Util = Object.defineProperties({}, {
 	},
 
 	/**
-	 * Returns the CSS time string represented by the passed number of milliseconds.
-	 */
+		Returns the CSS time string represented by the passed number of milliseconds.
+	*/
 	toCSSTime : {
 		value : function (msec) {
 			"use strict";
@@ -791,9 +791,9 @@ Object.defineProperties(SeedablePRNG, {
 });
 
 
-/*******************************************************************************************************************
+/***********************************************************************************************************************
  * AudioWrapper
- ******************************************************************************************************************/
+ **********************************************************************************************************************/
 // Setup the AudioWrapper constructor
 function AudioWrapper(audio) {
 	Object.defineProperties(this, {

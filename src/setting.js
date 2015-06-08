@@ -73,7 +73,7 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 			throw new Error("missing parameters, no " + errors.join(" or ") + " specified");
 		}
 		if (typeof def !== "object") {
-			throw new Error("definition parameter must be an object");
+			throw new TypeError("definition parameter must be an object");
 		}
 		if (definitionsHas(name)) {
 			throw new Error('cannot clobber existing setting "' + name + '"');
@@ -102,7 +102,7 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 			if (!def.hasOwnProperty("list")) {
 				throw new Error("no list specified");
 			} else if (!Array.isArray(def.list)) {
-				throw new Error("list must be an array");
+				throw new TypeError("list must be an array");
 			} else if (def.list.length === 0) {
 				throw new Error("list must not be empty");
 			}
