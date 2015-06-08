@@ -851,7 +851,8 @@ Object.defineProperties(History, {
 
 			if (!state.isEmpty()) { // alternatively, we could check for the presence of `state.active.init`
 				throw new Error("History.initPRNG must be called during initialization,"
-					+ " either in a script-tagged passage or from the StoryInit special passage");
+					+ " within either a script section (Twine 1: a script-tagged passage,"
+					+ " Twine 2: Story JavaScript) or the StoryInit special passage");
 			}
 
 			state.prng = new SeedablePRNG(seed, useEntropy);
