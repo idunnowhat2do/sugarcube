@@ -566,6 +566,13 @@ Object.defineProperties(History.prototype, {
 		}
 	},
 
+	random : {
+		value : function () {
+			if (DEBUG) { console.log("[<History>.random()]"); }
+			return this.prng ? this.prng.random() : Math.random();
+		}
+	},
+
 	regenerateSuid : {
 		value : function () {
 			if (DEBUG) { console.log("[<History>.regenerateSuid()]"); }
@@ -842,17 +849,13 @@ Object.defineProperties(History, {
 		value : function (seed, useEntropy) {
 			if (DEBUG) { console.log("[History.initPRNG()]"); }
 
-			runtime.flags.HistoryPRNG.isEnabled = true;
+			if (!state.isEmpty()) { // alternatively, we could check for the presence of `state.active.init`
+				throw new Error("History.initPRNG must be called during initialization,"
+					+ " either in a script-tagged passage or from the StoryInit special passage");
+			}
+
 			state.prng = new SeedablePRNG(seed, useEntropy);
 			state.active.rcount = state.prng.count;
-
-			if (!runtime.flags.HistoryPRNG.isMathPRNG) {
-				runtime.flags.HistoryPRNG.isMathPRNG = true;
-				Math.random = function () {
-					if (DEBUG) { console.log("**** state.prng.random() called via Math.random() ****"); }
-					return state.prng.random();
-				};
-			}
 		}
 	},
 
@@ -913,9 +916,12 @@ Object.defineProperties(History, {
 			// necessary?
 			document.title = tale.title;
 
+			// cache the current history's PRNG state
+			var isPRNGEnabled = !!state.prng;
+
 			// reset the history
 			state = new History();
-			if (runtime.flags.HistoryPRNG.isEnabled) {
+			if (isPRNGEnabled) {
 				History.initPRNG(stateObj.hasOwnProperty("rseed") ? stateObj.rseed : null);
 			}
 			if (config.historyMode === History.Modes.Session) {

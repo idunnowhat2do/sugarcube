@@ -102,7 +102,7 @@ function random(/* inclusive */ min, /* inclusive */ max) { // eslint-disable-li
 		min = swap;
 	}
 
-	return Math.floor(Math.random() * (max - min + 1)) + min;
+	return Math.floor(state.random() * (max - min + 1)) + min;
 }
 
 /**
@@ -124,7 +124,7 @@ function randomFloat(/* inclusive */ min, /* exclusive */ max) { // eslint-disab
 		min = swap;
 	}
 
-	return Math.random() * (max - min) + min;
+	return state.random() * (max - min) + min;
 }
 
 /**

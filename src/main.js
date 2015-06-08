@@ -46,14 +46,6 @@ var	version = Object.freeze({
 
 // Runtime object (internal use only)
 var	runtime = Object.defineProperties({}, {
-		flags : {
-			value : {
-				HistoryPRNG : {
-					isEnabled  : false,
-					isMathPRNG : false
-				}
-			}
-		},
 		temp : {
 			writable : true,
 			value    : {}
