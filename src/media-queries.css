@@ -8,7 +8,7 @@
  **********************************************************************************************************************/
 
 /*
-	Increase viewport utilization as its size decreases.
+	Increase viewport utilization as its width decreases.
 */
 @media screen and (max-width: 1136px) {
 	#ui-bar.stowed ~ #story {
@@ -21,8 +21,9 @@
 }
 
 /*
-	At narrow viewport widths, set #story{margin-left} equal to #ui-bar.stowed~#story{margin-left},
-	so that #ui-bar will side over top of #story when unstowed, rather than shoving it over.
+	At very narrow viewport widths, set `#story{margin-left}` equal to the value
+	of `#ui-bar.stowed~#story{margin-left}`, so that `#ui-bar` will side over top
+	of `#story` when unstowed, rather than shoving it over.
 */
 @media screen and (max-width: 768px) {
 	#story {

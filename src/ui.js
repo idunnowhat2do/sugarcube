@@ -96,8 +96,8 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			+             '<ul id="menu-story"></ul>'
 			+             '<ul id="menu-core">'
 			+                 '<li id="menu-saves"><a tabindex="0">' + strings.saves.title + '</a></li>'
-			+                 '<li id="menu-settings"><a tabindex="0">' + strings.settings.title + '</a></li>'
 //			+                 '<li id="menu-rewind"><a tabindex="0">' + strings.rewind.title + '</a></li>'
+			+                 '<li id="menu-settings"><a tabindex="0">' + strings.settings.title + '</a></li>'
 			+                 '<li id="menu-restart"><a tabindex="0">' + strings.restart.title + '</a></li>'
 			+                 '<li id="menu-share"><a tabindex="0">' + strings.share.title + '</a></li>'
 			+             '</ul>'
@@ -189,10 +189,6 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 //			jQuery("#menu-rewind").remove();
 //		}
 
-		// setup the Restart menu item
-		dialogAddClickHandler("#menu-restart a", null, function () { buildDialogRestart(); })
-			.text(strings.restart.title);
-
 		// setup the Settings menu item
 		if (!Setting.isEmpty()) {
 			dialogAddClickHandler("#menu-settings a", null, function () { buildDialogSettings(); })
@@ -200,6 +196,10 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		} else {
 			jQuery("#menu-settings").remove();
 		}
+
+		// setup the Restart menu item
+		dialogAddClickHandler("#menu-restart a", null, function () { buildDialogRestart(); })
+			.text(strings.restart.title);
 
 		// setup the Share menu item
 		if (tale.has("StoryShare")) {

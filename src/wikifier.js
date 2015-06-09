@@ -1753,7 +1753,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					if (passage !== "") {
 						if (el.tagName.toUpperCase() === "IMG") {
 							var source;
-							// check for Twine 1.4 Base64 image passage transclusion
+							// check for image passage transclusion
 							if (tale.has(passage)) {
 								passage = tale.get(passage);
 								if (passage.tags.contains("Twine.image")) {
