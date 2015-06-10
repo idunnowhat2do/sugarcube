@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /*
- * build.js
- *   - Description : Node.js-hosted build script for SugarCube
- *   - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
- *   - Copyright   : Copyright © 2014–2015 Thomas Michael Edwards. All rights reserved.
- *   - Version     : 1.2.4, 2015-05-22
- */
+	build.js
+	  - Description : Node.js-hosted build script for SugarCube 1.x
+	  - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
+	  - Copyright   : Copyright © 2014–2015 Thomas Michael Edwards. All rights reserved.
+	  - Version     : 1.2.5, 2015-06-10
+*/
 "use strict";
 
 /*******************************************************************************
@@ -42,33 +42,33 @@ var CONFIG = {
 	twine1 : {
 		build : {
 			src  : "src/format-twine1.tpl",
-			dest : "dist/twine1/sugarcube/header.html"
+			dest : "dist/twine1/sugarcube-1/header.html"
 		},
 		copy : [
 			{
 				src  : "src/format-twine1.py",
-				dest : "dist/twine1/sugarcube/sugarcube.py"
+				dest : "dist/twine1/sugarcube-1/sugarcube-1.py"
 			},
 			{
 				src  : "LICENSE",
-				dest : "dist/twine1/sugarcube/LICENSE"
+				dest : "dist/twine1/sugarcube-1/LICENSE"
 			}
 		]
 	},
 	twine2 : {
 		build : {
 				src  : "src/format-twine2.tpl",
-				dest : "dist/twine2/sugarcube/format.js",
+				dest : "dist/twine2/SugarCube-1/format.js",
 				json : "src/format-twine2.json"
 		},
 		copy : [
 			{
 				src  : "icon.svg",
-				dest : "dist/twine2/sugarcube/icon.svg"
+				dest : "dist/twine2/SugarCube-1/icon.svg"
 			},
 			{
 				src  : "LICENSE",
-				dest : "dist/twine2/sugarcube/LICENSE"
+				dest : "dist/twine2/SugarCube-1/LICENSE"
 			}
 		]
 	}
