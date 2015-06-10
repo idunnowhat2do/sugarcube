@@ -13,7 +13,7 @@ from collections import OrderedDict
 class Header (header.Header):
 
 	def filesToEmbed(self):
-		userLibPath = self.builtinPath + os.sep + 'sugarcube' + os.sep + 'userlib.js'
+		userLibPath = self.path + os.sep + 'userlib.js'
 		if os.path.isfile(userLibPath):
 			return OrderedDict([
 				('"USER_LIB"', userLibPath)
@@ -22,7 +22,7 @@ class Header (header.Header):
 			return OrderedDict()
 
 	def storySettings(self):
-		return "SugarCube does not support the StorySettings special passage.\n\nInstead, you should use SugarCube's configuration object, config.\n    See: http://www.motoslave.net/sugarcube/docs/config-object.html"
+		return "SugarCube 1.x does not support the StorySettings special passage.\n\nInstead, you should use its configuration object, config.\n    See: http://www.motoslave.net/sugarcube/1/docs/config-object.html"
 
 	def isEndTag(self, name, tag):
 		return (name == ('/' + tag) or name == ('end' + tag))
