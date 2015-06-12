@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * init-screen.css
+ * structural.css
  *
  * Copyright © 2014–2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
@@ -10,12 +10,8 @@
 /* Default body styling */
 body {
 	/*
-		We define the base font size and line height here as they affect the
-		layout of the base page elements (e.g. ui-bar, ui-dialog, passage display).
-	 */
-	/*
-	font: 16px/1 Verdana, "DejaVu Sans", Helmet, Freesans, sans-serif;
-	font: 16px/1 Helmet, Freesans, sans-serif;
+		We define the base font size and line height here as they affect the layout
+		of the base page elements (i.e. `#ui-bar`, `#ui-dialog`, and `#story`).
 	*/
 	font: 16px/1 Helmet, Freesans, sans-serif;
 }
@@ -95,9 +91,9 @@ html.ui-dialog-open body {
 	transition: opacity 200ms ease-in;
 }
 /*
- * n.b. We cannot animate `#ui-dialog:not(.open)` as the restoration of `overflow` on
- *      `body` would cause the still animating dialog to jerk if a scrollbar popped in.
- */
+	We cannot animate `#ui-dialog:not(.open)` as the restoration of `overflow` on
+	`body` would cause the still animating dialog to jerk if a scrollbar popped in.
+*/
 #ui-dialog {
 	display: none;
 	opacity: 0;
@@ -151,8 +147,12 @@ html.ui-dialog-open body {
 }
 
 /* Stop text selection on certain UI anchors & buttons */
-button, #ui-bar-toggle, #menu a,
-#ui-dialog-close, #ui-dialog-body.list a, #ui-dialog-body.settings span[id|="setting-input"] {
+button,
+#ui-bar-toggle,
+#menu a,
+#ui-dialog-close,
+#ui-dialog-body.list a,
+#ui-dialog-body.settings span[id|="setting-input"] {
 	-webkit-user-select: none;
 	-khtml-user-select: none;
 	-moz-user-select: none;

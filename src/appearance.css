@@ -209,13 +209,25 @@ audio, canvas, progress, video {
 	color: #eee;
 }
 
-[data-icon]:before, [data-icon-before]:before, [data-icon-after]:after,
-.error:before, a.macro-back:before, a.macro-return:after, a.link-external:after,
+[data-icon]:before,
+[data-icon-before]:before,
+[data-icon-after]:after,
+.error:before,
+a.macro-back:before,
+a.macro-return:after,
+#story a.link-external:after,
 #ui-bar-toggle button:before,
-#menu-saves a:before, #menu-rewind a:before, #menu-restart a:before, #menu-settings a:before, #menu-share a:before,
-#ui-dialog-close, #ui-dialog-body.settings button[id|="setting-control"]:after, #ui-dialog-body.settings button[id|="setting-control"].enabled:after,
-#ui-dialog-body.saves button[id="saves-export"]:before, #ui-dialog-body.saves button[id="saves-import"]:before, #ui-dialog-body.saves button[id="saves-clear"]:before, #ui-dialog-body.saves button[id|="saves-delete"]:before,
-.icon {
+#menu-saves a:before,
+/*#menu-rewind a:before,*/
+#menu-settings a:before,
+#menu-restart a:before,
+#menu-share a:before,
+#ui-dialog-close,
+#ui-dialog-body.saves button[id="saves-export"]:before,
+#ui-dialog-body.saves button[id="saves-import"]:before,
+#ui-dialog-body.saves button[id="saves-clear"]:before,
+#ui-dialog-body.settings button[id|="setting-control"]:after,
+#ui-dialog-body.settings button[id|="setting-control"].enabled:after {
 	font-family: "tme-fa-icons";
 	font-style: normal;
 	font-weight: normal;
@@ -242,7 +254,7 @@ a.macro-back:before {
 a.macro-return:after {
 	content: "\00a0\e822";
 }
-#passages a.link-external:after {
+#story a.link-external:after {
 	content: "\00a0\e80e";
 }
 #ui-bar-toggle button:before {
@@ -254,14 +266,16 @@ a.macro-return:after {
 #menu-saves a:before {
 	content: "\e82b\00a0";
 }
+/*
 #menu-rewind a:before {
 	content: "\e825\00a0";
 }
-#menu-restart a:before {
-	content: "\e82c\00a0";
-}
+*/
 #menu-settings a:before {
 	content: "\e82d\00a0";
+}
+#menu-restart a:before {
+	content: "\e82c\00a0";
 }
 #menu-share a:before {
 	content: "\e82f\00a0";
@@ -419,7 +433,10 @@ a.macro-return:after {
 	padding: 0.4em;
 }
 #ui-dialog-body.saves ul.buttons li:last-child {
-	/* using position:absolute;right:0; here can produce poor results */
+	/*
+		Using `position:absolute;right:0;` here can produce poor results, so we
+		fallback to using `float:right` instead.
+	*/
 	float: right;
 }
 

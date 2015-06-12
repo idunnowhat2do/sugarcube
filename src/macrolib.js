@@ -573,7 +573,7 @@ Macro.add("if", {
 							"no conditional expression specified for <<" + this.payload[i].name
 							+ ">> clause" + (i > 0 ? " (#" + i + ")" : "")
 						);
-					} else if (!config.macros.disableIfAssignmentError && /[^=&^|<>*/%+-]=[^=]/.test(this.payload[i].arguments)) {
+					} else if (!config.macros.disableIfAssignmentError && /[^!=&^|<>*/%+-]=[^=]/.test(this.payload[i].arguments)) {
 						return this.error(
 							'assignment operator "=" found within <<'
 							+ this.payload[i].name + ">> clause" + (i > 0 ? " (#" + i + ")" : "")
@@ -834,7 +834,7 @@ Macro.add("script", {
  * <<button>> & <<click>>
  */
 Macro.add(["button", "click"], {
-	version : { major : 5, minor : 1, patch : 1 },
+	version : { major : 5, minor : 2, patch : 0 },
 	tags    : null,
 	handler : function () {
 		if (this.args.length === 0) {
@@ -881,18 +881,24 @@ Macro.add(["button", "click"], {
 			}
 			insertText(el, text);
 		}
-		el.classList.add("link-" + (
-			passage != null /* lazy equality for null */
-				? tale.has(passage) ? "internal" : "broken"
-				: "internal"
-		));
+		if (passage != null) { // lazy equality for null
+			if (tale.has(passage)) {
+				el.classList.add("link-internal");
+				if (config.addVisitedLinkClass && state.has(passage)) {
+					el.classList.add("link-visited");
+				}
+			} else {
+				el.classList.add("link-broken");
+			}
+		} else {
+			el.classList.add("link-internal");
+		}
 		el.classList.add("macro-" + this.name);
 		addAccessibleClickHandler(el, getWikifyEvalHandler(
 			this.payload[0].contents.trim(),
 			widgetArgs,
 			passage != null ? function () { state.display(passage, el); } : undefined // lazy equality for null
-		), passage != null, ".macros");
-		//jQuery(el).addClass("event-click" + (passage != null ? "-once" : ""));
+		), passage != null, ".macros"); // lazy equality for null
 		this.output.appendChild(el);
 	}
 });
