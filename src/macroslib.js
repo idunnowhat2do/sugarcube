@@ -1566,12 +1566,17 @@ function defineStandardMacros() {
 				}
 			},
 			types : Object.freeze({
-				// define the supported audio types via MIME-type (incl. the codecs property)
-				//     n.b. Opera (pre-15?) will return a false-negative if the codecs value is quoted
+				/*
+					Define the supported audio types via MIME-type (incl. the codecs property).
+
+					n.b. Opera (Presto) will return a false-negative if the codecs value is quoted.
+					     Opera (Blink) will return a false-negative for WAVE audio if the preferred
+					     MIME-type of "audio/wave" is specified, instead "audio/wav" must be used.
+				*/
 				mp3  : 'audio/mpeg; codecs=mp3',
 				ogg  : 'audio/ogg; codecs=vorbis',
 				webm : 'audio/webm; codecs=vorbis',
-				wav  : 'audio/wave; codecs=1'
+				wav  : 'audio/wav; codecs=1'
 			}),
 			canPlay : {},
 			tracks : {}
