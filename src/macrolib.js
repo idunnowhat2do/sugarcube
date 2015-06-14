@@ -569,7 +569,24 @@ Macro.add("if", {
 	handler  : function () {
 		try {
 			for (var i = 0, len = this.payload.length; i < len; i++) {
-				if (this.payload[i].name !== "else") {
+				// sanity checks
+				switch (this.payload[i].name) {
+				case "else":
+					if (this.payload[i].arguments.length !== 0) {
+						if (/^\s*if\b/i.test(this.payload[i].arguments)) {
+							return this.error(
+								'whitespace is not allowed between the "else" and "if" in <<elseif>> clause'
+								+ (i > 0 ? " (#" + i + ")" : "")
+							);
+						}
+						return this.error(
+							"<<else>> does not accept a conditional expression"
+							+ " (perhaps you meant to use <<elseif>>), invalid: "
+							+ this.payload[i].arguments
+						);
+					}
+					break;
+				default:
 					if (this.payload[i].arguments.length === 0) {
 						return this.error(
 							"no conditional expression specified for <<" + this.payload[i].name
@@ -584,19 +601,9 @@ Macro.add("if", {
 							+ this.payload[i].arguments
 						);
 					}
-				} else if (this.payload[i].name === "else" && this.payload[i].arguments.length !== 0) {
-					if (/^\s*if\b/i.test(this.payload[i].arguments)) {
-						return this.error(
-							'whitespace is not allowed between the "else" and "if" in <<elseif>> clause'
-							+ (i > 0 ? " (#" + i + ")" : "")
-						);
-					}
-					return this.error(
-						"<<else>> does not accept a conditional expression"
-						+ " (perhaps you meant to use <<elseif>>), invalid: "
-						+ this.payload[i].arguments
-					);
+					break;
 				}
+				// conditional test
 				if (this.payload[i].name === "else" || !!Wikifier.evalExpression(this.payload[i].arguments)) {
 					new Wikifier(this.output, this.payload[i].contents);
 					break;
@@ -1577,7 +1584,7 @@ if (!has.audio) {
 		<<cacheaudio>>
 	*/
 	Macro.add("cacheaudio", {
-		version : { major : 1, minor : 0, revision : 0 },
+		version : { major : 1, minor : 0, revision : 1 },
 		handler : function () {
 			if (this.args.length < 2) {
 				var errors = [];
