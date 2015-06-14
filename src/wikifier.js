@@ -1185,7 +1185,7 @@ var Wikifier = (function () {
 			{
 				name: "macro",
 				match: "<<",
-				lookaheadRegExp: /<<([^>\s]+)(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|(?:\[(?:[<>]?[Ii][Mm][Gg])?\[[^\r\n]*?\]\]+)|[^>]|(?:>(?!>)))*)>>/gm,
+				lookaheadRegExp: /<<(\/?[A-Za-z][^>\s]*)(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|(?:\[(?:[<>]?[Ii][Mm][Gg])?\[[^\r\n]*?\]\]+)|[^>]|(?:>(?!>)))*)>>/gm,
 				argsPattern: "(?:" + [
 					'("(?:\\\\.|[^"\\\\])+")',                          // 1=double quoted
 					"('(?:\\\\.|[^'\\\\])+')",                          // 2=single quoted
@@ -1303,10 +1303,12 @@ var Wikifier = (function () {
 						contentStart = w.nextMatch,
 						payload      = [];
 
-					while (
-						   (w.matchStart = w.source.indexOf("<<", w.nextMatch)) !== -1
-						&& this.parseTag(w)
-					) {
+					while ((w.matchStart = w.source.indexOf(this.match, w.nextMatch)) !== -1) {
+						if (!this.parseTag(w)) {
+							this.lookaheadRegExp.lastIndex = w.nextMatch = w.matchStart + this.match.length;
+							continue;
+						}
+
 						var	tagName  = this.working.name,
 							tagArgs  = this.working.arguments,
 							tagBegin = this.working.index,
