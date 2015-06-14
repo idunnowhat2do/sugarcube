@@ -574,27 +574,57 @@ function defineStandardMacros() {
 	 * <<if>>
 	 */
 	macros.add("if", {
-		version  : { major : 3, minor : 2, patch : 0 },
+		version  : { major : 4, minor : 0, patch : 0 },
 		skipArgs : true,
 		tags     : [ "elseif", "else" ],
 		handler  : function () {
 			try {
 				for (var i = 0, len = this.payload.length; i < len; i++) {
-					if (this.payload[i].name !== "else" && this.payload[i].arguments.length === 0) {
-						return this.error("no conditional expression specified for <<" + this.payload[i].name + ">> clause" + (i > 0 ? " (#" + i + ")" : ""));
-					} else if (this.payload[i].name === "else" && this.payload[i].arguments.length !== 0) {
-						if (/^\s*if\b/i.test(this.payload[i].arguments)) {
-							return this.error('whitespace is not allowed between the "else" and "if" in <<elseif>> clause' + (i > 0 ? " (#" + i + ")" : ""));
+					// sanity checks
+					switch (this.payload[i].name) {
+					case "else":
+						if (this.payload[i].arguments.length !== 0) {
+							if (/^\s*if\b/i.test(this.payload[i].arguments)) {
+								return this.error(
+									'whitespace is not allowed between the "else" and "if" in <<elseif>> clause'
+									+ (i > 0 ? " (#" + i + ")" : "")
+								);
+							}
+							return this.error(
+								"<<else>> does not accept a conditional expression"
+								+ " (perhaps you meant to use <<elseif>>), invalid: "
+								+ this.payload[i].arguments
+							);
 						}
-						return this.error("<<else>> does not accept a conditional expression (perhaps you meant to use <<elseif>> instead), invalid: " + this.payload[i].arguments);
+						break;
+					default:
+						if (this.payload[i].arguments.length === 0) {
+							return this.error(
+								"no conditional expression specified for <<" + this.payload[i].name
+								+ ">> clause" + (i > 0 ? " (#" + i + ")" : "")
+							);
+						} else if (!config.macros.disableIfAssignmentError && /[^!=&^|<>*/%+-]=[^=]/.test(this.payload[i].arguments)) {
+							return this.error(
+								'assignment operator "=" found within <<'
+								+ this.payload[i].name + ">> clause" + (i > 0 ? " (#" + i + ")" : "")
+								+ " (perhaps you meant to use an equality operator:"
+								+ ' ==, ===, eq, is), invalid: '
+								+ this.payload[i].arguments
+							);
+						}
+						break;
 					}
+					// conditional test
 					if (this.payload[i].name === "else" || !!Wikifier.evalExpression(this.payload[i].arguments)) {
 						new Wikifier(this.output, this.payload[i].contents);
 						break;
 					}
 				}
 			} catch (e) {
-				return this.error("bad conditional expression in <<" + (i === 0 ? "if" : "elseif") + ">> clause" + (i > 0 ? " (#" + i + ")" : "") + ": " + e.message);
+				return this.error(
+					"bad conditional expression in <<" + (i === 0 ? "if" : "elseif") + ">> clause"
+					+ (i > 0 ? " (#" + i + ")" : "") + ": " + e.message
+				);
 			}
 		}
 	});
@@ -1520,7 +1550,7 @@ function defineStandardMacros() {
 		 * <<cacheaudio>>
 		 */
 		macros.add("cacheaudio", {
-			version : { major: 1, minor: 0, revision: 0 },
+			version : { major: 1, minor: 0, revision: 1 },
 			handler : function () {
 				if (this.args.length < 2) {
 					var errors = [];
