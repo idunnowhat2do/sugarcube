@@ -510,7 +510,8 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 			value : [
 					"(?:(" + Wikifier.textPrimitives.anyLetter + "+)\\(([^\\)\\|\\n]+)\\):)", // [1,2]=style(value):
 					"(?:(" + Wikifier.textPrimitives.anyLetter + "+):([^;\\|\\n]+);)",        // [3,4]=style:value;
-					"(?:((?:\\." + Wikifier.textPrimitives.anyLetter + "+)+);)"               // [5]  =.className;  (Twine 1.4 extension)
+					"(?:((?:\\." + Wikifier.textPrimitives.anyLetter + "+)+);)",              // [5]  =.className;
+					"(?:((?:#" + Wikifier.textPrimitives.anyLetter + "+)+);)"                 // [6]  =#id;
 				].join("|")
 		}
 	});
@@ -530,7 +531,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 
 		inlineCSS : {
 			value : function (w) {
-				var	css             = { styles : [], classes : [] },
+				var	css             = { styles : [], classes : [], id : "" },
 					lookaheadRegExp = new RegExp(Wikifier.textPrimitives.inlineCSS, "gm"),
 					matched;
 				do {
@@ -550,6 +551,8 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							});
 						} else if (lookaheadMatch[5]) {
 							css.classes = css.classes.concat(lookaheadMatch[5].slice(1).split(/\./));
+						} else if (lookaheadMatch[6]) {
+							css.id = lookaheadMatch[6].slice(1).split(/#/).pop();
 						}
 						w.nextMatch = lookaheadRegExp.lastIndex;
 					}
@@ -950,6 +953,9 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 								for (var i = 0; i < css.classes.length; i++) { // eslint-disable-line no-redeclare
 									cell.classList.add(css.classes[i]);
 								}
+								if (css.id !== "") {
+									cell.id = css.id;
+								}
 								w.subWikify(cell, this.cellTerminator);
 								if (w.matchText.substr(w.matchText.length - 2, 1) === " ") {
 									spaceRight = true;
@@ -1202,7 +1208,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 			{
 				name            : "macro",
 				match           : "<<",
-				lookaheadRegExp : /<<([^>\s]+)(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|(?:\[(?:[<>]?[Ii][Mm][Gg])?\[[^\r\n]*?\]\]+)|[^>]|(?:>(?!>)))*)>>/gm,
+				lookaheadRegExp : /<<(\/?[A-Za-z][^>\s]*)(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|(?:\[(?:[<>]?[Ii][Mm][Gg])?\[[^\r\n]*?\]\]+)|[^>]|(?:>(?!>)))*)>>/gm,
 				argsPattern     : "(?:" + [
 					'("(?:\\\\.|[^"\\\\])+")',                          // 1=double quoted
 					"('(?:\\\\.|[^'\\\\])+')",                          // 2=single quoted
@@ -1324,10 +1330,12 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						contentStart = w.nextMatch,
 						payload      = [];
 
-					while (
-						   (w.matchStart = w.source.indexOf("<<", w.nextMatch)) !== -1
-						&& this.parseTag(w)
-					) {
+					while ((w.matchStart = w.source.indexOf(this.match, w.nextMatch)) !== -1) {
+						if (!this.parseTag(w)) {
+							this.lookaheadRegExp.lastIndex = w.nextMatch = w.matchStart + this.match.length;
+							continue;
+						}
+
 						var	tagName  = this.working.name,
 							tagArgs  = this.working.arguments,
 							tagBegin = this.working.index,
@@ -1613,7 +1621,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					var	blockMatch = this.blockRegExp.exec(w.source),
 						blockLevel = blockMatch && blockMatch.index === w.nextMatch,
 						el         = insertElement(w.output, blockLevel ? "div" : "span");
-					if (css.styles.length === 0 && css.classes.length === 0) {
+					if (css.styles.length === 0 && css.classes.length === 0 && css.id === "") {
 						el.className = "marked";
 					} else {
 						for (var i = 0; i < css.styles.length; i++) {
@@ -1621,6 +1629,9 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						}
 						for (var i = 0; i < css.classes.length; i++) { // eslint-disable-line no-redeclare
 							el.classList.add(css.classes[i]);
+						}
+						if (css.id !== "") {
+							el.id = css.id;
 						}
 					}
 					if (blockLevel) {

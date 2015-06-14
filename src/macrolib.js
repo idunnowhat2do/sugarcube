@@ -18,9 +18,11 @@ function getWikifyEvalHandler(content, widgetArgs, callback) {
 	return function () {
 		if (content !== "") {
 			var argsCache;
-			// there's no catch clause because this try/finally is here simply to ensure that
-			// the $args variable is properly restored in the event that an exception is thrown
-			// during the Wikifier.wikifyEval() call
+			/*
+				There's no catch clause because this try/finally is here simply to ensure that
+				the `$args` variable is properly restored in the event that an exception is thrown
+				during the `Wikifier.wikifyEval()` call.
+			*/
 			try {
 				if (typeof widgetArgs !== "undefined") {
 					// cache the existing $args variable, if any
@@ -59,8 +61,8 @@ function getWikifyEvalHandler(content, widgetArgs, callback) {
  * Links Macros
  **********************************************************************************************************************/
 /**
- * <<actions>>
- */
+	<<actions>>
+*/
 Macro.add("actions", {
 	version : { major : 3, minor : 1, patch : 0 },
 	handler : function () {
@@ -127,8 +129,8 @@ Macro.add("actions", {
 });
 
 /**
- * <<back>> & <<return>>
- */
+	<<back>> & <<return>>
+*/
 Macro.add(["back", "return"], {
 	version : { major : 5, minor : 2, patch : 0 },
 	handler : function () {
@@ -194,9 +196,9 @@ Macro.add(["back", "return"], {
 					return this.error('passage "' + this.args[1] + '" does not exist');
 				}
 				/*
-				 * this.name === "return" || config.disableHistoryTracking)
-				 * allow <<back>> to work like <<return>> when config.disableHistoryTracking is enabled
-				 */
+					// allow <<back>> to work like <<return>> when `config.disableHistoryTracking` is enabled
+					if (this.name === "return" || config.disableHistoryTracking) {
+				*/
 				if (this.name === "return") {
 					pname = this.args[1];
 				} else {
@@ -268,8 +270,8 @@ Macro.add(["back", "return"], {
 }, true);
 
 /**
- * <<choice>>
- */
+	<<choice>>
+*/
 Macro.add("choice", {
 	version : { major : 5, minor : 1, patch : 0 },
 	handler : function () {
@@ -349,8 +351,8 @@ Macro.add("choice", {
 });
 
 /**
- * <<link>>
- */
+	<<link>>
+*/
 Macro.add("link", {
 	version      : { major : 4, minor : 1, patch : 0 },
 	actionRegExp : /^disable|remove|keep|once$/, // `keep` and `once` are deprecated
@@ -458,8 +460,8 @@ Macro.add("link", {
  * Display Macros
  **********************************************************************************************************************/
 /**
- * <<display>>
- */
+	<<display>>
+*/
 Macro.add("display", {
 	version : { major : 3, minor : 1, patch : 0 },
 	handler : function () {
@@ -492,8 +494,8 @@ Macro.add("display", {
 });
 
 /**
- * <<nobr>>
- */
+	<<nobr>>
+*/
 Macro.add("nobr", {
 	version  : { major : 2, minor : 0, patch : 0 },
 	skipArgs : true,
@@ -505,8 +507,8 @@ Macro.add("nobr", {
 });
 
 /**
- * <<print>>
- */
+	<<print>>
+*/
 Macro.add("print", {
 	version  : { major : 2, minor : 1, patch : 0 },
 	skipArgs : true,
@@ -527,8 +529,8 @@ Macro.add("print", {
 });
 
 /**
- * <<silently>>
- */
+	<<silently>>
+*/
 Macro.add("silently", {
 	version  : { major : 4, minor : 0, patch : 0 },
 	skipArgs : true,
@@ -558,8 +560,8 @@ Macro.add("silently", {
  * Control Macros
  **********************************************************************************************************************/
 /**
- * <<if>>, <<elseif>>, & <<else>>
- */
+	<<if>>, <<elseif>>, & <<else>>
+*/
 Macro.add("if", {
 	version  : { major : 4, minor : 0, patch : 0 },
 	skipArgs : true,
@@ -567,7 +569,24 @@ Macro.add("if", {
 	handler  : function () {
 		try {
 			for (var i = 0, len = this.payload.length; i < len; i++) {
-				if (this.payload[i].name !== "else") {
+				// sanity checks
+				switch (this.payload[i].name) {
+				case "else":
+					if (this.payload[i].arguments.length !== 0) {
+						if (/^\s*if\b/i.test(this.payload[i].arguments)) {
+							return this.error(
+								'whitespace is not allowed between the "else" and "if" in <<elseif>> clause'
+								+ (i > 0 ? " (#" + i + ")" : "")
+							);
+						}
+						return this.error(
+							"<<else>> does not accept a conditional expression"
+							+ " (perhaps you meant to use <<elseif>>), invalid: "
+							+ this.payload[i].arguments
+						);
+					}
+					break;
+				default:
 					if (this.payload[i].arguments.length === 0) {
 						return this.error(
 							"no conditional expression specified for <<" + this.payload[i].name
@@ -582,19 +601,9 @@ Macro.add("if", {
 							+ this.payload[i].arguments
 						);
 					}
-				} else if (this.payload[i].name === "else" && this.payload[i].arguments.length !== 0) {
-					if (/^\s*if\b/i.test(this.payload[i].arguments)) {
-						return this.error(
-							'whitespace is not allowed between the "else" and "if" in <<elseif>> clause'
-							+ (i > 0 ? " (#" + i + ")" : "")
-						);
-					}
-					return this.error(
-						"<<else>> does not accept a conditional expression"
-						+ " (perhaps you meant to use <<elseif>>), invalid: "
-						+ this.payload[i].arguments
-					);
+					break;
 				}
+				// conditional test
 				if (this.payload[i].name === "else" || !!Wikifier.evalExpression(this.payload[i].arguments)) {
 					new Wikifier(this.output, this.payload[i].contents);
 					break;
@@ -610,8 +619,8 @@ Macro.add("if", {
 });
 
 /**
- * <<for>>, <<break>>, & <<continue>>
- */
+	<<for>>, <<break>>, & <<continue>>
+*/
 Macro.add("for", {
 	version  : { major : 1, minor : 0, patch : 1 },
 	skipArgs : true,
@@ -695,8 +704,8 @@ Macro.add(["break", "continue"], {
  * Variables Macros
  **********************************************************************************************************************/
 /**
- * <<set>>
- */
+	<<set>>
+*/
 Macro.add("set", {
 	version  : { major : 3, minor : 1, patch : 0 },
 	skipArgs : true,
@@ -710,8 +719,8 @@ Macro.add("set", {
 });
 
 /**
- * <<unset>>
- */
+	<<unset>>
+*/
 Macro.add("unset", {
 	version  : { major : 2, minor : 1, patch : 0 },
 	skipArgs : true,
@@ -735,8 +744,8 @@ Macro.add("unset", {
 });
 
 /**
- * <<remember>>
- */
+	<<remember>>
+*/
 Macro.add("remember", {
 	version  : { major : 3, minor : 1, patch : 0 },
 	skipArgs : true,
@@ -772,8 +781,8 @@ Macro.add("remember", {
 });
 
 /**
- * <<forget>>
- */
+	<<forget>>
+*/
 Macro.add("forget", {
 	version  : { major : 1, minor : 1, patch : 0 },
 	skipArgs : true,
@@ -810,13 +819,13 @@ Macro.add("forget", {
  * Scripting Macros
  **********************************************************************************************************************/
 /**
- * <<run>>
- */
+	<<run>>
+*/
 Macro.add("run", "set"); // add <<run>> as an alias of <<set>>
 
 /**
- * <<script>>
- */
+	<<script>>
+*/
 Macro.add("script", {
 	version  : { major : 1, minor : 0, patch : 0 },
 	skipArgs : true,
@@ -831,8 +840,8 @@ Macro.add("script", {
  * Interactive Macros
  **********************************************************************************************************************/
 /**
- * <<button>> & <<click>>
- */
+	<<button>> & <<click>>
+*/
 Macro.add(["button", "click"], {
 	version : { major : 5, minor : 2, patch : 0 },
 	tags    : null,
@@ -904,8 +913,8 @@ Macro.add(["button", "click"], {
 });
 
 /**
- * <<checkbox>>
- */
+	<<checkbox>>
+*/
 Macro.add("checkbox", {
 	version : { major : 5, minor : 2, patch : 1 },
 	handler : function () {
@@ -947,8 +956,8 @@ Macro.add("checkbox", {
 });
 
 /**
- * <<radiobutton>>
- */
+	<<radiobutton>>
+*/
 Macro.add("radiobutton", {
 	version : { major : 5, minor : 2, patch : 1 },
 	handler : function () {
@@ -995,8 +1004,8 @@ Macro.add("radiobutton", {
 });
 
 /**
- * <<textarea>>
- */
+	<<textarea>>
+*/
 Macro.add("textarea", {
 	version : { major : 1, minor : 1, patch : 1 },
 	handler : function () {
@@ -1047,8 +1056,8 @@ Macro.add("textarea", {
 });
 
 /**
- * <<textbox>>
- */
+	<<textbox>>
+*/
 Macro.add("textbox", {
 	version : { major : 5, minor : 2, patch : 1 },
 	handler : function () {
@@ -1123,8 +1132,8 @@ Macro.add("textbox", {
  * DOM (Classes) Macros
  **********************************************************************************************************************/
 /**
- * <<addclass>> & <<toggleclass>>
- */
+	<<addclass>> & <<toggleclass>>
+*/
 Macro.add(["addclass", "toggleclass"], {
 	version : { major : 2, minor : 0, patch : 1 },
 	handler : function () {
@@ -1153,8 +1162,8 @@ Macro.add(["addclass", "toggleclass"], {
 });
 
 /**
- * <<removeclass>>
- */
+	<<removeclass>>
+*/
 Macro.add("removeclass", {
 	version : { major : 1, minor : 0, patch : 1 },
 	handler : function () {
@@ -1181,8 +1190,8 @@ Macro.add("removeclass", {
  * DOM (Content) Macros
  **********************************************************************************************************************/
 /**
- * <<append>>, <<prepend>>, & <<replace>>
- */
+	<<append>>, <<prepend>>, & <<replace>>
+*/
 Macro.add(["append", "prepend", "replace"], {
 	version : { major : 2, minor : 1, patch : 0 },
 	tags    : null,
@@ -1217,8 +1226,8 @@ Macro.add(["append", "prepend", "replace"], {
 });
 
 /**
- * <<remove>>
- */
+	<<remove>>
+*/
 Macro.add("remove", {
 	version : { major : 1, minor : 0, patch : 1 },
 	handler : function () {
@@ -1241,8 +1250,8 @@ Macro.add("remove", {
  * Miscellaneous Macros
  **********************************************************************************************************************/
 /**
- * <<goto>>
- */
+	<<goto>>
+*/
 Macro.add("goto", {
 	version : { major : 1, minor : 0, patch : 0 },
 	handler : function () {
@@ -1263,11 +1272,14 @@ Macro.add("goto", {
 			return this.error('passage "' + passage + '" does not exist');
 		}
 
-		// call state.display()
-		//   n.b. this does not terminate the current Wikifier call chain, though, ideally, it probably
-		//        should, however, doing so wouldn't be trivial and there's the question of would that
-		//        behavior be unwanted by users, who are used to the current behavior from similar macros
-		//        and constructs
+		/*
+			Call state.display().
+
+			n.b. This does not terminate the current Wikifier call chain, though, ideally, it probably
+			     should, however, doing so wouldn't be trivial and there's the question of would that
+			     behavior be unwanted by users, who are used to the current behavior from similar macros
+			     and constructs.
+		*/
 		setTimeout(function () {
 			state.display(passage);
 		}, 40); // not too short, not too long
@@ -1275,8 +1287,33 @@ Macro.add("goto", {
 });
 
 /**
- * <<widget>>
- */
+	<<timed>>
+*/
+Macro.add("timed", {
+	version : { major : 1, minor : 0, patch : 0 },
+	tags    : null,
+	handler : function () {
+		if (this.args.length === 0) {
+			return this.error("no CSS time specified");
+		}
+
+		if (this.payload[0].contents !== "") {
+			var	contents  = this.payload[0].contents,
+				container = document.createElement("span");
+			container.className = "macro-timed timed-insertion-container";
+			this.output.appendChild(container);
+			setTimeout(function () {
+				var frag = document.createDocumentFragment();
+				new Wikifier(frag, contents);
+				container.appendChild(frag);
+			}, Util.fromCSSTime(this.args[0]));
+		}
+	}
+});
+
+/**
+	<<widget>>
+*/
 Macro.add("widget", {
 	version : { major : 2, minor : 1, patch : 0 },
 	tags    : null,
@@ -1370,8 +1407,8 @@ if (!has.audio) {
 	});
 } else {
 	/**
-	 * <<audio>>
-	 */
+		<<audio>>
+	*/
 	Macro.add("audio", {
 		version : { major : 1, minor : 1, revision : 0 },
 		handler : function () {
@@ -1531,8 +1568,8 @@ if (!has.audio) {
 	});
 
 	/**
-	 * <<stopallaudio>>
-	 */
+		<<stopallaudio>>
+	*/
 	Macro.add("stopallaudio", {
 		version : { major : 1, minor : 0, revision : 0 },
 		handler : function () {
@@ -1544,10 +1581,10 @@ if (!has.audio) {
 	});
 
 	/**
-	 * <<cacheaudio>>
-	 */
+		<<cacheaudio>>
+	*/
 	Macro.add("cacheaudio", {
-		version : { major : 1, minor : 0, revision : 0 },
+		version : { major : 1, minor : 0, revision : 1 },
 		handler : function () {
 			if (this.args.length < 2) {
 				var errors = [];
@@ -1594,20 +1631,25 @@ if (!has.audio) {
 			}
 		},
 		types : Object.freeze({
-			// define the supported audio types via MIME-type (incl. the codecs property)
-			//     n.b. Opera (pre-15?) will return a false-negative if the codecs value is quoted
+			/*
+				Define the supported audio types via MIME-type (incl. the codecs property).
+
+				n.b. Opera (Presto) will return a false-negative if the codecs value is quoted.
+				     Opera (Blink) will return a false-negative for WAVE audio if the preferred
+				     MIME-type of "audio/wave" is specified, instead "audio/wav" must be used.
+			*/
 			mp3  : 'audio/mpeg; codecs=mp3',
 			ogg  : 'audio/ogg; codecs=vorbis',
 			webm : 'audio/webm; codecs=vorbis',
-			wav  : 'audio/wave; codecs=1'
+			wav  : 'audio/wav; codecs=1'
 		}),
 		canPlay : {},
 		tracks  : {}
 	});
 
 	/**
-	 * <<playlist>>
-	 */
+		<<playlist>>
+	*/
 	Macro.add("playlist", {
 		version : { major : 1, minor : 2, revision : 0 },
 		handler : function () {
@@ -1810,8 +1852,8 @@ if (!has.audio) {
 	});
 
 	/**
-	 * <<setplaylist>>
-	 */
+		<<setplaylist>>
+	*/
 	Macro.add("setplaylist", {
 		version : { major : 2, minor : 0, revision : 1 },
 		handler : function () {
