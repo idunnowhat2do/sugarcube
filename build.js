@@ -4,7 +4,7 @@
 	  - Description : Node.js-hosted build script for SugarCube
 	  - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
 	  - Copyright   : Copyright © 2014–2015 Thomas Michael Edwards. All rights reserved.
-	  - Version     : 1.2.11, 2015-06-08
+	  - Version     : 1.2.12, 2015-06-14
 */
 "use strict";
 
@@ -49,7 +49,7 @@ var CONFIG = {
 		copy : [
 			{
 				src  : "src/format-twine1.py",
-				dest : "dist/twine1/sugarcube-2/sugarcube.py"
+				dest : "dist/twine1/sugarcube-2/sugarcube-2.py"
 			},
 			{
 				src  : "LICENSE",
