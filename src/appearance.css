@@ -125,6 +125,9 @@ audio, canvas, progress, video {
 #ui-bar a {
 	text-decoration: none;
 }
+#ui-bar hr {
+	border-color: #444;
+}
 #ui-bar-toggle {
 	position: absolute;
 	top: 0.2em;
