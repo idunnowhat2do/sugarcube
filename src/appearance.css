@@ -22,7 +22,6 @@ a {
 	-moz-transition-duration: 200ms;
 	transition-duration: 200ms;
 }
-/*a:focus,*/
 a:hover {
 	color: #8af;
 	text-decoration: underline;
@@ -30,7 +29,6 @@ a:hover {
 a.link-broken {
 	color: #c22;
 }
-/*a.link-broken:focus,*/
 a.link-broken:hover {
 	color: #e44;
 }
@@ -48,7 +46,6 @@ button {
 	-moz-transition-duration: 200ms;
 	transition-duration: 200ms;
 }
-/*button:focus,*/
 button:hover {
 	background-color: #57c;
 	border-color: #79e;
@@ -119,6 +116,12 @@ audio, canvas, progress, video {
 	border-right: 1px solid #444;
 	text-align: center;
 }
+#ui-bar-tray {
+	position: absolute;
+	top: 0.2em;
+	left: 0;
+	right: 0;
+}
 #ui-bar-body {
 	overflow: auto;
 }
@@ -129,12 +132,10 @@ audio, canvas, progress, video {
 	border-color: #444;
 }
 #ui-bar-toggle {
-	position: absolute;
-	top: 0.2em;
-	right: 0;
-}
-#ui-bar-toggle button {
 	display: block;
+	position: absolute;
+	top: 0;
+	right: 0;
 	font-size: 1.2em;
 	color: #eee;
 	background-color: transparent;
@@ -143,11 +144,10 @@ audio, canvas, progress, video {
 	line-height: inherit;
 	padding: 0.3em 0.45em 0.25em;
 }
-#ui-bar.stowed #ui-bar-toggle button {
+#ui-bar.stowed #ui-bar-toggle {
 	padding: 0.3em 0.35em 0.25em 0.55em;
 }
-/*#ui-bar-toggle button:focus,*/
-#ui-bar-toggle button:hover {
+#ui-bar-toggle:hover {
 	background-color: #444;
 	border-color: #eee;
 }
@@ -182,7 +182,6 @@ audio, canvas, progress, video {
 	color: #eee;
 	text-transform: uppercase;
 }
-/*#menu li a:focus,*/
 #menu li a:hover {
 	background-color: #444;
 	border-color: #eee;
@@ -207,7 +206,6 @@ audio, canvas, progress, video {
 #ui-bar footer a {
 	color: #bbb;
 }
-/*#ui-bar footer a:focus,*/
 #ui-bar footer a:hover {
 	color: #eee;
 }
@@ -219,7 +217,7 @@ audio, canvas, progress, video {
 a.macro-back:before,
 a.macro-return:after,
 #story a.link-external:after,
-#ui-bar-toggle button:before,
+#ui-bar-toggle:before,
 #menu-saves a:before,
 #menu-rewind a:before,
 #menu-settings a:before,
@@ -260,10 +258,10 @@ a.macro-return:after {
 #story a.link-external:after {
 	content: "\00a0\e80e";
 }
-#ui-bar-toggle button:before {
+#ui-bar-toggle:before {
 	content: "\e81d";
 }
-#ui-bar.stowed #ui-bar-toggle button:before {
+#ui-bar.stowed #ui-bar-toggle:before {
 	content: "\e81e";
 }
 #menu-saves a:before {
@@ -333,7 +331,6 @@ a.macro-return:after {
 	-moz-transition-duration: 200ms;
 	transition-duration: 200ms;
 }
-/*#ui-dialog-close:focus,*/
 #ui-dialog-close:hover {
 	background-color: #b44;
 	border-color: #d66;
@@ -390,7 +387,6 @@ a.macro-return:after {
 	color: #eee;
 	text-decoration: none;
 }
-/*#ui-dialog-body.list li a:focus,*/
 #ui-dialog-body.list li a:hover {
 	background-color: #333;
 	border-color: #eee;
@@ -454,7 +450,6 @@ a.macro-return:after {
 	border: 1px solid #444;
 	padding: 0.4em;
 }
-/*#ui-dialog-body.settings button[id|="setting-control"]:focus,*/
 #ui-dialog-body.settings button[id|="setting-control"]:hover {
 	background-color: #333;
 	border-color: #eee;
@@ -463,7 +458,6 @@ a.macro-return:after {
 	background-color: #282;
 	border-color: #4a4;
 }
-/*#ui-dialog-body.settings button[id|="setting-control"].enabled:focus,*/
 #ui-dialog-body.settings button[id|="setting-control"].enabled:hover {
 	background-color: #4a4;
 	border-color: #6c6;

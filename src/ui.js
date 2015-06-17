@@ -82,7 +82,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		/* eslint-disable max-len */
 		temp.innerHTML =
 			  '<div id="ui-bar">'
-			+     '<div id="ui-bar-toggle"><button tabindex="0" aria-label="' + strings.uiBar.toggle + '"></button></div>'
+			+     '<div id="ui-bar-tray"><button id="ui-bar-toggle" tabindex="0" aria-label="' + strings.uiBar.toggle + '"></button></div>'
 			+     '<div id="ui-bar-body">'
 			+         '<header id="title" role="banner">'
 			+             '<div id="story-banner"></div>'
@@ -159,7 +159,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		}
 
 		// setup the #ui-bar-toggle widget
-		jQuery("#ui-bar-toggle>button")
+		jQuery("#ui-bar-toggle")
 			.on("click", function () {
 				_bar.classList.toggle("stowed");
 			});
