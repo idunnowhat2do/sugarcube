@@ -221,7 +221,7 @@ a.macro-return:after,
 #story a.link-external:after,
 #ui-bar-toggle button:before,
 #menu-saves a:before,
-/*#menu-rewind a:before,*/
+#menu-rewind a:before,
 #menu-settings a:before,
 #menu-restart a:before,
 #menu-share a:before,
@@ -269,11 +269,9 @@ a.macro-return:after {
 #menu-saves a:before {
 	content: "\e82b\00a0";
 }
-/*
 #menu-rewind a:before {
 	content: "\e825\00a0";
 }
-*/
 #menu-settings a:before {
 	content: "\e82d\00a0";
 }

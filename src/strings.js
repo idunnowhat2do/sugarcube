@@ -67,12 +67,12 @@ var	strings = { // eslint-disable-line no-unused-vars
 			reset : "Reset to Defaults"
 		},
 
-//		// rewind
-//		rewind : {
-//			title       : "Rewind",
-//			turn        : "Turn",
-//			unavailable : "No rewind points available\u2026"
-//		},
+		// rewind
+		rewind : {
+			title       : "Rewind",
+			turn        : "Turn",
+			unavailable : "No rewind points available\u2026"
+		},
 
 		// restart
 		restart : {
