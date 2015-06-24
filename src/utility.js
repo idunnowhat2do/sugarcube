@@ -277,6 +277,7 @@ function addStyle(css) { // eslint-disable-line no-unused-vars
 		style.type = "text/css";
 		document.head.appendChild(style);
 	}
+	style = new StyleWrapper(style);
 
 	// check for wiki image transclusion
 	var	matchRe = /\[[<>]?[Ii][Mm][Gg]\[(?:\s|\S)*?\]\]+/g;
@@ -291,7 +292,7 @@ function addStyle(css) { // eslint-disable-line no-unused-vars
 			}
 
 			var source = markup.source;
-			// check for Twine 1.4 Base64 image passage transclusion
+			// check for image passage transclusion
 			if (source.slice(0, 5) !== "data:" && tale.has(source)) {
 				var passage = tale.get(source);
 				if (passage.tags.contains("Twine.image")) {
@@ -302,13 +303,7 @@ function addStyle(css) { // eslint-disable-line no-unused-vars
 		});
 	}
 
-	if (style.styleSheet) {
-		// for IE ≤ 10
-		style.styleSheet.cssText += css;
-	} else {
-		// for everyone else
-		style.appendChild(document.createTextNode(css));
-	}
+	style.add(css);
 }
 
 /**
@@ -786,6 +781,63 @@ Object.defineProperties(SeedablePRNG, {
 				prng.random();
 			}
 			return prng;
+		}
+	}
+});
+
+
+/***********************************************************************************************************************
+ * StyleWrapper
+ **********************************************************************************************************************/
+// Setup the StyleWrapper constructor
+function StyleWrapper(style) {
+	/*
+	if (style == null || !(style instanceof HTMLStyleElement)) { // lazy equality for null
+	*/
+	if (style == null) { // lazy equality for null
+		throw new TypeError("StyleWrapper style parameter must be an HTMLStyleElement object");
+	}
+	Object.defineProperties(this, {
+		style : {
+			value : style
+		}
+	});
+}
+
+// Setup the StyleWrapper prototype
+Object.defineProperties(StyleWrapper.prototype, {
+	isEmpty : {
+		value : function () {
+			/*
+			return this.style.styleSheet
+				? this.style.styleSheet.cssText === "" // for IE ≤ 10
+				: this.style.hasChildNodes();          // for all other browsers (incl. IE ≥ 11)
+			*/
+			return this.style.cssRules.length === 0; // should work in all browsers (I think…)
+		}
+	},
+	set : {
+		value : function (css) {
+			this.clear();
+			this.add(css);
+		}
+	},
+	add : {
+		value : function (css) {
+			if (this.style.styleSheet) { // for IE ≤ 10
+				this.style.styleSheet.cssText += css;
+			} else { // for all other browsers (incl. IE ≥ 11)
+				this.style.appendChild(document.createTextNode(css));
+			}
+		}
+	},
+	clear : {
+		value : function () {
+			if (this.style.styleSheet) { // for IE ≤ 10
+				this.style.styleSheet.cssText = "";
+			} else { // for all other browsers (incl. IE ≥ 11)
+				removeChildren(this.style);
+			}
 		}
 	}
 });
