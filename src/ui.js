@@ -7,8 +7,9 @@
  *
  **********************************************************************************************************************/
 /*
-	global History, Save, Setting, Util, Wikifier, addAccessibleClickHandler, config, has, insertText,
-	       removeChildren, setPageElement, session, settings, state, storage, strings, tale, version
+	global History, Save, Setting, StyleWrapper, Util, Wikifier, addAccessibleClickHandler, config, has,
+	       insertText, removeChildren, setPageElement, session, settings, state, storage, strings, tale,
+	       version
 */
 
 var UI = (function () { // eslint-disable-line no-unused-vars
@@ -22,6 +23,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		_dialogClose    = null, // eslint-disable-line no-unused-vars
 		_dialogBody     = null,
 		_lastActive     = null,
+		_outlinePatch   = null,
 		_scrollbarWidth = 0;
 
 
@@ -36,6 +38,12 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 
 		// add `tabindex=-1` to <body>
 		//jQuery(document.body).attr("tabindex", -1);
+
+		// generate and cache the outline patching <style> element
+		_outlinePatch      = document.createElement("style");
+		_outlinePatch.id   = "style-outline-patch";
+		_outlinePatch.type = "text/css";
+		document.head.appendChild(_outlinePatch);
 
 		// calculate and cache the width of scrollbars
 		_scrollbarWidth = (function () {
@@ -58,8 +66,8 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				document.body.appendChild(outer);
 
 				var w1 = inner.offsetWidth;
-				// "overflow: scroll" does not work consistently with scrollbars which are
-				// styled with "::-webkit-scrollbar"
+				// `overflow: scroll` does not work consistently with scrollbars which are
+				// styled with `::-webkit-scrollbar`
 				outer.style.overflow = "auto";
 				var w2 = inner.offsetWidth;
 				if (w1 === w2) {
@@ -211,39 +219,17 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 
 		// setup accessible outline handling
 		// based on: http://www.paciellogroup.com/blog/2012/04/how-to-remove-css-outlines-in-an-accessible-manner/
-		(function () {
-			var	style          = document.getElementById("style-outline-patch"),
-				outlineHandler = function (evt) {
-					function setCSS(css) {
-						if (style.styleSheet) {
-							// for IE ≤ 10
-							style.styleSheet.cssText = css;
-						} else {
-							// for everyone else
-							style.innerHTML = css;
-						}
-					}
-
-					switch (evt.type) {
-					case "mousedown":
-						setCSS("*:focus{outline:none}");
-						break;
-					case "keydown":
-						setCSS("");
-						break;
-					}
-				};
-			if (style === null) {
-				style      = document.createElement("style");
-				style.id   = "style-outline-patch";
-				style.type = "text/css";
-				document.head.appendChild(style);
-			}
-
-			// setup the outline handler
-			jQuery(document.body)
-				.on("mousedown.outline-handler keydown.outline-handler", outlineHandler);
-		}());
+		jQuery(document.body)
+			.on("mousedown.outline-handler keydown.outline-handler", function (evt) {
+				switch (evt.type) {
+				case "mousedown":
+					patchOutlines(true);
+					break;
+				case "keydown":
+					patchOutlines(false);
+					break;
+				}
+			});
 
 		// handle the loading screen
 		if (document.readyState === "complete") {
@@ -281,6 +267,15 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			if (tale.has("StoryMenu")) {
 				buildListFromPassage("StoryMenu", menuStory);
 			}
+		}
+	}
+
+	function patchOutlines(patch) {
+		var	outlines = new StyleWrapper(_outlinePatch);
+		if (patch) {
+			outlines.set("*:focus{outline:none}");
+		} else {
+			outlines.clear();
 		}
 	}
 
@@ -1100,6 +1095,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		// Internals
 		start                : { value : start },
 		setPageElements      : { value : setPageElements },
+		patchOutlines        : { value : patchOutlines },
 		buildDialogSaves     : { value : buildDialogSaves },
 		buildDialogRewind    : { value : buildDialogRewind },
 		buildDialogRestart   : { value : buildDialogRestart },
