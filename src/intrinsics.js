@@ -677,7 +677,9 @@ Object.defineProperty(JSON, "reviveWrapper", {
 	writable     : true,
 	value        : function (code) {
 		"use strict";
-		if (typeof code !== "string") { throw new TypeError("JSON.reviveWrapper code parameter must be a string"); }
+		if (typeof code !== "string") {
+			throw new TypeError("JSON.reviveWrapper code parameter must be a string");
+		}
 		return "@@revive@@(" + code + ")";
 	}
 });
