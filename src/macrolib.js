@@ -843,7 +843,7 @@ Macro.add("script", {
 	<<button>> & <<click>>
 */
 Macro.add(["button", "click"], {
-	version : { major : 5, minor : 2, patch : 0 },
+	version : { major : 5, minor : 3, patch : 0 },
 	tags    : null,
 	handler : function () {
 		if (this.args.length === 0) {
@@ -891,6 +891,7 @@ Macro.add(["button", "click"], {
 			insertText(el, text);
 		}
 		if (passage != null) { // lazy equality for null
+			el.setAttribute("data-passage", passage);
 			if (tale.has(passage)) {
 				el.classList.add("link-internal");
 				if (config.addVisitedLinkClass && state.has(passage)) {
