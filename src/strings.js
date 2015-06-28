@@ -93,7 +93,7 @@ var	strings = { // eslint-disable-line no-unused-vars
 			title  : "Autoload",
 			cancel : "Go to start",
 			ok     : "Load autosave",
-			prompt : "There's an existing autosave. Load it now or go to the start?"
+			prompt : "An autosave exists. Load it now or go to the start?"
 		},
 
 		// macros
