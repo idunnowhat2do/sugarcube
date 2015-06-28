@@ -36,8 +36,7 @@ var	strings = { // eslint-disable-line no-unused-vars
 
 		// ui-bar
 		uiBar : {
-			toggle  : "Hide/show the UI bar",
-			credits : 'Made with <a href="http://twinery.org/" target="_blank" tabindex="-1">Twine</a> &amp; <a href="http://www.motoslave.net/sugarcube/" target="_blank" tabindex="-1">SugarCube</a>'
+			toggle : "Hide/show the UI bar"
 		},
 
 		// saves

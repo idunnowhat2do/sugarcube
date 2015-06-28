@@ -151,11 +151,19 @@ audio, canvas, progress, video {
 	background-color: #444;
 	border-color: #eee;
 }
-#ui-bar header, #story-caption, #menu {
+#ui-bar-body {
 	line-height: 1.5;
 }
-#menu, #ui-bar footer {
+#ui-bar-body > :not(:first-child) {
 	margin-top: 2em;
+}
+#story-title {
+	margin: 0;
+	font-size: 162.5%;
+}
+#story-author {
+	margin-top: 2em;
+	font-weight: bold;
 }
 #menu ul {
 	margin: 0;
@@ -185,29 +193,6 @@ audio, canvas, progress, video {
 #menu li a:hover {
 	background-color: #444;
 	border-color: #eee;
-}
-#story-title {
-	margin: 0;
-	font-size: 162.5%;
-}
-#story-author {
-	margin-top: 2em;
-	font-weight: bold;
-}
-#story-caption {
-	margin-top: 2em;
-}
-#ui-bar footer {
-	color: #888;
-}
-#ui-bar footer > * {
-	font-size: 62.5%;
-}
-#ui-bar footer a {
-	color: #bbb;
-}
-#ui-bar footer a:hover {
-	color: #eee;
 }
 
 [data-icon]:before,
