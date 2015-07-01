@@ -4,7 +4,7 @@
 	  - Description : Node.js-hosted build script for SugarCube 1.x
 	  - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
 	  - Copyright   : Copyright © 2014–2015 Thomas Michael Edwards. All rights reserved.
-	  - Version     : 1.2.5, 2015-06-10
+	  - Version     : 1.2.6, 2015-05-01
 */
 "use strict";
 
@@ -42,16 +42,16 @@ var CONFIG = {
 	twine1 : {
 		build : {
 			src  : "src/format-twine1.tpl",
-			dest : "dist/twine1/sugarcube-1/header.html"
+			dest : "dist/twine1/sugarcube/header.html"
 		},
 		copy : [
 			{
 				src  : "src/format-twine1.py",
-				dest : "dist/twine1/sugarcube-1/sugarcube-1.py"
+				dest : "dist/twine1/sugarcube/sugarcube.py"
 			},
 			{
 				src  : "LICENSE",
-				dest : "dist/twine1/sugarcube-1/LICENSE"
+				dest : "dist/twine1/sugarcube/LICENSE"
 			}
 		]
 	},
