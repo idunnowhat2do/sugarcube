@@ -8,7 +8,8 @@
  **********************************************************************************************************************/
 /*
 	global AudioWrapper, History, Macro, Util, Wikifier, addAccessibleClickHandler, config, has, insertElement,
-	       insertText, postdisplay, runtime, state, storage, strings, tale
+	       insertText, postdisplay, predisplay, printableStringOrDefault, runtime, state, storage, strings, tale,
+	       turns
 */
 
 /***********************************************************************************************************************
@@ -510,7 +511,7 @@ Macro.add("nobr", {
 	<<print>>
 */
 Macro.add("print", {
-	version  : { major : 2, minor : 1, patch : 0 },
+	version  : { major : 3, minor : 0, patch : 0 },
 	skipArgs : true,
 	handler  : function () {
 		if (this.args.full.length === 0) {
@@ -518,9 +519,9 @@ Macro.add("print", {
 		}
 
 		try {
-			var result = Util.evalExpression(this.args.full);
-			if (result != null && (typeof result !== "number" || !isNaN(result))) { // lazy equality for null
-				new Wikifier(this.output, result.toString());
+			var	result = printableStringOrDefault(Util.evalExpression(this.args.full), null);
+			if (result !== null) {
+				new Wikifier(this.output, result);
 			}
 		} catch (e) {
 			return this.error("bad expression: " + e.message);
@@ -1191,6 +1192,26 @@ Macro.add("removeclass", {
  * DOM (Content) Macros
  **********************************************************************************************************************/
 /**
+	<<copy>>
+*/
+Macro.add("copy", {
+	version : { major : 1, minor : 0, patch : 0 },
+	handler : function () {
+		if (this.args.length === 0) {
+			return this.error("no selector specified");
+		}
+
+		var $targets = jQuery(this.args[0]);
+
+		if ($targets.length === 0) {
+			return this.error('no elements matched the selector "' + this.args[0] + '"');
+		}
+
+		$(this.output).append($targets.html());
+	}
+});
+
+/**
 	<<append>>, <<prepend>>, & <<replace>>
 */
 Macro.add(["append", "prepend", "replace"], {
@@ -1291,23 +1312,71 @@ Macro.add("goto", {
 	<<timed>>
 */
 Macro.add("timed", {
-	version : { major : 1, minor : 0, patch : 0 },
-	tags    : null,
+	version : { major : 2, minor : 0, patch : 0 },
+	tags    : [ "next" ],
+	timers  : {},
 	handler : function () {
 		if (this.args.length === 0) {
-			return this.error("no CSS time specified");
+			return this.error("no time value specified in <<timed>>");
 		}
 
-		if (this.payload[0].contents !== "") {
-			var	contents  = this.payload[0].contents,
-				container = document.createElement("span");
-			container.className = "macro-timed timed-insertion-container";
-			this.output.appendChild(container);
-			setTimeout(function () {
+		var	items = [];
+		try {
+			items.push({
+				delay   : Math.max(10, Util.fromCSSTime(this.args[0].trim())),
+				content : this.payload[0].contents
+			});
+		} catch (e) {
+			return this.error(e.message + " in <<timed>>");
+		}
+		if (this.payload.length > 1) {
+			try {
+				for (var i = 1, len = this.payload.length; i < len; i++) {
+					items.push({
+						delay : this.payload[i].arguments.length === 0
+							? items[0].delay
+							: Math.max(10, Util.fromCSSTime(this.payload[i].arguments.trim())),
+						content : this.payload[i].contents
+					});
+				}
+			} catch (e) {
+				return this.error(e.message + " in <<next>> (#" + i + ")");
+			}
+		}
+
+		// register the timer and, possibly, a clean up task
+		this.self.registerTimeout(insertElement(this.output, "span", null, "macro-timed timed-insertion-container"), items);
+	},
+	registerTimeout : function (container, items) {
+		var	turnId  = turns(),
+			timers  = this.timers,
+			timerId = null,
+			item    = items.shift(),
+			worker  = function () {
+				delete timers[timerId];
+				if (turnId !== turns()) {
+					return;
+				}
 				var frag = document.createDocumentFragment();
-				new Wikifier(frag, contents);
+				new Wikifier(frag, item.content);
 				container.appendChild(frag);
-			}, Util.fromCSSTime(this.args[0]));
+				if (items.length > 0) {
+					item = items.shift();
+					timers[(timerId = setTimeout(worker, item.delay))] = true;
+				}
+			};
+		timers[(timerId = setTimeout(worker, item.delay))] = true;
+
+		// setup a single-use `predisplay` task to remove pending timers
+		if (!predisplay.hasOwnProperty("#timed-timers-cleanup")) {
+			predisplay["#timed-timers-cleanup"] = function (task) {
+				var timerIds = Object.keys(timers);
+				for (var i = 0; i < timerIds.length; i++) {
+					delete timers[timerIds[i]];
+					clearTimeout(timerIds[i]);
+				}
+				delete predisplay[task]; // single-use task
+			};
 		}
 	}
 });
