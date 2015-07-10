@@ -1334,7 +1334,7 @@ Macro.add("timed", {
 				for (var i = 1, len = this.payload.length; i < len; i++) {
 					items.push({
 						delay : this.payload[i].arguments.length === 0
-							? items[0].delay
+							? items[items.length - 1].delay
 							: Math.max(10, Util.fromCSSTime(this.payload[i].arguments.trim())),
 						content : this.payload[i].contents
 					});
