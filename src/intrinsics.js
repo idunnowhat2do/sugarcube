@@ -198,6 +198,24 @@ Object.defineProperty(Array.prototype, "count", {
 });
 
 /**
+	Returns a new array consisting of the flattened source array (flat map reduce)
+*/
+Object.defineProperty(Array.prototype, "flatten", {
+	configurable : true,
+	writable     : true,
+	value        : function () {
+		"use strict";
+		if (this == null) { // lazy equality for null
+			throw new TypeError("Array.prototype.flatten called on null or undefined");
+		}
+
+		return this.reduce(function (prev, cur) {
+			return prev.concat(Array.isArray(cur) ? cur.flatten() : cur);
+		}, []);
+	}
+});
+
+/**
 	Removes and returns a random value from the array in the range of lower and upper, if they are specified
 */
 Object.defineProperty(Array.prototype, "pluck", {
