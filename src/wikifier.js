@@ -44,7 +44,7 @@
  **********************************************************************************************************************/
 /*
 	global Macro, MacroContext, Util, addAccessibleClickHandler, config, insertElement, insertText, macros,
-	       removeChildren, removeElement, runtime, state, tale, throwError
+	       printableStringOrDefault, removeChildren, removeElement, runtime, state, tale, throwError
 */
 
 /* eslint-disable max-len */
@@ -841,8 +841,13 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 				name    : "$variable",
 				match   : "\\$\\w+(?:(?:\\.[A-Za-z_$]\\w*)|(?:\\[\\d+\\])|(?:\\[\"(?:\\\\.|[^\"\\\\])+\"\\])|(?:\\['(?:\\\\.|[^'\\\\])+'\\])|(?:\\[\\$\\w+\\]))*",
 				handler : function (w) {
-					var	result = Wikifier.getValue(w.matchText);
-					insertText(w.output, /^string|number|boolean$/.test(typeof result) ? result : w.matchText);
+					var	result = printableStringOrDefault(Wikifier.getValue(w.matchText), null);
+					if (result === null) {
+						insertText(w.output, w.matchText);
+					} else {
+						new Wikifier(w.output, result);
+					}
+
 				}
 			},
 
