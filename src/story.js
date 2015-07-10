@@ -524,6 +524,7 @@ Object.defineProperties(History.prototype, {
 				n.b. Perhaps this should be limited to the incoming passage and, if so,
 				     maybe before its contents are added to the DOM?
 			*/
+			UI.patchOutlines(true); // initially hide outlines
 			jQuery("#story")
 				// add `link-external` to all `href` bearing `<a>` elements which don't have it
 				.find("a[href]:not(.link-external)")

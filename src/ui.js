@@ -7,8 +7,9 @@
  *
  **********************************************************************************************************************/
 /*
-	global Save, Setting, Util, Wikifier, addAccessibleClickHandler, config, has, insertText, removeChildren,
-	       setPageElement, settings, state, storage, strings, tale, version
+	global History, Save, Setting, StyleWrapper, Util, Wikifier, addAccessibleClickHandler, config, has,
+	       insertText, removeChildren, setPageElement, session, settings, state, storage, strings, tale,
+	       version
 */
 
 var UI = (function () { // eslint-disable-line no-unused-vars
@@ -22,6 +23,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		_dialogClose    = null, // eslint-disable-line no-unused-vars
 		_dialogBody     = null,
 		_lastActive     = null,
+		_outlinePatch   = null,
 		_scrollbarWidth = 0;
 
 
@@ -36,6 +38,12 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 
 		// add `tabindex=-1` to <body>
 		//jQuery(document.body).attr("tabindex", -1);
+
+		// generate and cache the outline patching <style> element
+		_outlinePatch      = document.createElement("style");
+		_outlinePatch.id   = "style-outline-patch";
+		_outlinePatch.type = "text/css";
+		document.head.appendChild(_outlinePatch);
 
 		// calculate and cache the width of scrollbars
 		_scrollbarWidth = (function () {
@@ -58,8 +66,8 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				document.body.appendChild(outer);
 
 				var w1 = inner.offsetWidth;
-				// "overflow: scroll" does not work consistently with scrollbars which are
-				// styled with "::-webkit-scrollbar"
+				// `overflow: scroll` does not work consistently with scrollbars which are
+				// styled with `::-webkit-scrollbar`
 				outer.style.overflow = "auto";
 				var w2 = inner.offsetWidth;
 				if (w1 === w2) {
@@ -82,7 +90,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		/* eslint-disable max-len */
 		temp.innerHTML =
 			  '<div id="ui-bar">'
-			+     '<div id="ui-bar-toggle"><button tabindex="0" aria-label="' + strings.uiBar.toggle + '"></button></div>'
+			+     '<div id="ui-bar-tray"><button id="ui-bar-toggle" tabindex="0" aria-label="' + strings.uiBar.toggle + '"></button></div>'
 			+     '<div id="ui-bar-body">'
 			+         '<header id="title" role="banner">'
 			+             '<div id="story-banner"></div>'
@@ -96,16 +104,12 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			+             '<ul id="menu-story"></ul>'
 			+             '<ul id="menu-core">'
 			+                 '<li id="menu-saves"><a tabindex="0">' + strings.saves.title + '</a></li>'
-//			+                 '<li id="menu-rewind"><a tabindex="0">' + strings.rewind.title + '</a></li>'
+			+                 '<li id="menu-rewind"><a tabindex="0">' + strings.rewind.title + '</a></li>'
 			+                 '<li id="menu-settings"><a tabindex="0">' + strings.settings.title + '</a></li>'
 			+                 '<li id="menu-restart"><a tabindex="0">' + strings.restart.title + '</a></li>'
 			+                 '<li id="menu-share"><a tabindex="0">' + strings.share.title + '</a></li>'
 			+             '</ul>'
 			+         '</nav>'
-			+         '<footer role="contentinfo">'
-			+             '<p id="credits">' + strings.uiBar.credits + '</p>'
-			+             '<p id="version">' + version.short() + '</p>'
-			+         '</footer>'
 			+     '</div>'
 			+ '</div>'
 			+ '<div id="ui-overlay" class="ui-close"></div>'
@@ -159,7 +163,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		}
 
 		// setup the #ui-bar-toggle widget
-		jQuery("#ui-bar-toggle>button")
+		jQuery("#ui-bar-toggle")
 			.on("click", function () {
 				_bar.classList.toggle("stowed");
 			});
@@ -181,13 +185,13 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		dialogAddClickHandler("#menu-saves a", null, function () { buildDialogSaves(); })
 			.text(strings.saves.title);
 
-//		// setup the Rewind menu item
-//		if (!config.disableHistoryTracking && tale.lookup("tags", "bookmark").length > 0) {
-//			dialogAddClickHandler("#menu-rewind a", null, function () { buildDialogRewind(); })
-//				.text(strings.rewind.title);
-//		} else {
-//			jQuery("#menu-rewind").remove();
-//		}
+		// setup the Rewind menu item
+		if (!config.disableHistoryTracking && tale.lookup("tags", "bookmark").length > 0) {
+			dialogAddClickHandler("#menu-rewind a", null, function () { buildDialogRewind(); })
+				.text(strings.rewind.title);
+		} else {
+			jQuery("#menu-rewind").remove();
+		}
 
 		// setup the Settings menu item
 		if (!Setting.isEmpty()) {
@@ -211,39 +215,17 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 
 		// setup accessible outline handling
 		// based on: http://www.paciellogroup.com/blog/2012/04/how-to-remove-css-outlines-in-an-accessible-manner/
-		(function () {
-			var	style          = document.getElementById("style-outline-patch"),
-				outlineHandler = function (evt) {
-					function setCSS(css) {
-						if (style.styleSheet) {
-							// for IE ≤ 10
-							style.styleSheet.cssText = css;
-						} else {
-							// for everyone else
-							style.innerHTML = css;
-						}
-					}
-
-					switch (evt.type) {
-					case "mousedown":
-						setCSS("*:focus{outline:none}");
-						break;
-					case "keydown":
-						setCSS("");
-						break;
-					}
-				};
-			if (style === null) {
-				style      = document.createElement("style");
-				style.id   = "style-outline-patch";
-				style.type = "text/css";
-				document.head.appendChild(style);
-			}
-
-			// setup the outline handler
-			jQuery(document.body)
-				.on("mousedown.outline-handler keydown.outline-handler", outlineHandler);
-		}());
+		jQuery(document.body)
+			.on("mousedown.outline-handler keydown.outline-handler", function (evt) {
+				switch (evt.type) {
+				case "mousedown":
+					patchOutlines(true);
+					break;
+				case "keydown":
+					patchOutlines(false);
+					break;
+				}
+			});
 
 		// handle the loading screen
 		if (document.readyState === "complete") {
@@ -281,6 +263,15 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			if (tale.has("StoryMenu")) {
 				buildListFromPassage("StoryMenu", menuStory);
 			}
+		}
+	}
+
+	function patchOutlines(patch) {
+		var	outlines = new StyleWrapper(_outlinePatch);
+		if (patch) {
+			outlines.set("*:focus{outline:none}");
+		} else {
+			outlines.clear();
 		}
 	}
 
@@ -515,135 +506,136 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		}
 	}
 
-/* eslint-disable max-len */
-//	function buildDialogRewind() {
-//		if (DEBUG) { console.log("[UI.buildDialogRewind()]"); }
-//
-//		var list = document.createElement("ul");
-//
-//		jQuery(dialogSetup(strings.rewind.title, "rewind list"))
-//			.append(list);
-//
-//		for (var i = state.length - 2; i >= 0; i--) {
-//			var passage = tale.get(state.history[i].title);
-//			if (passage && passage.tags.contains("bookmark")) {
-//				var	item = document.createElement("li"),
-//					link = document.createElement("a");
-//				link.classList.add("ui-close");
-//				jQuery(link).one("click", (function () {
-//					var p = i;
-//					if (config.historyMode === History.Modes.Session) {
-//						return function () {
-//							if (DEBUG) { console.log("[rewind:click() @Session]"); }
-//
-//							// necessary?
-//							document.title = tale.title;
-//
-//							// regenerate the state history suid
-//							state.regenerateSuid();
-//
-//							// push the history states in order
-//							if (config.disableHistoryControls) {
-//								if (DEBUG) { console.log("    > pushing: " + p + " (" + state.history[p].title + ")"); }
-//
-//								// load the state into the window history
-//								History.replaceWindowState(
-//									{ suid : state.suid, sidx : state.history[p].sidx },
-//									(config.displayPassageTitles && state.history[p].title !== config.startingPassage)
-//										? tale.title + ": " + state.history[p].title
-//										: tale.title
-//								);
-//							} else {
-//								for (var i = 0, end = p; i <= end; i++) {
-//									if (DEBUG) { console.log("    > pushing: " + i + " (" + state.history[i].title + ")"); }
-//
-//									// load the state into the window history
-//									History.addWindowState(
-//										{ suid : state.suid, sidx : state.history[i].sidx },
-//										(config.displayPassageTitles && state.history[i].title !== config.startingPassage)
-//											? tale.title + ": " + state.history[i].title
-//											: tale.title
-//									);
-//								}
-//							}
-//
-//							var windowState = History.getWindowState();
-//							if (windowState !== null && windowState.sidx < state.top.sidx) {
-//								if (DEBUG) { console.log("    > stacks out of sync; popping " + (state.top.sidx - windowState.sidx) + " states to equalize"); }
-//								// stack indexes are out of sync, pop our stack until
-//								// we're back in sync with the window.history
-//								state.pop(state.top.sidx - windowState.sidx);
-//							}
-//
-//							// activate the current top
-//							state.setActiveState(state.top);
-//
-//							// display the passage
-//							state.display(state.active.title, null, "replace");
-//						};
-//					} else if (config.historyMode === History.Modes.Window) {
-//						return function () {
-//							if (DEBUG) { console.log("[rewind:click() @Window]"); }
-//
-//							// necessary?
-//							document.title = tale.title;
-//
-//							// push the history states in order
-//							if (!config.disableHistoryControls) {
-//								for (var i = 0, end = p; i <= end; i++) {
-//									if (DEBUG) { console.log("    > pushing: " + i + " (" + state.history[i].title + ")"); }
-//
-//									// load the state into the window history
-//									var stateObj = { history : state.history.slice(0, i + 1) };
-//									if (state.hasOwnProperty("prng")) {
-//										stateObj.rseed = state.prng.seed;
-//									}
-//									History.addWindowState(
-//										stateObj,
-//										(config.displayPassageTitles && state.history[i].title !== config.startingPassage)
-//											? tale.title + ": " + state.history[i].title
-//											: tale.title
-//									);
-//								}
-//							}
-//
-//							// stack ids are out of sync, pop our stack until
-//							// we're back in sync with the window.history
-//							state.pop(state.length - (p + 1));
-//
-//							// activate the current top
-//							state.setActiveState(state.top);
-//
-//							// display the passage
-//							state.display(state.active.title, null, "replace");
-//						};
-//					} else { // History.Modes.Hash
-//						return function () {
-//							if (DEBUG) { console.log("[rewind:click() @Hash]"); }
-//
-//							if (!config.disableHistoryControls) {
-//								window.location.hash = state.history[p].hash;
-//							} else {
-//								session.set("activeHash", state.history[p].hash);
-//								window.location.reload();
-//							}
-//						};
-//					}
-//				}()));
-//				link.appendChild(document.createTextNode(strings.rewind.turn + " " + (i + 1) + ": " + passage.description()));
-//				item.appendChild(link);
-//				list.appendChild(item);
-//			}
-//		}
-//		if (!list.hasChildNodes()) {
-//			var	item = document.createElement("li"),
-//				link = document.createElement("a");
-//			link.innerHTML = "<i>" + strings.rewind.unavailable + "</i>";
-//			item.appendChild(link);
-//			list.appendChild(item);
-//		}
-//	}
-/* eslint-enable max-len */
+	function buildDialogRewind() {
+		if (DEBUG) { console.log("[UI.buildDialogRewind()]"); }
+
+		var list = document.createElement("ul");
+
+		jQuery(dialogSetup(strings.rewind.title, "rewind list"))
+			.append(list);
+
+		for (var i = state.length - 2; i >= 0; i--) {
+			var passage = tale.get(state.history[i].title);
+			if (passage && passage.tags.contains("bookmark")) {
+				var	item = document.createElement("li"),
+					link = document.createElement("a");
+				link.classList.add("ui-close");
+				jQuery(link).one("click", (function () {
+					var p = i;
+					if (config.historyMode === History.Modes.Session) {
+						return function () {
+							if (DEBUG) { console.log("[rewind:click() @Session]"); }
+
+							// necessary?
+							document.title = tale.title;
+
+							// regenerate the state history suid
+							state.regenerateSuid();
+
+							// push the history states in order
+							if (config.disableHistoryControls) {
+								if (DEBUG) { console.log("    > pushing: " + p + " (" + state.history[p].title + ")"); }
+
+								// load the state into the window history
+								History.replaceWindowState(
+									{ suid : state.suid, sidx : state.history[p].sidx },
+									config.displayPassageTitles && state.history[p].title !== config.startingPassage
+										? tale.title + ": " + state.history[p].title
+										: tale.title
+								);
+							} else {
+								for (var i = 0, end = p; i <= end; i++) { // eslint-disable-line no-shadow
+									if (DEBUG) { console.log("    > pushing: " + i + " (" + state.history[i].title + ")"); }
+
+									// load the state into the window history
+									History.addWindowState(
+										{ suid : state.suid, sidx : state.history[i].sidx },
+										config.displayPassageTitles && state.history[i].title !== config.startingPassage
+											? tale.title + ": " + state.history[i].title
+											: tale.title
+									);
+								}
+							}
+
+							var windowState = History.getWindowState();
+							if (windowState !== null && windowState.sidx < state.top.sidx) {
+								if (DEBUG) {
+									console.log("    > stacks out of sync; popping "
+										+ (state.top.sidx - windowState.sidx) + " states to equalize");
+								}
+								// stack indexes are out of sync, pop our stack until
+								// we're back in sync with the window.history
+								state.pop(state.top.sidx - windowState.sidx);
+							}
+
+							// activate the current top
+							state.setActiveState(state.top);
+
+							// display the passage
+							state.display(state.active.title, null, "replace");
+						};
+					} else if (config.historyMode === History.Modes.Window) {
+						return function () {
+							if (DEBUG) { console.log("[rewind:click() @Window]"); }
+
+							// necessary?
+							document.title = tale.title;
+
+							// push the history states in order
+							if (!config.disableHistoryControls) {
+								for (var i = 0, end = p; i <= end; i++) { // eslint-disable-line no-shadow
+									if (DEBUG) { console.log("    > pushing: " + i + " (" + state.history[i].title + ")"); }
+
+									// load the state into the window history
+									var stateObj = { history : state.history.slice(0, i + 1) };
+									if (state.hasOwnProperty("prng")) {
+										stateObj.rseed = state.prng.seed;
+									}
+									History.addWindowState(
+										stateObj,
+										config.displayPassageTitles && state.history[i].title !== config.startingPassage
+											? tale.title + ": " + state.history[i].title
+											: tale.title
+									);
+								}
+							}
+
+							// stack ids are out of sync, pop our stack until
+							// we're back in sync with the window.history
+							state.pop(state.length - (p + 1));
+
+							// activate the current top
+							state.setActiveState(state.top);
+
+							// display the passage
+							state.display(state.active.title, null, "replace");
+						};
+					} else { // History.Modes.Hash
+						return function () {
+							if (DEBUG) { console.log("[rewind:click() @Hash]"); }
+
+							if (!config.disableHistoryControls) {
+								window.location.hash = state.history[p].hash;
+							} else {
+								session.set("activeHash", state.history[p].hash);
+								window.location.reload();
+							}
+						};
+					}
+				}()));
+				link.appendChild(document.createTextNode(strings.rewind.turn + " " + (i + 1) + ": " + passage.description()));
+				item.appendChild(link);
+				list.appendChild(item);
+			}
+		}
+		if (!list.hasChildNodes()) {
+			var	item = document.createElement("li"), // eslint-disable-line no-redeclare
+				link = document.createElement("a"); // eslint-disable-line no-redeclare
+			link.innerHTML = "<i>" + strings.rewind.unavailable + "</i>";
+			item.appendChild(link);
+			list.appendChild(item);
+		}
+	}
 
 	function buildDialogRestart() {
 		if (DEBUG) { console.log("[UI.buildDialogRestart()]"); }
@@ -857,10 +849,10 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		dialogOpen.apply(null, arguments);
 	}
 
-//	function dialogRewind(/* options, closeFn */) {
-//		buildDialogRewind();
-//		dialogOpen.apply(null, arguments);
-//	}
+	function dialogRewind(/* options, closeFn */) {
+		buildDialogRewind();
+		dialogOpen.apply(null, arguments);
+	}
 
 	function dialogSaves(/* options, closeFn */) {
 		buildDialogSaves();
@@ -1099,8 +1091,9 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		// Internals
 		start                : { value : start },
 		setPageElements      : { value : setPageElements },
+		patchOutlines        : { value : patchOutlines },
 		buildDialogSaves     : { value : buildDialogSaves },
-//		buildDialogRewind    : { value : buildDialogRewind },
+		buildDialogRewind    : { value : buildDialogRewind },
 		buildDialogRestart   : { value : buildDialogRestart },
 		buildDialogSettings  : { value : buildDialogSettings },
 		buildDialogShare     : { value : buildDialogShare },
@@ -1110,7 +1103,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		alert                : { value : dialogAlert },
 		restart              : { value : dialogRestart },
 		settings             : { value : dialogSettings },
-//		rewind               : { value : dialogRewind },
+		rewind               : { value : dialogRewind },
 		saves                : { value : dialogSaves },
 		share                : { value : dialogShare },
 		// Core

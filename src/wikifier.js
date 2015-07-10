@@ -44,7 +44,7 @@
  **********************************************************************************************************************/
 /*
 	global Macro, MacroContext, Util, addAccessibleClickHandler, config, insertElement, insertText, macros,
-	       removeChildren, removeElement, runtime, state, tale, throwError
+	       printableStringOrDefault, removeChildren, removeElement, runtime, state, tale, throwError
 */
 
 /* eslint-disable max-len */
@@ -841,8 +841,13 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 				name    : "$variable",
 				match   : "\\$\\w+(?:(?:\\.[A-Za-z_$]\\w*)|(?:\\[\\d+\\])|(?:\\[\"(?:\\\\.|[^\"\\\\])+\"\\])|(?:\\['(?:\\\\.|[^'\\\\])+'\\])|(?:\\[\\$\\w+\\]))*",
 				handler : function (w) {
-					var	result = Wikifier.getValue(w.matchText);
-					insertText(w.output, /^string|number|boolean$/.test(typeof result) ? result : w.matchText);
+					var	result = printableStringOrDefault(Wikifier.getValue(w.matchText), null);
+					if (result === null) {
+						insertText(w.output, w.matchText);
+					} else {
+						new Wikifier(w.output, result);
+					}
+
 				}
 			},
 
@@ -982,15 +987,55 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 				handler    : function (w) {
 					var isHeading = (function (nodes) {
 							var hasGCS = typeof window.getComputedStyle === "function";
-							for (var i = nodes.length - 1; i >= 0; i++) {
+							for (var i = nodes.length - 1; i >= 0; i--) {
 								var node = nodes[i];
 								switch (node.nodeType) {
 								case Node.ELEMENT_NODE:
-									if (node.nodeName.toUpperCase() === "BR") {
+									var tagName = node.nodeName.toUpperCase();
+									if (tagName === "BR") {
 										return true;
 									}
 									var styles = hasGCS ? window.getComputedStyle(node, null) : node.currentStyle;
-									return styles.display === "block";
+									if (styles && styles.display) {
+										return styles.display === "block";
+									}
+									/*
+										WebKit/Blink-based browsers do not attach any computed style
+										information to elements until they're inserted into the DOM
+										(and probably visible), not even the default browser styles
+										and any user styles.  So, we make an assumption based on the
+										element.
+									*/
+									switch (tagName) {
+									case "ADDRESS":
+									case "ARTICLE":
+									case "ASIDE":
+									case "BLOCKQUOTE":
+									case "CENTER":
+									case "DIV":
+									case "DL":
+									case "FIGURE":
+									case "FOOTER":
+									case "FORM":
+									case "H1":
+									case "H2":
+									case "H3":
+									case "H4":
+									case "H5":
+									case "H6":
+									case "HEADER":
+									case "HR":
+									case "MAIN":
+									case "NAV":
+									case "OL":
+									case "P":
+									case "PRE":
+									case "SECTION":
+									case "TABLE":
+									case "UL":
+										return true;
+									}
+									return false;
 								case Node.COMMENT_NODE:
 									break;
 								default:

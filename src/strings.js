@@ -36,8 +36,7 @@ var	strings = { // eslint-disable-line no-unused-vars
 
 		// ui-bar
 		uiBar : {
-			toggle  : "Hide/show the UI bar",
-			credits : 'Made with <a href="http://twinery.org/" target="_blank" tabindex="-1">Twine</a> &amp; <a href="http://www.motoslave.net/sugarcube/" target="_blank" tabindex="-1">SugarCube</a>'
+			toggle : "Hide/show the UI bar"
 		},
 
 		// saves
@@ -67,12 +66,12 @@ var	strings = { // eslint-disable-line no-unused-vars
 			reset : "Reset to Defaults"
 		},
 
-//		// rewind
-//		rewind : {
-//			title       : "Rewind",
-//			turn        : "Turn",
-//			unavailable : "No rewind points available\u2026"
-//		},
+		// rewind
+		rewind : {
+			title       : "Rewind",
+			turn        : "Turn",
+			unavailable : "No rewind points available\u2026"
+		},
 
 		// restart
 		restart : {
@@ -94,7 +93,7 @@ var	strings = { // eslint-disable-line no-unused-vars
 			title  : "Autoload",
 			cancel : "Go to start",
 			ok     : "Load autosave",
-			prompt : "There's an existing autosave. Load it now or go to the start?"
+			prompt : "An autosave exists. Load it now or go to the start?"
 		},
 
 		// macros
