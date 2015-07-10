@@ -315,6 +315,37 @@ function throwError(place, message, title) { // eslint-disable-line no-unused-va
 }
 
 /**
+	Returns the simple string representation of the passed value or, if there is none,
+	the passed default value
+ */
+function printableStringOrDefault(val, defVal) { // eslint-disable-line no-unused-vars
+	//if (val != null && (typeof val !== "number" || !isNaN(val))) { // lazy equality for null
+	//	return val.toString();
+	//}
+	//return defVal;
+
+	switch (typeof val) {
+	case "number":
+		if (isNaN(val)) {
+			return defVal;
+		}
+		break;
+	case "object":
+		if (val === null) {
+			return defVal;
+		} else if (Array.isArray(val)) {
+			return val.flatten().join(", ");
+		}
+		return "[object]";
+	case "function":
+	case "undefined":
+		return defVal;
+	}
+
+	return String(val);
+}
+
+/**
  * Fades a DOM element in or out
  *   n.b. Unused, included only for compatibility
  */
