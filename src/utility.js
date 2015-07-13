@@ -204,6 +204,31 @@ function throwError(place, message, title) {
 }
 
 /**
+	Returns the simple string representation of the passed value or, if there is none,
+	the passed default value
+ */
+function printableStringOrDefault(val, defVal) {
+	switch (typeof val) {
+	case "number":
+		if (isNaN(val)) {
+			return defVal;
+		}
+		break;
+	case "object":
+		if (val === null) {
+			return defVal;
+		} else if (Array.isArray(val)) {
+			return val.join(", ");
+		}
+		return "[object]";
+	case "function":
+	case "undefined":
+		return defVal;
+	}
+	return String(val);
+}
+
+/**
  * Fades a DOM element in or out
  *   n.b. Unused, included only for compatibility
  */
