@@ -827,8 +827,12 @@ var Wikifier = (function () {
 				name: "$variable",
 				match: "\\$\\w+(?:(?:\\.[A-Za-z_$]\\w*)|(?:\\[\\d+\\])|(?:\\[\"(?:\\\\.|[^\"\\\\])+\"\\])|(?:\\['(?:\\\\.|[^'\\\\])+'\\])|(?:\\[\\$\\w+\\]))*",
 				handler: function (w) {
-					var	result = Wikifier.getValue(w.matchText);
-					insertText(w.output, /^string|number|boolean$/.test(typeof result) ? result : w.matchText);
+					var	result = printableStringOrDefault(Wikifier.getValue(w.matchText), null);
+					if (result === null) {
+						insertText(w.output, w.matchText);
+					} else {
+						new Wikifier(w.output, result);
+					}
 				}
 			},
 
