@@ -847,7 +847,6 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					} else {
 						new Wikifier(w.output, result);
 					}
-
 				}
 			},
 

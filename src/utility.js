@@ -319,11 +319,6 @@ function throwError(place, message, title) { // eslint-disable-line no-unused-va
 	the passed default value
  */
 function printableStringOrDefault(val, defVal) { // eslint-disable-line no-unused-vars
-	//if (val != null && (typeof val !== "number" || !isNaN(val))) { // lazy equality for null
-	//	return val.toString();
-	//}
-	//return defVal;
-
 	switch (typeof val) {
 	case "number":
 		if (isNaN(val)) {
@@ -341,7 +336,6 @@ function printableStringOrDefault(val, defVal) { // eslint-disable-line no-unuse
 	case "undefined":
 		return defVal;
 	}
-
 	return String(val);
 }
 
