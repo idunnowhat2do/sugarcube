@@ -1312,7 +1312,7 @@ Macro.add("goto", {
 	<<timed>>
 */
 Macro.add("timed", {
-	version : { major : 2, minor : 0, patch : 0 },
+	version : { major : 2, minor : 0, patch : 1 },
 	tags    : [ "next" ],
 	timers  : {},
 	handler : function () {
@@ -1344,28 +1344,44 @@ Macro.add("timed", {
 			}
 		}
 
+		// add an expando method to the `items` array for iteration
+		Object.defineProperty(items, "nextItem", {
+			value : this.self.arrayNextItemFactory()
+		});
+
 		// register the timer and, possibly, a clean up task
 		this.self.registerTimeout(insertElement(this.output, "span", null, "macro-timed timed-insertion-container"), items);
 	},
+	arrayNextItemFactory : function () {
+		return function () {
+			if (this.length === 0) { return null; }
+			return this.shift();
+		};
+	},
 	registerTimeout : function (container, items) {
-		var	turnId  = turns(),
-			timers  = this.timers,
-			timerId = null,
-			item    = items.shift(),
-			worker  = function () {
+		var	turnId   = turns(),
+			timers   = this.timers,
+			timerId  = null,
+			nextItem = items.nextItem(),
+			worker   = function () {
+				// first: bookkeeping
 				delete timers[timerId];
 				if (turnId !== turns()) {
 					return;
 				}
-				var frag = document.createDocumentFragment();
-				new Wikifier(frag, item.content);
-				container.appendChild(frag);
-				if (items.length > 0) {
-					item = items.shift();
-					timers[(timerId = setTimeout(worker, item.delay))] = true;
+
+				// second: set the current item and setup the next worker, if any
+				var curItem = nextItem;
+				if ((nextItem = items.nextItem()) !== null) {
+					timers[(timerId = setTimeout(worker, nextItem.delay))] = true;
 				}
+
+				// third: wikify the content last to reduce drift
+				var frag = document.createDocumentFragment();
+				new Wikifier(frag, curItem.content);
+				container.appendChild(frag);
 			};
-		timers[(timerId = setTimeout(worker, item.delay))] = true;
+		timers[(timerId = setTimeout(worker, nextItem.delay))] = true;
 
 		// setup a single-use `predisplay` task to remove pending timers
 		if (!predisplay.hasOwnProperty("#timed-timers-cleanup")) {
