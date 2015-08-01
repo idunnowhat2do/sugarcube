@@ -153,7 +153,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		}
 
 		// setup the #ui-bar's initial state
-		if (config.ui.stowBarInitially) {
+		if (config.ui.stowBarInitially || jQuery(window).width() <= 800) {
 			var	$uiBarStory = jQuery("#ui-bar,#story");
 			$uiBarStory.addClass("no-transition");
 			_bar.classList.add("stowed");
