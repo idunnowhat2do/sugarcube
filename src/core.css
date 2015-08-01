@@ -1,0 +1,229 @@
+/***********************************************************************************************************************
+ *
+ * appearance.css
+ *
+ * Copyright © 2014–2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
+ *
+ **********************************************************************************************************************/
+
+/*
+	Default structural styles.
+*/
+body {
+	/*
+		We define the base font size and line height here as they affect the layout
+		of the base page elements (i.e. `#ui-bar`, `#ui-dialog`, and `#story`).
+	*/
+	font: 16px/1 Helmet, Freesans, sans-serif;
+}
+
+/* Story data styling */
+#store-area, tw-storydata {
+	display: none !important;
+	z-index: 0;
+}
+
+/* Story display area styling */
+#story {
+	z-index: 10;
+	margin: 2.5em;
+	-webkit-transition: margin-left 200ms ease-in;
+	-moz-transition: margin-left 200ms ease-in;
+	transition: margin-left 200ms ease-in;
+}
+@media screen and (max-width: 1136px) {
+	#story {
+		margin-right: 1.5em;
+		margin-right: 1.5em;
+	}
+}
+#passages {
+	max-width: 54em;
+	margin: 0 auto;
+}
+
+/* Special no transition styling */
+.no-transition {
+	-webkit-transition: none !important;
+	-moz-transition: none !important;
+	transition: none !important;
+}
+
+
+/*
+	Default appearance styles.
+*/
+body {
+	color: #eee;
+	background-color: #111;
+}
+*:focus {
+	outline: thin dotted;
+}
+a {
+	cursor: pointer;
+	color: #68d;
+	text-decoration: none;
+	-webkit-transition-duration: 200ms;
+	-moz-transition-duration: 200ms;
+	transition-duration: 200ms;
+}
+a:hover {
+	color: #8af;
+	text-decoration: underline;
+}
+a.link-broken {
+	color: #c22;
+}
+a.link-broken:hover {
+	color: #e44;
+}
+area {
+	cursor: pointer;
+}
+button {
+	cursor: pointer;
+	color: #eee;
+	background-color: #35a;
+	border: 1px solid #57c;
+	line-height: normal;
+	padding: 0.4em;
+	-webkit-transition-duration: 200ms;
+	-moz-transition-duration: 200ms;
+	transition-duration: 200ms;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+	user-select: none;
+}
+button:hover {
+	background-color: #57c;
+	border-color: #79e;
+}
+button:disabled {
+	cursor: not-allowed;
+	background-color: #444;
+	border: 1px solid #666;
+}
+input, select, textarea {
+	color: #eee;
+	background-color: transparent;
+	border: 1px solid #444;
+	padding: 0.4em;
+}
+select {
+	padding: 0.34em 0.4em;
+}
+input[type="text"], textarea {
+	/*
+	font-family: monospace, monospace;
+	font-size: 1em;
+	*/
+	min-width: 20em;
+}
+input[type="checkbox"], input[type="file"], input[type="radio"], select {
+	cursor: pointer;
+}
+input:focus, select:focus, textarea:focus,
+input:hover, select:hover, textarea:hover {
+	background-color: #333;
+	border-color: #eee;
+}
+hr {
+	display: block;
+	height: 1px;
+	border: none;
+	border-top: 1px solid #eee;
+	margin: 1em 0;
+	padding: 0;
+}
+textarea {
+	resize: vertical;
+}
+audio, canvas, progress, video {
+	max-width: 100%;
+}
+
+.error {
+	padding: 0.4em;
+	background-color: #511;
+	border-left: 0.5em solid #c22;
+}
+.error[title] {
+	cursor: help;
+}
+.highlight, .marked {
+	color: yellow;
+	font-weight: bold;
+	font-style: italic;
+}
+.nobr {
+	white-space: nowrap;
+}
+
+[data-icon]:before,
+[data-icon-before]:before,
+[data-icon-after]:after,
+.error:before,
+a.macro-back:before,
+a.macro-return:after,
+#story a.link-external:after {
+	font-family: "tme-fa-icons";
+	font-style: normal;
+	font-weight: normal;
+	font-variant: normal;
+	text-transform: none;
+	line-height: 1;
+	speak: none;
+}
+[data-icon]:before {
+	content: attr(data-icon);
+}
+[data-icon-before]:before {
+	content: attr(data-icon-before) "\00a0";
+}
+[data-icon-after]:after {
+	content: "\00a0" attr(data-icon-after);
+}
+.error:before {
+	content: "\00a0\e80d\00a0\00a0";
+}
+a.macro-back:before {
+	content: "\e821\00a0";
+}
+a.macro-return:after {
+	content: "\00a0\e822";
+}
+#story a.link-external:after {
+	content: "\00a0\e80e";
+}
+
+/* Passage styling */
+.passage {
+	line-height: 1.75;
+	text-align: left;
+	-webkit-transition: opacity 400ms ease-in;
+	-moz-transition: opacity 400ms ease-in;
+	transition: opacity 400ms ease-in;
+}
+.passage-in {
+	opacity: 0;
+}
+.passage ul, .passage ol {
+	margin-left: 0.5em;
+	padding-left: 1.5em;
+}
+.passage table {
+	margin: 1em 0;
+	border-collapse: collapse;
+	font-size: 100%;
+}
+.passage tr, .passage th, .passage td, .passage caption {
+	padding: 3px;
+}
+.passage .error {
+	white-space: nowrap;
+}

@@ -1,0 +1,312 @@
+/***********************************************************************************************************************
+ *
+ * ui-dialog.css
+ *
+ * Copyright © 2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
+ *
+ **********************************************************************************************************************/
+
+/*
+	Patches to the core styles.
+*/
+html.ui-dialog-open body {
+	overflow: hidden;
+}
+
+
+/*
+	Default structural styles.
+*/
+#ui-overlay.open {
+	visibility: visible;
+	-webkit-transition: opacity 200ms ease-in;
+	-moz-transition: opacity 200ms ease-in;
+	transition: opacity 200ms ease-in;
+}
+#ui-overlay:not(.open) {
+	-webkit-transition: visibility 200ms step-end, opacity 200ms ease-in;
+	-moz-transition: visibility 200ms step-end, opacity 200ms ease-in;
+	transition: visibility 200ms step-end, opacity 200ms ease-in;
+}
+#ui-overlay {
+	visibility: hidden;
+	opacity: 0;
+	z-index: 1000;
+	position: fixed;
+	top: 0px;
+	left: 0px;
+	height: 100%;
+	width: 100%;
+}
+#ui-dialog.open {
+	display: block;
+	-webkit-transition: opacity 200ms ease-in;
+	-moz-transition: opacity 200ms ease-in;
+	transition: opacity 200ms ease-in;
+}
+/*
+	We cannot animate `#ui-dialog:not(.open)` as the restoration of `overflow` on
+	`body` would cause the still animating dialog to jerk if a scrollbar popped in.
+*/
+#ui-dialog {
+	display: none;
+	opacity: 0;
+	z-index: 1100;
+	position: fixed;
+	top: 50px;
+	margin: 0;
+	padding: 0;
+}
+#ui-dialog-close {
+	display: block;
+	position: absolute;
+	right: 0;
+	top: 0;
+	white-space: nowrap;
+}
+#ui-dialog-body {
+	overflow: auto;
+	min-width: 280px;
+	height: 90%; /* fallback for browsers without support for calc() */
+	height: calc(100% - 2.1em - 34px); /* title(2.1em) - top/bottom borders(2px) - top/bottom gutters(32px) */
+}
+
+/* Settings dialog styling */
+#ui-dialog-body.settings [id|="setting-body"] {
+	display: table;
+	width: 100%;
+}
+#ui-dialog-body.settings [id|="setting-label"] {
+	display: table-cell;
+	padding: 0.4em 2em 0.4em 0;
+}
+#ui-dialog-body.settings [id|="setting-label"] + div {
+	display: table-cell;
+	min-width: 8em;
+	text-align: right;
+	vertical-align: middle;
+	white-space: nowrap;
+}
+
+
+/*
+	Default appearance styles.
+*/
+#ui-overlay {
+	background-color: #000;
+}
+#ui-overlay.open {
+	opacity: 0.8;
+}
+#ui-dialog {
+	max-width: 66em;
+}
+#ui-dialog.open {
+	opacity: 1;
+}
+#ui-dialog-title {
+	margin: 0;
+	padding: 0.2em 3.5em 0.2em 0.5em;
+	min-height: 24px;
+	font-size: 1.5em;
+	background-color: #444;
+	text-align: center;
+	text-transform: uppercase;
+}
+#ui-dialog-close {
+	cursor: pointer;
+	font-size: 120%;
+	margin: 0;
+	padding: 0;
+	width: 3.6em;
+	height: 1.6em;
+	color: #eee;
+	background-color: #922;
+	border: 1px solid #b44;
+	-webkit-transition-duration: 200ms;
+	-moz-transition-duration: 200ms;
+	transition-duration: 200ms;
+}
+#ui-dialog-close:hover {
+	background-color: #b44;
+	border-color: #d66;
+}
+#ui-dialog-body {
+	background-color: #111;
+	border: 1px solid #444;
+	text-align: left;
+	line-height: 1.5;
+	padding: 1em;
+}
+#ui-dialog-body > *:first-child {
+	margin-top: 0;
+}
+#ui-dialog-body hr {
+	background-color: #444;
+}
+
+/* Default dialog button bar styling */
+#ui-dialog-body ul.buttons {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+#ui-dialog-body ul.buttons li {
+	display: inline-block;
+	margin: 0;
+	padding: 0.4em 0.4em 0 0;
+}
+#ui-dialog-body ul.buttons > li + li > button {
+	margin-left: 1em;
+}
+
+/* List-based dialog styling (primarily for the Rewind & Share dialogs) */
+#ui-dialog-body.list {
+	padding: 0;
+	min-width: 140px;
+}
+#ui-dialog-body.list ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+#ui-dialog-body.list li {
+	margin: 0;
+}
+#ui-dialog-body.list li:not(:first-child) {
+	border-top: 1px solid #444;
+}
+#ui-dialog-body.list li a {
+	display: block;
+	padding: 0.25em 0.75em;
+	border: 1px solid transparent;
+	color: #eee;
+	text-decoration: none;
+}
+#ui-dialog-body.list li a:hover {
+	background-color: #333;
+	border-color: #eee;
+}
+
+/* Saves dialog styling */
+#ui-dialog-body.saves {
+	padding: 0 0 1px; /* Webkit/Blink need 1px bottom padding or they'll trigger the scroll bar */
+}
+#ui-dialog-body.saves > *:not(:first-child) {
+	border-top: 1px solid #444;
+}
+#ui-dialog-body.saves table {
+	border-spacing: 0;
+	min-width: 320px;
+	width: 100%;
+}
+#ui-dialog-body.saves tr:not(:first-child) {
+	border-top: 1px solid #444;
+}
+#ui-dialog-body.saves td {
+	padding: 0.33em 0.33em;
+}
+#ui-dialog-body.saves td:first-child {
+	min-width: 1.5em;
+	text-align: center;
+}
+#ui-dialog-body.saves td:nth-child(3) {
+	line-height: 1.2;
+}
+#ui-dialog-body.saves td:last-child {
+	text-align: right;
+}
+#ui-dialog-body.saves .empty {
+	color: #999;
+}
+#ui-dialog-body.saves .datestamp {
+	font-size: 75%;
+}
+#ui-dialog-body.saves ul.buttons li {
+	padding: 0.4em;
+}
+#ui-dialog-body.saves ul.buttons li:last-child {
+	/*
+		Using `position:absolute;right:0;` here can produce poor results, so we
+		fallback to using `float:right` instead.
+	*/
+	float: right;
+}
+
+/* Settings dialog styling */
+#ui-dialog-body.settings div[id|="setting-body"] + div[id|="setting-body"] {
+	margin: 0.5em 0;
+}
+#ui-dialog-body.settings [id|="setting-control"] {
+	white-space: nowrap;
+}
+#ui-dialog-body.settings button[id|="setting-control"] {
+	color: #eee;
+	background-color: transparent;
+	border: 1px solid #444;
+	padding: 0.4em;
+}
+#ui-dialog-body.settings button[id|="setting-control"]:hover {
+	background-color: #333;
+	border-color: #eee;
+}
+#ui-dialog-body.settings button[id|="setting-control"].enabled {
+	background-color: #282;
+	border-color: #4a4;
+}
+#ui-dialog-body.settings button[id|="setting-control"].enabled:hover {
+	background-color: #4a4;
+	border-color: #6c6;
+}
+
+/* Share dialog styling */
+#ui-dialog-body.share {
+	min-width: 140px;
+}
+
+/* Stop text selection on certain UI elements */
+#ui-dialog-close,
+#ui-dialog-body.list a,
+#ui-dialog-body.settings span[id|="setting-input"] {
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+	user-select: none;
+}
+
+
+/*
+	Default font icon styles.
+*/
+#ui-dialog-close,
+#ui-dialog-body.saves button[id="saves-export"]:before,
+#ui-dialog-body.saves button[id="saves-import"]:before,
+#ui-dialog-body.saves button[id="saves-clear"]:before,
+#ui-dialog-body.settings button[id|="setting-control"]:after,
+#ui-dialog-body.settings button[id|="setting-control"].enabled:after {
+	font-family: "tme-fa-icons";
+	font-style: normal;
+	font-weight: normal;
+	font-variant: normal;
+	text-transform: none;
+	line-height: 1;
+	speak: none;
+}
+#ui-dialog-body.saves button[id="saves-export"]:before {
+	content: "\e829\00a0";
+}
+#ui-dialog-body.saves button[id="saves-import"]:before {
+	content: "\e82a\00a0";
+}
+#ui-dialog-body.saves button[id="saves-clear"]:before {
+	content: "\e827\00a0";
+}
+#ui-dialog-body.settings button[id|="setting-control"]:after {
+	content: "\00a0\00a0\e830";
+}
+#ui-dialog-body.settings button[id|="setting-control"].enabled:after {
+	content: "\00a0\00a0\e831";
+}
