@@ -168,10 +168,6 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				_bar.classList.toggle("stowed");
 			});
 
-		// setup the #credits
-		jQuery("#credits", _bar)
-			.html(strings.uiBar.credits);
-
 		// setup the dynamic page elements
 		if (!tale.has("StoryCaption")) {
 			jQuery("#story-caption").remove();
@@ -182,12 +178,12 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		setPageElements();
 
 		// setup the Saves menu item
-		dialogAddClickHandler("#menu-saves a", null, function () { buildDialogSaves(); })
+		dialogAddClickHandler("#menu-saves a", null, buildDialogSaves)
 			.text(strings.saves.title);
 
 		// setup the Rewind menu item
 		if (!config.disableHistoryTracking && tale.lookup("tags", "bookmark").length > 0) {
-			dialogAddClickHandler("#menu-rewind a", null, function () { buildDialogRewind(); })
+			dialogAddClickHandler("#menu-rewind a", null, buildDialogRewind)
 				.text(strings.rewind.title);
 		} else {
 			jQuery("#menu-rewind").remove();
@@ -195,19 +191,19 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 
 		// setup the Settings menu item
 		if (!Setting.isEmpty()) {
-			dialogAddClickHandler("#menu-settings a", null, function () { buildDialogSettings(); })
+			dialogAddClickHandler("#menu-settings a", null, buildDialogSettings)
 				.text(strings.settings.title);
 		} else {
 			jQuery("#menu-settings").remove();
 		}
 
 		// setup the Restart menu item
-		dialogAddClickHandler("#menu-restart a", null, function () { buildDialogRestart(); })
+		dialogAddClickHandler("#menu-restart a", null, buildDialogRestart)
 			.text(strings.restart.title);
 
 		// setup the Share menu item
 		if (tale.has("StoryShare")) {
-			dialogAddClickHandler("#menu-share a", null, function () { buildDialogShare(); })
+			dialogAddClickHandler("#menu-share a", null, buildDialogShare)
 				.text(strings.share.title);
 		} else {
 			jQuery("#menu-share").remove();

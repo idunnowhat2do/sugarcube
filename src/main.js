@@ -185,13 +185,13 @@ jQuery(document).ready(function () {
 		// initialize the setting system
 		Setting.init();
 
-		// call macros' init functions
+		// call macros' init methods
 		Macro.init();
 
 		// initialize our state
 		state.init(); // this could take a while, so do it late
 
-		// call macros' "late" init functions
+		// call macros' "late" init methods
 		//Macro.init("lateInit");
 
 		// start the user interface
