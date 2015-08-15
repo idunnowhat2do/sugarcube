@@ -174,18 +174,18 @@ var	config = {
 		/* /DEPRECATED */
 	};
 
-var	macros      = {},         // macros manager
-	tale        = {},         // story manager
-	state       = {},         // history manager
-	storage     = {},         // persistant storage manager
-	session     = {},         // session storage manager
-	options     = {},         // options variable store
-	setup       = {},         // author setup variable store
-	prehistory  = {},         // pre-history task callbacks
-	predisplay  = {},         // pre-display task callbacks
-	postdisplay = {},         // post-display task callbacks
-	prerender   = {},         // Twine 1.4+ pre-render task callbacks
-	postrender  = {};         // Twine 1.4+ post-render task callbacks
+var	macros      = {}, // macros manager
+	tale        = {}, // story manager
+	state       = {}, // history manager
+	storage     = {}, // persistant storage manager
+	session     = {}, // session storage manager
+	options     = {}, // options variable store
+	setup       = {}, // author setup variable store
+	prehistory  = {}, // pre-history task callbacks
+	predisplay  = {}, // pre-display task callbacks
+	postdisplay = {}, // post-display task callbacks
+	prerender   = {}, // Twine 1.4+ pre-render task callbacks
+	postrender  = {}; // Twine 1.4+ post-render task callbacks
 
 /**
  * Main function, entry point for story startup
@@ -210,7 +210,8 @@ jQuery(document).ready(function () {
 		defineStandardMacros();
 
 		// instantiate the tale, state, storage, and session objects
-		tale    = new Tale();
+		tale = new Tale();
+		tale.init();
 		state   = new History();
 		storage = new KeyValueStore("webStorage", true, tale.domId); // params: driverName, persist, storageId
 		session = new KeyValueStore("webStorage", false, tale.domId);
