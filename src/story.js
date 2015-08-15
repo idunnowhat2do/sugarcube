@@ -1324,11 +1324,7 @@ function Tale(instanceName) {
 			}
 		}
 
-		if ("{{STORY_NAME}}" !== "") { // eslint-disable-line no-constant-condition, yoda
-			this.title = "{{STORY_NAME}}";
-		} else {
-			throw new Error("story title not set");
-		}
+		this.title = "{{STORY_NAME}}";
 	}
 
 	// update instance reference in SugarCube global object
@@ -1343,6 +1339,9 @@ Object.defineProperties(Tale.prototype, {
 			return this._title;
 		},
 		set : function (title) {
+			if (title == null || title === "") { // lazy equality for null
+				throw new Error("story title cannot be null or empty");
+			}
 			document.title = this._title = title;
 			this._domId = Util.slugify(title);
 		}
@@ -1362,7 +1361,7 @@ Object.defineProperties(Tale.prototype, {
 			if (TWINE1) {
 				var buf = document.createElement("div");
 				new Wikifier(buf, this.passages.StoryTitle.processText().trim());
-				this.title = buf.textContent;
+				this.title = buf.textContent.trim();
 			}
 		}
 	},
