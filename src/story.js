@@ -938,7 +938,7 @@ Object.defineProperties(Passage.prototype, {
 			if (this.tags.contains("nobr")) {
 				res = res.replace(/^\n+|\n+$/g, "").replace(/\n+/g, " ");
 			}
-			// check for Twine 1.4 Base64 image passage transclusion
+			// check for image passage transclusion
 			if (this.tags.contains("Twine.image")) {
 				res = "[img[" + res + "]]";
 			}

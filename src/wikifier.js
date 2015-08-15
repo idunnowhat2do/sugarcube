@@ -1208,7 +1208,7 @@ var Wikifier = (function () {
 					}
 					el = insertElement(el, "img");
 					source = Wikifier.helpers.evalPassageId(markup.source);
-					// check for Twine 1.4 Base64 image passage transclusion
+					// check for image passage transclusion
 					if (source.slice(0, 5) !== "data:" && tale.has(source)) {
 						var passage = tale.get(source);
 						if (passage.tags.contains("Twine.image")) {
@@ -1469,7 +1469,7 @@ var Wikifier = (function () {
 											isImage : true,
 											source  : source
 										};
-									// check for Twine 1.4 Base64 image passage transclusion
+									// check for image passage transclusion
 									if (source.slice(0, 5) !== "data:" && tale.has(source)) {
 										var passage = tale.get(source);
 										if (passage.tags.contains("Twine.image")) {
@@ -1779,7 +1779,7 @@ var Wikifier = (function () {
 					if (passage !== "") {
 						if (el.tagName.toUpperCase() === "IMG") {
 							var source;
-							// check for Twine 1.4 Base64 image passage transclusion
+							// check for image passage transclusion
 							if (tale.has(passage)) {
 								passage = tale.get(passage);
 								if (passage.tags.contains("Twine.image")) {
