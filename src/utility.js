@@ -162,7 +162,7 @@ function addStyle(css) {
 		document.head.appendChild(style);
 	}
 
-	// check for wiki image transclusion
+	// Check for wiki image transclusion.
 	var	matchRe = /\[[<>]?[Ii][Mm][Gg]\[(?:\s|\S)*?\]\]+/g;
 	if (matchRe.test(css)) {
 		css = css.replace(matchRe, function (wikiImage) {
@@ -175,14 +175,17 @@ function addStyle(css) {
 			}
 
 			var source = markup.source;
-			// check for Twine 1.4 Base64 image passage transclusion
+			// Check for image passage transclusion.
 			if (source.slice(0, 5) !== "data:" && tale.has(source)) {
 				var passage = tale.get(source);
 				if (passage.tags.contains("Twine.image")) {
 					source = passage.text;
 				}
 			}
-			return "url(" + source + ")";
+			// The source may be URI- or Base64-encoded, so we cannot use the
+			// standard encodeURIComponent() here.  Instead, we simply encode
+			// any double quotes, since the URI will be delimited by them.
+			return 'url("' + source.replace(/"/g, "%22") + '")';
 		});
 	}
 
