@@ -1219,6 +1219,8 @@ Object.defineProperties(Passage, {
 function Tale(instanceName) {
 	if (DEBUG) { console.log("[Tale()]"); }
 
+	this._title   = "";
+	this._domId   = "";
 	this.passages = {};
 	this.styles   = [];
 	this.scripts  = [];
@@ -1251,7 +1253,7 @@ function Tale(instanceName) {
 
 			if (name === "StoryStylesheet") {
 				storyStylesheet = passage;
-			} else if (name === "StoryScript") {
+			} else if (name === "StoryJavaScript") {
 				storyScript = passage;
 			} else if (tags.contains("stylesheet")) {
 				this.styles.push(passage);
@@ -1271,9 +1273,10 @@ function Tale(instanceName) {
 		}
 
 		if (this.passages.hasOwnProperty("StoryTitle")) {
-			var buf = document.createElement("div");
-			new Wikifier(buf, this.passages.StoryTitle.processText().trim());
-			this.setTitle(buf.textContent);
+			// We cannot Wikify and then grab the text content here as parts of the `Wikifier`
+			// depend on `tale` (being an instance of `Tale`), which we're in the process of
+			// instantiating now.  Chicken <-> Egg.
+			this.title = this.passages.StoryTitle.text.trim();
 		} else {
 			throw new Error("cannot find the StoryTitle special passage");
 		}
@@ -1322,7 +1325,7 @@ function Tale(instanceName) {
 		}
 
 		if ("{{STORY_NAME}}" !== "") { // eslint-disable-line no-constant-condition, yoda
-			this.setTitle("{{STORY_NAME}}");
+			this.title = "{{STORY_NAME}}";
 		} else {
 			throw new Error("story title not set");
 		}
@@ -1334,10 +1337,33 @@ function Tale(instanceName) {
 
 // Setup the Tale prototype
 Object.defineProperties(Tale.prototype, {
-	setTitle : {
-		value : function (title) {
-			document.title = this.title = title;
-			this.domId = Util.slugify(title);
+	// getters/setters
+	title : {
+		get : function () {
+			return this._title;
+		},
+		set : function (title) {
+			document.title = this._title = title;
+			this._domId = Util.slugify(title);
+		}
+	},
+
+	domId : {
+		get : function () {
+			return this._domId;
+		}
+	},
+
+	// methods
+	init : {
+		value : function () {
+			// This exists for things which must be done during initialization, but
+			// which cannot be done within the constructor for whatever reason.
+			if (TWINE1) {
+				var buf = document.createElement("div");
+				new Wikifier(buf, this.passages.StoryTitle.processText().trim());
+				this.title = buf.textContent;
+			}
 		}
 	},
 
