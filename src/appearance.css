@@ -116,13 +116,11 @@ audio, canvas, progress, video {
 	background-color: #222;
 	border-right: 1px solid #444;
 }
-#ui-bar header, #menu, #ui-bar footer {
-	text-align: right;
-}
 #ui-bar header, #menu {
 	font-weight: bold;
+	text-align: right;
 }
-#menu, #ui-bar footer {
+#menu {
 	margin-top: 3em;
 }
 #menu ul {

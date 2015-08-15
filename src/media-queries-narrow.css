@@ -15,7 +15,7 @@
 		border: none;
 		border-bottom: 1px solid #fff;
 	}
-	#ui-bar header, #story-caption, #ui-bar footer {
+	#ui-bar header, #story-caption {
 		text-align: left;
 		width: 66%;
 	}

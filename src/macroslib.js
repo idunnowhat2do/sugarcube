@@ -522,7 +522,7 @@ function defineStandardMacros() {
 	 * <<print>>
 	 */
 	macros.add("print", {
-		version  : { major : 2, minor : 1, patch : 0 },
+		version  : { major : 3, minor : 0, patch : 0 },
 		skipArgs : true,
 		handler  : function () {
 			if (this.args.full.length === 0) {
@@ -530,9 +530,9 @@ function defineStandardMacros() {
 			}
 
 			try {
-				var result = Util.evalExpression(this.args.full);
-				if (result != null && (typeof result !== "number" || !isNaN(result))) { // use lazy equality on null check
-					new Wikifier(this.output, result.toString());
+				var	result = printableStringOrDefault(Util.evalExpression(this.args.full), null);
+				if (result !== null) {
+					new Wikifier(this.output, result);
 				}
 			} catch (e) {
 				return this.error("bad expression: " + e.message);
