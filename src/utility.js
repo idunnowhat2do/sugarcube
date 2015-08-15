@@ -279,7 +279,7 @@ function addStyle(css) { // eslint-disable-line no-unused-vars
 	}
 	style = new StyleWrapper(style);
 
-	// check for wiki image transclusion
+	// Check for wiki image transclusion.
 	var	matchRe = /\[[<>]?[Ii][Mm][Gg]\[(?:\s|\S)*?\]\]+/g;
 	if (matchRe.test(css)) {
 		css = css.replace(matchRe, function (wikiImage) {
@@ -292,14 +292,17 @@ function addStyle(css) { // eslint-disable-line no-unused-vars
 			}
 
 			var source = markup.source;
-			// check for image passage transclusion
+			// Check for image passage transclusion.
 			if (source.slice(0, 5) !== "data:" && tale.has(source)) {
 				var passage = tale.get(source);
 				if (passage.tags.contains("Twine.image")) {
 					source = passage.text;
 				}
 			}
-			return "url(" + source + ")";
+			// The source may be URI- or Base64-encoded, so we cannot use the
+			// standard encodeURIComponent() here.  Instead, we simply encode
+			// any double quotes, since the URI will be delimited by them.
+			return 'url("' + source.replace(/"/g, "%22") + '")';
 		});
 	}
 
