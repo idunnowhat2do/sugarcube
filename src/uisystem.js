@@ -52,10 +52,6 @@ var UISystem = (function () {
 				+             '<li id="menu-share"><a>Share</a></li>'
 				+         '</ul>'
 				+     '</nav>'
-				+     '<footer role="contentinfo">'
-				+         '<p id="credits">Made with <a href="http://twinery.org/" target="_blank">Twine</a> &amp; <a href="http://www.motoslave.net/sugarcube/" target="_blank">SugarCube</a></p>'
-				+         '<p id="version">SugarCube (v"{{BUILD_VERSION_VERSION}}")</p>'
-				+     '</footer>'
 				+ '</div>'
 				+ '<div id="passages" role="main"></div>';
 		while (temp.hasChildNodes()) {
