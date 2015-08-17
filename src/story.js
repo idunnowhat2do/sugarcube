@@ -439,7 +439,6 @@ Object.defineProperties(History.prototype, {
 
 			// render the incoming passage and add it to the page
 			var incoming = passage.render();
-			incoming.style.visibility = "visible";
 			this.lastDisplay = Date.now();
 			if (updateDisplay) {
 				var	passages = document.getElementById("passages");
@@ -1097,9 +1096,8 @@ Object.defineProperties(Passage.prototype, {
 			if (DEBUG) { console.log("[<Passage>.render()] title: " + this.title); }
 
 			// create the new passage element
-			var passage = insertElement(null, "section", this.domId, "passage");
+			var passage = insertElement(null, "div", this.domId, "passage");
 			passage.setAttribute("data-passage", this.title);
-			passage.style.visibility = "hidden";
 
 			// add classes (generated from tags) to the passage and <body>
 			for (var i = 0; i < this.classes.length; i++) {

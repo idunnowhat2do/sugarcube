@@ -132,11 +132,16 @@
 	list-style: none;
 	border: 1px solid #444;
 }
+/*
 #menu ul:first-child {
 	margin-top: 0.5em;
 }
 #menu ul:not(:first-child) {
 	border-top: none;
+}
+*/
+#menu ul {
+	margin-top: 1em;
 }
 #menu li {
 	margin: 0;

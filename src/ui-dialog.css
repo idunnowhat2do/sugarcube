@@ -58,6 +58,9 @@ html.ui-dialog-open body {
 	margin: 0;
 	padding: 0;
 }
+#ui-dialog-titlebar {
+	position: relative;
+}
 #ui-dialog-close {
 	display: block;
 	position: absolute;
@@ -105,12 +108,14 @@ html.ui-dialog-open body {
 #ui-dialog.open {
 	opacity: 1;
 }
+#ui-dialog-titlebar {
+	background-color: #444;
+}
 #ui-dialog-title {
 	margin: 0;
 	padding: 0.2em 3.5em 0.2em 0.5em;
 	min-height: 24px;
 	font-size: 1.5em;
-	background-color: #444;
 	text-align: center;
 	text-transform: uppercase;
 }
@@ -121,9 +126,13 @@ html.ui-dialog-open body {
 	padding: 0;
 	width: 3.6em;
 	height: 1.6em;
+	/*
 	color: #eee;
 	background-color: #922;
 	border: 1px solid #b44;
+	*/
+	background-color: transparent;
+	border: 1px solid transparent;
 	-webkit-transition-duration: 200ms;
 	-moz-transition-duration: 200ms;
 	transition-duration: 200ms;
