@@ -996,6 +996,9 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 									}
 									var styles = hasGCS ? window.getComputedStyle(node, null) : node.currentStyle;
 									if (styles && styles.display) {
+										if (styles.display === "none") {
+											continue;
+										}
 										return styles.display === "block";
 									}
 									/*
@@ -1036,7 +1039,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 									}
 									return false;
 								case Node.COMMENT_NODE:
-									break;
+									continue;
 								default:
 									return false;
 								}
