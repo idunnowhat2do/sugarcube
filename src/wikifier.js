@@ -569,12 +569,16 @@ var Wikifier = (function () {
 
 		evalExpression : {
 			value : function (text) {
-				var	badResultRe = /\[(?:object(?:\s+[^\]]+)?|native\s+code)\]/,
-					result;
+				var result;
 				try {
 					result = Wikifier.evalExpression(text);
-					if (badResultRe.test(result)) {
+					if (result == null || typeof result === "function") { // use lazy equality for null
 						result = text;
+					} else {
+						result = String(result);
+						if (/\[(?:object(?:\s+[^\]]+)?|native\s+code)\]/.test(result)) {
+							result = text;
+						}
 					}
 				} catch (e) {
 					result = text;
@@ -585,7 +589,7 @@ var Wikifier = (function () {
 
 		evalPassageId : {
 			value : function (passage) {
-				if (passage != null && !tale.has(passage)) { // use lazy equality; 0 is a valid ID and name, so we cannot simply evaluate passage
+				if (passage != null && !tale.has(passage)) { // use lazy equality; `0` is a valid name, so we cannot simply evaluate `passage`
 					passage = Wikifier.helpers.evalExpression(passage);
 				}
 				return passage;
