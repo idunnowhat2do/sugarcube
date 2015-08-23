@@ -93,8 +93,8 @@ var	config = {
 
 		// macros properties
 		macros : {
-			disableIfAssignmentError : false,
-			maxLoopIterations        : 1000
+			ifAssignmentError : true,
+			maxLoopIterations : 1000
 		},
 
 		// saves properties

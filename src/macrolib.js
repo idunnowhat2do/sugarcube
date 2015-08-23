@@ -564,7 +564,7 @@ Macro.add("silently", {
 	<<if>>, <<elseif>>, & <<else>>
 */
 Macro.add("if", {
-	version  : { major : 4, minor : 0, patch : 0 },
+	version  : { major : 4, minor : 0, patch : 1 },
 	skipArgs : true,
 	tags     : [ "elseif", "else" ],
 	handler  : function () {
@@ -593,7 +593,7 @@ Macro.add("if", {
 							"no conditional expression specified for <<" + this.payload[i].name
 							+ ">> clause" + (i > 0 ? " (#" + i + ")" : "")
 						);
-					} else if (!config.macros.disableIfAssignmentError && /[^!=&^|<>*/%+-]=[^=]/.test(this.payload[i].arguments)) {
+					} else if (config.macros.ifAssignmentError && /[^!=&^|<>*/%+-]=[^=]/.test(this.payload[i].arguments)) {
 						return this.error(
 							'assignment operator "=" found within <<'
 							+ this.payload[i].name + ">> clause" + (i > 0 ? " (#" + i + ")" : "")
