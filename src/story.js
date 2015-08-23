@@ -453,30 +453,34 @@ Object.defineProperties(History.prototype, {
 						)
 						/* eslint-enable no-extra-parens */
 					) {
-						var outgoing = passages.childNodes[0];
-						if (!outgoing.classList.contains("passage-out")) {
-							outgoing.id = "out-" + outgoing.id;
-							outgoing.classList.add("passage-out");
-							if (typeof config.passageTransitionOut === "string") {
-								jQuery(outgoing).on(config.transitionEndEventName, function (evt) {
-									if (
-										   this.parentNode
-										&& evt.originalEvent.propertyName === config.passageTransitionOut
-									) {
-										this.parentNode.removeChild(this);
-									}
-								});
+						var outNodes = Array.from(passages.childNodes);
+						for (var i = 0; i < outNodes.length; i++) {
+							var outgoing = outNodes[i];
+							if (outgoing.nodeType === Node.ELEMENT_NODE && outgoing.classList.contains("passage")) {
+								if (outgoing.classList.contains("passage-out")) {
+									continue;
+								}
+								outgoing.id = "out-" + outgoing.id;
+								outgoing.classList.add("passage-out");
+								if (typeof config.passageTransitionOut === "string") {
+									jQuery(outgoing).on(config.transitionEndEventName, function (evt) {
+										if (
+											   this.parentNode
+											&& evt.originalEvent.propertyName === config.passageTransitionOut
+										) {
+											this.parentNode.removeChild(this);
+										}
+									});
+								} else {
+									setTimeout(function () {
+										if (outgoing.parentNode) {
+											outgoing.parentNode.removeChild(outgoing);
+										}
+									}, config.passageTransitionOut); // in milliseconds
+								}
 							} else {
-								setTimeout(function () {
-									if (outgoing.parentNode) {
-										outgoing.parentNode.removeChild(outgoing);
-									}
-								}, config.passageTransitionOut); // in milliseconds
+								outgoing.parentNode.removeChild(outgoing);
 							}
-						}
-						// remove additional elements (possibly duplicates of the incoming passage due to multi-clicks)
-						while (passages.childNodes.length > 1) {
-							passages.removeChild(passages.lastChild);
 						}
 					} else {
 						removeChildren(passages);
