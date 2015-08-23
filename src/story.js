@@ -35,7 +35,7 @@ function History(instanceName) {
 	/* eslint-enable max-len */
 
 	// currently active/displayed state
-	this.active = { init : true, variables : {} }; // allows macro initialization to set variables at startup
+	this.active = { init : true, variables : {}, sidx : -1 }; // allows macro initialization to set variables at startup
 
 	// current hash, if in Hash mode
 	if (config.historyMode === History.Modes.Hash) {
