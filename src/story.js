@@ -25,7 +25,6 @@ function History(instanceName) {
 			if (config.history.mode === History.Modes.Session) {
 				console.log("    > History.getWindowState(): " + History.getWindowState().sidx + " / " + History.getWindowState().suid);
 			} else if (config.history.mode === History.Modes.Window) {
-				//console.log("    > History.getWindowState(): " + History.getWindowState().history.length);
 				console.log("    > History.getWindowState(): " + History.getWindowState().delta.length);
 			}
 		} else {
@@ -584,11 +583,6 @@ Object.defineProperties(History.prototype, {
 	restart : {
 		value : function () {
 			if (DEBUG) { console.log("[<History>.restart()]"); }
-
-			// ZUGZUG
-			//jQuery(document.body).empty().append("\u00a0"); // daft, but necessary for some browsers ???
-			// ZUGZUG
-
 			if (config.history.mode !== History.Modes.Hash) {
 				History.addWindowState(null, tale.title); // using null here is deliberate
 				window.location.reload();
