@@ -259,7 +259,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		if (menuStory !== null) {
 			removeChildren(menuStory);
 			if (tale.has("StoryMenu")) {
-				buildListFromPassage("StoryMenu", menuStory);
+				buildLinkListFromPassage("StoryMenu", menuStory);
 			}
 		}
 	}
@@ -765,7 +765,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		if (DEBUG) { console.log("[UI.buildDialogShare()]"); }
 
 		jQuery(dialogSetup(strings.share.title, "share list"))
-			.append(buildListFromPassage("StoryShare"));
+			.append(buildLinkListFromPassage("StoryShare"));
 			//.find("a")
 			//	.addClass("ui-close");
 
@@ -793,7 +793,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		return true;
 	}
 
-	function buildListFromPassage(passage, list) {
+	function buildLinkListFromPassage(passage, list) {
 		if (list == null) { // lazy equality for null
 			list = document.createElement("ul");
 		}
@@ -803,16 +803,13 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			var li = null;
 			while (temp.hasChildNodes()) {
 				var node = temp.firstChild;
-				if (
-					   node.nodeType !== Node.TEXT_NODE
-					&& (node.nodeType !== Node.ELEMENT_NODE || node.nodeName.toUpperCase() === "BR")
-				) { // non-text, non-element, or <br>-element nodes
+				if (node.nodeType !== Node.ELEMENT_NODE || node.nodeName.toUpperCase() !== "A") { // non-<a>-element nodes
 					temp.removeChild(node);
 					if (li !== null) {
 						// forget the current list item
 						li = null;
 					}
-				} else { // text or non-<br>-element nodes
+				} else { // <a>-element nodes
 					if (li === null) {
 						// create a new list item
 						li = document.createElement("li");
@@ -1085,32 +1082,32 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 	 ******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
 		// Initialization
-		init                 : { value : init },
+		init                     : { value : init },
 		// Internals
-		start                : { value : start },
-		setPageElements      : { value : setPageElements },
-		patchOutlines        : { value : patchOutlines },
-		buildDialogSaves     : { value : buildDialogSaves },
-		buildDialogRewind    : { value : buildDialogRewind },
-		buildDialogRestart   : { value : buildDialogRestart },
-		buildDialogSettings  : { value : buildDialogSettings },
-		buildDialogShare     : { value : buildDialogShare },
-		buildDialogAutoload  : { value : buildDialogAutoload },
-		buildListFromPassage : { value : buildListFromPassage },
+		start                    : { value : start },
+		setPageElements          : { value : setPageElements },
+		patchOutlines            : { value : patchOutlines },
+		buildDialogSaves         : { value : buildDialogSaves },
+		buildDialogRewind        : { value : buildDialogRewind },
+		buildDialogRestart       : { value : buildDialogRestart },
+		buildDialogSettings      : { value : buildDialogSettings },
+		buildDialogShare         : { value : buildDialogShare },
+		buildDialogAutoload      : { value : buildDialogAutoload },
+		buildLinkListFromPassage : { value : buildLinkListFromPassage },
 		// Built-ins
-		alert                : { value : dialogAlert },
-		restart              : { value : dialogRestart },
-		settings             : { value : dialogSettings },
-		rewind               : { value : dialogRewind },
-		saves                : { value : dialogSaves },
-		share                : { value : dialogShare },
+		alert                    : { value : dialogAlert },
+		restart                  : { value : dialogRestart },
+		settings                 : { value : dialogSettings },
+		rewind                   : { value : dialogRewind },
+		saves                    : { value : dialogSaves },
+		share                    : { value : dialogShare },
 		// Core
-		isOpen               : { value : dialogIsOpen },
-		body                 : { value : dialogBody },
-		setup                : { value : dialogSetup },
-		addClickHandler      : { value : dialogAddClickHandler },
-		open                 : { value : dialogOpen },
-		close                : { value : dialogClose }
+		isOpen                   : { value : dialogIsOpen },
+		body                     : { value : dialogBody },
+		setup                    : { value : dialogSetup },
+		addClickHandler          : { value : dialogAddClickHandler },
+		open                     : { value : dialogOpen },
+		close                    : { value : dialogClose }
 	}));
 
 }());
