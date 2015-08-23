@@ -20,11 +20,11 @@ function History(instanceName) {
 	/* eslint-disable max-len */
 	if (DEBUG) {
 		console.log("[History()]");
-		console.log("    > config.historyMode: " + (config.historyMode === History.Modes.Hash ? "Hash" : config.historyMode === History.Modes.Window ? "Window" : "Session"));
+		console.log("    > config.history.mode: " + (config.history.mode === History.Modes.Hash ? "Hash" : config.history.mode === History.Modes.Window ? "Window" : "Session"));
 		if (History.getWindowState()) {
-			if (config.historyMode === History.Modes.Session) {
+			if (config.history.mode === History.Modes.Session) {
 				console.log("    > History.getWindowState(): " + History.getWindowState().sidx + " / " + History.getWindowState().suid);
-			} else if (config.historyMode === History.Modes.Window) {
+			} else if (config.history.mode === History.Modes.Window) {
 				//console.log("    > History.getWindowState(): " + History.getWindowState().history.length);
 				console.log("    > History.getWindowState(): " + History.getWindowState().delta.length);
 			}
@@ -38,7 +38,7 @@ function History(instanceName) {
 	this.active = { init : true, variables : {}, sidx : -1 }; // allows macro initialization to set variables at startup
 
 	// current hash, if in Hash mode
-	if (config.historyMode === History.Modes.Hash) {
+	if (config.history.mode === History.Modes.Hash) {
 		this.hash = "";
 	}
 
@@ -79,7 +79,7 @@ Object.defineProperties(History.prototype, {
 
 	length : {
 		get : function () {
-			return config.historyMode === History.Modes.Session ? this.active.sidx + 1 : this.history.length;
+			return config.history.mode === History.Modes.Session ? this.active.sidx + 1 : this.history.length;
 		}
 	},
 
@@ -105,7 +105,7 @@ Object.defineProperties(History.prototype, {
 			if (at > this.history.length) { return null; }
 
 			var dup = clone(this.history[this.history.length - at]);
-			if (config.historyMode === History.Modes.Session) {
+			if (config.history.mode === History.Modes.Session) {
 				delete dup.sidx;
 			}
 			return dup;
@@ -177,7 +177,7 @@ Object.defineProperties(History.prototype, {
 
 			for (var i = 0; i < arguments.length; i++) {
 				var state = arguments[i];
-				if (config.historyMode === History.Modes.Session) {
+				if (config.history.mode === History.Modes.Session) {
 					state.sidx = this.history.length;
 				}
 				this.history.push(state);
@@ -235,14 +235,14 @@ Object.defineProperties(History.prototype, {
 			}
 
 			/*
-				Finalize the `config.disableHistoryControls` setting before displaying the initial
+				Finalize the `config.history.controls` setting before displaying the initial
 				passage.
 			
 				n.b. We do this here to give the author every opportunity to modify the
-				     `config.disableHistoryTracking` setting.
+				     `config.history.tracking` setting.
 			*/
-			if (config.disableHistoryTracking) {
-				config.disableHistoryControls = true;
+			if (!config.history.tracking) {
+				config.history.controls = false;
 			}
 
 			// display the initial passage
@@ -294,9 +294,9 @@ Object.defineProperties(History.prototype, {
 				     to deal with it, or the jQuery Event object, if the necessary properties were
 				     pushed onto it.
 			*/
-			if (config.historyMode === History.Modes.Session) {
+			if (config.history.mode === History.Modes.Session) {
 				window.addEventListener("popstate", History.popStateHandlerSession, false);
-			} else if (config.historyMode === History.Modes.Window) {
+			} else if (config.history.mode === History.Modes.Window) {
 				window.addEventListener("popstate", History.popStateHandlerWindow, false);
 			} else {
 				window.addEventListener("hashchange", History.hashChangeHandler, false);
@@ -353,7 +353,7 @@ Object.defineProperties(History.prototype, {
 
 			// ensure that this.active is set if we have history
 			if (this.active.init && !this.isEmpty()) {
-				if (config.historyMode === History.Modes.Session) {
+				if (config.history.mode === History.Modes.Session) {
 					if (DEBUG) {
 						console.log("    [S]> state.active.init && !state.isEmpty(); activating: "
 							+ (History.hasWindowState()
@@ -363,7 +363,7 @@ Object.defineProperties(History.prototype, {
 					this.setActiveState(History.hasWindowState() ? History.getWindowState().sidx : this.top);
 				} else {
 					if (DEBUG) {
-						if (config.historyMode === History.Modes.Window) {
+						if (config.history.mode === History.Modes.Window) {
 							console.log("    [W]> state.active.init && !state.isEmpty(); activating: state.top");
 						} else {
 							console.log("    [H]> state.active.init && !state.isEmpty(); activating: state.top");
@@ -376,9 +376,9 @@ Object.defineProperties(History.prototype, {
 			// create a fresh entry in the history
 			if (updateHistory) {
 				if (!this.isEmpty()) {
-					if (config.disableHistoryTracking) {
+					if (!config.history.tracking) {
 						this.pop();
-					} else if (config.historyMode === History.Modes.Session) {
+					} else if (config.history.mode === History.Modes.Session) {
 						var windowState = History.getWindowState();
 						if (windowState !== null && windowState.sidx < this.top.sidx) {
 							if (DEBUG) {
@@ -398,23 +398,23 @@ Object.defineProperties(History.prototype, {
 				}
 				this.setActiveState(this.top);
 			}
-			if ((updateHistory || config.disableHistoryControls) && config.historyMode !== History.Modes.Hash) {
+			if ((updateHistory || !config.history.controls) && config.history.mode !== History.Modes.Hash) {
 				if (DEBUG) {
 					console.log("    > typeof History.getWindowState(): " + typeof History.getWindowState());
 				}
 				var stateObj;
-				if (config.historyMode === History.Modes.Session) {
+				if (config.history.mode === History.Modes.Session) {
 					stateObj = { suid : this.suid, sidx : this.active.sidx };
 				} else { // History.Modes.Window
 					stateObj = this.marshal();
 				}
 				History[
-					!History.hasWindowState() || config.disableHistoryControls
+					!History.hasWindowState() || !config.history.controls
 						? "replaceWindowState"
 						: "addWindowState"
 				](stateObj, windowTitle);
 			}
-			if (config.historyMode !== History.Modes.Window) {
+			if (config.history.mode !== History.Modes.Window) {
 				this.save();
 			}
 
@@ -494,7 +494,7 @@ Object.defineProperties(History.prototype, {
 					document.title = windowTitle;
 				}
 
-				if (config.historyMode === History.Modes.Hash) {
+				if (config.history.mode === History.Modes.Hash) {
 					window.location.hash = this.hash;
 				}
 
@@ -589,7 +589,7 @@ Object.defineProperties(History.prototype, {
 			//jQuery(document.body).empty().append("\u00a0"); // daft, but necessary for some browsers ???
 			// ZUGZUG
 
-			if (config.historyMode !== History.Modes.Hash) {
+			if (config.history.mode !== History.Modes.Hash) {
 				History.addWindowState(null, tale.title); // using null here is deliberate
 				window.location.reload();
 			} else {
@@ -602,10 +602,10 @@ Object.defineProperties(History.prototype, {
 		value : function () {
 			if (DEBUG) { console.log("[<History>.save()]"); }
 			var stateObj = this.marshal();
-			if (config.historyMode === History.Modes.Session) {
+			if (config.history.mode === History.Modes.Session) {
 				if (DEBUG) { console.log("    > this.suid: " + this.suid); }
 				session.set("history." + this.suid, stateObj);
-			} else if (config.historyMode === History.Modes.Hash) {
+			} else if (config.history.mode === History.Modes.Hash) {
 				this.hash = History.serializeWindowHashState(stateObj);
 			}
 		}
@@ -614,7 +614,7 @@ Object.defineProperties(History.prototype, {
 	restore : {
 		value : function (suid) {
 			if (DEBUG) { console.log("[<History>.restore()]"); }
-			if (config.historyMode === History.Modes.Session) {
+			if (config.history.mode === History.Modes.Session) {
 				if (suid) {
 					this.suid = suid;
 				} else if (History.hasWindowState()) {
@@ -638,7 +638,7 @@ Object.defineProperties(History.prototype, {
 						return true;
 					}
 				}
-			} else if (config.historyMode === History.Modes.Window) {
+			} else if (config.history.mode === History.Modes.Window) {
 				if (DEBUG) {
 					console.log("    > typeof window.history: " + typeof window.history);
 					console.log("    > typeof History.getWindowState(): " + typeof History.getWindowState());
@@ -890,11 +890,11 @@ Object.defineProperties(History, {
 		value : function () {
 			if (DEBUG) { console.log("[History.marshalToSave()]"); }
 
-			var stateObj = { mode : config.historyMode };
+			var stateObj = { mode : config.history.mode };
 			if (state.hasOwnProperty("prng")) {
 				stateObj.rseed = state.prng.seed;
 			}
-			if (config.historyMode === History.Modes.Session) {
+			if (config.history.mode === History.Modes.Session) {
 				stateObj.history = clone(state.history.slice(0, state.active.sidx + 1));
 			} else {
 				stateObj.history = clone(state.history);
@@ -910,7 +910,7 @@ Object.defineProperties(History, {
 			if (!stateObj || !stateObj.hasOwnProperty("mode") || !stateObj.hasOwnProperty("history")) {
 				throw new Error("state object is missing required data");
 			}
-			if (stateObj.mode !== config.historyMode) {
+			if (stateObj.mode !== config.history.mode) {
 				throw new Error("state object is from an incompatible history mode");
 			}
 
@@ -925,7 +925,7 @@ Object.defineProperties(History, {
 			if (isPRNGEnabled) {
 				History.initPRNG(stateObj.hasOwnProperty("rseed") ? stateObj.rseed : null);
 			}
-			if (config.historyMode === History.Modes.Session) {
+			if (config.history.mode === History.Modes.Session) {
 				state.regenerateSuid();
 				//if (DEBUG) { console.log("    > this.suid: " + state.suid); }
 			}
@@ -934,7 +934,7 @@ Object.defineProperties(History, {
 			state.history = clone(stateObj.history);
 
 			// restore the window history states (in order)
-			if (config.historyMode !== History.Modes.Hash && !config.disableHistoryControls) {
+			if (config.history.mode !== History.Modes.Hash && config.history.controls) {
 				for (var i = 0, iend = state.history.length; i < iend; i++) {
 					if (DEBUG) {
 						console.log("    > loading state into window history: "
@@ -946,7 +946,7 @@ Object.defineProperties(History, {
 						windowTitle = config.displayPassageTitles && state.history[i].title !== config.startingPassage
 							? state.history[i].title + " | " + tale.title
 							: tale.title;
-					switch (config.historyMode) {
+					switch (config.history.mode) {
 					case History.Modes.Session:
 						windowState = {
 							suid : state.suid,

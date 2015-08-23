@@ -197,8 +197,8 @@ Macro.add(["back", "return"], {
 					return this.error('passage "' + this.args[1] + '" does not exist');
 				}
 				/*
-					// allow <<back>> to work like <<return>> when `config.disableHistoryTracking` is enabled
-					if (this.name === "return" || config.disableHistoryTracking) {
+					// allow <<back>> to work like <<return>> when `config.history.tracking` is disabled
+					if (this.name === "return" || !config.history.tracking) {
 				*/
 				if (this.name === "return") {
 					pname = this.args[1];
@@ -234,7 +234,7 @@ Macro.add(["back", "return"], {
 		if (steps > 0) {
 			var	callback;
 			if (this.name === "back") {
-				if (config.historyMode === History.Modes.Hash || config.disableHistoryControls) {
+				if (config.history.mode === History.Modes.Hash || !config.history.controls) {
 					callback = function () {
 						// pop the history stack
 						//   n.b. (steps > 0) is correct, since the stack only holds clean/non-rendered states

@@ -184,7 +184,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			.text(strings.saves.title);
 
 		// setup the Rewind menu item
-		if (!config.disableHistoryTracking && tale.lookup("tags", "bookmark").length > 0) {
+		if (config.history.tracking && tale.lookup("tags", "bookmark").length > 0) {
 			dialogAddClickHandler("#menu-rewind a", null, buildDialogRewind)
 				.text(strings.rewind.title);
 		} else {
@@ -334,7 +334,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				tdDescTxt.title = strings.saves.labelAuto;
 				tdSlot.appendChild(tdDescTxt);
 
-				if (saves.autosave && saves.autosave.state.mode === config.historyMode) {
+				if (saves.autosave && saves.autosave.state.mode === config.history.mode) {
 					tdLoadBtn = createButton("load", "ui-close", strings.saves.labelLoad, "auto", Save.autosave.load);
 					tdLoad.appendChild(tdLoadBtn);
 
@@ -385,7 +385,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 
 				tdSlot.appendChild(document.createTextNode(i + 1));
 
-				if (saves.slots[i] && saves.slots[i].state.mode === config.historyMode) {
+				if (saves.slots[i] && saves.slots[i].state.mode === config.history.mode) {
 					tdLoadBtn = createButton("load", "ui-close", strings.saves.labelLoad, i, Save.slots.load);
 					tdLoad.appendChild(tdLoadBtn);
 
@@ -520,7 +520,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				link.classList.add("ui-close");
 				jQuery(link).one("click", (function () {
 					var p = i;
-					if (config.historyMode === History.Modes.Session) {
+					if (config.history.mode === History.Modes.Session) {
 						return function () {
 							if (DEBUG) { console.log("[rewind:click() @Session]"); }
 
@@ -531,7 +531,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 							state.regenerateSuid();
 
 							// push the history states in order
-							if (config.disableHistoryControls) {
+							if (!config.history.controls) {
 								if (DEBUG) { console.log("    > pushing: " + p + " (" + state.history[p].title + ")"); }
 
 								// load the state into the window history
@@ -572,7 +572,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 							// display the passage
 							state.display(state.active.title, null, "replace");
 						};
-					} else if (config.historyMode === History.Modes.Window) {
+					} else if (config.history.mode === History.Modes.Window) {
 						return function () {
 							if (DEBUG) { console.log("[rewind:click() @Window]"); }
 
@@ -580,7 +580,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 							document.title = tale.title;
 
 							// push the history states in order
-							if (!config.disableHistoryControls) {
+							if (config.history.controls) {
 								for (var i = 0, end = p; i <= end; i++) { // eslint-disable-line no-shadow
 									if (DEBUG) { console.log("    > pushing: " + i + " (" + state.history[i].title + ")"); }
 
@@ -612,7 +612,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 						return function () {
 							if (DEBUG) { console.log("[rewind:click() @Hash]"); }
 
-							if (!config.disableHistoryControls) {
+							if (config.history.controls) {
 								window.location.hash = state.history[p].hash;
 							} else {
 								session.set("activeHash", state.history[p].hash);

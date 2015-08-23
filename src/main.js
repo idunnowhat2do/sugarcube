@@ -64,11 +64,13 @@ var	config = {
 		updatePageElements    : true,
 
 		// history properties
-		disableHistoryControls : false,
-		disableHistoryTracking : false,
-		historyMode            : has.pushState
-			? has.sessionStorage ? History.Modes.Session : History.Modes.Window
-			: History.Modes.Hash,
+		history : {
+			controls : true,
+			mode     : has.pushState
+				? has.sessionStorage ? History.Modes.Session : History.Modes.Window
+				: History.Modes.Hash,
+			tracking : true
+		},
 
 		// transition properties
 		passageTransitionOut   : undefined,
