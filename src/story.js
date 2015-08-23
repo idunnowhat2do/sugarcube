@@ -251,10 +251,10 @@ Object.defineProperties(History.prototype, {
 				// enables the Twine 1.4+ "Test Play From Here" feature
 				if (DEBUG) { console.log('    > display: "' + testPlay + '" (testPlay)'); }
 				this.display(testPlay);
-			} else if (config.startingPassage == null) { // lazy equality for null
+			} else if (config.passages.start == null) { // lazy equality for null
 				throw new Error("starting passage not selected");
-			} else if (!tale.has(config.startingPassage)) {
-				throw new Error('starting passage ("' + config.startingPassage + '") not found');
+			} else if (!tale.has(config.passages.start)) {
+				throw new Error('starting passage ("' + config.passages.start + '") not found');
 			} else if (!this.restore()) {
 				// autoload the autosave, if requested and possible, else load the start passage
 				var loadStart = true;
@@ -280,8 +280,8 @@ Object.defineProperties(History.prototype, {
 					break;
 				}
 				if (loadStart) {
-					if (DEBUG) { console.log('    > display: "' + config.startingPassage + '"'); }
-					this.display(config.startingPassage);
+					if (DEBUG) { console.log('    > display: "' + config.passages.start + '"'); }
+					this.display(config.passages.start);
 				}
 			}
 
@@ -339,7 +339,7 @@ Object.defineProperties(History.prototype, {
 				     passage, always refer to passage.title and never the title parameter.
 			*/
 			var	passage     = tale.get(title),
-				windowTitle = config.displayPassageTitles && passage.title !== config.startingPassage
+				windowTitle = config.passages.displayTitles && passage.title !== config.passages.start
 					? passage.title + " | " + tale.title
 					: tale.title;
 
@@ -444,10 +444,10 @@ Object.defineProperties(History.prototype, {
 				if (passages.hasChildNodes()) {
 					if (
 						/* eslint-disable no-extra-parens */
-						   typeof config.passageTransitionOut === "number"
+						   typeof config.passages.transitionOut === "number"
 						|| (
-							   typeof config.passageTransitionOut === "string"
-							&& config.passageTransitionOut !== ""
+							   typeof config.passages.transitionOut === "string"
+							&& config.passages.transitionOut !== ""
 							&& config.transitionEndEventName !== ""
 						)
 						/* eslint-enable no-extra-parens */
@@ -461,11 +461,11 @@ Object.defineProperties(History.prototype, {
 								}
 								outgoing.id = "out-" + outgoing.id;
 								outgoing.classList.add("passage-out");
-								if (typeof config.passageTransitionOut === "string") {
+								if (typeof config.passages.transitionOut === "string") {
 									jQuery(outgoing).on(config.transitionEndEventName, function (evt) {
 										if (
 											   this.parentNode
-											&& evt.originalEvent.propertyName === config.passageTransitionOut
+											&& evt.originalEvent.propertyName === config.passages.transitionOut
 										) {
 											this.parentNode.removeChild(this);
 										}
@@ -475,7 +475,7 @@ Object.defineProperties(History.prototype, {
 										if (outgoing.parentNode) {
 											outgoing.parentNode.removeChild(outgoing);
 										}
-									}, config.passageTransitionOut); // in milliseconds
+									}, config.passages.transitionOut); // in milliseconds
 								}
 							} else {
 								outgoing.parentNode.removeChild(outgoing);
@@ -489,7 +489,7 @@ Object.defineProperties(History.prototype, {
 				passages.appendChild(incoming);
 				setTimeout(function () { incoming.classList.remove("passage-in"); }, 1);
 
-				if (config.displayPassageTitles && passage.title !== config.startingPassage) {
+				if (config.passages.displayTitles && passage.title !== config.passages.start) {
 					document.title = windowTitle;
 				}
 
@@ -515,8 +515,8 @@ Object.defineProperties(History.prototype, {
 						postdisplay[task].call(this, task);
 					}
 				}, passage);
-				if (config.updatePageElements) {
-					UI.setPageElements();
+				if (config.ui.updateStoryElements) {
+					UI.setStoryElements();
 				}
 			}
 
@@ -937,7 +937,7 @@ Object.defineProperties(History, {
 
 					// load the state into the window history
 					var	windowState,
-						windowTitle = config.displayPassageTitles && state.history[i].title !== config.startingPassage
+						windowTitle = config.passages.displayTitles && state.history[i].title !== config.passages.start
 							? state.history[i].title + " | " + tale.title
 							: tale.title;
 					switch (config.history.mode) {
@@ -1041,26 +1041,26 @@ Object.defineProperties(Passage.prototype, {
 	// methods
 	description : {
 		value : function () {
-			if (config.altPassageDescription != null) { // lazy equality for null
-				switch (typeof config.altPassageDescription) {
+			if (config.passages.descriptions != null) { // lazy equality for null
+				switch (typeof config.passages.descriptions) {
 				case "boolean":
-					if (config.altPassageDescription) {
+					if (config.passages.descriptions) {
 						return this.title;
 					}
 					break;
 				case "object":
-					if (config.altPassageDescription.hasOwnProperty(this.title)) {
-						return config.altPassageDescription[this.title];
+					if (config.passages.descriptions.hasOwnProperty(this.title)) {
+						return config.passages.descriptions[this.title];
 					}
 					break;
 				case "function":
-					var result = config.altPassageDescription.call(this);
+					var result = config.passages.descriptions.call(this);
 					if (result) {
 						return result;
 					}
 					break;
 				default:
-					throw new TypeError("config.altPassageDescription must be a boolean, object, or function");
+					throw new TypeError("config.passages.descriptions must be a boolean, object, or function");
 				}
 			}
 			if (this._excerpt == null) { // lazy equality for null
@@ -1222,7 +1222,7 @@ function Tale(instanceName) {
 	var	el, name, tags, passage;
 
 	if (TWINE1) {
-		config.startingPassage = "Start"; // set the default starting passage title
+		config.passages.start = "Start"; // set the default starting passage title
 		var	storyStylesheet,
 			storyScript;
 		for (var i = 0; i < nodes.length; i++) {
@@ -1273,7 +1273,7 @@ function Tale(instanceName) {
 			throw new Error("cannot find the StoryTitle special passage");
 		}
 	} else {
-		config.startingPassage = null; // no default starting passage title
+		config.passages.start = null; // no default starting passage title
 		var startNode = nodes[0].hasAttribute("startnode") ? nodes[0].getAttribute("startnode") : "";
 		nodes = nodes[0].childNodes;
 		for (var i = 0; i < nodes.length; i++) { // eslint-disable-line no-redeclare
@@ -1304,7 +1304,7 @@ function Tale(instanceName) {
 				passage = new Passage(name, el, +pid);
 
 				if (startNode !== "" && startNode === pid) {
-					config.startingPassage = name;
+					config.passages.start = name;
 				}
 
 				if (tags.contains("widget")) {

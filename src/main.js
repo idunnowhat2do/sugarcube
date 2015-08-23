@@ -56,12 +56,8 @@ var	runtime = Object.defineProperties({}, {
 var	config = Object.seal({
 		// general properties
 		addVisitedLinkClass   : false,
-		altPassageDescription : undefined,
 		cleanupWikifierOutput : false,
-		displayPassageTitles  : false,
 		loadDelay             : 0,
-		startingPassage       : undefined,
-		updatePageElements    : true,
 
 		// history properties
 		history : Object.seal({
@@ -72,29 +68,18 @@ var	config = Object.seal({
 			tracking : true
 		}),
 
-		// transition properties
-		passageTransitionOut   : undefined,
-		transitionEndEventName : (function () {
-			var	teMap  = {
-					"transition"       : "transitionend",
-					"MSTransition"     : "msTransitionEnd",
-					"WebkitTransition" : "webkitTransitionEnd",
-					"MozTransition"    : "transitionend"
-				},
-				teKeys = Object.keys(teMap),
-				el     = document.createElement("div");
-			for (var i = 0; i < teKeys.length; i++) {
-				if (el.style[teKeys[i]] !== undefined) {
-					return teMap[teKeys[i]];
-				}
-			}
-			return "";
-		}()),
-
 		// macros properties
 		macros : Object.seal({
 			ifAssignmentError : true,
 			maxLoopIterations : 1000
+		}),
+
+		// passages properties
+		passages : Object.seal({
+			descriptions  : undefined,
+			displayTitles : false,
+			start         : undefined,
+			transitionOut : undefined
 		}),
 
 		// saves properties
@@ -110,8 +95,27 @@ var	config = Object.seal({
 
 		// UI properties
 		ui : Object.seal({
-			stowBarInitially : false
-		})
+			stowBarInitially    : false,
+			updateStoryElements : true
+		}),
+
+		// transition properties
+		transitionEndEventName : (function () {
+			var	teMap  = {
+					"transition"       : "transitionend",
+					"MSTransition"     : "msTransitionEnd",
+					"WebkitTransition" : "webkitTransitionEnd",
+					"MozTransition"    : "transitionend"
+				},
+				teKeys = Object.keys(teMap),
+				el     = document.createElement("div");
+			for (var i = 0; i < teKeys.length; i++) {
+				if (el.style[teKeys[i]] !== undefined) {
+					return teMap[teKeys[i]];
+				}
+			}
+			return "";
+		}())
 	});
 
 /* eslint-disable no-unused-vars */
