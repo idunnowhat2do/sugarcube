@@ -53,7 +53,7 @@ var	runtime = Object.defineProperties({}, {
 	});
 
 // Config object (author/developer use)
-var	config = {
+var	config = Object.seal({
 		// general properties
 		addVisitedLinkClass   : false,
 		altPassageDescription : undefined,
@@ -64,13 +64,13 @@ var	config = {
 		updatePageElements    : true,
 
 		// history properties
-		history : {
+		history : Object.seal({
 			controls : true,
 			mode     : has.pushState
 				? has.sessionStorage ? History.Modes.Session : History.Modes.Window
 				: History.Modes.Hash,
 			tracking : true
-		},
+		}),
 
 		// transition properties
 		passageTransitionOut   : undefined,
@@ -92,13 +92,13 @@ var	config = {
 		}()),
 
 		// macros properties
-		macros : {
+		macros : Object.seal({
 			ifAssignmentError : true,
 			maxLoopIterations : 1000
-		},
+		}),
 
 		// saves properties
-		saves : {
+		saves : Object.seal({
 			autoload  : undefined,
 			autosave  : undefined,
 			id        : "untitled-story",
@@ -106,13 +106,13 @@ var	config = {
 			onLoad    : undefined,
 			onSave    : undefined,
 			slots     : 8
-		},
+		}),
 
 		// UI properties
-		ui : {
+		ui : Object.seal({
 			stowBarInitially : false
-		}
-	};
+		})
+	});
 
 /* eslint-disable no-unused-vars */
 var	macros      = {}, // legacy macros object
