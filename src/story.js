@@ -1373,7 +1373,8 @@ Object.defineProperties(Tale.prototype, {
 			case "string":
 				return this.passages.hasOwnProperty(title);
 			default:
-				throw new TypeError("Tale.prototype.has title parameter must be a string");
+				var what = typeof title;
+				throw new TypeError("Tale.prototype.has title parameter cannot be " + (what === "object" ? "an " + what : "a " + what));
 			}
 		}
 	},
@@ -1387,7 +1388,8 @@ Object.defineProperties(Tale.prototype, {
 			case "string":
 				return this.passages.hasOwnProperty(title) ? this.passages[title] : new Passage(title || "(unknown)");
 			default:
-				throw new TypeError("Tale.prototype.get title parameter must be a string");
+				var what = typeof title;
+				throw new TypeError("Tale.prototype.get title parameter cannot be " + (what === "object" ? "an " + what : "a " + what));
 			}
 		}
 	},
