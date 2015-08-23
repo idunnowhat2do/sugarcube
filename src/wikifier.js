@@ -176,7 +176,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 		},
 
 		/**
-		 * Meant to be called by macros, this returns the raw, unprocessed, text passed to the currently executing macro.
+		 * Meant to be called by macros, this returns the raw, unprocessed, text given to the currently executing macro.
 		 * Unlike TiddlyWiki's default mechanism, this does not attempt to split up the arguments into an array.
 		 */
 		rawArgs : {
@@ -186,7 +186,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 		},
 
 		/**
-		 * Meant to be called by macros, this returns the text passed to the currently executing macro after doing some
+		 * Meant to be called by macros, this returns the text given to the currently executing macro after doing some
 		 * magic with certain Twine/Twee operators (like: eq, gt, and $variable).
 		 */
 		fullArgs : {
@@ -221,7 +221,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 		},
 
 		/**
-		 * Returns the passed string with all Twine/Twee operators converted to their JavaScript counterparts
+		 * Returns the given string with all Twine/Twee operators converted to their JavaScript counterparts
 		 */
 		parse : {
 			value : function (expression) {
@@ -295,7 +295,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 		},
 
 		/**
-		 * Returns the value of the passed story $variable
+		 * Returns the value of the given story $variable
 		 */
 		getValue : {
 			value : function (storyVar) {
@@ -318,7 +318,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 		},
 
 		/**
-		 * Sets the value of the passed story $variable
+		 * Sets the value of the given story $variable
 		 */
 		setValue : {
 			value : function (storyVar, newValue) {
@@ -345,7 +345,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 		},
 
 		/**
-		 * Returns the property name chain of the passed story $variable, which may be of arbitrary complexity
+		 * Returns the property name chain of the given story $variable, which may be of arbitrary complexity
 		 */
 		parseStoryVariable : {
 			value : function (varText) {
@@ -382,7 +382,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 		},
 
 		/**
-		 * Evaluate the passed Twine expression and return the result, throwing if there were errors
+		 * Evaluate the given Twine expression and return the result, throwing if there were errors
 		 */
 		evalExpression : {
 			value : function (expression) {
@@ -391,7 +391,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 		},
 
 		/**
-		 * Evaluate the passed Twine statements and return the result, throwing if there were errors
+		 * Evaluate the given Twine statements and return the result, throwing if there were errors
 		 */
 		evalStatements : {
 			value : function (statements) {
@@ -400,7 +400,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 		},
 
 		/**
-		 * Wikify the passed text and discard the output, throwing if there were errors
+		 * Wikify the given text and discard the output, throwing if there were errors
 		 */
 		wikifyEval : {
 			value : function (text) {
@@ -415,7 +415,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						errTrap.removeChild(fc);
 					}
 				} finally {
-					// probably unnecessary, but let's be tidy
+					// unnecessary, but let's be tidy
 					removeChildren(errTrap); // remove any remaining children
 					if (typeof errTrap.remove === "function") { // lazy equality for null
 						errTrap.remove();
