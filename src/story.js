@@ -535,14 +535,10 @@ Object.defineProperties(History.prototype, {
 					.end()
 				// add `tabindex=0` to all interactive elements which don't have it
 				.find("a,link,button,input,select,textarea")
-//					.filter(":not([tabindex])")
 					.not("[tabindex]")
 						.attr("tabindex", 0)
 						.end()
-					.end()
-				// attempt to focus the first element of the incoming passage
-				.find("#passages>.passage>*:first-child")
-					.focus();
+					.end();
 
 			// handle autosaves
 			switch (typeof config.saves.autosave) {
