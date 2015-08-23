@@ -1808,15 +1808,16 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					if (passage == null) { return; } // lazy equality for null
 
 					passage = (typeof passage !== "string" ? String(passage) : passage).trim();
-					if (/^\$\w+/.test(passage)) {
-						passage = Wikifier.getValue(passage);
-						el.setAttribute("data-passage", passage);
+					var evaluated = Wikifier.helpers.evalPassageId(passage);
+					if (evaluated !== passage) {
+						passage = evaluated;
+						el.setAttribute("data-passage", evaluated);
 					}
 					if (passage !== "") {
 						if (el.tagName.toUpperCase() === "IMG") {
 							var source;
 							// check for image passage transclusion
-							if (tale.has(passage)) {
+							if (passage.slice(0, 5) !== "data:" && tale.has(passage)) {
 								passage = tale.get(passage);
 								if (passage.tags.contains("Twine.image")) {
 									source = passage.text;
