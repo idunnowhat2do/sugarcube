@@ -574,12 +574,15 @@ var Util = Object.defineProperties({}, {
 	diff : {
 		value : function (orig, dest) /* diff object */ {
 			"use strict";
-			var	keys    = [].concat(Object.keys(orig), Object.keys(dest))
-					        .sort().filter(function (v, i, a) { // eslint-disable-line no-shadow
-								return i === 0 || a[i - 1] !== v;
-							}),
-				diff    = {},
-				isArray = Array.isArray(orig),
+			var	objToString = Object.prototype.toString,
+				origIsArray = Array.isArray(orig),
+				keys        = []
+								.concat(Object.keys(orig), Object.keys(dest))
+								.sort()
+								.filter(function (v, i, a) { // eslint-disable-line no-shadow
+									return i === 0 || a[i - 1] !== v;
+								}),
+				diff        = {},
 				aOpRef;
 			for (var i = 0, klen = keys.length; i < klen; i++) {
 				var	p     = keys[i],
@@ -605,8 +608,8 @@ var Util = Object.defineProperties({}, {
 								diff[p] = [ Util.DiffOp.Copy, destP ];
 							} else {
 								// values are objects
-								var	origPType = Object.prototype.toString.call(origP),
-									destPType = Object.prototype.toString.call(destP);
+								var	origPType = objToString.call(origP),
+									destPType = objToString.call(destP);
 								if (origPType === destPType) {
 									// values are objects of the same prototype
 									if (origPType === "[object Date]") {
@@ -639,7 +642,7 @@ var Util = Object.defineProperties({}, {
 						}
 					} else {
 						// key only exists in orig
-						if (isArray && Util.isNumeric(p)) {
+						if (origIsArray && Util.isNumeric(p)) {
 							var np = +p;
 							if (!aOpRef) {
 								aOpRef = "";
