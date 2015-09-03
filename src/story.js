@@ -399,7 +399,8 @@ Object.defineProperties(History.prototype, {
 			}
 			if ((updateHistory || !config.history.controls) && config.history.mode !== History.Modes.Hash) {
 				if (DEBUG) {
-					console.log("    > typeof History.getWindowState(): " + typeof History.getWindowState());
+					console.log("    > History.hasWindowState(): " + History.hasWindowState());
+					console.log("    > History.getWindowState() [" + typeof History.getWindowState() + "]: ", History.getWindowState());
 				}
 				var stateObj;
 				if (config.history.mode === History.Modes.Session) {
@@ -695,11 +696,25 @@ Object.defineProperties(History, {
 			// required by IE (if you pass undefined as the URL, IE will happily set it
 			// to exactly that, so you must not pass it at all in that case)
 			if (url != null) { // lazy equality for null
+				if (DEBUG) {
+					if (obj == null) { // lazy equality for null
+						console.log('[History.addWindowState(null, "' + title + '", "' + url + '")]');
+					} else {
+						console.log('[History.addWindowState(…, "' + title + '", "' + url + '")]', obj);
+					}
+				}
 				window.history.pushState(obj != null /* lazy equality for null */
 					? History.serializeWindowState(obj)
 					: null,
 					title, url);
 			} else {
+				if (DEBUG) {
+					if (obj == null) { // lazy equality for null
+						console.log('[History.addWindowState(null, "' + title + '")]');
+					} else {
+						console.log('[History.addWindowState(…, "' + title + '")]', obj);
+					}
+				}
 				window.history.pushState(obj != null /* lazy equality for null */
 					? History.serializeWindowState(obj)
 					: null,
@@ -713,11 +728,25 @@ Object.defineProperties(History, {
 			// required by IE (if you pass undefined as the URL, IE will happily set it
 			// to exactly that, so you must not pass it at all in that case)
 			if (url != null) { // lazy equality for null
+				if (DEBUG) {
+					if (obj == null) { // lazy equality for null
+						console.log('[History.replaceWindowState(null, "' + title + '", "' + url + '")]');
+					} else {
+						console.log('[History.replaceWindowState(…, "' + title + '", "' + url + '")]', obj);
+					}
+				}
 				window.history.replaceState(obj != null /* lazy equality for null */
 					? History.serializeWindowState(obj)
 					: null,
 					title, url);
 			} else {
+				if (DEBUG) {
+					if (obj == null) { // lazy equality for null
+						console.log('[History.replaceWindowState(null, "' + title + '")]');
+					} else {
+						console.log('[History.replaceWindowState(…, "' + title + '")]', obj);
+					}
+				}
 				window.history.replaceState(obj != null /* lazy equality for null */
 					? History.serializeWindowState(obj)
 					: null,
