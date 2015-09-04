@@ -26,7 +26,7 @@ var
 		//            throws on pushState()/replaceState() calls on filesystem URLs (i.e. file://)
 		pushState : "history" in window && "pushState" in window.history && "state" in window.history && (function () {
 			try {
-				window.history.replaceState(null, window.document.title);
+				window.history.replaceState(window.history.state, window.document.title);
 				return true;
 			} catch (e) {
 				return false;
