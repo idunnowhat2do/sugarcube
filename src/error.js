@@ -8,13 +8,13 @@
  **********************************************************************************************************************/
 
 function alertUser(type, where, mesg, error) {
-	var	errMesg = "Apologies!  A " + type + " problem has occurred.";
+	var	errMesg = "Apologies! A " + type + " problem has occurred.";
 	switch (type) {
 	case "fatal":
-		errMesg += "  Aborting.";
+		errMesg += " Aborting.";
 		break;
 	case "technical":
-		errMesg += "  You may be able to continue, but some parts may not work properly.";
+		errMesg += " You may be able to continue, but some parts may not work properly.";
 		break;
 	}
 	if (where != null || mesg != null) { // lazy equality for null
@@ -31,9 +31,7 @@ function alertUser(type, where, mesg, error) {
 	if (error && error.stack) {
 		errMesg += "\n\nStack Trace:\n" + error.stack;
 	}
-	/* eslint-disable no-alert */
-	window.alert(errMesg);
-	/* eslint-enable no-alert */
+	window.alert(errMesg); // eslint-disable-line no-alert
 }
 
 function fatalAlert(where, mesg, error) { // eslint-disable-line no-unused-vars

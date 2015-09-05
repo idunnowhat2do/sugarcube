@@ -154,7 +154,7 @@ jQuery(document).ready(function () {
 		tale = new Tale();
 		tale.init();
 		state   = new History();
-		storage = new KeyValueStore("webStorage", true, tale.domId); // params: driverName, persist, storageId
+		storage = new KeyValueStore("webStorage", true, tale.domId); // params: driverType, persist, storageId
 		session = new KeyValueStore("webStorage", false, tale.domId);
 
 		// set the default saves ID
