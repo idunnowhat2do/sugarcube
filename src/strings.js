@@ -34,6 +34,11 @@ var	strings = { // eslint-disable-line no-unused-vars
 			saveIdMismatch     : "save is from the wrong %identity%"
 		},
 
+		// warnings
+		warnings : {
+			degraded : 'Apologies! Your browser either lacks some of the capabilities required by this %identity% or has disabled them, so this %identity% is running in a degraded mode. You may be able to continue, but some parts may not work properly.\n\nThe former may, probably, be solved by upgrading your browser. The latter may be solved by loosening its security restrictions' + (window.location.protocol === "file:" ? " or, perhaps, by viewing this %identity% via the HTTP protocol." : ".")
+		},
+
 		// ui-bar
 		uiBar : {
 			toggle : "Hide/show the UI bar"
@@ -44,7 +49,7 @@ var	strings = { // eslint-disable-line no-unused-vars
 			title       : "Saves",
 			disallowed  : "Saving has been disallowed on this passage.",
 			emptySlot   : "— slot empty —",
-			incapable   : 'Apologies! Your browser either lacks some of the capabilities required to support saves or has disabled them. The former can probably be solved by <a href="http://browsehappy.com/">upgrading your browser</a>. The latter may be solved by loosening its security restrictions or, perhaps, by viewing this %identity% via the HTTP protocol (if you are not already doing so).',
+			incapable   : 'Apologies! Your browser either lacks the capabilities required to support saves or has disabled them, so saves have been disabled for this session.<br><br>The former may, probably, be solved by <a href="http://browsehappy.com/" target="_blank">upgrading your browser</a>. The latter may be solved by loosening its security restrictions' + (window.location.protocol === "file:" ? " or, perhaps, by viewing this %identity% via the HTTP protocol." : "."),
 			labelAuto   : "Autosave",
 			labelDelete : "Delete",
 			labelExport : "Save to Disk\u2026",

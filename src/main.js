@@ -8,7 +8,7 @@
  **********************************************************************************************************************/
 /*
 	global History, KeyValueStore, Macro, Passage, Save, Setting, Tale, UI, Util, Wikifier, addStyle, browser,
-	       fatalAlert, has, technicalAlert
+	       fatalAlert, has, strings, technicalAlert
 */
 
 /*
@@ -162,6 +162,11 @@ jQuery(document).ready(function () {
 
 		// initialize the user interface (this must be done before script passages)
 		UI.init();
+
+		// alert players when their browser is degrading basic required capabilities
+		if (!has.pushState || storage.name === "cookie") {
+			window.alert(strings.warnings.degraded.replace(/%identity%/g, strings.identity)); // eslint-disable-line no-alert
+		}
 
 		// add the story styles
 		for (var i = 0; i < tale.styles.length; i++) {
