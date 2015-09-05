@@ -8,14 +8,30 @@
  **********************************************************************************************************************/
 
 var
-	// Capabilities object
+	/*
+		Capabilities object.
+	*/
 	has = {
-		// javascript capability properties
+		/*
+			JavaScript capability properties.
+		*/
 		defineProperty           : typeof Object.defineProperty === "function",
 		getOwnPropertyDescriptor : typeof Object.getOwnPropertyDescriptor === "function",
 
-		// browser API capability properties
-		pushState : "history" in window && "pushState" in window.history && "state" in window.history,
+		/*
+			Browser API capability properties.
+		*/
+		// the extended History API testing is required by implementation issues in various browsers
+		//   notably: Chromium v45 (and possibly all Blink-based browsers synced with that version)
+		//            throws on pushState()/replaceState() calls on filesystem URLs (i.e. file://)
+		pushState : "history" in window && "pushState" in window.history && "state" in window.history && (function () {
+			try {
+				window.history.replaceState(window.history.state, window.document.title);
+				return true;
+			} catch (e) {
+				return false;
+			}
+		}()),
 
 		// the extended Web Storage testing is required by implementation bugs in various browsers
 		//   notably: Firefox bug #748620 [https://bugzilla.mozilla.org/show_bug.cgi?id=748620]
@@ -59,7 +75,9 @@ var
 		audio : typeof document.createElement("audio").canPlayType === "function"
 	},
 
-	// Browser object
+	/*
+		Browser object.
+	*/
 	browser = {
 		userAgent : navigator.userAgent.toLowerCase()
 	};

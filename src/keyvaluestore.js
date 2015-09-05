@@ -14,9 +14,9 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 	/*******************************************************************************************************************
 	 * KeyValueStore Constructor
 	 ******************************************************************************************************************/
-	function KeyValueStore(driverName, persist, storageId) {
+	function KeyValueStore(driverType, persist, storageId) {
 		var driver = null;
-		switch (driverName) {
+		switch (driverType) {
 		case "cookie":
 			driver = new KeyValueStoreDriverCookie(persist, storageId);
 			break;
@@ -28,7 +28,7 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 			}
 			break;
 		default:
-			throw new Error("unknown driver name");
+			throw new Error("unknown driver type");
 		}
 		if (!driver._ok) {
 			throw new Error("unknown driver error");
@@ -38,7 +38,10 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 				value : driver
 			},
 			name : {
-				value : driverName
+				value : driver.name
+			},
+			type : {
+				value : driverType
 			},
 			id : {
 				value : storageId

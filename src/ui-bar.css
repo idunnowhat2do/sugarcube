@@ -98,11 +98,11 @@
 	top: 0;
 	right: 0;
 	font-size: 1.2em;
+	line-height: inherit;
 	color: #eee;
 	background-color: transparent;
 	border: 1px solid #444;
 	border-right: none;
-	line-height: inherit;
 	padding: 0.3em 0.45em 0.25em;
 }
 #ui-bar.stowed #ui-bar-toggle {

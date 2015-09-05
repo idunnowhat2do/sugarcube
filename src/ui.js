@@ -177,7 +177,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		if (!tale.has("StoryMenu")) {
 			jQuery("#menu-story").remove();
 		}
-		setPageElements();
+		setStoryElements();
 
 		// setup the Saves menu item
 		dialogAddClickHandler("#menu-saves a", null, buildDialogSaves)
@@ -245,8 +245,8 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		}, false);
 	}
 
-	function setPageElements() {
-		if (DEBUG) { console.log("[UI.setPageElements()]"); }
+	function setStoryElements() {
+		if (DEBUG) { console.log("[UI.setStoryElements()]"); }
 
 		// setup the (non-navigation) dynamic page elements
 		setPageElement("story-banner", "StoryBanner");
@@ -537,7 +537,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 								// load the state into the window history
 								History.replaceWindowState(
 									{ suid : state.suid, sidx : state.history[p].sidx },
-									config.displayPassageTitles && state.history[p].title !== config.startingPassage
+									config.passages.displayTitles && state.history[p].title !== config.passages.start
 										? tale.title + ": " + state.history[p].title
 										: tale.title
 								);
@@ -548,7 +548,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 									// load the state into the window history
 									History.addWindowState(
 										{ suid : state.suid, sidx : state.history[i].sidx },
-										config.displayPassageTitles && state.history[i].title !== config.startingPassage
+										config.passages.displayTitles && state.history[i].title !== config.passages.start
 											? tale.title + ": " + state.history[i].title
 											: tale.title
 									);
@@ -591,7 +591,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 									}
 									History.addWindowState(
 										stateObj,
-										config.displayPassageTitles && state.history[i].title !== config.startingPassage
+										config.passages.displayTitles && state.history[i].title !== config.passages.start
 											? tale.title + ": " + state.history[i].title
 											: tale.title
 									);
@@ -785,8 +785,8 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		jQuery(document.body).one("click.autoload", ".ui-close", function (evt) {
 			if (DEBUG) { console.log('    > display/autoload: "' + Save.autosave.get().title + '"'); }
 			if (evt.target.id !== "autoload-ok" || !Save.autosave.load()) {
-				if (DEBUG) { console.log('    > display: "' + config.startingPassage + '"'); }
-				state.display(config.startingPassage);
+				if (DEBUG) { console.log('    > display: "' + config.passages.start + '"'); }
+				state.display(config.passages.start);
 			}
 		});
 
@@ -1085,7 +1085,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		init                     : { value : init },
 		// Internals
 		start                    : { value : start },
-		setPageElements          : { value : setPageElements },
+		setStoryElements         : { value : setStoryElements },
 		patchOutlines            : { value : patchOutlines },
 		buildDialogSaves         : { value : buildDialogSaves },
 		buildDialogRewind        : { value : buildDialogRewind },
