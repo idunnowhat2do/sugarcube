@@ -11,13 +11,13 @@
  * Error Handling Setup
  **********************************************************************************************************************/
 function alertUser(type, where, mesg, error) {
-	var	errMesg = "Apologies!  A " + type + " problem has occurred.";
+	var	errMesg = "Apologies! A " + type + " problem has occurred.";
 	switch (type) {
 	case "fatal":
-		errMesg += "  Aborting.";
+		errMesg += " Aborting.";
 		break
 	case "technical":
-		errMesg += "  You may be able to continue, but some parts may not work properly.";
+		errMesg += " You may be able to continue, but some parts may not work properly.";
 		break
 	}
 	if (where != null || mesg != null) { // use lazy equality
@@ -213,7 +213,7 @@ jQuery(document).ready(function () {
 		tale = new Tale();
 		tale.init();
 		state   = new History();
-		storage = new KeyValueStore("webStorage", true, tale.domId); // params: driverName, persist, storageId
+		storage = new KeyValueStore("webStorage", true, tale.domId); // params: driverType, persist, storageId
 		session = new KeyValueStore("webStorage", false, tale.domId);
 
 		// set the default saves ID
