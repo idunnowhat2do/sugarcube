@@ -78,7 +78,7 @@ var	config = Object.seal({
 		passages : Object.seal({
 			descriptions  : undefined,
 			displayTitles : false,
-			start         : undefined,
+			start         : undefined, // set by the `Tale()` constructor
 			transitionOut : undefined
 		}),
 
