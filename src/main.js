@@ -222,6 +222,17 @@ jQuery(document).ready(function () {
 		// initialize the user interface (this must be done before script passages)
 		UISystem.init();
 
+		// alert players when their browser is degrading basic required capabilities
+		if (!has.pushState || storage.name === "cookie") {
+			window.alert((
+				  'Apologies! Your browser either lacks some of the capabilities required by this %identity% or has '
+				+ 'disabled them, so this %identity% is running in a degraded mode. You may be able to continue, but '
+				+ 'some parts may not work properly.\n\nThe former may, probably, be solved by upgrading your browser. '
+				+ 'The latter may be solved by loosening its security restrictions'
+				+ (window.location.protocol === "file:" ? " or, perhaps, by playing this %identity% via the HTTP protocol." : ".")
+			).replace(/%identity%/g, strings.identity));
+		}
+
 		// add the story styles
 		for (var i = 0; i < tale.styles.length; i++) {
 			addStyle(tale.styles[i].text);
