@@ -1135,8 +1135,18 @@ Object.defineProperties(Passage.prototype, {
 				}
 			}, this);
 
+			// wikify the PassageHeader passage, if it exists, into the passage element
+			if (tale.has("PassageHeader")) {
+				new Wikifier(passage, tale.get("PassageHeader").processText());
+			}
+
 			// wikify the passage into its element
 			new Wikifier(passage, this.processText());
+
+			// wikify the PassageFooter passage, if it exists, into the passage element
+			if (tale.has("PassageFooter")) {
+				new Wikifier(passage, tale.get("PassageFooter").processText());
+			}
 
 			// convert breaks to paragraphs within the output passage
 			if (config.cleanupWikifierOutput) {
