@@ -103,11 +103,11 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			+         '<nav id="menu" role="navigation">'
 			+             '<ul id="menu-story"></ul>'
 			+             '<ul id="menu-core">'
-			+                 '<li id="menu-saves"><a tabindex="0">' + strings.saves.title + '</a></li>'
-			+                 '<li id="menu-rewind"><a tabindex="0">' + strings.rewind.title + '</a></li>'
-			+                 '<li id="menu-settings"><a tabindex="0">' + strings.settings.title + '</a></li>'
-			+                 '<li id="menu-restart"><a tabindex="0">' + strings.restart.title + '</a></li>'
-			+                 '<li id="menu-share"><a tabindex="0">' + strings.share.title + '</a></li>'
+			+                 '<li id="menu-item-saves"><a tabindex="0">' + strings.saves.title + '</a></li>'
+			+                 '<li id="menu-item-rewind"><a tabindex="0">' + strings.rewind.title + '</a></li>'
+			+                 '<li id="menu-item-settings"><a tabindex="0">' + strings.settings.title + '</a></li>'
+			+                 '<li id="menu-item-restart"><a tabindex="0">' + strings.restart.title + '</a></li>'
+			+                 '<li id="menu-item-share"><a tabindex="0">' + strings.share.title + '</a></li>'
 			+             '</ul>'
 			+         '</nav>'
 			+     '</div>'
@@ -180,35 +180,35 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		setStoryElements();
 
 		// setup the Saves menu item
-		dialogAddClickHandler("#menu-saves a", null, buildDialogSaves)
+		dialogAddClickHandler("#menu-item-saves a", null, buildDialogSaves)
 			.text(strings.saves.title);
 
 		// setup the Rewind menu item
 		if (config.history.tracking && tale.lookup("tags", "bookmark").length > 0) {
-			dialogAddClickHandler("#menu-rewind a", null, buildDialogRewind)
+			dialogAddClickHandler("#menu-item-rewind a", null, buildDialogRewind)
 				.text(strings.rewind.title);
 		} else {
-			jQuery("#menu-rewind").remove();
+			jQuery("#menu-item-rewind").remove();
 		}
 
 		// setup the Settings menu item
 		if (!Setting.isEmpty()) {
-			dialogAddClickHandler("#menu-settings a", null, buildDialogSettings)
+			dialogAddClickHandler("#menu-item-settings a", null, buildDialogSettings)
 				.text(strings.settings.title);
 		} else {
-			jQuery("#menu-settings").remove();
+			jQuery("#menu-item-settings").remove();
 		}
 
 		// setup the Restart menu item
-		dialogAddClickHandler("#menu-restart a", null, buildDialogRestart)
+		dialogAddClickHandler("#menu-item-restart a", null, buildDialogRestart)
 			.text(strings.restart.title);
 
 		// setup the Share menu item
 		if (tale.has("StoryShare")) {
-			dialogAddClickHandler("#menu-share a", null, buildDialogShare)
+			dialogAddClickHandler("#menu-item-share a", null, buildDialogShare)
 				.text(strings.share.title);
 		} else {
-			jQuery("#menu-share").remove();
+			jQuery("#menu-item-share").remove();
 		}
 
 		// setup accessible outline handling

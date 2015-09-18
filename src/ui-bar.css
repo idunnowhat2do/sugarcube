@@ -177,11 +177,11 @@
 	Default font icon styles.
 */
 #ui-bar-toggle:before,
-#menu-saves a:before,
-#menu-rewind a:before,
-#menu-settings a:before,
-#menu-restart a:before,
-#menu-share a:before {
+#menu-item-saves a:before,
+#menu-item-rewind a:before,
+#menu-item-settings a:before,
+#menu-item-restart a:before,
+#menu-item-share a:before {
 	font-family: "tme-fa-icons";
 	font-style: normal;
 	font-weight: normal;
@@ -196,18 +196,18 @@
 #ui-bar.stowed #ui-bar-toggle:before {
 	content: "\e81e";
 }
-#menu-saves a:before {
+#menu-item-saves a:before {
 	content: "\e82b\00a0";
 }
-#menu-rewind a:before {
+#menu-item-rewind a:before {
 	content: "\e825\00a0";
 }
-#menu-settings a:before {
+#menu-item-settings a:before {
 	content: "\e82d\00a0";
 }
-#menu-restart a:before {
+#menu-item-restart a:before {
 	content: "\e82c\00a0";
 }
-#menu-share a:before {
+#menu-item-share a:before {
 	content: "\e82f\00a0";
 }
