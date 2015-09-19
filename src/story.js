@@ -1057,7 +1057,7 @@ Object.defineProperties(Passage.prototype, {
 			if (this.element == null) { // lazy equality for null
 				return ('<span class="error" title="%passage%">' + strings.errors.title + ": "
 					+ strings.errors.nonexistentPassage
-					+ '</span>').replace(/%passage%/g, Util.entityEncode(this.title));
+					+ '</span>').replace(/%passage%/g, Util.escape(this.title));
 			}
 			if (TWINE1) {
 				return Passage.unescape(this.element.textContent);
