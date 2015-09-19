@@ -460,14 +460,7 @@ function scrollWindowTo(el, increment) { // eslint-disable-line no-unused-vars
 var Util = Object.defineProperties({}, {
 
 	/**
-		[DEPRECATED] Backup Math.random, in case it's replaced later
-	*/
-	random : {
-		value : Math.random
-	},
-
-	/**
-		Returns whether the passed value is numeric
+		Returns whether the passed value is numeric.
 	*/
 	isNumeric : {
 		value : function (obj) {
@@ -486,7 +479,7 @@ var Util = Object.defineProperties({}, {
 	},
 
 	/**
-		Returns whether the passed value is boolean-ish
+		Returns whether the passed value is boolean-ish.
 	*/
 	isBoolean : {
 		value : function (obj) {
@@ -495,11 +488,11 @@ var Util = Object.defineProperties({}, {
 	},
 
 	/**
-		Returns a lowercased and underscore encoded version of the passed string
+		Returns a lowercased and hyphen encoded version of the passed string.
 	*/
 	slugify : {
 		value : function (str) {
-			return str
+			return String(str)
 				.trim()
 				.replace(/[^\w\s\u2013\u2014-]+/g, '')
 				.replace(/[_\s\u2013\u2014-]+/g, '-')
@@ -508,33 +501,57 @@ var Util = Object.defineProperties({}, {
 	},
 
 	/**
-		Returns an entity encoded version of the passed string
+		Returns an entity encoded version of the passed string.
 	*/
-	entityEncode : {
+	escape : {
 		value : function (str) {
-			return str
-				.replace(/&/g,  "&amp;")
-				.replace(/</g,  "&lt;")
-				.replace(/>/g,  "&gt;")
-				.replace(/\"/g, "&quot;");
+			if (str == null) { // lazy equality for null
+				return "";
+			}
+			var	htmlCharsRe    = /[&<>"'`]/g,
+				hasHtmlCharsRe = RegExp(htmlCharsRe.source), // to drop the global flag
+				htmlCharsMap   = {
+					"&" : "&amp;",
+					"<" : "&lt;",
+					">" : "&gt;",
+					'"' : "&quot;",
+					"'" : "&#39;",
+					"`" : "&#96;"
+				};
+			str = String(str);
+			return str && hasHtmlCharsRe.test(str)
+				? str.replace(htmlCharsRe, function (c) { return htmlCharsMap[c]; })
+				: str;
 		}
 	},
 
 	/**
-		Returns a decoded version of the passed entity encoded string
+		Returns a decoded version of the passed entity encoded string.
 	*/
-	entityDecode : {
+	unescape : {
 		value : function (str) {
-			return str
-				.replace(/&quot;/g, '"')
-				.replace(/&gt;/g,   ">")
-				.replace(/&lt;/g,   "<")
-				.replace(/&amp;/g,  "&");
+			if (str == null) { // lazy equality for null
+				return "";
+			}
+			var	escapedHtmlRe    = /&(?:amp|lt|gt|quot|#39|#96);/g,
+				hasEscapedHtmlRe = RegExp(escapedHtmlRe.source), // to drop the global flag
+				escapedHtmlMap   = {
+					"&amp;"  : "&",
+					"&lt;"   : "<",
+					"&gt;"   : ">",
+					"&quot;" : '"',
+					"&#39;"  : "'",
+					"&#96;"  : "`"
+				};
+			str = String(str);
+			return str && hasEscapedHtmlRe.test(str)
+				? str.replace(escapedHtmlRe, function (c) { return escapedHtmlMap[c]; })
+				: str;
 		}
 	},
 
 	/**
-		Returns the evaluation of the passed expression, throwing if there were errors
+		Returns the evaluation of the passed expression, throwing if there were errors.
 	*/
 	evalExpression : {
 		value : function (expression) {
@@ -545,7 +562,7 @@ var Util = Object.defineProperties({}, {
 	},
 
 	/**
-		Evaluates the passed statements, throwing if there were errors
+		Evaluates the passed statements, throwing if there were errors.
 	*/
 	evalStatements : {
 		value : function (statements) {
@@ -557,7 +574,7 @@ var Util = Object.defineProperties({}, {
 	},
 
 	/**
-		Diff operations enumeration
+		Diff operations enumeration.
 	*/
 	DiffOp : {
 		value : Object.freeze({
@@ -569,7 +586,7 @@ var Util = Object.defineProperties({}, {
 	},
 
 	/**
-		Returns a patch object containing the differences between the original and the destination objects
+		Returns a patch object containing the differences between the original and the destination objects.
 	*/
 	diff : {
 		value : function (orig, dest) /* diff object */ {
@@ -674,7 +691,7 @@ var Util = Object.defineProperties({}, {
 	},
 
 	/**
-		Returns an object resulting from updating the original object with the difference object
+		Returns an object resulting from updating the original object with the difference object.
 	*/
 	patch : {
 		value : function (orig, diff) /* patched object */ {
@@ -748,6 +765,32 @@ var Util = Object.defineProperties({}, {
 			}
 			return msec + "ms";
 		}
+	}
+
+});
+
+// Setup aliases
+Object.defineProperties(Util, {
+
+	/**
+		[DEPRECATED] Backup Math.random, in case it's replaced later.
+	*/
+	random : {
+		value : Math.random
+	},
+
+	/**
+		[DEPRECATED] Alias of `Util.escape`.
+	*/
+	entityEncode : {
+		value : Util.escape
+	},
+
+	/**
+		[DEPRECATED] Alias of `Util.unescape`.
+	*/
+	entityDecode : {
+		value : Util.unescape
 	}
 
 });
