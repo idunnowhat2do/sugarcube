@@ -508,10 +508,10 @@ Macro.add("nobr", {
 });
 
 /**
-	<<print>>
+	<<print>>, <<=>>, & <<->>
 */
-Macro.add("print", {
-	version  : { major : 3, minor : 0, patch : 0 },
+Macro.add([ "print", "=", "-" ], {
+	version  : { major : 4, minor : 0, patch : 0 },
 	skipArgs : true,
 	handler  : function () {
 		if (this.args.full.length === 0) {
@@ -521,7 +521,7 @@ Macro.add("print", {
 		try {
 			var	result = printableStringOrDefault(Util.evalExpression(this.args.full), null);
 			if (result !== null) {
-				new Wikifier(this.output, result);
+				new Wikifier(this.output, this.name === "-" ? Util.escape(result) : result);
 			}
 		} catch (e) {
 			return this.error("bad expression: " + e.message);
