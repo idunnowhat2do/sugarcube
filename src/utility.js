@@ -59,56 +59,100 @@ function clone(orig) {
 }
 
 /**
-	Returns the jQuery-wrapped target element(s) after making them accessible clickables (ARIA compatibility)
+	Returns the jQuery-wrapped target element(s) after making them accessible clickables (ARIA compatibility).
 */
-function addAccessibleClickHandler(targets, handler, once, namespace) { // eslint-disable-line no-unused-vars
-	if (namespace == null) { // lazy equality for null
-		namespace = "";
-	} else if (typeof namespace !== "string") {
-		throw new Error("addAccessibleClickHandler namespace parameter must be a string");
-	} else if (namespace[0] !== ".") {
-		throw new Error("addAccessibleClickHandler namespace parameter value is malformed: " + namespace);
-	}
+var addAccessibleClickHandler = (function () { // eslint-disable-line no-unused-vars
 
-	var	$targets = jQuery(targets);
+	// Event handler & utility functions
+	var	keypressHandler = function (evt) {
+			// 13 is Enter/Return, 32 is Space
+			if (evt.which === 13 || evt.which === 32) {
+				// trigger the click event on `document.activeElement` if possible, else `this`
+				$(function (self) {
+					// IE9 contains a bug which will throw an error upon accessing `document.activeElement`
+					// under certain circumstances, so we have to allow for an exception to be thrown
+					try {
+						return document.activeElement || self;
+					} catch (e) {
+						return self;
+					}
+				}(this)).trigger("click");
+			}
+		},
+		oneClickWrapper = function (handler) {
+			return function (evt) {
+				// call the true handler
+				handler.call(this, evt);
 
-	// set `role` to `button`, for non-<a>/-<button> elements
-	$targets.not("a,button").attr("role", "button");
+				// remove both event handlers (keypress & click) and the other components
+				$(this)
+					.off(".accessible-click")
+					.removeClass("event-click-once")
+					.removeAttr("tabindex")
+					.not("a,button")
+						.removeAttr("role");
+			};
+		};
 
-	// set `tabindex` to `0` to make them focusable
-	$targets.attr("tabindex", 0);
-
-	// set some classes
-	$targets.addClass("event-click" + (once ? "-once" : ""));
-
-	// set the keypress handlers, for non-<button> elements
-	//   n.b. for the single-use case, the click handler will also remove this handler
-	$targets.not("button").on("keypress.accessible-click" + namespace, function (evt) {
-		// 13 is Enter/Return, 32 is Space
-		if (evt.which === 13 || evt.which === 32) {
-			$(this).trigger("click");
+	// Return the actual `addAccessibleClickHandler()` function
+	return function (targets, delegate, handler, once, namespace) { // eslint-disable-line no-unused-vars
+		if (arguments.length < 2) {
+			throw new Error("addAccessibleClickHandler insufficient number of parameters");
 		}
-	});
 
-	// set the click handlers
-	//   n.b. to ensure both handlers are properly removed, `one()` must not be used here
-	$targets.on("click.accessible-click" + namespace, function (evt) {
-		if (once) {
-			// single-use, so remove both event handlers and the other components
-			$(this)
-				.off(".accessible-click")
-				.removeClass("event-click-once")
-				.removeAttr("tabindex")
-				.not("a,button")
-					.removeAttr("role");
+		if (typeof delegate === "function") {
+			namespace = once;
+			once      = !!handler;
+			handler   = delegate;
+			delegate  = undefined;
+		} else if (typeof delegate !== "string") {
+			throw new Error("addAccessibleClickHandler delegate parameter must be a string");
 		}
-		if (typeof handler === "function") {
-			handler.call(this, evt);
-		}
-	});
 
-	return $targets;
-}
+		if (typeof handler !== "function") {
+			throw new Error("addAccessibleClickHandler handler parameter must be a function");
+		}
+
+		if (namespace == null) { // lazy equality for null
+			namespace = "";
+		} else if (typeof namespace !== "string") {
+			throw new Error("addAccessibleClickHandler namespace parameter must be a string");
+		} else if (namespace[0] !== ".") {
+			throw new Error("addAccessibleClickHandler namespace parameter value is malformed: " + namespace);
+		}
+
+		var	$targets = jQuery(targets);
+
+		// set `role` to `button`, for non-<a>/-<button> elements
+		$targets.not("a,button").attr("role", "button");
+
+		// set `tabindex` to `0` to make them focusable
+		$targets.attr("tabindex", 0);
+
+		// set some classes
+		$targets.addClass("event-click" + (once ? "-once" : ""));
+
+		// set the keypress handlers, for non-<button> elements
+		//   n.b. for the single-use case, the click handler will also remove this handler
+		if (delegate) {
+			$targets.not("button").on("keypress.accessible-click" + namespace, delegate, keypressHandler);
+		} else {
+			$targets.not("button").on("keypress.accessible-click" + namespace, keypressHandler);
+		}
+
+		// set the click handlers
+		//   n.b. to ensure both handlers are properly removed, `one()` must not be used here
+		if (delegate) {
+			$targets.on("click.accessible-click" + namespace, delegate, once ? oneClickWrapper(handler) : handler);
+		} else {
+			$targets.on("click.accessible-click" + namespace, once ? oneClickWrapper(handler) : handler);
+		}
+
+		return $targets;
+	};
+
+}());
+
 
 /**
  * Returns the new DOM element, optionally appending it to the passed DOM element (if any)
