@@ -161,7 +161,7 @@
 	border-color: #eee;
 }
 
-/* Stop text selection on certain UI elements */
+/* Stop text selection on certain UI elements. */
 #ui-bar-toggle,
 #menu a {
 	-webkit-user-select: none;

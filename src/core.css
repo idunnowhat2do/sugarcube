@@ -18,13 +18,13 @@ body {
 	font: 16px/1 Helmet, Freesans, sans-serif;
 }
 
-/* Story data styling */
+/* Story data styling. */
 #store-area, tw-storydata {
 	display: none !important;
 	z-index: 0;
 }
 
-/* Story display area styling */
+/* Story display area styling. */
 #story {
 	z-index: 10;
 	margin: 2.5em;
@@ -42,7 +42,7 @@ body {
 	margin: 0 auto;
 }
 
-/* Special no transition styling */
+/* Special no transition styling. */
 .no-transition {
 	-webkit-transition: none !important;
 	-moz-transition: none !important;
@@ -200,7 +200,7 @@ a.macro-return:after {
 	content: "\00a0\e80e";
 }
 
-/* Passage styling */
+/* Passage styling. */
 .passage {
 	line-height: 1.75;
 	text-align: left;

@@ -67,8 +67,10 @@ var addAccessibleClickHandler = (function () { // eslint-disable-line no-unused-
 	var	keypressHandler = function (evt) {
 			// 13 is Enter/Return, 32 is Space
 			if (evt.which === 13 || evt.which === 32) {
+				evt.preventDefault();
+
 				// trigger the click event on `document.activeElement` if possible, else `this`
-				$(function (self) {
+				jQuery(function (self) {
 					// IE9 contains a bug which will throw an error upon accessing `document.activeElement`
 					// under certain circumstances, so we have to allow for an exception to be thrown
 					try {
@@ -85,7 +87,7 @@ var addAccessibleClickHandler = (function () { // eslint-disable-line no-unused-
 				handler.call(this, evt);
 
 				// remove both event handlers (keypress & click) and the other components
-				$(this)
+				jQuery(this)
 					.off(".accessible-click")
 					.removeClass("event-click-once")
 					.removeAttr("tabindex")

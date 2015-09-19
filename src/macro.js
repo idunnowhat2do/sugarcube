@@ -46,9 +46,9 @@ var Macro = (function () { // eslint-disable-line no-unused-vars
 			}
 			Object.defineProperty(_macros, name, { writable : false });
 
-			/* legacy kludges */
+			/* legacy kludge */
 			_macros[name]._MACRO_API = true;
-			/* /legacy kludges */
+			/* /legacy kludge */
 		} catch (e) {
 			if (e.name === "TypeError") {
 				throw new Error("cannot clobber protected macro <<" + name + ">>");
@@ -106,10 +106,10 @@ var Macro = (function () { // eslint-disable-line no-unused-vars
 		var macro = null;
 		if (macrosHas(name) && typeof _macros[name].handler === "function") {
 			macro = _macros[name];
-		/* legacy kludges */
+		/* legacy macro support */
 		} else if (macros.hasOwnProperty(name) && typeof macros[name].handler === "function") {
 			macro = macros[name];
-		/* /legacy kludges */
+		/* /legacy macro support */
 		}
 		return macro;
 	}
@@ -140,13 +140,13 @@ var Macro = (function () { // eslint-disable-line no-unused-vars
 				_macros[name][handler].call(_macros[name], name);
 			}
 		});
-		/* legacy kludges */
+		/* legacy macro support */
 		Object.keys(macros).forEach(function (name) {
 			if (typeof macros[name][handler] === "function") {
 				macros[name][handler].call(macros[name], name);
 			}
 		});
-		/* /legacy kludges */
+		/* /legacy macro support */
 	}
 
 
