@@ -1195,7 +1195,7 @@ Macro.add("removeclass", {
 	<<copy>>
 */
 Macro.add("copy", {
-	version : { major : 1, minor : 0, patch : 0 },
+	version : { major : 1, minor : 0, patch : 1 },
 	handler : function () {
 		if (this.args.length === 0) {
 			return this.error("no selector specified");
@@ -1207,7 +1207,7 @@ Macro.add("copy", {
 			return this.error('no elements matched the selector "' + this.args[0] + '"');
 		}
 
-		$(this.output).append($targets.html());
+		jQuery(this.output).append($targets.html());
 	}
 });
 

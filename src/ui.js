@@ -461,7 +461,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			if (has.fileAPI) {
 				btnBar.appendChild(createActionItem("export", "ui-close", strings.saves.labelExport, Save.export));
 				btnBar.appendChild(createActionItem("import", null, strings.saves.labelImport, function () {
-					$("#saves-import-file", _dialogBody).trigger("click");
+					jQuery("#saves-import-file", _dialogBody).trigger("click");
 				}));
 			}
 			if (savesOk) {
@@ -970,7 +970,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			.on("keypress.ui-close", ".ui-close", function (evt) {
 				// 13 is Enter/Return, 32 is Space
 				if (evt.which === 13 || evt.which === 32) {
-					$(this).trigger("click");
+					jQuery(this).trigger("click");
 				}
 			});
 	}
@@ -1006,7 +1006,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			.removeClass("ui-dialog-open");
 		if (_lastActive !== null) {
 			// attempt to restore focus to whichever element had it prior to opening the dialog
-			$(_lastActive).focus();
+			jQuery(_lastActive).focus();
 			_lastActive = null;
 		}
 
