@@ -65,7 +65,6 @@ function getWikifyEvalHandler(content, widgetArgs, callback) {
 	<<actions>>
 */
 Macro.add("actions", {
-	version : { major : 3, minor : 1, patch : 0 },
 	handler : function () {
 		var list = insertElement(this.output, "ul");
 		list.classList.add(this.name);
@@ -133,7 +132,6 @@ Macro.add("actions", {
 	<<back>> & <<return>>
 */
 Macro.add(["back", "return"], {
-	version : { major : 5, minor : 2, patch : 0 },
 	handler : function () {
 		var	steps = 1,
 			pname,
@@ -274,7 +272,6 @@ Macro.add(["back", "return"], {
 	<<choice>>
 */
 Macro.add("choice", {
-	version : { major : 5, minor : 1, patch : 0 },
 	handler : function () {
 		if (this.args.length === 0) {
 			return this.error("no passage specified");
@@ -355,7 +352,6 @@ Macro.add("choice", {
 	<<link>>
 */
 Macro.add("link", {
-	version      : { major : 4, minor : 1, patch : 0 },
 	actionRegExp : /^disable|remove|keep|once$/, // `keep` and `once` are deprecated
 	handler      : function () {
 		if (this.args.length === 0) {
@@ -464,7 +460,6 @@ Macro.add("link", {
 	<<display>>
 */
 Macro.add("display", {
-	version : { major : 3, minor : 1, patch : 0 },
 	handler : function () {
 		if (this.args.length === 0) {
 			return this.error("no passage specified");
@@ -498,7 +493,6 @@ Macro.add("display", {
 	<<nobr>>
 */
 Macro.add("nobr", {
-	version  : { major : 2, minor : 0, patch : 0 },
 	skipArgs : true,
 	tags     : null,
 	handler  : function () {
@@ -511,7 +505,6 @@ Macro.add("nobr", {
 	<<print>>, <<=>>, & <<->>
 */
 Macro.add([ "print", "=", "-" ], {
-	version  : { major : 4, minor : 0, patch : 0 },
 	skipArgs : true,
 	handler  : function () {
 		if (this.args.full.length === 0) {
@@ -533,7 +526,6 @@ Macro.add([ "print", "=", "-" ], {
 	<<silently>>
 */
 Macro.add("silently", {
-	version  : { major : 4, minor : 0, patch : 0 },
 	skipArgs : true,
 	tags     : null,
 	handler  : function () {
@@ -564,7 +556,6 @@ Macro.add("silently", {
 	<<if>>, <<elseif>>, & <<else>>
 */
 Macro.add("if", {
-	version  : { major : 4, minor : 0, patch : 1 },
 	skipArgs : true,
 	tags     : [ "elseif", "else" ],
 	handler  : function () {
@@ -623,7 +614,6 @@ Macro.add("if", {
 	<<for>>, <<break>>, & <<continue>>
 */
 Macro.add("for", {
-	version  : { major : 1, minor : 0, patch : 1 },
 	skipArgs : true,
 	tags     : null,
 	handler  : function () {
@@ -689,7 +679,6 @@ Macro.add("for", {
 	}
 });
 Macro.add(["break", "continue"], {
-	version  : { major : 1, minor : 0, patch : 0 },
 	skipArgs : true,
 	handler  : function () {
 		if (this.contextHas(function (c) { return c.name === "for"; })) {
@@ -708,7 +697,6 @@ Macro.add(["break", "continue"], {
 	<<set>>
 */
 Macro.add("set", {
-	version  : { major : 3, minor : 1, patch : 0 },
 	skipArgs : true,
 	handler  : function () {
 		if (this.args.full.length === 0) {
@@ -723,7 +711,6 @@ Macro.add("set", {
 	<<unset>>
 */
 Macro.add("unset", {
-	version  : { major : 2, minor : 1, patch : 0 },
 	skipArgs : true,
 	handler  : function () {
 		if (this.args.full.length === 0) {
@@ -748,7 +735,6 @@ Macro.add("unset", {
 	<<remember>>
 */
 Macro.add("remember", {
-	version  : { major : 3, minor : 1, patch : 0 },
 	skipArgs : true,
 	handler  : function () {
 		if (this.args.full.length === 0) {
@@ -785,7 +771,6 @@ Macro.add("remember", {
 	<<forget>>
 */
 Macro.add("forget", {
-	version  : { major : 1, minor : 1, patch : 0 },
 	skipArgs : true,
 	handler  : function () {
 		if (this.args.full.length === 0) {
@@ -828,7 +813,6 @@ Macro.add("run", "set"); // add <<run>> as an alias of <<set>>
 	<<script>>
 */
 Macro.add("script", {
-	version  : { major : 1, minor : 0, patch : 0 },
 	skipArgs : true,
 	tags     : null,
 	handler  : function () {
@@ -844,7 +828,6 @@ Macro.add("script", {
 	<<button>> & <<click>>
 */
 Macro.add(["button", "click"], {
-	version : { major : 5, minor : 3, patch : 0 },
 	tags    : null,
 	handler : function () {
 		if (this.args.length === 0) {
@@ -918,7 +901,6 @@ Macro.add(["button", "click"], {
 	<<checkbox>>
 */
 Macro.add("checkbox", {
-	version : { major : 5, minor : 2, patch : 1 },
 	handler : function () {
 		if (this.args.length < 3) {
 			var errors = [];
@@ -961,7 +943,6 @@ Macro.add("checkbox", {
 	<<radiobutton>>
 */
 Macro.add("radiobutton", {
-	version : { major : 5, minor : 2, patch : 1 },
 	handler : function () {
 		if (this.args.length < 2) {
 			var errors = [];
@@ -1009,7 +990,6 @@ Macro.add("radiobutton", {
 	<<textarea>>
 */
 Macro.add("textarea", {
-	version : { major : 1, minor : 1, patch : 1 },
 	handler : function () {
 		if (this.args.length < 2) {
 			var errors = [];
@@ -1061,7 +1041,6 @@ Macro.add("textarea", {
 	<<textbox>>
 */
 Macro.add("textbox", {
-	version : { major : 5, minor : 2, patch : 1 },
 	handler : function () {
 		if (this.args.length < 2) {
 			var errors = [];
@@ -1137,7 +1116,6 @@ Macro.add("textbox", {
 	<<addclass>> & <<toggleclass>>
 */
 Macro.add(["addclass", "toggleclass"], {
-	version : { major : 2, minor : 0, patch : 1 },
 	handler : function () {
 		if (this.args.length < 2) {
 			var errors = [];
@@ -1167,7 +1145,6 @@ Macro.add(["addclass", "toggleclass"], {
 	<<removeclass>>
 */
 Macro.add("removeclass", {
-	version : { major : 1, minor : 0, patch : 1 },
 	handler : function () {
 		if (this.args.length === 0) {
 			return this.error("no selector specified");
@@ -1195,7 +1172,6 @@ Macro.add("removeclass", {
 	<<copy>>
 */
 Macro.add("copy", {
-	version : { major : 1, minor : 0, patch : 1 },
 	handler : function () {
 		if (this.args.length === 0) {
 			return this.error("no selector specified");
@@ -1215,7 +1191,6 @@ Macro.add("copy", {
 	<<append>>, <<prepend>>, & <<replace>>
 */
 Macro.add(["append", "prepend", "replace"], {
-	version : { major : 2, minor : 1, patch : 0 },
 	tags    : null,
 	handler : function () {
 		if (this.args.length === 0) {
@@ -1251,7 +1226,6 @@ Macro.add(["append", "prepend", "replace"], {
 	<<remove>>
 */
 Macro.add("remove", {
-	version : { major : 1, minor : 0, patch : 1 },
 	handler : function () {
 		if (this.args.length === 0) {
 			return this.error("no selector specified");
@@ -1275,7 +1249,6 @@ Macro.add("remove", {
 	<<goto>>
 */
 Macro.add("goto", {
-	version : { major : 1, minor : 0, patch : 0 },
 	handler : function () {
 		if (this.args.length === 0) {
 			return this.error("no passage specified");
@@ -1312,7 +1285,6 @@ Macro.add("goto", {
 	<<timed>>
 */
 Macro.add("timed", {
-	version : { major : 2, minor : 0, patch : 1 },
 	tags    : [ "next" ],
 	timers  : {},
 	handler : function () {
@@ -1401,7 +1373,6 @@ Macro.add("timed", {
 	<<widget>>
 */
 Macro.add("widget", {
-	version : { major : 2, minor : 1, patch : 0 },
 	tags    : null,
 	handler : function () {
 		if (this.args.length === 0) {
@@ -1421,7 +1392,6 @@ Macro.add("widget", {
 
 		try {
 			Macro.add(widgetName, {
-				version  : { major : 1, minor : 0, patch : 0 },
 				isWidget : true,
 				handler  : (function (contents) {
 					return function () {
@@ -1488,7 +1458,6 @@ Macro.add("widget", {
  **********************************************************************************************************************/
 if (!has.audio) {
 	Macro.add(["audio", "stopallaudio", "cacheaudio", "playlist", "setplaylist"], {
-		version : { major : 1, minor : 0, revision : 0 },
 		handler : function () { /* empty */ }
 	});
 } else {
@@ -1496,7 +1465,6 @@ if (!has.audio) {
 		<<audio>>
 	*/
 	Macro.add("audio", {
-		version : { major : 1, minor : 1, revision : 0 },
 		handler : function () {
 			if (this.args.length < 2) {
 				var errors = [];
@@ -1657,7 +1625,6 @@ if (!has.audio) {
 		<<stopallaudio>>
 	*/
 	Macro.add("stopallaudio", {
-		version : { major : 1, minor : 0, revision : 0 },
 		handler : function () {
 			var tracks = Macro.get("cacheaudio").tracks;
 			Object.keys(tracks).forEach(function (id) {
@@ -1670,7 +1637,6 @@ if (!has.audio) {
 		<<cacheaudio>>
 	*/
 	Macro.add("cacheaudio", {
-		version : { major : 1, minor : 0, revision : 1 },
 		handler : function () {
 			if (this.args.length < 2) {
 				var errors = [];
@@ -1737,7 +1703,6 @@ if (!has.audio) {
 		<<playlist>>
 	*/
 	Macro.add("playlist", {
-		version : { major : 1, minor : 2, revision : 0 },
 		handler : function () {
 			if (this.args.length === 0) {
 				return this.error("no actions specified");
@@ -1941,7 +1906,6 @@ if (!has.audio) {
 		<<setplaylist>>
 	*/
 	Macro.add("setplaylist", {
-		version : { major : 2, minor : 0, revision : 1 },
 		handler : function () {
 			if (this.args.length === 0) {
 				return this.error("no track ID(s) specified");
