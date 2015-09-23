@@ -27,7 +27,7 @@
         "space-before-function-paren" : {"anonymous" : "always", "named" : "never"},
         "space-unary-ops"             : [ 1, { "words" : true, "nonwords": false } ],
         "spaced-line-comment"         : [ "always", { "exceptions" : [ "-" ] } ],
-        "wrap-iife"                   : [ 2, "outside" ],
+        "wrap-iife"                   : [ 2, "inside" ],
         "yoda"                        : [ 2, "never", { "exceptRange" : true } ]
     },
 	"globals": {
