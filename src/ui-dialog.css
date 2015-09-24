@@ -181,6 +181,7 @@ html.ui-dialog-open body {
 	margin: 0;
 	padding: 0;
 	list-style: none;
+	border: 1px solid transparent;
 }
 #ui-dialog-body.list li {
 	margin: 0;
@@ -209,7 +210,7 @@ html.ui-dialog-open body {
 }
 #ui-dialog-body.saves table {
 	border-spacing: 0;
-	min-width: 320px;
+	min-width: 340px;
 	width: 100%;
 }
 #ui-dialog-body.saves tr:not(:first-child) {
