@@ -61,6 +61,7 @@
 	margin: 2.5em 0;
 	padding: 0 1.5em;
 }
+#ui-bar.stowed #ui-bar-history,
 #ui-bar.stowed #ui-bar-body {
 	visibility: hidden;
 	-webkit-transition: visibility 200ms step-end;
@@ -92,16 +93,19 @@
 #ui-bar hr {
 	border-color: #444;
 }
-#ui-bar-toggle {
-	display: block;
-	position: absolute;
-	top: 0;
-	right: 0;
+#ui-bar-toggle,
+#ui-bar-history [id|="history"] {
 	font-size: 1.2em;
 	line-height: inherit;
 	color: #eee;
 	background-color: transparent;
 	border: 1px solid #444;
+}
+#ui-bar-toggle {
+	display: block;
+	position: absolute;
+	top: 0;
+	right: 0;
 	border-right: none;
 	padding: 0.3em 0.45em 0.25em;
 }
@@ -111,6 +115,29 @@
 #ui-bar-toggle:hover {
 	background-color: #444;
 	border-color: #eee;
+}
+#ui-bar-history {
+	/*
+	position: absolute;
+	top: 0;
+	left: 1.5em;
+	*/
+	margin: 0 auto;
+}
+#ui-bar-history [id|="history"] {
+	padding: 0.2em 0.45em 0.35em;
+}
+#ui-bar-history [id|="history"]:not(:first-child) {
+	margin-left: 1em;
+}
+#ui-bar-history [id|="history"]:hover {
+	background-color: #444;
+	border-color: #eee;
+}
+#ui-bar-history [id|="history"]:disabled {
+	color: #444;
+	background-color: transparent;
+	border-color: #444;
 }
 #ui-bar-body {
 	line-height: 1.5;
@@ -162,6 +189,7 @@
 }
 
 /* Stop text selection on certain UI elements. */
+#ui-bar-history [id|="history"],
 #ui-bar-toggle,
 #menu a {
 	-webkit-user-select: none;
@@ -177,8 +205,8 @@
 	Default font icon styles.
 */
 #ui-bar-toggle:before,
+#ui-bar-history [id|="history"],
 #menu-item-saves a:before,
-#menu-item-rewind a:before,
 #menu-item-settings a:before,
 #menu-item-restart a:before,
 #menu-item-share a:before {
@@ -198,9 +226,6 @@
 }
 #menu-item-saves a:before {
 	content: "\e82b\00a0";
-}
-#menu-item-rewind a:before {
-	content: "\e825\00a0";
 }
 #menu-item-settings a:before {
 	content: "\e82d\00a0";

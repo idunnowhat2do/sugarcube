@@ -19,23 +19,15 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 	 * Initialization
 	 ******************************************************************************************************************/
 	function init() {
-		/* legacy */
-		function convertOldSave(saveObj) {
-			if (saveObj.hasOwnProperty("data") && !saveObj.hasOwnProperty("state")) {
-				saveObj.state = {
-					mode  : saveObj.mode,
-					delta : History.deltaEncodeHistory(saveObj.data)
-				};
-				delete saveObj.mode;
-				delete saveObj.data;
-			} else if (saveObj.hasOwnProperty("state") && !saveObj.state.hasOwnProperty("delta")) {
-				saveObj.state.delta = History.deltaEncodeHistory(saveObj.state.history);
-				delete saveObj.state.history;
-			}
-		}
-		/* /legacy */
-
 		if (DEBUG) { console.log("[Save.init()]"); }
+
+		// disable save slots and the autosave when Web Storage is unavailable
+		if (storage.name === "cookie") {
+			savesObjClear();
+			config.saves.autosave = undefined;
+			config.saves.slots = 0;
+			return false;
+		}
 
 		if (config.saves.slots < 0) {
 			config.saves.slots = 0;
@@ -64,7 +56,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 				saves.slots.reverse();
 				saves.slots = saves.slots.filter(function (val) {
 					if (val === null && this.count > 0) {
-						this.count--;
+						--this.count;
 						return false;
 					}
 					return true;
@@ -79,15 +71,51 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 
 		/* legacy */
 		// convert old-style saves
+		var convertOldSave = function (saveObj) {
+			if (saveObj.hasOwnProperty("data")) {
+				delete saveObj.mode;
+				saveObj.state = {
+					delta : History.deltaEncode(saveObj.data)
+				};
+				delete saveObj.data;
+			} else if (!saveObj.state.hasOwnProperty("delta")) {
+				delete saveObj.state.mode;
+				saveObj.state.delta = History.deltaEncode(saveObj.state.history);
+				delete saveObj.state.history;
+			} else if (!saveObj.state.hasOwnProperty("index")) {
+				delete saveObj.state.mode;
+			}
+			saveObj.state.index = saveObj.state.delta.length - 1;
+			if (saveObj.state.hasOwnProperty("rseed")) {
+				saveObj.state.seed = saveObj.state.rseed;
+				delete saveObj.state.rseed;
+				saveObj.state.delta.forEach(function (v, i, delta) { // eslint-disable-line no-shadow
+					if (delta[i].hasOwnProperty("rcount")) {
+						delta[i].pull = delta[i].rcount;
+						delete delta[i].rcount;
+					}				
+				});
+			}
+		};
 		if (saves.autosave !== null) {
-			if (!saves.autosave.hasOwnProperty("state") || !saves.autosave.state.hasOwnProperty("delta")) {
+			if (
+				   !saves.autosave.hasOwnProperty("state")
+				|| !saves.autosave.state.hasOwnProperty("delta")
+				|| !saves.autosave.state.hasOwnProperty("index")
+				||  saves.autosave.state.hasOwnProperty("rseed")
+			) {
 				convertOldSave(saves.autosave);
 				updated = true;
 			}
 		}
-		for (var i = 0; i < saves.slots.length; i++) {
+		for (var i = 0; i < saves.slots.length; ++i) {
 			if (saves.slots[i] !== null) {
-				if (!saves.slots[i].hasOwnProperty("state") || !saves.slots[i].state.hasOwnProperty("delta")) {
+				if (
+					   !saves.slots[i].hasOwnProperty("state")
+					|| !saves.slots[i].state.hasOwnProperty("delta")
+					|| !saves.slots[i].state.hasOwnProperty("index")
+					||  saves.slots[i].state.hasOwnProperty("rseed")
+				) {
 					convertOldSave(saves.slots[i]);
 					updated = true;
 				}
@@ -147,7 +175,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 	 * Autosave
 	 ******************************************************************************************************************/
 	function autosaveOK() {
-		return typeof config.saves.autosave !== "undefined";
+		return storage.name !== "cookie" && typeof config.saves.autosave !== "undefined";
 	}
 
 	function autosaveHas() {
@@ -197,7 +225,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 	 * Slots
 	 ******************************************************************************************************************/
 	function slotsOK() {
-		return _slotsUBound !== -1;
+		return storage.name !== "cookie" && _slotsUBound !== -1;
 	}
 
 	function slotsLength() {
@@ -211,9 +239,9 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 
 		var	saves = savesObjGet(),
 			count = 0;
-		for (var i = 0; i < saves.slots.length; i++) {
+		for (var i = 0; i < saves.slots.length; ++i) {
 			if (saves.slots[i] !== null) {
-				count++;
+				++count;
 			}
 		}
 		return count;
@@ -339,7 +367,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 	 * Private
 	 ******************************************************************************************************************/
 	function _appendSlots(array, num) {
-		for (var i = 0; i < num; i++) {
+		for (var i = 0; i < num; ++i) {
 			array.push(null);
 		}
 		return array;
@@ -347,7 +375,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 
 	function _savesObjIsEmpty(saves) {
 		var	isSlotsEmpty = true;
-		for (var i = 0; i < saves.slots.length; i++) {
+		for (var i = 0; i < saves.slots.length; ++i) {
 			if (saves.slots[i] !== null) {
 				isSlotsEmpty = false;
 				break;
@@ -365,6 +393,8 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 	}
 
 	function _marshal() {
+		if (DEBUG) { console.log("[Save/_marshal()]"); }
+
 		var saveObj = {
 			id    : config.saves.id,
 			state : History.marshalToSave()
@@ -378,7 +408,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		}
 
 		// delta encode the state history
-		saveObj.state.delta = History.deltaEncodeHistory(saveObj.state.history);
+		saveObj.state.delta = History.deltaEncode(saveObj.state.history);
 		delete saveObj.state.history;
 
 		return saveObj;
@@ -392,8 +422,25 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 				throw new Error(strings.errors.saveMissingData);
 			}
 
+			/* legacy */
+			delete saveObj.state.mode;
+			if (!saveObj.state.hasOwnProperty("index")) {
+				saveObj.state.index = saveObj.state.delta.length - 1;
+			}
+			if (saveObj.state.hasOwnProperty("rseed")) {
+				saveObj.state.seed = saveObj.state.rseed;
+				delete saveObj.state.rseed;
+				saveObj.state.delta.forEach(function (v, i, delta) {
+					if (delta[i].hasOwnProperty("rcount")) {
+						delta[i].pull = delta[i].rcount;
+						delete delta[i].rcount;
+					}				
+				});
+			}
+			/* /legacy */
+
 			// delta decode the state history
-			saveObj.state.history = History.deltaDecodeHistory(saveObj.state.delta);
+			saveObj.state.history = History.deltaDecode(saveObj.state.delta);
 			delete saveObj.state.delta;
 
 			if (typeof config.saves.onLoad === "function") {
@@ -456,5 +503,5 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		}
 	}));
 
-}());
+})();
 

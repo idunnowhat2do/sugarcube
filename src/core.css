@@ -78,6 +78,9 @@ a.link-broken {
 a.link-broken:hover {
 	color: #e44;
 }
+span.link-disabled {
+	color: #aaa;
+}
 area {
 	cursor: pointer;
 }
@@ -167,8 +170,10 @@ audio, canvas, progress, video {
 [data-icon-before]:before,
 [data-icon-after]:after,
 .error:before,
+/*
 a.macro-back:before,
 a.macro-return:after,
+*/
 #story a.link-external:after {
 	font-family: "tme-fa-icons";
 	font-style: normal;
@@ -190,12 +195,14 @@ a.macro-return:after,
 .error:before {
 	content: "\00a0\e80d\00a0\00a0";
 }
+/*
 a.macro-back:before {
 	content: "\e821\00a0";
 }
 a.macro-return:after {
 	content: "\00a0\e822";
 }
+*/
 #story a.link-external:after {
 	content: "\00a0\e80e";
 }

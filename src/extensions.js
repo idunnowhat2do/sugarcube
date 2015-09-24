@@ -68,7 +68,7 @@ if (!Object.create || typeof Object.create !== "function") {
 				}
 				return obj;
 			};
-		}())
+		})()
 		/* eslint-enable no-proto */
 	});
 }
@@ -133,7 +133,7 @@ Object.defineProperty(Array.prototype, "containsAll", {
 				return Array.prototype.indexOf.apply(this, arguments) !== -1;
 			}
 		} else {
-			for (var i = 0, iend = arguments.length; i < iend; i++) {
+			for (var i = 0, iend = arguments.length; i < iend; ++i) {
 				if (!Array.prototype.some.call(this, function (v) { return v === this.val; }, { val : arguments[i] })) {
 					return false;
 				}
@@ -162,7 +162,7 @@ Object.defineProperty(Array.prototype, "containsAny", {
 				return Array.prototype.indexOf.apply(this, arguments) !== -1;
 			}
 		} else {
-			for (var i = 0, iend = arguments.length; i < iend; i++) {
+			for (var i = 0, iend = arguments.length; i < iend; ++i) {
 				if (Array.prototype.some.call(this, function (v) { return v === this.val; }, { val : arguments[i] })) {
 					return true;
 				}
@@ -190,8 +190,8 @@ Object.defineProperty(Array.prototype, "count", {
 			count   = 0;
 
 		while ((pos = indexOf.call(this, needle, pos)) !== -1) {
-			count++;
-			pos++;
+			++count;
+			++pos;
 		}
 		return count;
 	}
@@ -304,7 +304,7 @@ Object.defineProperty(Array.prototype, "shuffle", {
 			return;
 		}
 
-		for (var i = this.length - 1; i > 0; i--) {
+		for (var i = this.length - 1; i > 0; --i) {
 			var	j    = Math.floor(Math.random() * (i + 1)),
 				swap = this[i];
 			this[i] = this[j];
@@ -333,7 +333,7 @@ Object.defineProperty(Function.prototype, "partial", {
 		return function () {
 			var	applied = [],
 				argc    = 0;
-			for (var i = 0; i < bound.length; i++) {
+			for (var i = 0; i < bound.length; ++i) {
 				applied.push(bound[i] === undefined ? arguments[argc++] : bound[i]);
 			}
 			return fn.apply(this, applied.concat(slice.call(arguments, argc)));
@@ -493,7 +493,7 @@ Object.defineProperty(String.prototype, "count", {
 			count   = 0;
 
 		while ((pos = indexOf.call(this, needle, pos)) !== -1) {
-			count++;
+			++count;
 			pos += step;
 		}
 		return count;

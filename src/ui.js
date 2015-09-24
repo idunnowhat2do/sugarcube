@@ -7,9 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global History, Save, Setting, StyleWrapper, Util, Wikifier, addAccessibleClickHandler, config, has,
-	       insertText, removeChildren, setPageElement, session, settings, state, storage, strings, tale,
-	       version
+	global History, Save, Setting, StyleWrapper, Util, Wikifier, config, has, insertText, removeChildren,
+	       safeActiveElement, setPageElement, session, settings, state, storage, strings, tale, version
 */
 
 var UI = (function () { // eslint-disable-line no-unused-vars
@@ -79,7 +78,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				scrollbarWidth = w1 - w2;
 			} catch (e) { /* no-op */ }
 			return scrollbarWidth || 17; // 17px is a reasonable failover
-		}());
+		})();
 
 		// generate the UI elements and add them to the page
 		var	store  = document.getElementById("store-area"),
@@ -90,7 +89,17 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		/* eslint-disable max-len */
 		temp.innerHTML =
 			  '<div id="ui-bar">'
-			+     '<div id="ui-bar-tray"><button id="ui-bar-toggle" tabindex="0" aria-label="' + strings.uiBar.toggle + '"></button></div>'
+			+     '<div id="ui-bar-tray">'
+			+         String.format('<button id="ui-bar-toggle" tabindex="0" title="{0}" aria-label="{0}"></button>', strings.uiBar.toggle)
+			+         '<div id="ui-bar-history">'
+			+             String.format('<button id="history-backward" tabindex="0" title="{0}" aria-label="{0}">\ue821</button>',
+							strings.uiBar.backward.replace(/%identity%/g, strings.identity))
+			+             String.format('<button id="history-jumpto" tabindex="0" title="{0}" aria-label="{0}">\ue823</button>',
+							strings.uiBar.jumpto.replace(/%identity%/g, strings.identity))
+			+             String.format('<button id="history-forward" tabindex="0" title="{0}" aria-label="{0}">\ue822</button>',
+							strings.uiBar.forward.replace(/%identity%/g, strings.identity))
+			+         '</div>'
+			+     '</div>'
 			+     '<div id="ui-bar-body">'
 			+         '<header id="title" role="banner">'
 			+             '<div id="story-banner"></div>'
@@ -104,7 +113,6 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			+             '<ul id="menu-story"></ul>'
 			+             '<ul id="menu-core">'
 			+                 '<li id="menu-item-saves"><a tabindex="0">' + strings.saves.title + '</a></li>'
-			+                 '<li id="menu-item-rewind"><a tabindex="0">' + strings.rewind.title + '</a></li>'
 			+                 '<li id="menu-item-settings"><a tabindex="0">' + strings.settings.title + '</a></li>'
 			+                 '<li id="menu-item-restart"><a tabindex="0">' + strings.restart.title + '</a></li>'
 			+                 '<li id="menu-item-share"><a tabindex="0">' + strings.share.title + '</a></li>'
@@ -138,6 +146,28 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 
 		// insert the UI elements into the page before the store area
 		store.parentNode.insertBefore(uiTree, store);
+
+		// setup the document-wide delegated handlers
+		jQuery(document)
+			// setup a handler for the history-backward/-forward buttons
+			.on("tw:historyupdate", (function ($backward, $forward) {
+				return function () {
+					$backward.prop("disabled", state.length < 2);
+					$forward.prop("disabled", state.length === state.size);
+				};
+			})(jQuery("#history-backward"), jQuery("#history-forward")))
+			// setup accessible outline handling
+			// based on: http://www.paciellogroup.com/blog/2012/04/how-to-remove-css-outlines-in-an-accessible-manner/
+			.on("mousedown.outline-handler keydown.outline-handler", function (evt) {
+				switch (evt.type) {
+				case "mousedown":
+					patchOutlines(true);
+					break;
+				case "keydown":
+					patchOutlines(false);
+					break;
+				}
+			});
 	}
 
 
@@ -146,13 +176,6 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 	 ******************************************************************************************************************/
 	function start() {
 		if (DEBUG) { console.log("[UI.start()]"); }
-
-		// setup the title
-		if (TWINE1) {
-			setPageElement("story-title", "StoryTitle", tale.title);
-		} else {
-			jQuery("#story-title").empty().append(tale.title);
-		}
 
 		// setup the #ui-bar's initial state
 		if (config.ui.stowBarInitially || jQuery(window).width() <= 800) {
@@ -164,11 +187,48 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			}, 100);
 		}
 
-		// setup the #ui-bar-toggle widget
+		// setup the #ui-bar-toggle and #ui-bar-history widgets
 		jQuery("#ui-bar-toggle")
-			.on("click", function () {
-				_bar.classList.toggle("stowed");
+			.ariaClick({
+				label : strings.uiBar.toggle
+			}, function () {
+				jQuery(_bar).toggleClass("stowed");
 			});
+		if (config.history.controls) {
+			jQuery("#history-backward")
+				.prop("disabled", true)
+				.ariaClick({
+					label : strings.uiBar.backward.replace(/%identity%/g, strings.identity)
+				}, function () {
+					state.backward();
+				});
+			if ((config.history.maxStates === 0 || config.history.maxStates > 10) && tale.lookup("tags", "bookmark").length > 0) {
+				jQuery("#history-jumpto")
+					.ariaClick({
+						label : strings.uiBar.jumpto.replace(/%identity%/g, strings.identity)
+					}, function () {
+						UI.jumpto();
+					});
+			} else {
+				jQuery("#history-jumpto").remove();
+			}
+			jQuery("#history-forward")
+				.prop("disabled", true)
+				.ariaClick({
+					label : strings.uiBar.forward.replace(/%identity%/g, strings.identity)
+				}, function () {
+					state.forward();
+				});
+		} else {
+			jQuery("#ui-bar-history").remove();
+		}
+
+		// setup the title
+		if (TWINE1) {
+			setPageElement("story-title", "StoryTitle", tale.title);
+		} else {
+			jQuery("#story-title").empty().append(tale.title);
+		}
 
 		// setup the dynamic page elements
 		if (!tale.has("StoryCaption")) {
@@ -182,14 +242,6 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		// setup the Saves menu item
 		dialogAddClickHandler("#menu-item-saves a", null, buildDialogSaves)
 			.text(strings.saves.title);
-
-		// setup the Rewind menu item
-		if (config.history.tracking && tale.lookup("tags", "bookmark").length > 0) {
-			dialogAddClickHandler("#menu-item-rewind a", null, buildDialogRewind)
-				.text(strings.rewind.title);
-		} else {
-			jQuery("#menu-item-rewind").remove();
-		}
 
 		// setup the Settings menu item
 		if (!Setting.isEmpty()) {
@@ -210,20 +262,6 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		} else {
 			jQuery("#menu-item-share").remove();
 		}
-
-		// setup accessible outline handling
-		// based on: http://www.paciellogroup.com/blog/2012/04/how-to-remove-css-outlines-in-an-accessible-manner/
-		jQuery(document.body)
-			.on("mousedown.outline-handler keydown.outline-handler", function (evt) {
-				switch (evt.type) {
-				case "mousedown":
-					patchOutlines(true);
-					break;
-				case "keydown":
-					patchOutlines(false);
-					break;
-				}
-			});
 
 		// handle the loading screen
 		if (document.readyState === "complete") {
@@ -273,46 +311,91 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		}
 	}
 
+	function buildDialogJumpTo() {
+		if (DEBUG) { console.log("[UI.buildDialogJumpTo()]"); }
+
+		var list = document.createElement("ul");
+
+		jQuery(dialogSetup(strings.jumpto.title, "jumpto list"))
+			.append(list);
+
+		for (var i = state.size - 1; i >= 0; --i) {
+			if (i === state.activeIndex) {
+				continue;
+			}
+
+			var passage = tale.get(state.history[i].title);
+
+			if (passage && passage.tags.contains("bookmark")) {
+				var	item = document.createElement("li"),
+					link = document.createElement("a");
+
+				jQuery(link)
+					.ariaClick({ one : true }, (function (idx) {
+						return function () {
+							state.goTo(idx);
+						};
+					})(i))
+					.addClass("ui-close")
+					.text(strings.jumpto.turn + " " + (state.expired + i + 1) + ": " + passage.description());
+
+				item.appendChild(link);
+				list.appendChild(item);
+			}
+
+		}
+		if (!list.hasChildNodes()) {
+			jQuery(list).append("<li><a><i>" + strings.jumpto.unavailable + "</i></a></li>");
+		}
+	}
+
 	function buildDialogSaves() {
 		function createActionItem(bId, bClass, bText, bAction) {
-			var	li  = document.createElement("li"),
-				btn = document.createElement("button");
-			btn.id = "saves-" + bId;
+			var	li   = document.createElement("li"),
+				$btn = jQuery(document.createElement("button"));
+
+			$btn
+				.attr("id", "saves-" + bId)
+				.html(bText);
 			if (bClass) {
-				btn.classList.add(bClass);
+				$btn.addClass(bClass);
 			}
-			btn.innerHTML = bText;
 			if (bAction) {
-				btn.setAttribute("tabindex", 0);
-				jQuery(btn).on("click", bAction);
+				$btn.ariaClick(bAction);
 			} else {
-				btn.disabled = true;
+				$btn.prop("disabled", true);
 			}
-			li.appendChild(btn);
+			$btn.appendTo(li);
+			//li.appendChild($btn[0]);
 			return li;
 		}
 		function createSaveList() {
 			function createButton(bId, bClass, bText, bSlot, bAction) {
-				var btn = document.createElement("button");
-				btn.id = "saves-" + bId + "-" + bSlot;
+				var $btn = jQuery(document.createElement("button"));
+
+				$btn
+					.attr("id", "saves-" + bId + "-" + bSlot)
+					.addClass(bId)
+					.html(bText);
 				if (bClass) {
-					btn.classList.add(bClass);
+					$btn.addClass(bClass);
 				}
-				btn.classList.add(bId);
-				btn.innerHTML = bText;
 				if (bAction) {
-					btn.setAttribute("tabindex", 0);
 					if (bSlot === "auto") {
-						jQuery(btn).on("click", function () { bAction(); });
-						btn.title = bText + " " + strings.saves.labelAuto;
+						$btn
+							.ariaClick({
+								label : bText + " " + strings.saves.labelAuto
+							}, function () { bAction(); });
 					} else {
-						jQuery(btn).on("click", function () { bAction(bSlot); });
-						btn.title = bText + " " + strings.saves.labelSlot + " " + (bSlot + 1);
+						$btn
+							.ariaClick({
+								label : bText + " " + strings.saves.labelSlot + " " + (bSlot + 1)
+							}, function () { bAction(bSlot); });
 					}
 				} else {
-					btn.disabled = true;
+					$btn.prop("disabled", true);
 				}
-				return btn;
+				return $btn[0];
 			}
 
 			var	saves = Save.get(),
@@ -334,7 +417,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				tdDescTxt.title = strings.saves.labelAuto;
 				tdSlot.appendChild(tdDescTxt);
 
-				if (saves.autosave && saves.autosave.state.mode === config.history.mode) {
+				if (saves.autosave) {
 					tdLoadBtn = createButton("load", "ui-close", strings.saves.labelLoad, "auto", Save.autosave.load);
 					tdLoad.appendChild(tdLoadBtn);
 
@@ -376,7 +459,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				tr.appendChild(tdDele);
 				tbody.appendChild(tr);
 			}
-			for (var i = 0; i < saves.slots.length; i++) {
+			for (var i = 0; i < saves.slots.length; ++i) {
 				tr     = document.createElement("tr");
 				tdSlot = document.createElement("td");
 				tdLoad = document.createElement("td");
@@ -385,7 +468,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 
 				tdSlot.appendChild(document.createTextNode(i + 1));
 
-				if (saves.slots[i] && saves.slots[i].state.mode === config.history.mode) {
+				if (saves.slots[i]) {
 					tdLoadBtn = createButton("load", "ui-close", strings.saves.labelLoad, i, Save.slots.load);
 					tdLoad.appendChild(tdLoadBtn);
 
@@ -495,143 +578,12 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 							dialogClose();
 						});
 					return input;
-				}()));
+				})());
 			}
 			return true;
 		} else {
 			dialogAlert(strings.saves.incapable.replace(/%identity%/g, strings.identity));
 			return false;
-		}
-	}
-
-	function buildDialogRewind() {
-		if (DEBUG) { console.log("[UI.buildDialogRewind()]"); }
-
-		var list = document.createElement("ul");
-
-		jQuery(dialogSetup(strings.rewind.title, "rewind list"))
-			.append(list);
-
-		for (var i = state.length - 2; i >= 0; i--) {
-			var passage = tale.get(state.history[i].title);
-			if (passage && passage.tags.contains("bookmark")) {
-				var	item = document.createElement("li"),
-					link = document.createElement("a");
-				link.classList.add("ui-close");
-				jQuery(link).one("click", (function () {
-					var p = i;
-					if (config.history.mode === History.Modes.Session) {
-						return function () {
-							if (DEBUG) { console.log("[rewind:click() @Session]"); }
-
-							// necessary?
-							document.title = tale.title;
-
-							// regenerate the state history suid
-							state.regenerateSuid();
-
-							// push the history states in order
-							if (!config.history.controls) {
-								if (DEBUG) { console.log("    > pushing: " + p + " (" + state.history[p].title + ")"); }
-
-								// load the state into the window history
-								History.replaceWindowState(
-									{ suid : state.suid, sidx : state.history[p].sidx },
-									config.passages.displayTitles && state.history[p].title !== config.passages.start
-										? tale.title + ": " + state.history[p].title
-										: tale.title
-								);
-							} else {
-								for (var i = 0, end = p; i <= end; i++) { // eslint-disable-line no-shadow
-									if (DEBUG) { console.log("    > pushing: " + i + " (" + state.history[i].title + ")"); }
-
-									// load the state into the window history
-									History.addWindowState(
-										{ suid : state.suid, sidx : state.history[i].sidx },
-										config.passages.displayTitles && state.history[i].title !== config.passages.start
-											? tale.title + ": " + state.history[i].title
-											: tale.title
-									);
-								}
-							}
-
-							var windowState = History.getWindowState();
-							if (windowState !== null && windowState.sidx < state.top.sidx) {
-								if (DEBUG) {
-									console.log("    > stacks out of sync; popping "
-										+ (state.top.sidx - windowState.sidx) + " states to equalize");
-								}
-								// stack indexes are out of sync, pop our stack until
-								// we're back in sync with the window.history
-								state.pop(state.top.sidx - windowState.sidx);
-							}
-
-							// activate the current top
-							state.setActiveState(state.top);
-
-							// display the passage
-							state.display(state.active.title, null, "replace");
-						};
-					} else if (config.history.mode === History.Modes.Window) {
-						return function () {
-							if (DEBUG) { console.log("[rewind:click() @Window]"); }
-
-							// necessary?
-							document.title = tale.title;
-
-							// push the history states in order
-							if (config.history.controls) {
-								for (var i = 0, end = p; i <= end; i++) { // eslint-disable-line no-shadow
-									if (DEBUG) { console.log("    > pushing: " + i + " (" + state.history[i].title + ")"); }
-
-									// load the state into the window history
-									var stateObj = { history : state.history.slice(0, i + 1) };
-									if (state.hasOwnProperty("prng")) {
-										stateObj.rseed = state.prng.seed;
-									}
-									History.addWindowState(
-										stateObj,
-										config.passages.displayTitles && state.history[i].title !== config.passages.start
-											? tale.title + ": " + state.history[i].title
-											: tale.title
-									);
-								}
-							}
-
-							// stack ids are out of sync, pop our stack until
-							// we're back in sync with the window.history
-							state.pop(state.length - (p + 1));
-
-							// activate the current top
-							state.setActiveState(state.top);
-
-							// display the passage
-							state.display(state.active.title, null, "replace");
-						};
-					} else { // History.Modes.Hash
-						return function () {
-							if (DEBUG) { console.log("[rewind:click() @Hash]"); }
-
-							if (config.history.controls) {
-								window.location.hash = state.history[p].hash;
-							} else {
-								session.set("activeHash", state.history[p].hash);
-								window.location.reload();
-							}
-						};
-					}
-				}()));
-				link.appendChild(document.createTextNode(strings.rewind.turn + " " + (i + 1) + ": " + passage.description()));
-				item.appendChild(link);
-				list.appendChild(item);
-			}
-		}
-		if (!list.hasChildNodes()) {
-			var	item = document.createElement("li"), // eslint-disable-line no-redeclare
-				link = document.createElement("a"); // eslint-disable-line no-redeclare
-			link.innerHTML = "<i>" + strings.rewind.unavailable + "</i>";
-			item.appendChild(link);
-			list.appendChild(item);
 		}
 	}
 
@@ -688,7 +640,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 					jQuery(elControl)
 						.text(strings.settings.off);
 				}
-				addAccessibleClickHandler(elControl, function () {
+				jQuery(elControl).ariaClick(function () {
 					if (settings[name]) {
 						jQuery(this)
 							.removeClass("enabled")
@@ -712,7 +664,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				break;
 			case Setting.Types.List:
 				elControl = document.createElement("select");
-				for (var i = 0; i < control.list.length; i++) {
+				for (var i = 0; i < control.list.length; ++i) {
 					var elItem = document.createElement("option");
 					jQuery(elItem)
 						.val(i)
@@ -786,7 +738,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			if (DEBUG) { console.log('    > display/autoload: "' + Save.autosave.get().title + '"'); }
 			if (evt.target.id !== "autoload-ok" || !Save.autosave.load()) {
 				if (DEBUG) { console.log('    > display: "' + config.passages.start + '"'); }
-				state.display(config.passages.start);
+				state.play(config.passages.start);
 			}
 		});
 
@@ -834,6 +786,16 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		dialogOpen(options, closeFn);
 	}
 
+	function dialogJumpTo(/* options, closeFn */) {
+		buildDialogJumpTo();
+		dialogOpen.apply(null, arguments);
+	}
+
+	function dialogSaves(/* options, closeFn */) {
+		buildDialogSaves();
+		dialogOpen.apply(null, arguments);
+	}
+
 	function dialogRestart(options) {
 		buildDialogRestart();
 		dialogOpen(options);
@@ -841,16 +803,6 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 
 	function dialogSettings(/* options, closeFn */) {
 		buildDialogSettings();
-		dialogOpen.apply(null, arguments);
-	}
-
-	function dialogRewind(/* options, closeFn */) {
-		buildDialogRewind();
-		dialogOpen.apply(null, arguments);
-	}
-
-	function dialogSaves(/* options, closeFn */) {
-		buildDialogSaves();
 		dialogOpen.apply(null, arguments);
 	}
 
@@ -886,7 +838,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 	}
 
 	function dialogAddClickHandler(targets, options, startFn, doneFn, closeFn) {
-		return addAccessibleClickHandler(targets, function (evt) {
+		return jQuery(targets).ariaClick(function (evt) {
 			evt.preventDefault(); // does not prevent bound events, only default actions (e.g. href links)
 
 			// call the start function
@@ -928,7 +880,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 					return function () {
 						dialogResizeHandler({ data : top });
 					};
-				}(options.top)));
+				})(options.top));
 		}
 
 		// EXPERIMENTAL (really comment this at some point)
@@ -1079,8 +1031,8 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		start                    : { value : start },
 		setStoryElements         : { value : setStoryElements },
 		patchOutlines            : { value : patchOutlines },
+		buildDialogJumpTo        : { value : buildDialogJumpTo },
 		buildDialogSaves         : { value : buildDialogSaves },
-		buildDialogRewind        : { value : buildDialogRewind },
 		buildDialogRestart       : { value : buildDialogRestart },
 		buildDialogSettings      : { value : buildDialogSettings },
 		buildDialogShare         : { value : buildDialogShare },
@@ -1088,10 +1040,10 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		buildLinkListFromPassage : { value : buildLinkListFromPassage },
 		// Built-ins
 		alert                    : { value : dialogAlert },
+		jumpto                   : { value : dialogJumpTo },
+		saves                    : { value : dialogSaves },
 		restart                  : { value : dialogRestart },
 		settings                 : { value : dialogSettings },
-		rewind                   : { value : dialogRewind },
-		saves                    : { value : dialogSaves },
 		share                    : { value : dialogShare },
 		// Core
 		isOpen                   : { value : dialogIsOpen },
@@ -1102,5 +1054,5 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		close                    : { value : dialogClose }
 	}));
 
-}());
+})();
 

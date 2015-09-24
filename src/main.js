@@ -61,11 +61,8 @@ var	config = Object.seal({
 
 		// history properties
 		history : Object.seal({
-			controls : true,
-			mode     : has.pushState
-				? has.sessionStorage ? History.Modes.Session : History.Modes.Window
-				: History.Modes.Hash,
-			tracking : true
+			controls  : true,
+			maxStates : 100
 		}),
 
 		// macros properties
@@ -109,13 +106,13 @@ var	config = Object.seal({
 				},
 				teKeys = Object.keys(teMap),
 				el     = document.createElement("div");
-			for (var i = 0; i < teKeys.length; i++) {
+			for (var i = 0; i < teKeys.length; ++i) {
 				if (el.style[teKeys[i]] !== undefined) {
 					return teMap[teKeys[i]];
 				}
 			}
 			return "";
-		}())
+		})()
 	});
 
 /* eslint-disable no-unused-vars */
@@ -163,18 +160,19 @@ jQuery(document).ready(function () {
 		// initialize the user interface (this must be done before script passages)
 		UI.init();
 
-		// alert players when their browser is degrading basic required capabilities
-		if (!has.pushState || storage.name === "cookie") {
+		// alert players when their browser is degrading required capabilities
+		if (!session.has("rcWarn") && storage.name === "cookie") {
+			session.set("rcWarn", 1);
 			window.alert(strings.warnings.degraded.replace(/%identity%/g, strings.identity)); // eslint-disable-line no-alert
 		}
 
 		// add the story styles
-		for (var i = 0; i < tale.styles.length; i++) {
+		for (var i = 0; i < tale.styles.length; ++i) {
 			addStyle(tale.styles[i].text);
 		}
 
 		// evaluate the story scripts
-		for (var i = 0; i < tale.scripts.length; i++) { // eslint-disable-line no-redeclare
+		for (var i = 0; i < tale.scripts.length; ++i) { // eslint-disable-line no-redeclare
 			try {
 				eval(tale.scripts[i].text); // eslint-disable-line no-eval
 			} catch (e) {
@@ -183,7 +181,7 @@ jQuery(document).ready(function () {
 		}
 
 		// process the story widgets
-		for (var i = 0; i < tale.widgets.length; i++) { // eslint-disable-line no-redeclare
+		for (var i = 0; i < tale.widgets.length; ++i) { // eslint-disable-line no-redeclare
 			try {
 				Wikifier.wikifyEval(tale.widgets[i].processText());
 			} catch (e) {

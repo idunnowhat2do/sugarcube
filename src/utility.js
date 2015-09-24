@@ -96,102 +96,30 @@ function clone(orig) {
 }
 
 /**
-	Returns the jQuery-wrapped target element(s) after making them accessible clickables (ARIA compatibility).
+	[DEPRECATED] Returns the jQuery-wrapped target element(s) after making them accessible clickables (ARIA compatibility).
 */
-var addAccessibleClickHandler = (function () { // eslint-disable-line no-unused-vars
+function addAccessibleClickHandler(targets, selector, fn, one, namespace) { // eslint-disable-line no-unused-vars
+	if (arguments.length < 2) {
+		throw new Error("addAccessibleClickHandler insufficient number of parameters");
+	}
 
-	// Event handler & utility functions
-	var	keypressHandler = function (evt) {
-			// 13 is Enter/Return, 32 is Space
-			if (evt.which === 13 || evt.which === 32) {
-				evt.preventDefault();
+	if (typeof selector === "function") {
+		namespace = one;
+		one       = fn;
+		fn        = selector;
+		selector  = undefined;
+	}
 
-				// trigger the click event on `document.activeElement` if possible, else `this`
-				jQuery(function (self) {
-					// IE9 contains a bug which will throw an error upon accessing `document.activeElement`
-					// under certain circumstances, so we have to allow for an exception to be thrown
-					try {
-						return document.activeElement || self;
-					} catch (e) {
-						return self;
-					}
-				}(this)).trigger("click");
-			}
-		},
-		oneClickWrapper = function (handler) {
-			return function (evt) {
-				// call the true handler
-				handler.call(this, evt);
+	if (typeof fn !== "function") {
+		throw new TypeError("addAccessibleClickHandler handler parameter must be a function");
+	}
 
-				// remove both event handlers (keypress & click) and the other components
-				jQuery(this)
-					.off(".accessible-click")
-					.removeClass("event-click-once")
-					.removeAttr("tabindex")
-					.not("a,button")
-						.removeAttr("role");
-			};
-		};
-
-	// Return the actual `addAccessibleClickHandler()` function
-	return function (targets, delegate, handler, once, namespace) { // eslint-disable-line no-unused-vars
-		if (arguments.length < 2) {
-			throw new Error("addAccessibleClickHandler insufficient number of parameters");
-		}
-
-		if (typeof delegate === "function") {
-			namespace = once;
-			once      = !!handler;
-			handler   = delegate;
-			delegate  = undefined;
-		} else if (typeof delegate !== "string") {
-			throw new Error("addAccessibleClickHandler delegate parameter must be a string");
-		}
-
-		if (typeof handler !== "function") {
-			throw new Error("addAccessibleClickHandler handler parameter must be a function");
-		}
-
-		if (namespace == null) { // lazy equality for null
-			namespace = "";
-		} else if (typeof namespace !== "string") {
-			throw new Error("addAccessibleClickHandler namespace parameter must be a string");
-		} else if (namespace[0] !== ".") {
-			throw new Error("addAccessibleClickHandler namespace parameter value is malformed: " + namespace);
-		}
-
-		var	$targets = jQuery(targets);
-
-		// set `role` to `button`, for non-<a>/-<button> elements
-		$targets.not("a,button").attr("role", "button");
-
-		// set `tabindex` to `0` to make them focusable
-		$targets.attr("tabindex", 0);
-
-		// set some classes
-		$targets.addClass("event-click" + (once ? "-once" : ""));
-
-		// set the keypress handlers, for non-<button> elements
-		//   n.b. for the single-use case, the click handler will also remove this handler
-		if (delegate) {
-			$targets.not("button").on("keypress.accessible-click" + namespace, delegate, keypressHandler);
-		} else {
-			$targets.not("button").on("keypress.accessible-click" + namespace, keypressHandler);
-		}
-
-		// set the click handlers
-		//   n.b. to ensure both handlers are properly removed, `one()` must not be used here
-		if (delegate) {
-			$targets.on("click.accessible-click" + namespace, delegate, once ? oneClickWrapper(handler) : handler);
-		} else {
-			$targets.on("click.accessible-click" + namespace, once ? oneClickWrapper(handler) : handler);
-		}
-
-		return $targets;
-	};
-
-}());
-
+	return jQuery(targets).ariaClick({
+		namespace : namespace,
+		one       : !!one,
+		selector  : selector
+	}, fn);
+}
 
 /**
  * Returns the new DOM element, optionally appending it to the passed DOM element (if any)
@@ -334,7 +262,7 @@ function setPageElement(id, titles, defaultText) { // eslint-disable-line no-unu
 	if (!Array.isArray(titles)) {
 		titles = [ titles ];
 	}
-	for (var i = 0, iend = titles.length; i < iend; i++) {
+	for (var i = 0, iend = titles.length; i < iend; ++i) {
 		if (tale.has(titles[i])) {
 			new Wikifier(el, tale.get(titles[i]).processText().trim());
 			return el;
@@ -402,7 +330,7 @@ function throwError(place, message, title) { // eslint-disable-line no-unused-va
 
 /**
 	Returns the simple string representation of the passed value or, if there is none,
-	the passed default value
+	the passed default value.
  */
 function printableStringOrDefault(val, defVal) { // eslint-disable-line no-unused-vars
 	switch (typeof val) {
@@ -672,7 +600,7 @@ var Util = Object.defineProperties({}, {
 		value : function (statements) {
 			"use strict";
 			// the enclosing anonymous function is to isolate the passed code within its own scope
-			eval("(function(){" + statements + "\n}());"); // eslint-disable-line no-eval
+			eval("(function(){" + statements + "\n})();"); // eslint-disable-line no-eval
 			return true;
 		}
 	},
@@ -705,7 +633,7 @@ var Util = Object.defineProperties({}, {
 								}),
 				diff        = {},
 				aOpRef;
-			for (var i = 0, klen = keys.length; i < klen; i++) {
+			for (var i = 0, klen = keys.length; i < klen; ++i) {
 				var	p     = keys[i],
 					origP = orig[p],
 					destP = dest[p];
@@ -802,7 +730,7 @@ var Util = Object.defineProperties({}, {
 			"use strict";
 			var	keys    = Object.keys(diff || {}),
 				patched = clone(orig);
-			for (var i = 0, klen = keys.length; i < klen; i++) {
+			for (var i = 0, klen = keys.length; i < klen; ++i) {
 				var	p     = keys[i],
 					diffP = diff[p];
 				if (diffP === Util.DiffOp.Delete) {
@@ -912,16 +840,19 @@ function SeedablePRNG(seed, useEntropy) {
 				value : prng
 			},
 			seed : {
+				/*
+					TODO: Make this non-writable.
+				*/
 				writable : true,
 				value    : seed
 			},
-			count : {
+			pull : {
 				writable : true,
 				value    : 0
 			},
 			random : {
 				value : function () {
-					this.count++;
+					++this.pull;
 					return this._prng();
 				}
 			}
@@ -934,20 +865,20 @@ function SeedablePRNG(seed, useEntropy) {
 Object.defineProperties(SeedablePRNG, {
 	marshal : {
 		value : function (prng) {
-			if (!prng || !prng.hasOwnProperty("seed") || !prng.hasOwnProperty("count")) {
+			if (!prng || !prng.hasOwnProperty("seed") || !prng.hasOwnProperty("pull")) {
 				throw new Error("PRNG is missing required data");
 			}
 
 			return {
-				seed  : prng.seed,
-				count : prng.count
+				seed : prng.seed,
+				pull : prng.pull
 			};
 		}
 	},
 
 	unmarshal : {
 		value : function (prngObj) {
-			if (!prngObj || !prngObj.hasOwnProperty("seed") || !prngObj.hasOwnProperty("count")) {
+			if (!prngObj || !prngObj.hasOwnProperty("seed") || !prngObj.hasOwnProperty("pull")) {
 				throw new Error("PRNG object is missing required data");
 			}
 
@@ -955,7 +886,7 @@ Object.defineProperties(SeedablePRNG, {
 			var prng = new SeedablePRNG(prngObj.seed, false);
 
 			// pull values until the new PRNG is in sync with the original
-			for (var i = 0, iend = prngObj.count; i < iend; i++) {
+			for (var i = 0, iend = prngObj.pull; i < iend; ++i) {
 				prng.random();
 			}
 			return prng;
@@ -1219,7 +1150,7 @@ Object.defineProperties(AudioWrapper.prototype, {
 						self._faderId = null;
 					}
 				};
-			}(this)), interval);
+			})(this), interval);
 		}
 	},
 	fade : {

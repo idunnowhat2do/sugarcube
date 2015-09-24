@@ -120,8 +120,8 @@ var Macro = (function () { // eslint-disable-line no-unused-vars
 		try {
 			/* eslint-disable no-eval */
 			eval(thisp == null /* lazy equality for null */
-				? 'var output = document.createElement("div");(function(){' + statements + '\n}());'
-				: "var output = thisp.output;(function(){" + statements + "\n}.call(thisp));");
+				? 'var output = document.createElement("div");(function(){' + statements + '\n})();'
+				: "var output = thisp.output;(function(){" + statements + "\n}).call(thisp);");
 			/* eslint-enable no-eval */
 			return true;
 		} catch (e) {
@@ -165,7 +165,7 @@ var Macro = (function () { // eslint-disable-line no-unused-vars
 		var	endTags = [ "/" + parent, "end" + parent ], // automatically create the closing tags
 			allTags = [].concat(endTags, bodyTags);
 
-		for (var i = 0; i < allTags.length; i++) {
+		for (var i = 0; i < allTags.length; ++i) {
 			var tag = allTags[i];
 			if (macrosHas(tag)) {
 				throw new Error("cannot register tag for an existing macro");
@@ -229,7 +229,7 @@ var Macro = (function () { // eslint-disable-line no-unused-vars
 		}
 	}));
 
-}());
+})();
 
 
 /***********************************************************************************************************************

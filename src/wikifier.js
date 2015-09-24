@@ -43,8 +43,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global Macro, MacroContext, Util, addAccessibleClickHandler, config, insertElement, insertText, macros,
-	       printableStringOrDefault, removeChildren, removeElement, runtime, state, tale, throwError
+	global Macro, MacroContext, Util, config, insertElement, insertText, macros, printableStringOrDefault,
+	       removeChildren, removeElement, runtime, state, tale, throwError
 */
 
 /* eslint-disable max-len */
@@ -134,7 +134,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 
 						// Figure out which formatter matched
 						var matchingFormatter = -1;
-						for (var i = 1; i < formatterMatch.length; i++) {
+						for (var i = 1; i < formatterMatch.length; ++i) {
 							if (formatterMatch[i]) {
 								matchingFormatter = i - 1;
 								break; // stop once we've found the matching formatter
@@ -209,7 +209,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 				if (DEBUG) { console.log("[Wikifier.compileFormatters]"); }
 				var	formatters = Wikifier.formatters,
 					patterns   = [];
-				for (var i = 0, iend = formatters.length; i < iend; i++) {
+				for (var i = 0, iend = formatters.length; i < iend; ++i) {
 					patterns.push("(" + formatters[i].match + ")");
 				}
 				_formatterCache = {
@@ -304,7 +304,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 
 				if (pNames.length !== 0) {
 					retVal = state.active.variables;
-					for (var i = 0, iend = pNames.length; i < iend; i++) {
+					for (var i = 0, iend = pNames.length; i < iend; ++i) {
 						if (typeof retVal[pNames[i]] !== "undefined") {
 							retVal = retVal[pNames[i]];
 						} else {
@@ -327,7 +327,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 				if (pNames.length !== 0) {
 					var	baseObj = state.active.variables,
 						varName = pNames.pop();
-					for (var i = 0, iend = pNames.length; i < iend; i++) {
+					for (var i = 0, iend = pNames.length; i < iend; ++i) {
 						if (typeof baseObj[pNames[i]] !== "undefined") {
 							baseObj = baseObj[pNames[i]];
 						} else {
@@ -440,12 +440,12 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					} else {
 						el.classList.add("link-broken");
 					}
-					addAccessibleClickHandler(el, function () {
+					jQuery(el).ariaClick({ one : true }, function () {
 						if (typeof callback === "function") {
 							callback();
 						}
-						state.display(passage, el);
-					}, true);
+						state.play(passage);
+					});
 				}
 				if (text) {
 					insertText(el, text);
@@ -572,7 +572,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					return name;
 				}
 				var parts = name.split("-");
-				for (var i = 1; i < parts.length; i++) {
+				for (var i = 1; i < parts.length; ++i) {
 					parts[i] = parts[i].slice(0, 1).toUpperCase() + parts[i].slice(1);
 				}
 				return parts.join("");
@@ -652,11 +652,11 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						start = pos;
 					},
 					slurpQuote = function (endQuote) {
-						pos++;
+						++pos;
 						loop: for (;;) {
 							switch (peek()) {
 							case '\\':
-								pos++;
+								++pos;
 								var c = peek(); // eslint-disable-line no-shadow
 								if (c !== EOF && c !== '\n') {
 									break;
@@ -668,7 +668,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							case endQuote:
 								break loop;
 							}
-							pos++;
+							++pos;
 						}
 						return pos;
 					},
@@ -695,11 +695,11 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					switch (c) {
 					case '<':
 						item.align = "left";
-						pos++;
+						++pos;
 						break;
 					case '>':
 						item.align = "right";
-						pos++;
+						++pos;
 						break;
 					}
 					if (!/^[Ii][Mm][Gg]$/.test(w.source.slice(pos, pos + 3))) {
@@ -748,14 +748,14 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						case '|': // core section pipe ('|') separator
 							if (cid === 0) {
 								emit(isLink ? "text" : "title");
-								start++;
+								++start;
 								cid = 1;
 							}
 							break;
 						case '-': // possible core section right arrow ("->") separator (Twine 2 extension)
 							if (cid === 0 && peekAhead(1) === '>') {
 								emit(isLink ? "text" : "title");
-								pos++;
+								++pos;
 								start += 2;
 								cid = 1;
 							}
@@ -763,7 +763,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						case '<': // possible core section left arrow ("<-") separator (Twine 2 extension)
 							if (cid === 0 && peekAhead(1) === '-') {
 								emit(isLink ? "link" : "source");
-								pos++;
+								++pos;
 								start += 2;
 								cid = 2;
 							}
@@ -772,14 +772,14 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							if (cid === -1) {
 								return error("unexpected left square bracket '['");
 							}
-							depth++;
+							++depth;
 							if (depth === 1) {
 								ignore();
-								start++;
+								++start;
 							}
 							break;
 						case ']':
-							depth--;
+							--depth;
 							if (depth === 0) {
 								switch (cid) {
 								case 0: // core section (nothing emitted yet)
@@ -805,16 +805,16 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 									cid = -1;
 									break;
 								}
-								pos++;
+								++pos;
 								if (peek() === ']') {
-									pos++;
+									++pos;
 									break loop;
 								}
-								pos--;
+								--pos;
 							}
 							break;
 						}
-						pos++;
+						++pos;
 					}
 				} catch (e) {
 					return error(e.message);
@@ -899,7 +899,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 									rowElement = insertElement(rowContainer, "tr");
 									this.rowHandler(w, rowElement, prevColumns);
 								}
-								rowCount++;
+								++rowCount;
 							}
 						}
 					} while (matched);
@@ -917,14 +917,14 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							if (cellMatch[1] === "~") {
 								var last = prevColumns[col];
 								if (last) {
-									last.rowCount++;
+									++last.rowCount;
 									last.element.setAttribute("rowSpan", last.rowCount);
 									last.element.setAttribute("rowspan", last.rowCount);
 									last.element.valign = "center";
 								}
 								w.nextMatch = cellMatch.index + cellMatch[0].length - 1;
 							} else if (cellMatch[1] === ">") {
-								curColCount++;
+								++curColCount;
 								w.nextMatch = cellMatch.index + cellMatch[0].length - 1;
 							} else if (cellMatch[2]) {
 								w.nextMatch = cellMatch.index + cellMatch[0].length;
@@ -933,15 +933,15 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 								var	spaceLeft  = false,
 									spaceRight = false,
 									cell;
-								w.nextMatch++;
+								++w.nextMatch;
 								var css = Wikifier.helpers.inlineCSS(w);
 								while (w.source.substr(w.nextMatch, 1) === " ") {
 									spaceLeft = true;
-									w.nextMatch++;
+									++w.nextMatch;
 								}
 								if (w.source.substr(w.nextMatch, 1) === "!") {
 									cell = insertElement(e, "th");
-									w.nextMatch++;
+									++w.nextMatch;
 								} else {
 									cell = insertElement(e, "td");
 								}
@@ -955,10 +955,10 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 									cell.setAttribute("colspan", curColCount);
 									curColCount = 1;
 								}
-								for (var i = 0; i < css.styles.length; i++) {
+								for (var i = 0; i < css.styles.length; ++i) {
 									cell.style[css.styles[i].style] = css.styles[i].value;
 								}
-								for (var i = 0; i < css.classes.length; i++) { // eslint-disable-line no-redeclare
+								for (var i = 0; i < css.classes.length; ++i) { // eslint-disable-line no-redeclare
 									cell.classList.add(css.classes[i]);
 								}
 								if (css.id !== "") {
@@ -977,7 +977,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 								}
 								w.nextMatch = w.nextMatch - 1;
 							}
-							col++;
+							++col;
 						}
 					} while (matched);
 				}
@@ -990,7 +990,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 				handler    : function (w) {
 					var isHeading = (function (nodes) {
 							var hasGCS = typeof window.getComputedStyle === "function";
-							for (var i = nodes.length - 1; i >= 0; i--) {
+							for (var i = nodes.length - 1; i >= 0; --i) {
 								var node = nodes[i];
 								switch (node.nodeType) {
 								case Node.ELEMENT_NODE:
@@ -1049,7 +1049,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 								}
 							}
 							return true;
-						}(w.output.childNodes));
+						})(w.output.childNodes);
 					if (isHeading) {
 						w.subWikify(insertElement(w.output, "h" + w.matchLength), this.terminator);
 					} else {
@@ -1088,11 +1088,11 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							newLevel = lookaheadMatch[0].length;
 							w.nextMatch += lookaheadMatch[0].length;
 							if (newLevel > curLevel) {
-								for (i = curLevel; i < newLevel; i++) {
+								for (i = curLevel; i < newLevel; ++i) {
 									placeStack.push(insertElement(placeStack[placeStack.length - 1], newType));
 								}
 							} else if (newLevel < curLevel) {
-								for (i = curLevel; i > newLevel; i--) {
+								for (i = curLevel; i > newLevel; --i) {
 									placeStack.pop();
 								}
 							} else if (newLevel === curLevel && newType !== curType) {
@@ -1130,12 +1130,12 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						i;
 					do {
 						if (newLevel > curLevel) {
-							for (i = curLevel; i < newLevel; i++) {
+							for (i = curLevel; i < newLevel; ++i) {
 								placeStack.push(insertElement(placeStack[placeStack.length - 1], this.element));
 							}
 						} else {
 							if (newLevel < curLevel) {
-								for (i = curLevel; i > newLevel; i--) {
+								for (i = curLevel; i > newLevel; --i) {
 									placeStack.pop();
 								}
 							}
@@ -1192,7 +1192,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					var	link  = Wikifier.helpers.evalPassageId(markup.link),
 						text  = markup.hasOwnProperty("text") ? Wikifier.helpers.evalExpression(markup.text) : link,
 						setFn = markup.hasOwnProperty("setter")
-							? (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(markup.setter)))
+							? (function (ex) { return function () { Wikifier.evalStatements(ex); }; })(Wikifier.parse(markup.setter))
 							: null;
 					if (markup.forceInternal || !Wikifier.isExternalLink(link)) {
 						Wikifier.createInternalLink(w.output, link, text, setFn);
@@ -1224,7 +1224,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					// align=(left|right), title=(title), source=source, forceInternal=(~), link=(link), setter=(setter)
 					var	el     = w.output,
 						setFn  = markup.hasOwnProperty("setter")
-							? (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(markup.setter)))
+							? (function (ex) { return function () { Wikifier.evalStatements(ex); }; })(Wikifier.parse(markup.setter))
 							: null,
 						source;
 					if (markup.hasOwnProperty("link")) {
@@ -1394,17 +1394,17 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 
 						switch (tagName) {
 						case openTag:
-							opened++;
+							++opened;
 							break;
 
 						case closeAlt:
 						case closeTag:
-							opened--;
+							--opened;
 							break;
 
 						default:
 							if (opened === 1 && bodyTags) {
-								for (var i = 0, iend = bodyTags.length; i < iend; i++) {
+								for (var i = 0, iend = bodyTags.length; i < iend; ++i) {
 									if (tagName === bodyTags[i]) {
 										payload.push({
 											name      : curTag,
@@ -1493,7 +1493,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 								arg.text     = markup.hasOwnProperty("text") ? Wikifier.helpers.evalExpression(markup.text) : arg.link;
 								arg.external = !markup.forceInternal && Wikifier.isExternalLink(arg.link);
 								arg.setFn    = markup.hasOwnProperty("setter")
-									? (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(markup.setter)))
+									? (function (ex) { return function () { Wikifier.evalStatements(ex); }; })(Wikifier.parse(markup.setter))
 									: null;
 							} else if (markup.isImage) {
 								// .isImage, [.align], [.title], .source, [.forceInternal], [.link], [.setter]
@@ -1511,7 +1511,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 										}
 									}
 									return imgObj;
-								}(markup.source));
+								})(markup.source);
 								if (markup.hasOwnProperty("align")) {
 									arg.align = markup.align;
 								}
@@ -1523,7 +1523,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 									arg.external = !markup.forceInternal && Wikifier.isExternalLink(arg.link);
 								}
 								arg.setFn = markup.hasOwnProperty("setter")
-									? (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(markup.setter)))
+									? (function (ex) { return function () { Wikifier.evalStatements(ex); }; })(Wikifier.parse(markup.setter))
 									: null;
 							}
 						} else if (match[5]) {
@@ -1675,10 +1675,10 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					if (css.styles.length === 0 && css.classes.length === 0 && css.id === "") {
 						el.className = "marked";
 					} else {
-						for (var i = 0; i < css.styles.length; i++) {
+						for (var i = 0; i < css.styles.length; ++i) {
 							el.style[css.styles[i].style] = css.styles[i].value;
 						}
-						for (var i = 0; i < css.classes.length; i++) { // eslint-disable-line no-redeclare
+						for (var i = 0; i < css.classes.length; ++i) { // eslint-disable-line no-redeclare
 							el.classList.add(css.classes[i]);
 						}
 						if (css.id !== "") {
@@ -1830,7 +1830,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							if (setter != null) { // lazy equality for null
 								setter = (typeof setter !== "string" ? String(setter) : setter).trim();
 								if (setter !== "") {
-									callback = (function (ex) { return function () { Wikifier.evalStatements(ex); }; }(Wikifier.parse(setter)));
+									callback = (function (ex) { return function () { Wikifier.evalStatements(ex); }; })(Wikifier.parse(setter));
 								}
 							}
 							if (tale.has(passage)) {
@@ -1841,12 +1841,12 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							} else {
 								el.classList.add("link-broken");
 							}
-							addAccessibleClickHandler(el, function () {
+							jQuery(el).ariaClick({ one : true }, function () {
 								if (typeof callback === "function") {
 									callback.call(this);
 								}
-								state.display(passage, el);
-							}, true);
+								state.play(passage);
+							});
 						}
 					}
 				}
@@ -1860,6 +1860,6 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 	 ******************************************************************************************************************/
 	return Wikifier; // export the constructor
 
-}());
+})();
 /* eslint-enable max-len */
 

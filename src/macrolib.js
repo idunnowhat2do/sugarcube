@@ -7,9 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global AudioWrapper, History, Macro, Util, Wikifier, addAccessibleClickHandler, config, has, insertElement,
-	       insertText, postdisplay, predisplay, printableStringOrDefault, runtime, state, storage, strings, tale,
-	       turns
+	global AudioWrapper, Macro, Util, Wikifier, config, has, insertElement,insertText,
+	       postdisplay, predisplay, printableStringOrDefault, runtime, state, storage, strings, tale, turns
 */
 
 /***********************************************************************************************************************
@@ -71,7 +70,7 @@ Macro.add("actions", {
 		if (!state.active.variables["#actions"]) {
 			state.active.variables["#actions"] = {};
 		}
-		for (var i = 0; i < this.args.length; i++) {
+		for (var i = 0; i < this.args.length; ++i) {
 			var	passage,
 				text,
 				image,
@@ -117,7 +116,7 @@ Macro.add("actions", {
 					state.active.variables["#actions"][p] = true;
 					if (typeof fn === "function") { fn(); }
 				};
-			}(passage, setFn)));
+			})(passage, setFn));
 			if (image == null) { // lazy equality for null
 				insertText(el, text);
 			} else {
@@ -131,142 +130,116 @@ Macro.add("actions", {
 /**
 	<<back>> & <<return>>
 */
-Macro.add(["back", "return"], {
+Macro.add([ "back", "return" ], {
 	handler : function () {
-		var	steps = 1,
-			pname,
-			ctext,
+		var	stateIdx = -1,
+			passage,
+			text,
 			image,
 			el;
 
-		// translate wiki link/image syntax into the <<back>>/<<return>> "to" syntax
-		if (this.args.length === 1 && typeof this.args[0] === "object") {
-			if (this.args[0].isImage) {
-				// argument was in wiki image syntax
-				image = document.createElement("img");
-				image.src = this.args[0].source;
-				if (this.args[0].hasOwnProperty("passage")) {
-					image.setAttribute("data-passage", this.args[0].passage);
-				}
-				if (this.args[0].hasOwnProperty("title")) {
-					image.title = this.args[0].title;
-				}
-				if (this.args[0].hasOwnProperty("align")) {
-					image.align = this.args[0].align;
-				}
-				if (this.args[0].hasOwnProperty("link")) {
-					this.args.push("to");
-					this.args.push(this.args[0].link);
-				}
-				this.args[0] = null;
-			} else {
-				if (this.args[0].count === 1) {
-					// simple link syntax: [[...]]
-					this.args.push(this.args[0].link);
-					this.args[0] = "to";
-				} else {
-					// pretty link syntax: [[...|...]]
-					this.args.push("to");
-					this.args.push(this.args[0].link);
-					this.args[0] = this.args[0].text;
-				}
-			}
+		/* legacy */
+		if (this.args.length > 1) {
+			return this.error("too many arguments specified, check the documentation for details");
 		}
+		/* /legacy */
 
 		if (this.args.length === 1) {
-			ctext = this.args[0];
-		} else if (this.args.length !== 0) {
-			if (this.args.length === 3) {
-				ctext = this.args.shift();
-			}
-
-			if (this.args[0] === "go") {
-				if (isNaN(this.args[1]) || this.args[1] < 1) {
-					return this.error('argument following "go" must be a whole number greater than zero');
-				}
-				steps = this.args[1] < state.length ? this.args[1] : state.length - 1;
-				pname = state.peek(steps).title;
-			} else if (this.args[0] === "to") {
-				if (typeof this.args[1] === "object") {
-					// argument was in wiki link syntax
-					this.args[1] = this.args[1].link;
-				}
-				if (!tale.has(this.args[1])) {
-					return this.error('passage "' + this.args[1] + '" does not exist');
-				}
-				/*
-					// allow <<back>> to work like <<return>> when `config.history.tracking` is disabled
-					if (this.name === "return" || !config.history.tracking) {
-				*/
-				if (this.name === "return") {
-					pname = this.args[1];
+			if (typeof this.args[0] === "object") {
+				if (this.args[0].isImage) {
+					// argument was in wiki image syntax
+					image = document.createElement("img");
+					image.src = this.args[0].source;
+					if (this.args[0].hasOwnProperty("passage")) {
+						image.setAttribute("data-passage", this.args[0].passage);
+					}
+					if (this.args[0].hasOwnProperty("title")) {
+						image.title = this.args[0].title;
+					}
+					if (this.args[0].hasOwnProperty("align")) {
+						image.align = this.args[0].align;
+					}
+					if (this.args[0].hasOwnProperty("link")) {
+						passage = this.args[0].link;
+					}
 				} else {
-					for (var i = state.length - 1; i >= 0; i--) {
-						if (state.history[i].title === this.args[1]) {
-							steps = state.length - 1 - i;
-							pname = this.args[1];
-							break;
-						}
+					// argument was in wiki link syntax
+					if (this.args[0].count === 1) {
+						// simple link syntax: [[...]]
+						passage = this.args[0].link;
+					} else {
+						// pretty link syntax: [[...|...]]
+						text    = this.args[0].text;
+						passage = this.args[0].link;
 					}
 				}
-				if (pname == null) { // lazy equality for null
-					return this.error('cannot find passage "' + this.args[1] + '" in the current story history');
-				}
-			} else {
-				return this.error('"' + this.args[0] + '" is not a valid action (go|to)');
+			} else if (this.args.length === 1) {
+				// argument was simply the link text
+				text = this.args[0];
 			}
 		}
-		if (pname == null && state.length > 1) { // lazy equality for null
-			pname = state.peek(steps).title;
-		}
 
-		if (pname == null) { // lazy equality for null
-			return this.error("cannot find passage");
-		} else if (steps === 0) {
-			return this.error("already at the first passage in the current story history");
-		}
-
-		el = document.createElement("a");
-		el.classList.add("link-internal");
-		el.classList.add("macro-" + this.name);
-		if (steps > 0) {
-			var	callback;
+		if (passage == null) { // lazy equality for null
+			// find the index and title of the most recent passage within the story history
+			// whose title does not match that of the active passage
+			for (var i = state.length - 2; i >= 0; --i) {
+				if (state.history[i].title !== state.active.title) {
+					stateIdx = i;
+					passage = state.history[i].title;
+					break;
+				}
+			}
+			// fallback to `state.expiredUnique` if we failed to find a passage
+			if (passage == null && state.expiredUnique !== "") { // lazy equality for null
+				passage = state.expiredUnique;
+			}
+		} else {
+			if (!tale.has(passage)) {
+				return this.error('passage "' + passage + '" does not exist');
+			}
 			if (this.name === "back") {
-				if (config.history.mode === History.Modes.Hash || !config.history.controls) {
-					callback = function () {
-						// pop the history stack
-						//   n.b. (steps > 0) is correct, since the stack only holds clean/non-rendered states
-						while (steps > 0 && state.length > 1) {
-							state.pop();
-							steps--;
-						}
-						// activate the new top since we popped the stack
-						state.setActiveState(state.top);
-						// display the passage
-						state.display(pname, el, "replace");
-					};
-				} else {
-					callback = function () {
-						if (state.length > 1) {
-							window.history.go(-steps);
-						}
-					};
+				// find the index of the most recent passage within the story history whose
+				// title matches that of the specified passage
+				for (var i = state.length - 2; i >= 0; --i) { // eslint-disable-line no-redeclare
+					if (state.history[i].title === passage) {
+						stateIdx = i;
+						break;
+					}
 				}
-			} else {
-				callback = function () {
-					state.display(pname, el);
-				};
+				if (stateIdx === -1) {
+					return this.error('cannot find passage "' + passage + '" in the current story history');
+				}
 			}
-			addAccessibleClickHandler(el, callback, true);
 		}
+
+		if (passage == null) { // lazy equality for null
+			return this.error("cannot find passage");
+		}
+//		if (this.name === "back" && stateIdx === -1) {
+//			// no-op; we're already at the first passage in the current story history
+//			return;
+//		}
+
+		if (this.name !== "back" || stateIdx !== -1) {
+			el = document.createElement("a");
+			jQuery(el)
+				.addClass("link-internal")
+				.ariaClick({ one : true }, this.name === "return"
+					? function () { state.play(passage); }
+					: function () { state.goTo(stateIdx); });
+		} else {
+			el = document.createElement("span");
+			el.classList.add("link-disabled");
+		}
+		el.classList.add("macro-" + this.name);
 		if (image == null) { // lazy equality for null
-			insertText(el, ctext || strings.macros[this.name].text);
+			insertText(el, text != null ? text : strings.macros[this.name].text); // lazy equality for null
 		} else {
 			el.appendChild(image);
 		}
 		this.output.appendChild(el);
 	}
-}, true);
+});
 
 /**
 	<<choice>>
@@ -339,110 +312,6 @@ Macro.add("choice", {
 			state.active.variables["#choice"][choiceId] = true;
 			if (typeof setFn === "function") { setFn(); }
 		});
-		if (image == null) { // lazy equality for null
-			insertText(el, text);
-		} else {
-			el.appendChild(image);
-		}
-		el.classList.add("macro-" + this.name);
-	}
-});
-
-/**
-	<<link>>
-*/
-Macro.add("link", {
-	actionRegExp : /^disable|remove|keep|once$/, // `keep` and `once` are deprecated
-	handler      : function () {
-		if (this.args.length === 0) {
-			return this.error("no link location specified");
-		}
-
-		var	link,
-			text,
-			image,
-			external,
-			setFn,
-			actionRegExp = this.self.actionRegExp,
-			action,
-			el;
-
-		if (this.args.length === 3) {
-			action = this.args.pop();
-		} else if (this.args.length === 2 && actionRegExp.test(this.args[1])) {
-			action = this.args.pop();
-		}
-		if (action != null && !actionRegExp.test(action)) { // lazy equality for null
-			return this.error('"' + action + '" is not a valid action (disable|remove)');
-		}
-
-		if (this.args.length === 2) {
-			text = this.args[0];
-			link = this.args[1];
-		} else {
-			if (typeof this.args[0] === "object" && this.args[0].isImage) {
-				// argument was in wiki image syntax
-				image = document.createElement("img");
-				image.src = this.args[0].source;
-				if (this.args[0].hasOwnProperty("passage")) {
-					image.setAttribute("data-passage", this.args[0].passage);
-				}
-				if (this.args[0].hasOwnProperty("title")) {
-					image.title = this.args[0].title;
-				}
-				if (this.args[0].hasOwnProperty("align")) {
-					image.align = this.args[0].align;
-				}
-				link     = this.args[0].link;
-				external = this.args[0].external;
-				setFn    = this.args[0].setFn;
-			} else {
-				if (typeof this.args[0] === "object") {
-					// argument was in wiki link syntax
-					text     = this.args[0].text;
-					link     = this.args[0].link;
-					external = this.args[0].external;
-					setFn    = this.args[0].setFn;
-				} else {
-					// argument was simply the link location
-					text = link = this.args[0];
-				}
-			}
-		}
-		if (external == null) { // lazy equality for null
-			external = Wikifier.isExternalLink(link);
-		}
-
-		if (action) {
-			if (!state.active.variables.hasOwnProperty("#link")) {
-				state.active.variables["#link"] = {};
-			} else if (
-				   state.active.variables["#link"].hasOwnProperty(link)
-				&& state.active.variables["#link"][link]
-			) {
-				if (action === "disable" || action === "keep") {
-					el = insertElement(this.output, "span");
-					if (image == null) { // lazy equality for null
-						insertText(el, text);
-					} else {
-						el.appendChild(image);
-					}
-					el.classList.add("link-disabled");
-					el.classList.add("macro-" + this.name);
-					el.setAttribute("tabindex", -1);
-				}
-				return;
-			}
-		}
-
-		if (external) {
-			el = Wikifier.createExternalLink(this.output, link);
-		} else {
-			el = Wikifier.createInternalLink(this.output, link, null, function () {
-				if (action) { state.active.variables["#link"][link] = true; }
-				if (typeof setFn === "function") { setFn(); }
-			});
-		}
 		if (image == null) { // lazy equality for null
 			insertText(el, text);
 		} else {
@@ -560,7 +429,7 @@ Macro.add("if", {
 	tags     : [ "elseif", "else" ],
 	handler  : function () {
 		try {
-			for (var i = 0, len = this.payload.length; i < len; i++) {
+			for (var i = 0, len = this.payload.length; i < len; ++i) {
 				// sanity checks
 				switch (this.payload[i].name) {
 				case "else":
@@ -678,7 +547,7 @@ Macro.add("for", {
 		}
 	}
 });
-Macro.add(["break", "continue"], {
+Macro.add([ "break", "continue" ], {
 	skipArgs : true,
 	handler  : function () {
 		if (this.contextHas(function (c) { return c.name === "for"; })) {
@@ -827,7 +696,7 @@ Macro.add("script", {
 /**
 	<<button>> & <<click>>
 */
-Macro.add(["button", "click"], {
+Macro.add([ "button", "click" ], {
 	tags    : null,
 	handler : function () {
 		if (this.args.length === 0) {
@@ -888,11 +757,15 @@ Macro.add(["button", "click"], {
 			el.classList.add("link-internal");
 		}
 		el.classList.add("macro-" + this.name);
-		addAccessibleClickHandler(el, getWikifyEvalHandler(
-			this.payload[0].contents.trim(),
-			widgetArgs,
-			passage != null ? function () { state.display(passage, el); } : undefined // lazy equality for null
-		), passage != null, ".macros"); // lazy equality for null
+		jQuery(el)
+			.ariaClick({
+				namespace : ".macros",
+				one       : passage != null /* lazy equality for null */
+			}, getWikifyEvalHandler(
+				this.payload[0].contents.trim(),
+				widgetArgs,
+				passage != null ? function () { state.play(passage); } : undefined /* lazy equality for null */
+			));
 		this.output.appendChild(el);
 	}
 });
@@ -1092,7 +965,7 @@ Macro.add("textbox", {
 					evt.preventDefault();
 					Wikifier.setValue(varName, this.value);
 					if (passage != null) { // lazy equality for null
-						state.display(passage, this);
+						state.play(passage);
 					}
 				}
 			});
@@ -1115,7 +988,7 @@ Macro.add("textbox", {
 /**
 	<<addclass>> & <<toggleclass>>
 */
-Macro.add(["addclass", "toggleclass"], {
+Macro.add([ "addclass", "toggleclass" ], {
 	handler : function () {
 		if (this.args.length < 2) {
 			var errors = [];
@@ -1190,7 +1063,7 @@ Macro.add("copy", {
 /**
 	<<append>>, <<prepend>>, & <<replace>>
 */
-Macro.add(["append", "prepend", "replace"], {
+Macro.add([ "append", "prepend", "replace" ], {
 	tags    : null,
 	handler : function () {
 		if (this.args.length === 0) {
@@ -1268,7 +1141,7 @@ Macro.add("goto", {
 		}
 
 		/*
-			Call state.display().
+			Call state.play().
 
 			n.b. This does not terminate the current Wikifier call chain, though, ideally, it probably
 			     should, however, doing so wouldn't be trivial and there's the question of would that
@@ -1276,7 +1149,7 @@ Macro.add("goto", {
 			     and constructs.
 		*/
 		setTimeout(function () {
-			state.display(passage);
+			state.play(passage);
 		}, 40); // not too short, not too long
 	}
 });
@@ -1303,7 +1176,7 @@ Macro.add("timed", {
 		}
 		if (this.payload.length > 1) {
 			try {
-				for (var i = 1, len = this.payload.length; i < len; i++) {
+				for (var i = 1, len = this.payload.length; i < len; ++i) {
 					items.push({
 						delay : this.payload[i].arguments.length === 0
 							? items[items.length - 1].delay
@@ -1359,7 +1232,7 @@ Macro.add("timed", {
 		if (!predisplay.hasOwnProperty("#timed-timers-cleanup")) {
 			predisplay["#timed-timers-cleanup"] = function (task) {
 				var timerIds = Object.keys(timers);
-				for (var i = 0; i < timerIds.length; i++) {
+				for (var i = 0; i < timerIds.length; ++i) {
 					delete timers[timerIds[i]];
 					clearTimeout(timerIds[i]);
 				}
@@ -1404,7 +1277,7 @@ Macro.add("widget", {
 
 							// setup the widget arguments array
 							state.active.variables.args = [];
-							for (var i = 0, len = this.args.length; i < len; i++) {
+							for (var i = 0, len = this.args.length; i < len; ++i) {
 								state.active.variables.args[i] = this.args[i];
 							}
 							state.active.variables.args.raw = this.args.raw;
@@ -1444,7 +1317,7 @@ Macro.add("widget", {
 							}
 						}
 					};
-				}(this.payload[0].contents))
+				})(this.payload[0].contents)
 			});
 		} catch (e) {
 			return this.error('cannot create widget macro "' + widgetName + '": ' + e.message);
@@ -1457,7 +1330,7 @@ Macro.add("widget", {
  * Audio Macros
  **********************************************************************************************************************/
 if (!has.audio) {
-	Macro.add(["audio", "stopallaudio", "cacheaudio", "playlist", "setplaylist"], {
+	Macro.add([ "audio", "stopallaudio", "cacheaudio", "playlist", "setplaylist" ], {
 		handler : function () { /* empty */ }
 	});
 } else {
@@ -1591,7 +1464,7 @@ if (!has.audio) {
 				}
 				if (passage != null) { // lazy equality for null
 					audio.oneEnd(function () { // execute the callback once only
-						state.display(passage);
+						state.play(passage);
 					});
 				}
 				switch (action) {
@@ -1651,7 +1524,7 @@ if (!has.audio) {
 				id      = this.args[0],
 				extRe   = /^.+?(?:\.([^\.\/\\]+?))$/;
 
-			for (var i = 1; i < this.args.length; i++) {
+			for (var i = 1; i < this.args.length; ++i) {
 				var	url   = this.args[i],
 					match = extRe.exec(url);
 
@@ -1915,7 +1788,7 @@ if (!has.audio) {
 				playlist = Macro.get("playlist"),
 				list     = [];
 
-			for (var i = 0; i < this.args.length; i++) {
+			for (var i = 0; i < this.args.length; ++i) {
 				var	id = this.args[i];
 				if (!tracks.hasOwnProperty(id)) {
 					return this.error("no track by ID: " + id);

@@ -41,7 +41,17 @@ var	strings = { // eslint-disable-line no-unused-vars
 
 		// ui-bar
 		uiBar : {
-			toggle : "Hide/show the UI bar"
+			toggle   : "Toggle the UI bar",
+			backward : "Go backward within the %identity% history",
+			forward  : "Go forward within the %identity% history",
+			jumpto   : "Jump to a specific point within the %identity% history"
+		},
+
+		// jumpto
+		jumpto : {
+			title       : "Jump To",
+			turn        : "Turn",
+			unavailable : "No jump points currently available\u2026"
 		},
 
 		// saves
@@ -69,13 +79,6 @@ var	strings = { // eslint-disable-line no-unused-vars
 			off   : "Off",
 			on    : "On",
 			reset : "Reset to Defaults"
-		},
-
-		// rewind
-		rewind : {
-			title       : "Rewind",
-			turn        : "Turn",
-			unavailable : "No rewind points available\u2026"
 		},
 
 		// restart

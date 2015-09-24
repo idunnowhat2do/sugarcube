@@ -157,7 +157,7 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 		if (definitionsHas(name)) {
 			delete settings[name];
 		}
-		for (var i = 0; i < _definitions.length; i++) {
+		for (var i = 0; i < _definitions.length; ++i) {
 			if (_definitions[i].name === name) {
 				_definitions.splice(i, 1);
 				definitionsDelete(name);
@@ -252,5 +252,5 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 		reset     : { value : settingsReset }
 	}));
 
-}());
+})();
 

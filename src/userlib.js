@@ -35,14 +35,16 @@ function lastVisited(/* variadic */) { // eslint-disable-line no-unused-vars
 		turns; // eslint-disable-line no-shadow
 	if (passages.length > 1) {
 		turns = state.length;
-		for (var i = 0, iend = passages.length; i < iend; i++) {
+		for (var i = 0, iend = passages.length; i < iend; ++i) {
 			turns = Math.min(turns, lastVisited(passages[i]));
 		}
 	} else {
 		var	hist  = state.history,
 			title = passages[0];
-		for (turns = state.length - 1; turns >= 0; turns--) {
-			if (hist[turns].title === title) { break; }
+		for (turns = state.length - 1; turns >= 0; --turns) {
+			if (hist[turns].title === title) {
+				break;
+			}
 		}
 		if (turns !== -1) {
 			turns = state.length - 1 - turns;
@@ -72,16 +74,15 @@ function previous(offset) { // eslint-disable-line no-unused-vars
 		return state.length > offset ? state.peek(offset).title : "";
 	}
 
-	// new behavior without offset
-	if (state.length < 2) {
-		return "";
-	}
-	for (var i = state.length - 2; i >= 0; i--) {
+	// behavior without an offset
+	for (var i = state.length - 2; i >= 0; --i) {
 		if (state.history[i].title !== state.active.title) {
 			return state.history[i].title;
 		}
 	}
-	return "";
+
+	// fallback to `state.expiredUnique` if we failed to find a passage
+	return state.expiredUnique;
 }
 
 /**
@@ -137,7 +138,7 @@ function tags(/* variadic */) { // eslint-disable-line no-unused-vars
 
 	var	passages = Array.prototype.concat.apply([], arguments),
 		tags     = []; // eslint-disable-line no-shadow
-	for (var i = 0, iend = passages.length; i < iend; i++) {
+	for (var i = 0, iend = passages.length; i < iend; ++i) {
 		tags = tags.concat(tale.get(passages[i]).tags);
 	}
 	return tags;
@@ -158,7 +159,7 @@ function time() { // eslint-disable-line no-unused-vars
 	     do not count toward the total.
 */
 function turns() { // eslint-disable-line no-unused-vars
-	return state.length;
+	return state.expired + state.length;
 }
 
 /**
@@ -181,15 +182,17 @@ function visited(/* variadic */) { // eslint-disable-line no-unused-vars
 		count;
 	if (passages.length > 1) {
 		count = state.length;
-		for (var i = 0, iend = passages.length; i < iend; i++) {
+		for (var i = 0, iend = passages.length; i < iend; ++i) {
 			count = Math.min(count, visited(passages[i]));
 		}
 	} else {
 		var	hist  = state.history,
 			title = passages[0];
 		count = 0;
-		for (var i = 0, iend = state.length; i < iend; i++) { // eslint-disable-line no-redeclare
-			if (hist[i].title === title) { count++; }
+		for (var i = 0, iend = state.length; i < iend; ++i) { // eslint-disable-line no-redeclare
+			if (hist[i].title === title) {
+				++count;
+			}
 		}
 	}
 	return count;
@@ -206,14 +209,18 @@ function visitedTags(/* variadic */) {
 	var	list  = Array.prototype.concat.apply([], arguments),
 		llen  = list.length,
 		count = 0;
-	for (var i = 0, iend = state.length; i < iend; i++) {
+	for (var i = 0, iend = state.length; i < iend; ++i) {
 		var tags = tale.get(state.history[i].title).tags; // eslint-disable-line no-shadow
 		if (tags.length !== 0) {
 			var found = 0;
-			for (var j = 0; j < llen; j++) {
-				if (tags.contains(list[j])) { found++; }
+			for (var j = 0; j < llen; ++j) {
+				if (tags.contains(list[j])) {
+					++found;
+				}
 			}
-			if (found === llen) { count++; }
+			if (found === llen) {
+				++count;
+			}
 		}
 	}
 	return count;

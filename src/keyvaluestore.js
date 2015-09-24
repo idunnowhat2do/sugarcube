@@ -86,7 +86,7 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 				if (DEBUG) { console.log('[<KeyValueStore>.clear()]'); }
 
 				var keys = this.keys();
-				for (var i = 0; i < keys.length; i++) {
+				for (var i = 0; i < keys.length; ++i) {
 					if (DEBUG) { console.log("    > deleting key: " + keys[i]); }
 					this.delete(keys[i]);
 				}
@@ -176,7 +176,7 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 
 				var	keys = this.keys(),
 					re   = new RegExp("^" + RegExp.escape(subKey));
-				for (var i = 0; i < keys.length; i++) {
+				for (var i = 0; i < keys.length; ++i) {
 					if (re.test(keys[i])) {
 						if (DEBUG) { console.log("    > deleting key: " + keys[i]); }
 						this.delete(keys[i], quiet);
@@ -266,7 +266,7 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 				}
 
 				var keys = [];
-				for (var i = 0; i < this._engine.length; i++) {
+				for (var i = 0; i < this._engine.length; ++i) {
 					var key = this._engine.key(i);
 					if (this._prefixRe.test(key)) {
 						keys.push(key.replace(this._prefixRe, ""));
@@ -395,7 +395,7 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 				var cookieObj = {};
 				if ("cookie" in document && document.cookie !== "") {
 					var cookies = document.cookie.split(/;\s*/);
-					for (var i = 0; i < cookies.length; i++) {
+					for (var i = 0; i < cookies.length; ++i) {
 						var	kv  = cookies[i].split("="),
 							key = decodeURIComponent(kv[0]);
 						if (this._prefixRe.test(key)) {
@@ -515,5 +515,5 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 	 ******************************************************************************************************************/
 	return KeyValueStore; // export the constructor
 
-}());
+})();
 
