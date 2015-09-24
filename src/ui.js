@@ -909,15 +909,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 
 		// record the last active/focused non-dialog element
 		if (!dialogIsOpen()) {
-			_lastActive = (function () {
-				// IE9 contains a bug which will throw an error upon accessing `document.activeElement`
-				// under certain circumstances, so we have to allow for an exception to be thrown
-				try {
-					return document.activeElement || null;
-				} catch (e) {
-					return null;
-				}
-			}());
+			_lastActive = safeActiveElement();
 		}
 
 		// add the UI isOpen class
