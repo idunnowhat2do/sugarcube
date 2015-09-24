@@ -34,18 +34,55 @@ function clone(orig) {
 	}
 
 	// create a copy of the original
+	/*
 	var	type = Object.prototype.toString.call(orig),
 		copy;
 	if (type === "[object Date]") {
 		copy = new Date(orig.getTime());
+	} else if (type === "[object Map]") {
+		copy = new Map();
+		orig.forEach(function (v, k) { copy.set(k, clone(v)); });
 	} else if (type === "[object RegExp]") {
 		copy = new RegExp(orig);
+	} else if (type === "[object Set]") {
+		copy = new Set();
+		orig.forEach(function (v) { copy.add(clone(v)); });
 	} else if (Array.isArray(orig)) {
 		copy = [];
 	} else {
 		// try to ensure that the returned object has the same prototype as the original
 		var proto = Object.getPrototypeOf(orig);
 		copy = proto ? Object.create(proto) : orig.constructor.prototype;
+	}
+	*/
+	var copy;
+	if (Array.isArray(orig)) {
+		copy = [];
+	} else {
+		// this relies on `Object.prototype.toString()` and `Function.prototype.call()`
+		// performing as intended, which may not be the case if they've been replaced
+		// we don't have much choice, however, so it's not really an issue
+		switch (Object.prototype.toString.call(orig)) {
+		case "[object Date]":
+			copy = new Date(orig.getTime());
+			break;
+		case "[object Map]":
+			copy = new Map();
+			orig.forEach(function (v, k) { copy.set(k, clone(v)); });
+			break;
+		case "[object RegExp]":
+			copy = new RegExp(orig);
+			break;
+		case "[object Set]":
+			copy = new Set();
+			orig.forEach(function (v) { copy.add(clone(v)); });
+			break;
+		default:
+			// try to ensure that the returned object has the same prototype as the original
+			var proto = Object.getPrototypeOf(orig);
+			copy = proto ? Object.create(proto) : orig.constructor.prototype;
+			break;
+		}
 	}
 
 	// duplicate the original's own properties (includes expando properties on non-generic objects)
