@@ -6,11 +6,11 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global random */
+/* global random, safeActiveElement */
 /* eslint-disable no-extend-native */
 
 /***********************************************************************************************************************
- * Polyfills
+ * JavaScript Polyfills
  **********************************************************************************************************************/
 /*
 	NOTE: Most of the ES5 & ES6 polyfills now come from the `es5-shim.js` & `es6-shim.js` libraries, respectively.
@@ -75,7 +75,7 @@ if (!Object.create || typeof Object.create !== "function") {
 
 
 /***********************************************************************************************************************
- * Extensions, General
+ * JavaScript Extensions, General
  **********************************************************************************************************************/
 /**
 	Returns a random value from the given array in the range of lower and upper, if they are specified
@@ -657,17 +657,33 @@ Object.defineProperty(String.prototype, "readBracketedList", {
 
 
 /***********************************************************************************************************************
- * Extensions, JSON/serialization
+ * JavaScript Extensions, JSON/serialization
  **********************************************************************************************************************/
 /**
 	Define toJSON methods on each prototype we want to support
 */
+Object.defineProperty(Date.prototype, "toJSON", {
+	configurable : true,
+	writable     : true,
+	value        : function () {
+		"use strict";
+		return JSON.reviveWrapper('new Date("' + this.toISOString() + '")');
+	}
+});
 Object.defineProperty(Function.prototype, "toJSON", {
 	configurable : true,
 	writable     : true,
 	value        : function () {
 		"use strict";
 		return JSON.reviveWrapper(this.toString());
+	}
+});
+Object.defineProperty(Map.prototype, "toJSON", {
+	configurable : true,
+	writable     : true,
+	value        : function () {
+		"use strict";
+		return JSON.reviveWrapper('new Map(' + JSON.stringify(Array.from(this.entries())) + ')');
 	}
 });
 Object.defineProperty(RegExp.prototype, "toJSON", {
@@ -678,12 +694,12 @@ Object.defineProperty(RegExp.prototype, "toJSON", {
 		return JSON.reviveWrapper(this.toString());
 	}
 });
-Object.defineProperty(Date.prototype, "toJSON", {
+Object.defineProperty(Set.prototype, "toJSON", {
 	configurable : true,
 	writable     : true,
 	value        : function () {
 		"use strict";
-		return JSON.reviveWrapper('new Date("' + this.toISOString() + '")');
+		return JSON.reviveWrapper('new Set(' + JSON.stringify(Array.from(this.values())) + ')');
 	}
 });
 
@@ -730,4 +746,135 @@ Object.defineProperty(JSON, "parse", {
 		});
 	}
 });
+
+
+/***********************************************************************************************************************
+ * jQuery Plugins
+ **********************************************************************************************************************/
+/**
+	`ariaClick([options,] fn)` method plugin.
+
+	Makes the target element(s) WAI-ARIA compatible clickables.
+*/
+(function () {
+
+	// Event handler & utility functions
+	var	onKeypressFn = function (evt) {
+			// 13 is Enter/Return, 32 is Space
+			if (evt.which === 13 || evt.which === 32) {
+				evt.preventDefault();
+
+				// to allow for delegation attempt to trigger the click event on `document.activeElement`
+				// if possible, elsewise on `this`
+				jQuery(safeActiveElement() || this).trigger("click");
+			}
+		},
+		onClickFnWrapper = function (fn) {
+			return function () {
+				// toggle "aria-pressed" status if the attribute exists
+				var $this = jQuery(this);
+				if ($this.is("[aria-pressed]")) {
+					$this.attr("aria-pressed", $this.attr("aria-pressed") === "true" ? "false" : "true");
+				}
+
+				// call the true handler
+				fn.apply(this, arguments);
+			};
+		},
+		oneClickFnWrapper = function (fn) {
+			return onClickFnWrapper(function () {
+				// remove both event handlers (keypress & click) and the other components
+				jQuery(this)
+					.off(".aria-clickable")
+					.removeAttr("tabindex aria-controls aria-pressed")
+					.not("a,button")
+						.removeAttr("role")
+						.end()
+					.filter("button")
+						.prop("disabled", true);
+
+				// call the true handler
+				fn.apply(this, arguments);
+			});
+		};
+
+	// extend jQuery with an `ariaClick()` method
+	jQuery.fn.extend({
+		ariaClick : function (options, fn) {
+			if (arguments.length === 0) {
+				return this;
+			}
+
+			if (fn == null) { // lazy equality for null
+				fn      = options;
+				options = undefined;
+			}
+
+			options = jQuery.extend({
+				namespace : undefined,
+				one       : false,
+				selector  : undefined,
+				data      : undefined,
+				controls  : undefined,
+				pressed   : undefined,
+				label     : undefined
+			}, options);
+			if (typeof options.namespace !== "string") {
+				options.namespace = "";
+			} else if (options.namespace[0] !== ".") {
+				options.namespace = "." + options.namespace;
+			}
+			if (typeof options.pressed === "boolean") {
+				options.pressed = options.pressed ? "true" : "false";
+			}
+
+			// set `type` to `button` to suppress "submit" semantics, for <button> elements
+			this.filter("button").prop("type", "button");
+
+			// set `role` to `button`, for non-<a>/-<button> elements
+			this.not("a,button").attr("role", "button");
+
+			// set `tabindex` to `0` to make them focusable (unnecessary on <button> elements, but it doesn't hurt)
+			this.attr("tabindex", 0);
+
+			// set `aria-controls`
+			if (options.controls != null) { // lazy equality for null
+				this.attr("aria-controls", options.controls);
+			}
+
+			// set `aria-pressed`
+			if (options.pressed != null) { // lazy equality for null
+				this.attr("aria-pressed", options.pressed);
+			}
+
+			// set `aria-label` and `title`
+			if (options.label != null) { // lazy equality for null
+				this.attr({
+					"aria-label" : options.label,
+					"title"      : options.label
+				});
+			}
+
+			// set the keypress handlers, for non-<button> elements
+			//   n.b. for the single-use case, the click handler will also remove this handler
+			this.not("button").on(
+				"keypress.aria-clickable" + options.namespace,
+				options.selector,
+				onKeypressFn
+			);
+
+			// set the click handlers
+			//   n.b. to ensure both handlers are properly removed, `one()` must not be used here
+			this.on(
+				"click.aria-clickable" + options.namespace,
+				options.selector,
+				options.data,
+				options.one ? oneClickFnWrapper(fn) : onClickFnWrapper(fn)
+			);
+
+			return this;
+		}
+	});
+
+})();
 
