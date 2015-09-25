@@ -61,7 +61,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 	function Wikifier(place, source) {
 		// general Wikifier properties
 		this.formatter = _formatterCache || Wikifier.compileFormatters();
-		this.output    = place != null ? place : document.createElement("div"); // lazy equality for null
+		this.output    = place != null ? place : document.createDocumentFragment(); // lazy equality for null
 		this.source    = source;
 		this.nextMatch = 0;
 

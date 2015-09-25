@@ -15,12 +15,6 @@
 /***********************************************************************************************************************
  * History API
  **********************************************************************************************************************/
-// Setup the State constructor
-function State(title, variables) {
-	this.title = title || "";
-	this.variables = variables != null ? clone(variables) : {}; // lazy equality for null
-}
-
 // Setup the History constructor
 function History(instanceName) {
 	if (DEBUG) { console.log("[History()]"); }
@@ -32,15 +26,8 @@ function History(instanceName) {
 	this.history = [];
 
 	// currently active/displayed state
-/*
-	this.active = {
-		init      : true, // flag, for startup active state only / TODO: Necessary?
-		title     : "",
-		variables : {}    // allows macro initialization to set variables at startup
-	};
-*/
-	this.active = Object.assign(new State(), {
-		init : true // flag, for startup active state only / TODO: Necessary?
+	this.active = Object.assign(History.State.create(), {
+		init : true // flag, for startup active state only - TODO: Necessary?
 	});
 
 	// currently active/displayed state index
@@ -62,7 +49,7 @@ function History(instanceName) {
 	this.lastDisplay = null;
 
 	/*
-		Update instance reference in SugarCube global object.
+		Update instance reference in the `SugarCube` global object.
 	*/
 	window.SugarCube[instanceName || "state"] = this;
 }
@@ -204,13 +191,17 @@ Object.defineProperties(History.prototype, {
 				return this.length;
 			}
 
-			// if we're not at the top of the stack, pop it until we are
+			/*
+				If we're not at the top of the stack, pop it until we are.
+			*/
 			if (this.length < this.size) {
 				if (DEBUG) { console.log("    > non-top push; popping " + (this.size - this.length) + " states"); }
 				this.pop(this.size - this.length);
 			}
 
-			// push each of the new states onto the history stack
+			/*
+				Push each of the new states onto the history stack.
+			*/
 			for (var i = 0; i < arguments.length; ++i) {
 				this.history.push(arguments[i]);
 				if (this.prng) {
@@ -219,6 +210,8 @@ Object.defineProperties(History.prototype, {
 			}
 
 			if (config.history.maxStates !== 0) {
+				// using `slice()` or `splice()` here would be difficult, as we need to set the
+				// two expired passage name properties
 				while (this.size > config.history.maxStates) {
 					this.expiredLast = this.history.shift().title;
 					if (this.expiredLast !== this.bottom.title) {
@@ -240,7 +233,12 @@ Object.defineProperties(History.prototype, {
 		      Perhaps it would be better for it to work on the latter, as does
 		      `<History>.push()`.
 
-		TODO: Should this remove the active state, this doesn't set `this.active`
+		TODO: Perhaps make a similar method, `trim()` or something similar, which only
+		      removes the future states (i.e. truncate the history to the present).
+		      Alternatively, perhaps merging this into `push()`, since its only used
+		      there, and renaming it to something like `add()` would be better.
+
+		TODO: Should this remove the active state, `this.active` is not set
 		      to the new top.  It probably should do so.
 	*/
 	pop : {
@@ -266,23 +264,40 @@ Object.defineProperties(History.prototype, {
 				throw new Error("state activation attempted with null or undefined");
 			}
 
-			if (typeof state === "object") {
-
+			/*
+				Set the active state.
+			*/
+			switch (typeof state) {
+			case "object":
 				this.active = clone(state);
+				break;
 
-			} else {
-
+			case "number":
 				if (this.isEmpty()) {
 					throw new Error("state activation attempted with index on empty history");
-				} else if (state < 0 || state >= this.size) {
+				}
+				if (state < 0 || state >= this.size) {
 					throw new RangeError("state activation attempted with out-of-bounds index"
 						+ "; need [0, " + (this.size - 1) + "], got " + state);
 				}
-
 				this.active = clone(this.history[state]);
+				break;
 
+			default:
+				throw new TypeError('state activation attempted with a "' + typeof state
+					+ '"; must be an object or valid history stack index');
 			}
 
+			/*
+				Restore the seedable PRNG.
+
+				n.b. We cannot simply set `this.prng.pull` to `this.active.pull` as that would not
+				     properly mutate the seedable PRNG's internal state.
+
+				TODO: I believe that seedrandom has been updated to expose its internal state in
+				      various ways.  It may now be possible to use that to restore its internal
+				      state, rather than having to unmarshal the PRNG every time.
+			*/
 			if (this.prng) {
 				this.prng = SeedablePRNG.unmarshal({
 					seed : this.prng.seed,
@@ -290,10 +305,14 @@ Object.defineProperties(History.prototype, {
 				});
 			}
 
-			// update the session
+			/*
+				Update the session history.
+			*/
 			session.set("history", this.marshal());
 
-			// trigger a global `tw:historyupdate` event
+			/*
+				Trigger a global `tw:historyupdate` event.
+			*/
 			jQuery.event.trigger("tw:historyupdate");
 
 			return this.active;
@@ -304,7 +323,9 @@ Object.defineProperties(History.prototype, {
 		value : function () {
 			if (DEBUG) { console.log("[<History>.init()]"); }
 
-			// execute the StoryInit passage
+			/*
+				Execute the StoryInit passage.
+			*/
 			if (tale.has("StoryInit")) {
 				try {
 					Wikifier.wikifyEval(tale.get("StoryInit").text);
@@ -325,7 +346,7 @@ Object.defineProperties(History.prototype, {
 			}
 
 			/*
-				Finalize the various `config.history` properties here before displaying the initial passage.
+				Finalize the various `config.history` properties here, before any passages are displayed.
 			
 				n.b. We do this here to give authors every opportunity to modify the `config.history.maxStates`
 				     property.
@@ -339,26 +360,35 @@ Object.defineProperties(History.prototype, {
 				config.history.controls = false;
 			}
 
-			// display the initial passage
-			var testPlay; // Twine 1.4+ "Test Play From Here" feature variable
+			/*
+				Handle the Twine 1.4+ "Test Play From Here" feature.
+			*/
 			if (TWINE1) {
-				testPlay = "START_AT";
+				var testPlay = "START_AT";
+				if (testPlay !== "") {
+					if (DEBUG) { console.log('    > display: "' + testPlay + '" (testPlay)'); }
+					this.play(testPlay);
+					return;
+				}
 			}
-			if (typeof testPlay !== "undefined" && testPlay !== "") {
-				// enables the Twine 1.4+ "Test Play From Here" feature
-				if (DEBUG) { console.log('    > display: "' + testPlay + '" (testPlay)'); }
-				this.play(testPlay);
-			} else if (config.passages.start == null) { // lazy equality for null
+
+			/*
+				Attempt to restore an active session.  Failing that, attempt to autoload the autosave,
+				if requested.  Failing that, display the starting passage.
+			*/
+			if (config.passages.start == null) { // lazy equality for null
 				throw new Error("starting passage not selected");
-			} else if (!tale.has(config.passages.start)) {
+			}
+			if (!tale.has(config.passages.start)) {
 				throw new Error('starting passage ("' + config.passages.start + '") not found');
-			} else if (!this.restore()) {
-				// autoload the autosave, if requested and possible, else load the start passage
+			}
+			if (!this.restore()) {
 				var loadStart = true;
+
 				switch (typeof config.saves.autoload) {
 				case "boolean":
-					if (config.saves.autoload && Save.autosave.ok()) {
-						if (DEBUG) { console.log('    > display/autoload: "' + Save.autosave.get().title + '"'); }
+					if (config.saves.autoload && Save.autosave.ok() && Save.autosave.has()) {
+						if (DEBUG) { console.log('    > display, attempting autoload: "' + Save.autosave.get().title + '"'); }
 						loadStart = !Save.autosave.load();
 					}
 					break;
@@ -371,11 +401,12 @@ Object.defineProperties(History.prototype, {
 					break;
 				case "function":
 					if (Save.autosave.ok() && Save.autosave.has() && !!config.saves.autoload()) {
-						if (DEBUG) { console.log('    > display/autoload: "' + Save.autosave.get().title + '"'); }
+						if (DEBUG) { console.log('    > display, attempting autoload: "' + Save.autosave.get().title + '"'); }
 						loadStart = !Save.autosave.load();
 					}
 					break;
 				}
+
 				if (loadStart) {
 					if (DEBUG) { console.log('    > display: "' + config.passages.start + '"'); }
 					this.play(config.passages.start);
@@ -388,24 +419,31 @@ Object.defineProperties(History.prototype, {
 		value : function () {
 			if (DEBUG) { console.log("[<History>.restore()]"); }
 
+			/*
+				Attempt to restore an active session history.
+			*/
 			if (session.has("history")) {
+				/*
+					Retrieve the session history.
+				*/
 				var historyObj = session.get("history");
-
 				if (DEBUG) { console.log("    > session history:", historyObj); }
-
 				if (historyObj == null) { // lazy equality for null
 					return false;
 				}
 
+				/*
+					Restore the session history.
+				*/
 				this.unmarshal(historyObj);
-
 				if (!tale.has(this.active.title)) {
 					throw new Error('session restoration failed, no such passage "' + this.active.title + '"');
 				}
 
-				// display the active passage
+				/*
+					Display the active passage.
+				*/
 				this.show();
-
 				return true;
 			}
 
@@ -417,6 +455,9 @@ Object.defineProperties(History.prototype, {
 		value : function () {
 			if (DEBUG) { console.log("[<History>.restart()]"); }
 
+			/*
+				Delete an active session history and reload the page.
+			*/
 			session.delete("history");
 			window.location.reload();
 		}
@@ -450,7 +491,7 @@ Object.defineProperties(History.prototype, {
 
 	show : {
 		value : function () {
-			this.play(this.active.title, true);
+			return this.play(this.active.title, true);
 		}
 	},
 
@@ -458,15 +499,19 @@ Object.defineProperties(History.prototype, {
 		value : function (title, noHistory) {
 			if (DEBUG) { console.log("[<History>.play()]"); }
 
-			// reset the runtime temp/scratch object
+			/*
+				Reset the runtime temp/scratch object.
+			*/
 			runtime.temp = {};
 
 			/*
+				Retrieve the passage by the given title.
+
 				n.b. The title parameter may be empty, a string, or a number (though using a number
 				     as reference to a numeric title should be discouraged), so after loading the
 				     passage, always refer to passage.title and never the title parameter.
 			*/
-			var passage = tale.get(title == null ? this.active.title : title);
+			var passage = tale.get(title);
 
 			// execute the pre-history tasks
 			Object.keys(prehistory).forEach(function (task) {
@@ -475,20 +520,25 @@ Object.defineProperties(History.prototype, {
 				}
 			}, passage);
 
-			// ensure that this.active is set if we have history
-			// TODO: Remove this if no longer necessary.
-			// +ZUGZUG
+			/*
+				Ensure that `this.active` is set if we have history.
+
+				TODO: I don't think this is necessary any longer, so it should be removed.
+			*/
 			if (this.active.init && !this.isEmpty()) {
-				throw new Error("active state initialization flag seen while history not empty");
+				throw new Error("active state initialization flag seen while history not empty; please notify the developer");
 			}
-			// -ZUGZUG
 
-			// create a new entry in the history
+			/*
+				Create a new entry in the history.
+			*/
 			if (!noHistory) {
-				this.push(new State(passage.title, clone(this.active.variables)));
+				this.push(History.State.create(passage.title, this.active.variables));
 			}
 
-			// clear <body> classes, then execute the PassageReady passage and pre-display tasks
+			/*
+				Clear `<body>` classes, then execute the `PassageReady` passage and `predisplay` tasks.
+			*/
 			if (document.body.className) {
 				document.body.className = "";
 			}
@@ -505,11 +555,15 @@ Object.defineProperties(History.prototype, {
 				}
 			}
 
-			// render the incoming passage and update the last display time
+			/*
+				Render the incoming passage and update the last display time.
+			*/
 			var incoming = passage.render();
 			this.lastDisplay = Date.now();
 
-			// add the rendered passage to the page
+			/*
+				Add the rendered passage to the page.
+			*/
 			var	passages = document.getElementById("passages");
 			if (passages.hasChildNodes()) {
 				if (
@@ -561,16 +615,22 @@ Object.defineProperties(History.prototype, {
 				incoming.classList.remove("passage-in");
 			}, 1);
 
-			// set the document title
+			/*
+				Set the document title.
+			*/
 			document.title = config.passages.displayTitles && passage.title !== config.passages.start
 				? passage.title + " | " + tale.title
 				: tale.title;
 
-			// scroll the window
+			/*
+				Scroll the window to the top.
+			*/
 			window.scroll(0, 0);
 
-			// execute the PassageDone passage and post-display tasks, then update
-			// the non-passage page elements, if enabled
+			/*
+				Execute the `PassageDone` passage and `postdisplay` tasks, then update the non-passage
+				page elements, if enabled.
+			*/
 			if (tale.has("PassageDone")) {
 				try {
 					Wikifier.wikifyEval(tale.get("PassageDone").text);
@@ -590,8 +650,8 @@ Object.defineProperties(History.prototype, {
 			/*
 				Last second post-processing for accessibility and other things.
 
-				n.b. Perhaps this should be limited to the incoming passage and, if so,
-				     maybe before its contents are added to the DOM?
+				TODO: Perhaps this should be limited to the incoming passage and, if so,
+				      maybe before its contents are added to the DOM?
 			*/
 			UI.patchOutlines(true); // initially hide outlines
 			jQuery("#story")
@@ -604,7 +664,9 @@ Object.defineProperties(History.prototype, {
 					.not("[tabindex]")
 						.attr("tabindex", 0);
 
-			// handle autosaves
+			/*
+				Handle autosaves.
+			*/
 			switch (typeof config.saves.autosave) {
 			case "boolean":
 				if (config.saves.autosave) {
@@ -632,13 +694,17 @@ Object.defineProperties(History.prototype, {
 
 	marshal : {
 		value : function () {
-			// required core properties
+			/*
+				Gather required core properties.
+			*/
 			var historyObj = {
 				delta : History.deltaEncode(this.history),
 				index : this.activeIndex
 			};
 
-			// optional core properties
+			/*
+				Gather optional core properties.
+			*/
 			if (this.expired !== 0) {
 				historyObj.expired = this.expired;
 			}
@@ -649,7 +715,9 @@ Object.defineProperties(History.prototype, {
 				historyObj.unique = this.expiredUnique;
 			}
 
-			// if seedable PRNG is enabled
+			/*
+				Gather optional miscellaneous properties.
+			*/
 			if (this.hasOwnProperty("prng")) {
 				historyObj.seed = this.prng.seed;
 			}
@@ -670,11 +738,15 @@ Object.defineProperties(History.prototype, {
 				throw new Error("History.prototype.unmarshal history object has no index property");
 			}
 
-			// required core properties
+			/*
+				Restore required core properties.
+			*/
 			this.history = History.deltaDecode(historyObj.delta);
 			this.activeIndex = historyObj.index;
 
-			// optional core properties
+			/*
+				Restore optional core properties.
+			*/
 			if (historyObj.hasOwnProperty("expired")) {
 				this.expired = historyObj.expired;
 			}
@@ -685,12 +757,16 @@ Object.defineProperties(History.prototype, {
 				this.expiredUnique = historyObj.unique;
 			}
 
-			// if seedable PRNG is enabled
+			/*
+				Restore optional miscellaneous properties.
+			*/
 			if (this.hasOwnProperty("prng") && historyObj.hasOwnProperty("seed")) {
 				this.prng.seed = historyObj.seed;
 			}
 
-			// activate the current state (do this only after all properties have been restored)
+			/*
+				Activate the current state (do this only after all properties have been restored).
+			*/
 			this.setActiveState(this.activeIndex);
 		}
 	},
@@ -705,18 +781,112 @@ Object.defineProperties(History.prototype, {
 
 // Setup the History static methods
 Object.defineProperties(History, {
-	initPRNG : {
-		value : function (seed, useEntropy) {
-			if (DEBUG) { console.log("[History.initPRNG()]"); }
+	State : {
+		value : Object.defineProperty({}, "create", {
+			value : function (title, variables) {
+				return {
+					title     : title == null ? "" : String(title),       // lazy equality for null
+					variables : variables == null ? {} : clone(variables) // lazy equality for null
+				};
+			}
+		})
+	},
 
-			if (!state.isEmpty()) { // alternatively, we could check for the presence of `state.active.init`
-				throw new Error("History.initPRNG must be called during initialization,"
-					+ " within either a script section (Twine 1: a script-tagged passage,"
-					+ " Twine 2: Story JavaScript) or the StoryInit special passage");
+	marshalToSave : {
+		value : function () {
+			if (DEBUG) { console.log("[History.marshalToSave()]"); }
+
+			/*
+				Gather required core properties.
+			*/
+			var historyObj = {
+				history : clone(state.history),
+				index   : state.activeIndex
+			};
+
+			/*
+				Gather optional core properties.
+			*/
+			if (state.expired !== 0) {
+				historyObj.expired = state.expired;
+			}
+			if (state.expiredLast !== "") {
+				historyObj.last = state.expiredLast;
+			}
+			if (state.expiredUnique !== "") {
+				historyObj.unique = state.expiredUnique;
 			}
 
-			state.prng = new SeedablePRNG(seed, useEntropy);
-			state.active.pull = state.prng.pull;
+			/*
+				Gather optional miscellaneous properties.
+			*/
+			if (state.hasOwnProperty("prng")) {
+				historyObj.seed = state.prng.seed;
+			}
+
+			return historyObj;
+		}
+	},
+
+	unmarshalFromSave : {
+		value : function (historyObj) {
+			if (DEBUG) { console.log("[History.unmarshalFromSave()]"); }
+
+			if (historyObj == null) { // lazy equality for null
+				throw new Error("history object is null or undefined");
+			}
+			if (!historyObj.hasOwnProperty("history") || historyObj.history.length === 0) {
+				throw new Error("history object has no history or history is empty");
+			}
+			if (!historyObj.hasOwnProperty("index")) {
+				throw new Error("history object has no index property");
+			}
+
+			/*
+				Cache the current history's seedable PRNG state.
+			*/
+			var hasPRNG = state.hasOwnProperty("prng");
+
+			/*
+				Reset the history.
+			*/
+			state = new History();
+
+			/*
+				Restore optional miscellaneous properties.
+			*/
+			if (hasPRNG) {
+				History.initPRNG(historyObj.hasOwnProperty("seed") ? historyObj.seed : null);
+			}
+
+			/*
+				Restore required core properties.
+			*/
+			state.history = clone(historyObj.history);
+			state.activeIndex = historyObj.index;
+
+			/*
+				Restore optional core properties.
+			*/
+			if (historyObj.hasOwnProperty("expired")) {
+				state.expired = historyObj.expired;
+			}
+			if (historyObj.hasOwnProperty("last")) {
+				state.expiredLast = historyObj.last;
+			}
+			if (historyObj.hasOwnProperty("unique")) {
+				state.expiredUnique = historyObj.unique;
+			}
+
+			/*
+				Activate the current state (do this only after all properties have been restored).
+			*/
+			state.setActiveState(state.activeIndex);
+
+			/*
+				Display the active passage.
+			*/
+			state.show();
 		}
 	},
 
@@ -754,79 +924,18 @@ Object.defineProperties(History, {
 		}
 	},
 
-	marshalToSave : {
-		value : function () {
-			if (DEBUG) { console.log("[History.marshalToSave()]"); }
+	initPRNG : {
+		value : function (seed, useEntropy) {
+			if (DEBUG) { console.log("[History.initPRNG()]"); }
 
-			// required core properties
-			var historyObj = {
-				history : clone(state.history), // ZUGZUG? clone(state.history.slice(0, state.length))
-				index   : state.activeIndex
-			};
-
-			// optional core properties
-			if (state.expired !== 0) {
-				historyObj.expired = state.expired;
-			}
-			if (state.expiredLast !== "") {
-				historyObj.last = state.expiredLast;
-			}
-			if (state.expiredUnique !== "") {
-				historyObj.unique = state.expiredUnique;
+			if (!state.isEmpty()) { // TODO: alternatively, we could check for the presence of `state.active.init`
+				throw new Error("History.initPRNG must be called during initialization,"
+					+ " within either a script section (Twine 1: a script-tagged passage,"
+					+ " Twine 2: Story JavaScript) or the StoryInit special passage");
 			}
 
-			// if seedable PRNG is enabled
-			if (state.hasOwnProperty("prng")) {
-				historyObj.seed = state.prng.seed;
-			}
-
-			return historyObj;
-		}
-	},
-
-	unmarshalFromSave : {
-		value : function (historyObj) {
-			if (DEBUG) { console.log("[History.unmarshalFromSave()]"); }
-
-			if (historyObj == null) { // lazy equality for null
-				throw new Error("history object is null or undefined");
-			}
-			if (!historyObj.hasOwnProperty("history") || historyObj.history.length === 0) {
-				throw new Error("history object has no history or history is empty");
-			}
-			if (!historyObj.hasOwnProperty("index")) {
-				throw new Error("history object has no index property");
-			}
-
-			// cache the current history's seedable PRNG state
-			var hasPRNG = state.hasOwnProperty("prng");
-
-			// reset the history and initialize the seedable PRNG, if enabled
-			state = new History();
-			if (hasPRNG) {
-				History.initPRNG(historyObj.hasOwnProperty("seed") ? historyObj.seed : null);
-			}
-
-			// required core properties
-			state.history = clone(historyObj.history);
-			state.activeIndex = historyObj.index;
-
-			// optional core properties
-			if (historyObj.hasOwnProperty("expired")) {
-				state.expired = historyObj.expired;
-			}
-			if (historyObj.hasOwnProperty("last")) {
-				state.expiredLast = historyObj.last;
-			}
-			if (historyObj.hasOwnProperty("unique")) {
-				state.expiredUnique = historyObj.unique;
-			}
-
-			// activate the current state (do this only after all properties have been restored)
-			state.setActiveState(state.activeIndex);
-
-			// display the active passage
-			state.show();
+			state.prng = new SeedablePRNG(seed, useEntropy);
+			state.active.pull = state.prng.pull;
 		}
 	}
 });
@@ -1194,7 +1303,7 @@ function Tale(instanceName) {
 		this.title = "{{STORY_NAME}}";
 	}
 
-	// update instance reference in SugarCube global object
+	// update instance reference in the `SugarCube` global object
 	window.SugarCube[instanceName || "tale"] = this;
 }
 

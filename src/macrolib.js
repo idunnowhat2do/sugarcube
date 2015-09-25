@@ -407,7 +407,9 @@ Macro.add("silently", {
 		// discard the output, unless there were errors
 		while (errTrap.hasChildNodes()) {
 			var fc = errTrap.firstChild;
-			if (fc.classList && fc.classList.contains("error")) { errList.push(fc.textContent); }
+			if (fc.classList && fc.classList.contains("error")) {
+				errList.push(fc.textContent);
+			}
 			errTrap.removeChild(fc);
 		}
 		if (errList.length > 0) {

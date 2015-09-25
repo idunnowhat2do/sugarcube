@@ -492,6 +492,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 			value : Object.freeze(Object.defineProperties({}, {
 				ok      : { value : slotsOK },
 				length  : { value : slotsLength },
+				size    : { get : function () { return slotsLength(); } },
 				isEmpty : { value : slotsIsEmpty },
 				count   : { value : slotsCount },
 				has     : { value : slotsHas },
