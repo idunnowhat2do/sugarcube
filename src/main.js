@@ -223,7 +223,8 @@ jQuery(document).ready(function () {
 		UISystem.init();
 
 		// alert players when their browser is degrading basic required capabilities
-		if (!has.pushState || storage.name === "cookie") {
+		if (!session.hasItem("rcWarn") && (!has.pushState || storage.name === "cookie")) {
+			session.setItem("rcWarn", 1);
 			window.alert((
 				  'Apologies! Your browser either lacks some of the capabilities required by this %identity% or has '
 				+ 'disabled them, so this %identity% is running in a degraded mode. You may be able to continue, but '
