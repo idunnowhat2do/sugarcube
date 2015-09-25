@@ -1259,8 +1259,8 @@ Macro.add("widget", {
 				return this.error('cannot clobber existing macro "' + widgetName + '"');
 			}
 
-			// remove existing widget
-			Macro.remove(widgetName);
+			// delete the existing widget
+			Macro.delete(widgetName);
 		}
 
 		try {
