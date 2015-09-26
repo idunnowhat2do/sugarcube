@@ -4,7 +4,7 @@
 	  - Description : Node.js-hosted build script for SugarCube
 	  - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
 	  - Copyright   : Copyright © 2014–2015 Thomas Michael Edwards. All rights reserved.
-	  - Version     : 1.2.14, 2015-09-24
+	  - Version     : 1.2.15, 2015-09-26
 */
 "use strict";
 
@@ -29,7 +29,7 @@ var CONFIG = {
 		"src/macro.js",
 		"src/macrolib.js",
 		"src/userlib.js",
-		"src/main.js",
+		"src/sugarcube.js",
 		"src/outro.js"
 	],
 	css : [
