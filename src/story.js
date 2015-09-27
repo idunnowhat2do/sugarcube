@@ -182,7 +182,7 @@ var Story = (function () { // eslint-disable-line no-unused-vars
 			throw new Error("story title cannot be null or empty");
 		}
 		document.title = _title = Util.unescape(title);
-		_domId = Util.slugify(title);
+		_domId = Util.slugify(_title);
 	}
 
 	function domIdGet() {
