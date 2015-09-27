@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global AudioWrapper, Macro, Util, Wikifier, config, has, insertElement,insertText,
-	       postdisplay, predisplay, printableStringOrDefault, runtime, state, storage, strings, tale, turns
+	global AudioWrapper, Macro, Story, Util, Wikifier, config, has, insertElement,insertText, postdisplay,
+	       predisplay, printableStringOrDefault, runtime, state, storage, strings, turns
 */
 
 /***********************************************************************************************************************
@@ -194,7 +194,7 @@ Macro.add([ "back", "return" ], {
 				passage = state.expiredUnique;
 			}
 		} else {
-			if (!tale.has(passage)) {
+			if (!Story.has(passage)) {
 				return this.error('passage "' + passage + '" does not exist');
 			}
 			if (this.name === "back") {
@@ -343,13 +343,13 @@ Macro.add("display", {
 			// argument was simply the passage name
 			passage = this.args[0];
 		}
-		if (!tale.has(passage)) {
+		if (!Story.has(passage)) {
 			return this.error('passage "' + passage + '" does not exist');
 		}
 
 		var el = this.output;
 
-		passage = tale.get(passage);
+		passage = Story.get(passage);
 		if (this.args[1]) {
 			el = insertElement(el, this.args[1], null, passage.domId);
 			el.setAttribute("data-passage", passage.title);
@@ -747,7 +747,7 @@ Macro.add([ "button", "click" ], {
 		}
 		if (passage != null) { // lazy equality for null
 			el.setAttribute("data-passage", passage);
-			if (tale.has(passage)) {
+			if (Story.has(passage)) {
 				el.classList.add("link-internal");
 				if (config.addVisitedLinkClass && state.has(passage)) {
 					el.classList.add("link-visited");
@@ -1138,7 +1138,7 @@ Macro.add("goto", {
 			// argument was simply the passage name
 			passage = this.args[0];
 		}
-		if (!tale.has(passage)) {
+		if (!Story.has(passage)) {
 			return this.error('passage "' + passage + '" does not exist');
 		}
 
@@ -1434,7 +1434,7 @@ if (!has.audio) {
 						// argument was simply the passage name
 						passage = raw;
 					}
-					if (!tale.has(passage)) {
+					if (!Story.has(passage)) {
 						return this.error('passage "' + passage + '" does not exist');
 					}
 					break;

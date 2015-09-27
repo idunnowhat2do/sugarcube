@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global History, Save, Setting, StyleWrapper, Util, Wikifier, config, has, insertText, removeChildren,
-	       safeActiveElement, setPageElement, session, settings, state, storage, strings, tale, version
+	global History, Save, Setting, Story, StyleWrapper, Util, Wikifier, config, has, insertText, removeChildren,
+	       safeActiveElement, setPageElement, session, settings, state, storage, strings, version
 */
 
 var UI = (function () { // eslint-disable-line no-unused-vars
@@ -27,7 +27,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 
 
 	/*******************************************************************************************************************
-	 * Initialization
+	 * Initialization & Startup
 	 ******************************************************************************************************************/
 	function init() {
 		if (DEBUG) { console.log("[UI.init()]"); }
@@ -170,10 +170,6 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			});
 	}
 
-
-	/*******************************************************************************************************************
-	 * Internals
-	 ******************************************************************************************************************/
 	function start() {
 		if (DEBUG) { console.log("[UI.start()]"); }
 
@@ -202,7 +198,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				}, function () {
 					state.backward();
 				});
-			if ((config.history.maxStates === 0 || config.history.maxStates > 10) && tale.lookup("tags", "bookmark").length > 0) {
+			if ((config.history.maxStates === 0 || config.history.maxStates > 10) && Story.lookup("tags", "bookmark").length > 0) {
 				jQuery("#history-jumpto")
 					.ariaClick({
 						label : strings.uiBar.jumpto.replace(/%identity%/g, strings.identity)
@@ -224,17 +220,17 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		}
 
 		// setup the title
-		if (TWINE1) {
-			setPageElement("story-title", "StoryTitle", tale.title);
-		} else {
-			jQuery("#story-title").empty().append(tale.title);
+		if (TWINE1) { // for Twine 1
+			setPageElement("story-title", "StoryTitle", Story.title);
+		} else { // for Twine 2
+			jQuery("#story-title").text(Story.title);
 		}
 
 		// setup the dynamic page elements
-		if (!tale.has("StoryCaption")) {
+		if (!Story.has("StoryCaption")) {
 			jQuery("#story-caption").remove();
 		}
-		if (!tale.has("StoryMenu")) {
+		if (!Story.has("StoryMenu")) {
 			jQuery("#menu-story").remove();
 		}
 		setStoryElements();
@@ -256,7 +252,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			.text(strings.restart.title);
 
 		// setup the Share menu item
-		if (tale.has("StoryShare")) {
+		if (Story.has("StoryShare")) {
 			dialogAddClickHandler("#menu-item-share a", null, buildDialogShare)
 				.text(strings.share.title);
 		} else {
@@ -283,6 +279,10 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		}, false);
 	}
 
+
+	/*******************************************************************************************************************
+	 * Internals
+	 ******************************************************************************************************************/
 	function setStoryElements() {
 		if (DEBUG) { console.log("[UI.setStoryElements()]"); }
 
@@ -296,7 +296,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		var menuStory = document.getElementById("menu-story");
 		if (menuStory !== null) {
 			removeChildren(menuStory);
-			if (tale.has("StoryMenu")) {
+			if (Story.has("StoryMenu")) {
 				buildLinkListFromPassage("StoryMenu", menuStory);
 			}
 		}
@@ -324,7 +324,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				continue;
 			}
 
-			var passage = tale.get(state.history[i].title);
+			var passage = Story.get(state.history[i].title);
 
 			if (passage && passage.tags.contains("bookmark")) {
 				var	item = document.createElement("li"),
@@ -750,7 +750,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			list = document.createElement("ul");
 		}
 		var temp = document.createDocumentFragment();
-		new Wikifier(temp, tale.get(passage).processText().trim());
+		new Wikifier(temp, Story.get(passage).processText().trim());
 		if (temp.hasChildNodes()) {
 			var li = null;
 			while (temp.hasChildNodes()) {
@@ -1025,10 +1025,10 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 	 * Exports
 	 ******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
-		// Initialization
+		// Initialization & Startup
 		init                     : { value : init },
-		// Internals
 		start                    : { value : start },
+		// Internals
 		setStoryElements         : { value : setStoryElements },
 		patchOutlines            : { value : patchOutlines },
 		buildDialogJumpTo        : { value : buildDialogJumpTo },

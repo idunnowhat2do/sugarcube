@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global Save, SeedablePRNG, UI, Util, Wikifier, clone, config, postdisplay, predisplay, prehistory, removeChildren,
-	       runtime, session, state:true, tale, technicalAlert
+	global Save, SeedablePRNG, Story, UI, Util, Wikifier, clone, config, postdisplay, predisplay, prehistory,
+	       removeChildren, runtime, session, state:true, technicalAlert
 */
 
 /***********************************************************************************************************************
@@ -325,9 +325,9 @@ Object.defineProperties(History.prototype, {
 			/*
 				Execute the StoryInit passage.
 			*/
-			if (tale.has("StoryInit")) {
+			if (Story.has("StoryInit")) {
 				try {
-					Wikifier.wikifyEval(tale.get("StoryInit").text);
+					Wikifier.wikifyEval(Story.get("StoryInit").text);
 				} catch (e) {
 					technicalAlert("StoryInit", e.message);
 				}
@@ -362,10 +362,10 @@ Object.defineProperties(History.prototype, {
 			/*
 				Handle the Twine 1.4+ "Test Play From Here" feature.
 			*/
-			if (TWINE1) {
+			if (TWINE1) { // for Twine 1
 				var testPlay = "START_AT";
 				if (testPlay !== "") {
-					if (DEBUG) { console.log('    > display: "' + testPlay + '" (testPlay)'); }
+					if (DEBUG) { console.log('    > display: "' + testPlay + '" (Test Play)'); }
 					this.play(testPlay);
 					return;
 				}
@@ -378,7 +378,7 @@ Object.defineProperties(History.prototype, {
 			if (config.passages.start == null) { // lazy equality for null
 				throw new Error("starting passage not selected");
 			}
-			if (!tale.has(config.passages.start)) {
+			if (!Story.has(config.passages.start)) {
 				throw new Error('starting passage ("' + config.passages.start + '") not found');
 			}
 			if (!this.restore()) {
@@ -435,7 +435,7 @@ Object.defineProperties(History.prototype, {
 					Restore the session history.
 				*/
 				this.unmarshal(historyObj);
-				if (!tale.has(this.active.title)) {
+				if (!Story.has(this.active.title)) {
 					throw new Error('session restoration failed, no such passage "' + this.active.title + '"');
 				}
 
@@ -510,7 +510,7 @@ Object.defineProperties(History.prototype, {
 				     as reference to a numeric title should be discouraged), so after loading the
 				     passage, always refer to passage.title and never the title parameter.
 			*/
-			var passage = tale.get(title);
+			var passage = Story.get(title);
 
 			// execute the pre-history tasks
 			Object.keys(prehistory).forEach(function (task) {
@@ -546,9 +546,9 @@ Object.defineProperties(History.prototype, {
 					predisplay[task].call(this, task);
 				}
 			}, passage);
-			if (tale.has("PassageReady")) {
+			if (Story.has("PassageReady")) {
 				try {
-					Wikifier.wikifyEval(tale.get("PassageReady").text);
+					Wikifier.wikifyEval(Story.get("PassageReady").text);
 				} catch (e) {
 					technicalAlert("PassageReady", e.message);
 				}
@@ -618,8 +618,8 @@ Object.defineProperties(History.prototype, {
 				Set the document title.
 			*/
 			document.title = config.passages.displayTitles && passage.title !== config.passages.start
-				? passage.title + " | " + tale.title
-				: tale.title;
+				? passage.title + " | " + Story.title
+				: Story.title;
 
 			/*
 				Scroll the window to the top.
@@ -630,9 +630,9 @@ Object.defineProperties(History.prototype, {
 				Execute the `PassageDone` passage and `postdisplay` tasks, then update the non-passage
 				page elements, if enabled.
 			*/
-			if (tale.has("PassageDone")) {
+			if (Story.has("PassageDone")) {
 				try {
-					Wikifier.wikifyEval(tale.get("PassageDone").text);
+					Wikifier.wikifyEval(Story.get("PassageDone").text);
 				} catch (e) {
 					technicalAlert("PassageDone", e.message);
 				}

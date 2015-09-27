@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global Wikifier, strings, tale */
+/* global Story, Wikifier, strings */
 
 /***********************************************************************************************************************
  * Utility Functions
@@ -263,8 +263,8 @@ function setPageElement(id, titles, defaultText) { // eslint-disable-line no-unu
 		titles = [ titles ];
 	}
 	for (var i = 0, iend = titles.length; i < iend; ++i) {
-		if (tale.has(titles[i])) {
-			new Wikifier(el, tale.get(titles[i]).processText().trim());
+		if (Story.has(titles[i])) {
+			new Wikifier(el, Story.get(titles[i]).processText().trim());
 			return el;
 		}
 	}
@@ -304,8 +304,8 @@ function addStyle(css) { // eslint-disable-line no-unused-vars
 
 			var source = markup.source;
 			// Check for image passage transclusion.
-			if (source.slice(0, 5) !== "data:" && tale.has(source)) {
-				var passage = tale.get(source);
+			if (source.slice(0, 5) !== "data:" && Story.has(source)) {
+				var passage = Story.get(source);
 				if (passage.tags.contains("Twine.image")) {
 					source = passage.text;
 				}

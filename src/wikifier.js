@@ -43,12 +43,13 @@
  *
  **********************************************************************************************************************/
 /*
-	global Macro, MacroContext, Util, config, insertElement, insertText, macros, printableStringOrDefault,
-	       removeChildren, removeElement, runtime, state, tale, throwError
+	global Macro, MacroContext, Story, Util, config, insertElement, insertText, macros, printableStringOrDefault,
+	       removeChildren, removeElement, runtime, state, throwError
 */
 
 /* eslint-disable max-len */
 var Wikifier = (function () { // eslint-disable-line no-unused-vars
+	"use strict";
 
 	var
 		_formatterCache, // the Wikifier formatter object cache
@@ -432,7 +433,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 				var el = document.createElement("a");
 				if (passage != null) { // lazy equality for null
 					el.setAttribute("data-passage", passage);
-					if (tale.has(passage)) {
+					if (Story.has(passage)) {
 						el.classList.add("link-internal");
 						if (config.addVisitedLinkClass && state.has(passage)) {
 							el.classList.add("link-visited");
@@ -477,7 +478,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 		 */
 		isExternalLink : {
 			value : function (link) {
-				if (tale.has(link)) {
+				if (Story.has(link)) {
 					return false;
 				}
 
@@ -601,7 +602,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 
 		evalPassageId : {
 			value : function (passage) {
-				if (passage != null && !tale.has(passage)) { // lazy equality for null; `0` is a valid name, so we cannot simply evaluate `passage`
+				if (passage != null && !Story.has(passage)) { // lazy equality for null; `0` is a valid name, so we cannot simply evaluate `passage`
 					passage = Wikifier.helpers.evalExpression(passage);
 				}
 				return passage;
@@ -1239,8 +1240,8 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					el = insertElement(el, "img");
 					source = Wikifier.helpers.evalPassageId(markup.source);
 					// check for image passage transclusion
-					if (source.slice(0, 5) !== "data:" && tale.has(source)) {
-						var passage = tale.get(source);
+					if (source.slice(0, 5) !== "data:" && Story.has(source)) {
+						var passage = Story.get(source);
 						if (passage.tags.contains("Twine.image")) {
 							el.setAttribute("data-passage", passage.title);
 							source = passage.text;
@@ -1503,8 +1504,8 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 											source  : source
 										};
 									// check for Twine 1.4 Base64 image passage transclusion
-									if (source.slice(0, 5) !== "data:" && tale.has(source)) {
-										var passage = tale.get(source);
+									if (source.slice(0, 5) !== "data:" && Story.has(source)) {
+										var passage = Story.get(source);
 										if (passage.tags.contains("Twine.image")) {
 											imgObj.source  = passage.text;
 											imgObj.passage = passage.title;
@@ -1817,8 +1818,8 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						if (el.tagName.toUpperCase() === "IMG") {
 							var source;
 							// check for image passage transclusion
-							if (passage.slice(0, 5) !== "data:" && tale.has(passage)) {
-								passage = tale.get(passage);
+							if (passage.slice(0, 5) !== "data:" && Story.has(passage)) {
+								passage = Story.get(passage);
 								if (passage.tags.contains("Twine.image")) {
 									source = passage.text;
 								}
@@ -1833,7 +1834,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 									callback = (function (ex) { return function () { Wikifier.evalStatements(ex); }; })(Wikifier.parse(setter));
 								}
 							}
-							if (tale.has(passage)) {
+							if (Story.has(passage)) {
 								el.classList.add("link-internal");
 								if (config.addVisitedLinkClass && state.has(passage)) {
 									el.classList.add("link-visited");

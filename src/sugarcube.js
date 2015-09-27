@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global History, KeyValueStore, Macro, Passage, Save, Setting, Tale, UI, Util, Wikifier, addStyle, browser,
-	       fatalAlert, has, strings, technicalAlert
+	global History, KeyValueStore, Macro, Passage, Save, Setting, Story, UI, Util, Wikifier, browser, fatalAlert,
+	       has, strings
 */
 
 /*
@@ -90,7 +90,7 @@ var	config = Object.seal({
 		passages : Object.seal({
 			descriptions  : undefined,
 			displayTitles : false,
-			start         : undefined, // set by the `Tale()` constructor
+			start         : undefined, // set by `Story.init()`
 			transitionOut : undefined
 		}),
 
@@ -135,28 +135,28 @@ var	config = Object.seal({
 	});
 
 /*
-	Variables.
+	Internal variables, mostly for use by story authors.
 */
 /* eslint-disable no-unused-vars */
-var	macros      = {}, // legacy macros object
-	tale        = {}, // story manager
-	state       = {}, // history manager
-	storage     = {}, // persistant storage manager
-	session     = {}, // session storage manager
-	settings    = {}, // settings object
-	setup       = {}, // setup object
-	prehistory  = {}, // pre-history task callbacks object
-	predisplay  = {}, // pre-display task callbacks object
-	postdisplay = {}, // post-display task callbacks object
-	prerender   = {}, // pre-render task callbacks object
-	postrender  = {}; // post-render task callbacks object
+var	macros      = {},    // legacy macros object
+	tale        = Story, // legacy story manager object name (alias for `Story`)
+	state       = {},    // history manager -- TODO:? legacy history manager object name (alias for `History`)
+	storage     = {},    // persistant storage manager
+	session     = {},    // session storage manager
+	settings    = {},    // settings object
+	setup       = {},    // setup object
+	prehistory  = {},    // pre-history task callbacks object
+	predisplay  = {},    // pre-display task callbacks object
+	postdisplay = {},    // post-display task callbacks object
+	prerender   = {},    // pre-render task callbacks object
+	postrender  = {};    // post-render task callbacks object
 /* eslint-enable no-unused-vars */
 
 /**
-	The main function, which is the entry point for story startup.
+	The main function, which is the entry point for the story.
 */
 jQuery(function () {
-	if (DEBUG) { console.log("[main()]"); }
+	if (DEBUG) { console.log("[SugarCube main()]"); }
 
 	/*
 		[WARNING!]
@@ -173,13 +173,20 @@ jQuery(function () {
 		}
 
 		/*
-			Instantiate the tale, state, storage, and session objects.
+			Initialize the story (this must be done before most anything else).
 		*/
-		tale = new Tale();
-		tale.init();
-		state   = new History();
-		storage = new KeyValueStore("webStorage", true, tale.domId); // params: driverType, persist, storageId
-		session = new KeyValueStore("webStorage", false, tale.domId);
+		Story.init();
+
+		/*
+			Instantiate the state history.
+		*/
+		state = new History();
+
+		/*
+			Instantiate the storage and session objects.
+		*/
+		storage = new KeyValueStore("webStorage", true, Story.domId); // params: driverType, persist, storageId
+		session = new KeyValueStore("webStorage", false, Story.domId);
 
 		/*
 			Set the default saves ID.
@@ -187,7 +194,7 @@ jQuery(function () {
 			n.b. If not for the requirement to support Twine 1/Twee, we could use stories'
 			     IFID attribute here.
 		*/
-		config.saves.id = tale.domId;
+		config.saves.id = Story.domId;
 
 		/*
 			Initialize the user interface (this must be done before script passages).
@@ -203,36 +210,12 @@ jQuery(function () {
 		}
 
 		/*
-			Add the story styles.
+			Start the story (largely load the user styles, scripts, and widgets).
 		*/
-		for (var i = 0; i < tale.styles.length; ++i) {
-			addStyle(tale.styles[i].text);
-		}
+		Story.start();
 
 		/*
-			Evaluate the story scripts.
-		*/
-		for (var i = 0; i < tale.scripts.length; ++i) { // eslint-disable-line no-redeclare
-			try {
-				eval(tale.scripts[i].text); // eslint-disable-line no-eval
-			} catch (e) {
-				technicalAlert(tale.scripts[i].title, e.message);
-			}
-		}
-
-		/*
-			Process the story widgets.
-		*/
-		for (var i = 0; i < tale.widgets.length; ++i) { // eslint-disable-line no-redeclare
-			try {
-				Wikifier.wikifyEval(tale.widgets[i].processText());
-			} catch (e) {
-				technicalAlert(tale.widgets[i].title, e.message);
-			}
-		}
-
-		/*
-			Initialize the save system (this must be done after script passages and before state initialization).
+			Initialize the save system (this must be done after story startup and before state initialization).
 		*/
 		Save.init();
 
@@ -247,9 +230,9 @@ jQuery(function () {
 		Macro.init();
 
 		/*
-			Initialize our state.
+			Initialize our state (this should be done as late as possible, but before we start the UI).
 		*/
-		state.init(); // this could take a while, so do it late
+		state.init();
 
 		/*
 			[DEPRECATED] Call macros' "late" init methods.
@@ -274,7 +257,7 @@ jQuery(function () {
 		Passage  : Passage,
 		Save     : Save,
 		Setting  : Setting,
-		Tale     : Tale,
+		Story    : Story,
 		UI       : UI,
 		Util     : Util,
 		Wikifier : Wikifier,
@@ -288,7 +271,6 @@ jQuery(function () {
 		setup    : setup,
 		state    : state,
 		storage  : storage,
-		tale     : tale,
 		version  : version
 	};
 });

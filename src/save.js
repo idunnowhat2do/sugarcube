@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global History, UI, config, escape, saveAs, state, storage, strings, tale */
+/* global History, Story, UI, config, escape, saveAs, state, storage, strings */
 
 var Save = (function () { // eslint-disable-line no-unused-vars
 	"use strict";
@@ -206,7 +206,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 
 		var saves = savesObjGet();
 		saves.autosave = _marshal();
-		saves.autosave.title = title || tale.get(state.active.title).description();
+		saves.autosave.title = title || Story.get(state.active.title).description();
 		saves.autosave.date = Date.now();
 		if (metadata != null) { // lazy equality for null
 			saves.autosave.metadata = metadata;
@@ -301,7 +301,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 			return false;
 		}
 		saves.slots[slot] = _marshal();
-		saves.slots[slot].title = title || tale.get(state.active.title).description();
+		saves.slots[slot].title = title || Story.get(state.active.title).description();
 		saves.slots[slot].date = Date.now();
 		if (metadata != null) { // lazy equality for null
 			saves.slots[slot].metadata = metadata;
@@ -332,7 +332,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 			return;
 		}
 
-		var	saveName = tale.domId + ".save",
+		var	saveName = Story.domId + ".save",
 			saveObj  = LZString.compressToBase64(JSON.stringify(_marshal()));
 		saveAs(new Blob([saveObj], { type : "text/plain;charset=UTF-8" }), saveName);
 	}
@@ -491,8 +491,8 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		slots : {
 			value : Object.freeze(Object.defineProperties({}, {
 				ok      : { value : slotsOK },
-				length  : { value : slotsLength },
-				size    : { get : function () { return slotsLength(); } },
+				length  : { value : slotsLength }, // TODO: Favor `Save.slots.length()` or `Save.slots.length`?
+				size    : { get : slotsLength },   // TODO: Or `Save.slots.size`?
 				isEmpty : { value : slotsIsEmpty },
 				count   : { value : slotsCount },
 				has     : { value : slotsHas },

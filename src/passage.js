@@ -6,21 +6,45 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global Util, Wikifier, config, convertBreaksToParagraphs, insertElement, postrender, prerender, strings, tale */
+/* global Story, Util, Wikifier, config, convertBreaksToParagraphs, insertElement, postrender, prerender, strings */
 
 var Passage = (function () { // eslint-disable-line no-unused-vars
 	"use strict";
+
+	if (TWINE1) { // for Twine 1
+
+		/*
+			Returns a decoded version of the passed Twine 1 passage store encoded string.
+		*/
+		var _unescapeTwine1 = function (str) {
+			if (str === "") {
+				return "";
+			}
+			var	escapedHtmlRe    = /(?:\\n|\\t|\\s|\\|\r)/g,
+				hasEscapedHtmlRe = RegExp(escapedHtmlRe.source), // to drop the global flag
+				escapedHtmlMap   = Object.freeze({
+					"\\n" : "\n",
+					"\\t" : "\t",
+					"\\s" : "\\",
+					"\\"  : "\\",
+					"\r"  : ""
+				});
+			return hasEscapedHtmlRe.test(str)
+				? str.replace(escapedHtmlRe, function (c) { return escapedHtmlMap[c]; })
+				: str;
+		};
+
+	}
 
 
 	/*******************************************************************************************************************
 	 * Constructor
 	 ******************************************************************************************************************/
-	function Passage(title, el, id) {
-		this.title = title;
+	function Passage(title, el) {
+		this.title = Util.unescape(title);
 		this.domId = "passage-" + Util.slugify(this.title);
 		if (el) {
 			this.element = el;
-			this.id      = id;
 			this.tags    = el.hasAttribute("tags") ? el.getAttribute("tags").trim().splitOrEmpty(/\s+/) : [];
 			this.classes = [];
 			if (this.tags.length > 0) {
@@ -34,9 +58,9 @@ var Passage = (function () { // eslint-disable-line no-unused-vars
 				//     widget     → special tag
 				var	tagClasses = [],
 					tagsToSkip;
-				if (TWINE1) {
+				if (TWINE1) { // for Twine 1
 					tagsToSkip = /^(?:debug|nobr|passage|script|stylesheet|widget|twine\..*)$/i;
-				} else {
+				} else { // for Twine 2
 					tagsToSkip = /^(?:debug|nobr|passage|widget|twine\..*)$/i;
 				}
 				for (var i = 0; i < this.tags.length; ++i) {
@@ -56,7 +80,6 @@ var Passage = (function () { // eslint-disable-line no-unused-vars
 			}
 		} else {
 			this.element = null;
-			this.id      = undefined;
 			this.tags    = [];
 			this.classes = [];
 		}
@@ -78,9 +101,9 @@ var Passage = (function () { // eslint-disable-line no-unused-vars
 						+ strings.errors.nonexistentPassage
 						+ '</span>').replace(/%passage%/g, Util.escape(this.title));
 				}
-				if (TWINE1) {
+				if (TWINE1) { // for Twine 1
 					return _unescapeTwine1(this.element.textContent);
-				} else {
+				} else { // for Twine 2
 					return this.element.textContent.replace(/\r/g, "");
 				}
 			}
@@ -155,16 +178,16 @@ var Passage = (function () { // eslint-disable-line no-unused-vars
 				}, this);
 
 				// wikify the PassageHeader passage, if it exists, into the passage element
-				if (tale.has("PassageHeader")) {
-					new Wikifier(passage, tale.get("PassageHeader").processText());
+				if (Story.has("PassageHeader")) {
+					new Wikifier(passage, Story.get("PassageHeader").processText());
 				}
 
 				// wikify the passage into its element
 				new Wikifier(passage, this.processText());
 
 				// wikify the PassageFooter passage, if it exists, into the passage element
-				if (tale.has("PassageFooter")) {
-					new Wikifier(passage, tale.get("PassageFooter").processText());
+				if (Story.has("PassageFooter")) {
+					new Wikifier(passage, Story.get("PassageFooter").processText());
 				}
 
 				// convert breaks to paragraphs within the output passage
@@ -238,37 +261,6 @@ var Passage = (function () { // eslint-disable-line no-unused-vars
 			}
 		}
 	});
-
-
-	/*******************************************************************************************************************
-	 * Private
-	 ******************************************************************************************************************/
-	if (TWINE1) {
-		/* eslint-disable no-inner-declarations */
-
-		/*
-			Returns a decoded version of the passed Twine 1 passage store encoded string.
-		*/
-		function _unescapeTwine1(str) {
-			if (str === "") {
-				return "";
-			}
-			var	escapedHtmlRe    = /(?:\\n|\\t|\\s|\\|\r)/g,
-				hasEscapedHtmlRe = RegExp(escapedHtmlRe.source), // to drop the global flag
-				escapedHtmlMap   = Object.freeze({
-					"\\n" : "\n",
-					"\\t" : "\t",
-					"\\s" : "\\",
-					"\\"  : "\\",
-					"\r"  : ""
-				});
-			return hasEscapedHtmlRe.test(str)
-				? str.replace(escapedHtmlRe, function (c) { return escapedHtmlMap[c]; })
-				: str;
-		}
-
-		/* eslint-enable no-inner-declarations */
-	}
 
 
 	/*******************************************************************************************************************

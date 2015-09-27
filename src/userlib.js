@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global state, tale */
+/* global Story, state */
 
 /***********************************************************************************************************************
  * User Utility Functions
@@ -133,13 +133,13 @@ function randomFloat(/* inclusive */ min, /* exclusive */ max) { // eslint-disab
 */
 function tags(/* variadic */) { // eslint-disable-line no-unused-vars
 	if (arguments.length === 0) {
-		return tale.get(state.active.title).tags.slice(0);
+		return Story.get(state.active.title).tags.slice(0);
 	}
 
 	var	passages = Array.prototype.concat.apply([], arguments),
 		tags     = []; // eslint-disable-line no-shadow
 	for (var i = 0, iend = passages.length; i < iend; ++i) {
-		tags = tags.concat(tale.get(passages[i]).tags);
+		tags = tags.concat(Story.get(passages[i]).tags);
 	}
 	return tags;
 }
@@ -210,7 +210,7 @@ function visitedTags(/* variadic */) {
 		llen  = list.length,
 		count = 0;
 	for (var i = 0, iend = state.length; i < iend; ++i) {
-		var tags = tale.get(state.history[i].title).tags; // eslint-disable-line no-shadow
+		var tags = Story.get(state.history[i].title).tags; // eslint-disable-line no-shadow
 		if (tags.length !== 0) {
 			var found = 0;
 			for (var j = 0; j < llen; ++j) {
