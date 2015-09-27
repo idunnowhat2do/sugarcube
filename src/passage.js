@@ -98,7 +98,7 @@ var Passage = (function () { // eslint-disable-line no-unused-vars
 			get : function () {
 				if (this.element == null) { // lazy equality for null
 					return ('<span class="error" title="%passage%">' + strings.errors.title + ": "
-						+ strings.errors.nonexistentPassage
+						+ strings.errors.nonexistentPassage /* this also contains the `%passage%` pattern */
 						+ '</span>').replace(/%passage%/g, Util.escape(this.title));
 				}
 				if (TWINE1) { // for Twine 1
