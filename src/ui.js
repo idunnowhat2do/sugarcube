@@ -32,19 +32,27 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 	function init() {
 		if (DEBUG) { console.log("[UI.init()]"); }
 
-		// remove #init-no-js & #init-lacking from #init-screen
+		/*
+			Remove #init-no-js & #init-lacking from #init-screen.
+		*/
 		jQuery("#init-no-js, #init-lacking").remove();
 
-		// add `tabindex=-1` to <body>
+		/*
+			Add `tabindex=-1` to <body>.
+		*/
 		//jQuery(document.body).attr("tabindex", -1);
 
-		// generate and cache the outline patching <style> element
+		/*
+			Generate and cache the outline patching <style> element.
+		*/
 		_outlinePatch      = document.createElement("style");
 		_outlinePatch.id   = "style-outline-patch";
 		_outlinePatch.type = "text/css";
 		document.head.appendChild(_outlinePatch);
 
-		// calculate and cache the width of scrollbars
+		/*
+			Calculate and cache the width of scrollbars.
+		*/
 		_scrollbarWidth = (function () {
 			var scrollbarWidth;
 			try {
@@ -80,12 +88,12 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			return scrollbarWidth || 17; // 17px is a reasonable failover
 		})();
 
-		// generate the UI elements and add them to the page
+		/*
+			Generate the main UI elements.
+		*/
 		var	store  = document.getElementById("store-area"),
 			uiTree = document.createDocumentFragment(),
 			temp   = document.createElement("div");
-
-		// generate the core elements
 		/* eslint-disable max-len */
 		temp.innerHTML =
 			  '<div id="ui-bar">'
@@ -136,7 +144,9 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			uiTree.appendChild(temp.firstChild);
 		}
 
-		// cache the main UI elements
+		/*
+			Cache the core UI elements, since they're going to be used often.
+		*/
 		_bar         = uiTree.querySelector("#ui-bar");
 		_overlay     = uiTree.querySelector("#ui-overlay");
 		_dialog      = uiTree.querySelector("#ui-dialog");
@@ -144,10 +154,14 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		_dialogClose = uiTree.querySelector("#ui-dialog-close");
 		_dialogBody  = uiTree.querySelector("#ui-dialog-body");
 
-		// insert the UI elements into the page before the store area
+		/*
+			Insert the main UI elements into the page before the store area.
+		*/
 		store.parentNode.insertBefore(uiTree, store);
 
-		// setup the document-wide delegated handlers
+		/*
+			Setup the document-wide delegated handlers.
+		*/
 		jQuery(document)
 			// setup a handler for the history-backward/-forward buttons
 			.on("tw:historyupdate", (function ($backward, $forward) {

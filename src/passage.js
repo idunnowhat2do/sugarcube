@@ -69,9 +69,13 @@ var Passage = (function () { // eslint-disable-line no-unused-vars
 					}
 				}
 				if (tagClasses.length > 0) {
+					/*
+						TODO: Should the following be done before the IF, or even at all?
+					*/
 					if (el.className) {
 						tagClasses = tagClasses.concat(el.className.split(/\s+/));
 					}
+
 					// sort and filter out non-uniques
 					this.classes = tagClasses.sort().filter(function (val, i, aref) { // eslint-disable-line no-shadow
 						return i === 0 || aref[i - 1] !== val;

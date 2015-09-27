@@ -882,13 +882,15 @@ Object.defineProperties(SeedablePRNG, {
 				throw new Error("PRNG object is missing required data");
 			}
 
-			// create a new PRNG using the original seed
+			/*
+				Create a new PRNG using the original seed and pull values until it has
+				reached the original pull count.
+			*/
 			var prng = new SeedablePRNG(prngObj.seed, false);
-
-			// pull values until the new PRNG is in sync with the original
-			for (var i = 0, iend = prngObj.pull; i < iend; ++i) {
+			for (var i = prngObj.pull; i > 0; --i) {
 				prng.random();
 			}
+
 			return prng;
 		}
 	}
