@@ -43,8 +43,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global Macro, MacroContext, Story, Util, config, insertElement, insertText, macros, printableStringOrDefault,
-	       removeChildren, removeElement, runtime, state, throwError
+	global Macro, MacroContext, State, Story, Util, config, insertElement, insertText, macros,
+	       printableStringOrDefault, removeChildren, removeElement, runtime, throwError
 */
 
 /* eslint-disable max-len */
@@ -231,7 +231,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					match,
 					map   = {
 						// $variable mapping
-						"$"     : "state.active.variables.",
+						"$"     : "State.variables.",
 						// assignment operators
 						"to"    : "=",
 						// equality operators
@@ -304,7 +304,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					retVal;
 
 				if (pNames.length !== 0) {
-					retVal = state.active.variables;
+					retVal = State.variables;
 					for (var i = 0, iend = pNames.length; i < iend; ++i) {
 						if (typeof retVal[pNames[i]] !== "undefined") {
 							retVal = retVal[pNames[i]];
@@ -326,7 +326,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 				var pNames = Wikifier.parseStoryVariable(storyVar);
 
 				if (pNames.length !== 0) {
-					var	baseObj = state.active.variables,
+					var	baseObj = State.variables,
 						varName = pNames.pop();
 					for (var i = 0, iend = pNames.length; i < iend; ++i) {
 						if (typeof baseObj[pNames[i]] !== "undefined") {
@@ -435,7 +435,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					el.setAttribute("data-passage", passage);
 					if (Story.has(passage)) {
 						el.classList.add("link-internal");
-						if (config.addVisitedLinkClass && state.has(passage)) {
+						if (config.addVisitedLinkClass && State.has(passage)) {
 							el.classList.add("link-visited");
 						}
 					} else {
@@ -445,7 +445,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						if (typeof callback === "function") {
 							callback();
 						}
-						state.play(passage);
+						State.play(passage);
 					});
 				}
 				if (text) {
@@ -1836,7 +1836,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							}
 							if (Story.has(passage)) {
 								el.classList.add("link-internal");
-								if (config.addVisitedLinkClass && state.has(passage)) {
+								if (config.addVisitedLinkClass && State.has(passage)) {
 									el.classList.add("link-visited");
 								}
 							} else {
@@ -1846,7 +1846,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 								if (typeof callback === "function") {
 									callback.call(this);
 								}
-								state.play(passage);
+								State.play(passage);
 							});
 						}
 					}

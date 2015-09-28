@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global AudioWrapper, Macro, Story, Util, Wikifier, config, has, insertElement,insertText, postdisplay,
-	       predisplay, printableStringOrDefault, runtime, state, storage, strings, turns
+	global AudioWrapper, Macro, State, Story, Util, Wikifier, config, has, insertElement,insertText, postdisplay,
+	       predisplay, printableStringOrDefault, runtime, storage, strings, turns
 */
 
 /***********************************************************************************************************************
@@ -26,12 +26,12 @@ function getWikifyEvalHandler(content, widgetArgs, callback) {
 			try {
 				if (typeof widgetArgs !== "undefined") {
 					// cache the existing $args variable, if any
-					if (state.active.variables.hasOwnProperty("args")) {
-						argsCache = state.active.variables.args;
+					if (State.variables.hasOwnProperty("args")) {
+						argsCache = State.variables.args;
 					}
 
 					// setup the $args variable
-					state.active.variables.args = widgetArgs;
+					State.variables.args = widgetArgs;
 				}
 
 				// wikify the content and discard any output, unless there were errors
@@ -39,11 +39,11 @@ function getWikifyEvalHandler(content, widgetArgs, callback) {
 			} finally {
 				if (typeof widgetArgs !== "undefined") {
 					// teardown the $args variable
-					delete state.active.variables.args;
+					delete State.variables.args;
 
 					// restore the cached $args variable, if any
 					if (typeof argsCache !== "undefined") {
-						state.active.variables.args = argsCache;
+						State.variables.args = argsCache;
 					}
 				}
 			}
@@ -67,8 +67,8 @@ Macro.add("actions", {
 	handler : function () {
 		var list = insertElement(this.output, "ul");
 		list.classList.add(this.name);
-		if (!state.active.variables["#actions"]) {
-			state.active.variables["#actions"] = {};
+		if (!State.variables["#actions"]) {
+			State.variables["#actions"] = {};
 		}
 		for (var i = 0; i < this.args.length; ++i) {
 			var	passage,
@@ -105,15 +105,15 @@ Macro.add("actions", {
 			}
 
 			if (
-				   state.active.variables["#actions"].hasOwnProperty(passage)
-				&& state.active.variables["#actions"][passage]
+				   State.variables["#actions"].hasOwnProperty(passage)
+				&& State.variables["#actions"][passage]
 			) {
 				continue;
 			}
 
 			el = Wikifier.createInternalLink(insertElement(list, "li"), passage, null, (function (p, fn) {
 				return function () {
-					state.active.variables["#actions"][p] = true;
+					State.variables["#actions"][p] = true;
 					if (typeof fn === "function") { fn(); }
 				};
 			})(passage, setFn));
@@ -182,16 +182,16 @@ Macro.add([ "back", "return" ], {
 		if (passage == null) { // lazy equality for null
 			// find the index and title of the most recent passage within the story history
 			// whose title does not match that of the active passage
-			for (var i = state.length - 2; i >= 0; --i) {
-				if (state.history[i].title !== state.active.title) {
+			for (var i = State.length - 2; i >= 0; --i) {
+				if (State.history[i].title !== State.passage) {
 					stateIdx = i;
-					passage = state.history[i].title;
+					passage = State.history[i].title;
 					break;
 				}
 			}
-			// fallback to `state.expiredUnique` if we failed to find a passage
-			if (passage == null && state.expiredUnique !== "") { // lazy equality for null
-				passage = state.expiredUnique;
+			// fallback to `State.expiredUnique` if we failed to find a passage
+			if (passage == null && State.expiredUnique !== "") { // lazy equality for null
+				passage = State.expiredUnique;
 			}
 		} else {
 			if (!Story.has(passage)) {
@@ -200,8 +200,8 @@ Macro.add([ "back", "return" ], {
 			if (this.name === "back") {
 				// find the index of the most recent passage within the story history whose
 				// title matches that of the specified passage
-				for (var i = state.length - 2; i >= 0; --i) { // eslint-disable-line no-redeclare
-					if (state.history[i].title === passage) {
+				for (var i = State.length - 2; i >= 0; --i) { // eslint-disable-line no-redeclare
+					if (State.history[i].title === passage) {
 						stateIdx = i;
 						break;
 					}
@@ -225,8 +225,8 @@ Macro.add([ "back", "return" ], {
 			jQuery(el)
 				.addClass("link-internal")
 				.ariaClick({ one : true }, this.name === "return"
-					? function () { state.play(passage); }
-					: function () { state.goTo(stateIdx); });
+					? function () { State.play(passage); }
+					: function () { State.goTo(stateIdx); });
 		} else {
 			el = document.createElement("span");
 			el.classList.add("link-disabled");
@@ -254,7 +254,7 @@ Macro.add("choice", {
 			text,
 			image,
 			setFn,
-			choiceId = state.active.title,
+			choiceId = State.passage,
 			el;
 
 		if (this.args.length === 1) {
@@ -290,11 +290,11 @@ Macro.add("choice", {
 			text = this.args[1];
 		}
 
-		if (!state.active.variables.hasOwnProperty("#choice")) {
-			state.active.variables["#choice"] = {};
+		if (!State.variables.hasOwnProperty("#choice")) {
+			State.variables["#choice"] = {};
 		} else if (
-			   state.active.variables["#choice"].hasOwnProperty(choiceId)
-			&& state.active.variables["#choice"][choiceId]
+			   State.variables["#choice"].hasOwnProperty(choiceId)
+			&& State.variables["#choice"][choiceId]
 		) {
 			el = insertElement(this.output, "span");
 			if (image == null) { // lazy equality for null
@@ -309,7 +309,7 @@ Macro.add("choice", {
 		}
 
 		el = Wikifier.createInternalLink(this.output, passage, null, function () {
-			state.active.variables["#choice"][choiceId] = true;
+			State.variables["#choice"][choiceId] = true;
 			if (typeof setFn === "function") { setFn(); }
 		});
 		if (image == null) { // lazy equality for null
@@ -595,8 +595,8 @@ Macro.add("unset", {
 		while ((match = re.exec(expression)) !== null) {
 			var name = match[1];
 
-			if (state.active.variables.hasOwnProperty(name)) {
-				delete state.active.variables[name];
+			if (State.variables.hasOwnProperty(name)) {
+				delete State.variables[name];
 			}
 		}
 	}
@@ -621,7 +621,7 @@ Macro.add("remember", {
 			while ((match = re.exec(expression)) !== null) {
 				var name = match[1];
 
-				remember[name] = state.active.variables[name];
+				remember[name] = State.variables[name];
 			}
 			if (!storage.set("remember", remember)) {
 				return this.error("unknown error, cannot remember: " + this.args.raw);
@@ -632,7 +632,7 @@ Macro.add("remember", {
 		var remember = storage.get("remember");
 		if (remember) {
 			Object.keys(remember).forEach(function (name) {
-				state.active.variables[name] = remember[name];
+				State.variables[name] = remember[name];
 			});
 		}
 	}
@@ -657,8 +657,8 @@ Macro.add("forget", {
 		while ((match = re.exec(expression)) !== null) {
 			var name = match[1];
 
-			if (state.active.variables.hasOwnProperty(name)) {
-				delete state.active.variables[name];
+			if (State.variables.hasOwnProperty(name)) {
+				delete State.variables[name];
 			}
 			if (remember && remember.hasOwnProperty(name)) {
 				needStore = true;
@@ -708,10 +708,10 @@ Macro.add([ "button", "click" ], {
 		var	widgetArgs = (function () { // eslint-disable-line no-extra-parens
 				var wargs;
 				if (
-					   state.active.variables.hasOwnProperty("args")
+					   State.variables.hasOwnProperty("args")
 					&& this.contextHas(function (c) { return c.self.isWidget; })
 				) {
-					wargs = state.active.variables.args;
+					wargs = State.variables.args;
 				}
 				return wargs;
 			}.call(this)),
@@ -749,7 +749,7 @@ Macro.add([ "button", "click" ], {
 			el.setAttribute("data-passage", passage);
 			if (Story.has(passage)) {
 				el.classList.add("link-internal");
-				if (config.addVisitedLinkClass && state.has(passage)) {
+				if (config.addVisitedLinkClass && State.has(passage)) {
 					el.classList.add("link-visited");
 				}
 			} else {
@@ -766,7 +766,7 @@ Macro.add([ "button", "click" ], {
 			}, getWikifyEvalHandler(
 				this.payload[0].contents.trim(),
 				widgetArgs,
-				passage != null ? function () { state.play(passage); } : undefined /* lazy equality for null */
+				passage != null ? function () { State.play(passage); } : undefined /* lazy equality for null */
 			));
 		this.output.appendChild(el);
 	}
@@ -967,7 +967,7 @@ Macro.add("textbox", {
 					evt.preventDefault();
 					Wikifier.setValue(varName, this.value);
 					if (passage != null) { // lazy equality for null
-						state.play(passage);
+						State.play(passage);
 					}
 				}
 			});
@@ -1143,7 +1143,7 @@ Macro.add("goto", {
 		}
 
 		/*
-			Call state.play().
+			Call State.play().
 
 			n.b. This does not terminate the current Wikifier call chain, though, ideally, it probably
 			     should, however, doing so wouldn't be trivial and there's the question of would that
@@ -1151,7 +1151,7 @@ Macro.add("goto", {
 			     and constructs.
 		*/
 		setTimeout(function () {
-			state.play(passage);
+			State.play(passage);
 		}, 40); // not too short, not too long
 	}
 });
@@ -1273,17 +1273,17 @@ Macro.add("widget", {
 						var argsCache;
 						try {
 							// cache the existing $args variable, if any
-							if (state.active.variables.hasOwnProperty("args")) {
-								argsCache = state.active.variables.args;
+							if (State.variables.hasOwnProperty("args")) {
+								argsCache = State.variables.args;
 							}
 
 							// setup the widget arguments array
-							state.active.variables.args = [];
+							State.variables.args = [];
 							for (var i = 0, len = this.args.length; i < len; ++i) {
-								state.active.variables.args[i] = this.args[i];
+								State.variables.args[i] = this.args[i];
 							}
-							state.active.variables.args.raw = this.args.raw;
-							state.active.variables.args.full = this.args.full;
+							State.variables.args.raw = this.args.raw;
+							State.variables.args.full = this.args.full;
 
 							// setup the error trapping variables
 							var	outFrag = document.createDocumentFragment(),
@@ -1311,11 +1311,11 @@ Macro.add("widget", {
 							return this.error("cannot execute widget: " + e.message);
 						} finally {
 							// teardown the widget arguments array
-							delete state.active.variables.args;
+							delete State.variables.args;
 
 							// restore the cached $args variable, if any
 							if (typeof argsCache !== "undefined") {
-								state.active.variables.args = argsCache;
+								State.variables.args = argsCache;
 							}
 						}
 					};
@@ -1466,7 +1466,7 @@ if (!has.audio) {
 				}
 				if (passage != null) { // lazy equality for null
 					audio.oneEnd(function () { // execute the callback once only
-						state.play(passage);
+						State.play(passage);
 					});
 				}
 				switch (action) {

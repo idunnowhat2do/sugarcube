@@ -40,7 +40,21 @@ var Story = (function () { // eslint-disable-line no-unused-vars
 			/*
 				Set the default starting passage title.
 			*/
-			config.passages.start = "Start";
+			config.passages.start = (function () {
+				/*
+					Handle the Twine 1.4+ "Test Play From Here" feature.
+				*/
+				var testPlay = "START_AT";
+				if (testPlay !== "") {
+					if (DEBUG) { console.log('    > starting passage set to: "' + testPlay + '" (Test Play)'); }
+					return testPlay;
+				}
+
+				/*
+					In the absence of a Test Play, return "Start".
+				*/
+				return "Start";
+			})();
 
 			/*
 				Process the passages, excluding any tagged "Twine.private" or "annotation".

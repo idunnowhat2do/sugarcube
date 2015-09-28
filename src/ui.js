@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global History, Save, Setting, Story, StyleWrapper, Util, Wikifier, config, has, insertText, removeChildren,
-	       safeActiveElement, setPageElement, session, settings, state, storage, strings, version
+	global Save, Setting, State, Story, StyleWrapper, Util, Wikifier, config, has, insertText, removeChildren,
+	       safeActiveElement, setPageElement, session, settings, storage, strings, version
 */
 
 var UI = (function () { // eslint-disable-line no-unused-vars
@@ -166,8 +166,8 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			// setup a handler for the history-backward/-forward buttons
 			.on("tw:historyupdate", (function ($backward, $forward) {
 				return function () {
-					$backward.prop("disabled", state.length < 2);
-					$forward.prop("disabled", state.length === state.size);
+					$backward.prop("disabled", State.length < 2);
+					$forward.prop("disabled", State.length === State.size);
 				};
 			})(jQuery("#history-backward"), jQuery("#history-forward")))
 			// setup accessible outline handling
@@ -206,11 +206,11 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			});
 		if (config.history.controls) {
 			jQuery("#history-backward")
-				.prop("disabled", true)
+				.prop("disabled", State.length < 2)
 				.ariaClick({
 					label : strings.uiBar.backward.replace(/%identity%/g, strings.identity)
 				}, function () {
-					state.backward();
+					State.backward();
 				});
 			if ((config.history.maxStates === 0 || config.history.maxStates > 10) && Story.lookup("tags", "bookmark").length > 0) {
 				jQuery("#history-jumpto")
@@ -223,11 +223,11 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				jQuery("#history-jumpto").remove();
 			}
 			jQuery("#history-forward")
-				.prop("disabled", true)
+				.prop("disabled", State.length === State.size)
 				.ariaClick({
 					label : strings.uiBar.forward.replace(/%identity%/g, strings.identity)
 				}, function () {
-					state.forward();
+					State.forward();
 				});
 		} else {
 			jQuery("#ui-bar-history").remove();
@@ -333,12 +333,12 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		jQuery(dialogSetup(strings.jumpto.title, "jumpto list"))
 			.append(list);
 
-		for (var i = state.size - 1; i >= 0; --i) {
-			if (i === state.activeIndex) {
+		for (var i = State.size - 1; i >= 0; --i) {
+			if (i === State.activeIndex) {
 				continue;
 			}
 
-			var passage = Story.get(state.history[i].title);
+			var passage = Story.get(State.history[i].title);
 
 			if (passage && passage.tags.contains("bookmark")) {
 				var	item = document.createElement("li"),
@@ -347,11 +347,11 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				jQuery(link)
 					.ariaClick({ one : true }, (function (idx) {
 						return function () {
-							state.goTo(idx);
+							State.goTo(idx);
 						};
 					})(i))
 					.addClass("ui-close")
-					.text(strings.jumpto.turn + " " + (state.expired + i + 1) + ": " + passage.description());
+					.text(strings.jumpto.turn + " " + (State.expired + i + 1) + ": " + passage.description());
 
 				item.appendChild(link);
 				list.appendChild(item);
@@ -612,7 +612,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 
 		// add an additional click handler for the OK button
 		jQuery("#ui-dialog-body #restart-ok").one("click", function () {
-			state.restart();
+			State.restart();
 		});
 
 		return true;
@@ -752,7 +752,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			if (DEBUG) { console.log('    > display/autoload: "' + Save.autosave.get().title + '"'); }
 			if (evt.target.id !== "autoload-ok" || !Save.autosave.load()) {
 				if (DEBUG) { console.log('    > display: "' + config.passages.start + '"'); }
-				state.play(config.passages.start);
+				State.play(config.passages.start);
 			}
 		});
 

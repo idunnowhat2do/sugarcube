@@ -7,7 +7,7 @@
  *
  **********************************************************************************************************************/
 /*
-	global History, KeyValueStore, Macro, Passage, Save, Setting, Story, UI, Util, Wikifier, browser, fatalAlert,
+	global KeyValueStore, Macro, Passage, Save, Setting, State, Story, UI, Util, Wikifier, browser, fatalAlert,
 	       has, strings
 */
 
@@ -69,7 +69,7 @@ var	config = Object.seal({
 		loadDelay             : 0,
 
 		/*
-			History properties.
+			State history properties.
 		*/
 		history : Object.seal({
 			controls  : true,
@@ -104,7 +104,8 @@ var	config = Object.seal({
 			isAllowed : undefined,
 			onLoad    : undefined,
 			onSave    : undefined,
-			slots     : 8
+			slots     : 8,
+			version   : undefined
 		}),
 
 		/*
@@ -140,7 +141,7 @@ var	config = Object.seal({
 /* eslint-disable no-unused-vars */
 var	macros      = {},    // legacy macros object
 	tale        = Story, // legacy story manager object name (alias for `Story`)
-	state       = {},    // history manager -- TODO:? legacy history manager object name (alias for `History`)
+	state       = State, // legacy state manager object name (alias for `State`)
 	storage     = {},    // persistant storage manager
 	session     = {},    // session storage manager
 	settings    = {},    // settings object
@@ -176,11 +177,6 @@ jQuery(function () {
 			Initialize the story (this must be done before most anything else).
 		*/
 		Story.init();
-
-		/*
-			Instantiate the state history.
-		*/
-		state = new History();
 
 		/*
 			Instantiate the storage and session objects.
@@ -232,7 +228,7 @@ jQuery(function () {
 		/*
 			Initialize the state (this should be done as late as possible, but before UI startup).
 		*/
-		state.init();
+		State.init();
 
 		/*
 			[DEPRECATED] Call macros' "late" init methods.
@@ -252,11 +248,11 @@ jQuery(function () {
 		Finally, export identifiers for debugging purposes.
 	*/
 	window.SugarCube = {
-		History  : History,
 		Macro    : Macro,
 		Passage  : Passage,
 		Save     : Save,
 		Setting  : Setting,
+		State    : State,
 		Story    : Story,
 		UI       : UI,
 		Util     : Util,
@@ -269,7 +265,6 @@ jQuery(function () {
 		session  : session,
 		settings : settings,
 		setup    : setup,
-		state    : state,
 		storage  : storage,
 		version  : version
 	};

@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global History, Story, UI, config, escape, saveAs, state, storage, strings */
+/* global State, Story, UI, config, escape, saveAs, storage, strings */
 
 var Save = (function () { // eslint-disable-line no-unused-vars
 	"use strict";
@@ -75,12 +75,12 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 			if (saveObj.hasOwnProperty("data")) {
 				delete saveObj.mode;
 				saveObj.state = {
-					delta : History.deltaEncode(saveObj.data)
+					delta : State.deltaEncode(saveObj.data)
 				};
 				delete saveObj.data;
 			} else if (!saveObj.state.hasOwnProperty("delta")) {
 				delete saveObj.state.mode;
-				saveObj.state.delta = History.deltaEncode(saveObj.state.history);
+				saveObj.state.delta = State.deltaEncode(saveObj.state.history);
 				delete saveObj.state.history;
 			} else if (!saveObj.state.hasOwnProperty("index")) {
 				delete saveObj.state.mode;
@@ -206,7 +206,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 
 		var saves = savesObjGet();
 		saves.autosave = _marshal();
-		saves.autosave.title = title || Story.get(state.active.title).description();
+		saves.autosave.title = title || Story.get(State.passage).description();
 		saves.autosave.date = Date.now();
 		if (metadata != null) { // lazy equality for null
 			saves.autosave.metadata = metadata;
@@ -301,7 +301,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 			return false;
 		}
 		saves.slots[slot] = _marshal();
-		saves.slots[slot].title = title || Story.get(state.active.title).description();
+		saves.slots[slot].title = title || Story.get(State.passage).description();
 		saves.slots[slot].date = Date.now();
 		if (metadata != null) { // lazy equality for null
 			saves.slots[slot].metadata = metadata;
@@ -397,7 +397,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 
 		var saveObj = {
 			id    : config.saves.id,
-			state : History.marshalToSave()
+			state : State.marshalForSave()
 		};
 		if (config.saves.version) {
 			saveObj.version = config.saves.version;
@@ -408,7 +408,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		}
 
 		// delta encode the state history
-		saveObj.state.delta = History.deltaEncode(saveObj.state.history);
+		saveObj.state.delta = State.deltaEncode(saveObj.state.history);
 		delete saveObj.state.history;
 
 		return saveObj;
@@ -440,7 +440,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 			/* /legacy */
 
 			// delta decode the state history
-			saveObj.state.history = History.deltaDecode(saveObj.state.delta);
+			saveObj.state.history = State.deltaDecode(saveObj.state.delta);
 			delete saveObj.state.delta;
 
 			if (typeof config.saves.onLoad === "function") {
@@ -452,7 +452,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 			}
 
 			// restore the state
-			History.unmarshalFromSave(saveObj.state); // may also throw exceptions
+			State.unmarshalForSave(saveObj.state); // may also throw exceptions
 		} catch (e) {
 			UI.alert(e.message[0].toUpperCase() + e.message.slice(1) + ".</p><p>" + strings.aborting + ".");
 			return false;
