@@ -12,14 +12,17 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 	"use strict";
 
 	var
+		/*
+			Core properties.
+		*/
 		_slotsUBound = -1;
 
 
 	/*******************************************************************************************************************
-	 * Initialization
+	 * Saves Functions
 	 ******************************************************************************************************************/
-	function init() {
-		if (DEBUG) { console.log("[Save.init()]"); }
+	function savesInit() {
+		if (DEBUG) { console.log("[Save/savesInit()]"); }
 
 		// disable save slots and the autosave when Web Storage is unavailable
 		if (storage.name === "cookie") {
@@ -141,10 +144,6 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		return true;
 	}
 
-
-	/*******************************************************************************************************************
-	 * Saves Object
-	 ******************************************************************************************************************/
 	function savesObjCreate() {
 		return {
 			autosave : null,
@@ -162,17 +161,13 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		return true;
 	}
 
-
-	/*******************************************************************************************************************
-	 * General
-	 ******************************************************************************************************************/
-	function ok() {
+	function savesOK() {
 		return autosaveOK() || slotsOK();
 	}
 
 
 	/*******************************************************************************************************************
-	 * Autosave
+	 * Autosave Functions
 	 ******************************************************************************************************************/
 	function autosaveOK() {
 		return storage.name !== "cookie" && typeof config.saves.autosave !== "undefined";
@@ -222,7 +217,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 
 
 	/*******************************************************************************************************************
-	 * Slots
+	 * Slots Functions
 	 ******************************************************************************************************************/
 	function slotsOK() {
 		return storage.name !== "cookie" && _slotsUBound !== -1;
@@ -324,7 +319,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 
 
 	/*******************************************************************************************************************
-	 * Disk
+	 * Disk Functions
 	 ******************************************************************************************************************/
 	function exportSave() {
 		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed()) {
@@ -364,7 +359,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 
 
 	/*******************************************************************************************************************
-	 * Private
+	 * Utility Functions
 	 ******************************************************************************************************************/
 	function _appendSlots(array, num) {
 		for (var i = 0; i < num; ++i) {
@@ -466,17 +461,17 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 	 * Exports
 	 ******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
-		// Initialization
-		init     : { value : init },
-		// Save Object
-		get      : { value : savesObjGet },
-		clear    : { value : savesObjClear },
-		// General
-		ok       : { value : ok },
-		// Disk
-		export   : { value : exportSave },
-		import   : { value : importSave },
-		// Autosave
+		/*
+			Save Functions.
+		*/
+		init  : { value : savesInit },
+		get   : { value : savesObjGet },
+		clear : { value : savesObjClear },
+		ok    : { value : savesOK },
+
+		/*
+			Autosave  Functions.
+		*/
 		autosave : {
 			value : Object.freeze(Object.defineProperties({}, {
 				ok     : { value : autosaveOK },
@@ -487,12 +482,14 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 				delete : { value : autosaveDelete }
 			}))
 		},
-		// Slots
+
+		/*
+			Slots  Functions.
+		*/
 		slots : {
 			value : Object.freeze(Object.defineProperties({}, {
 				ok      : { value : slotsOK },
-				length  : { value : slotsLength }, // TODO: Favor `Save.slots.length()` or `Save.slots.length`?
-				size    : { get : slotsLength },   // TODO: Or `Save.slots.size`?
+				length  : { get : slotsLength },
 				isEmpty : { value : slotsIsEmpty },
 				count   : { value : slotsCount },
 				has     : { value : slotsHas },
@@ -501,7 +498,13 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 				save    : { value : slotsSave },
 				delete  : { value : slotsDelete }
 			}))
-		}
+		},
+
+		/*
+			Disk Functions.
+		*/
+		export : { value : exportSave },
+		import : { value : importSave }
 	}));
 
 })();

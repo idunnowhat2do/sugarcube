@@ -7,7 +7,7 @@
  *
  **********************************************************************************************************************/
 /*
-	global Save, Setting, State, Story, StyleWrapper, Util, Wikifier, config, has, insertText, removeChildren,
+	global Has, Save, Setting, State, Story, StyleWrapper, Util, Wikifier, config, insertText, removeChildren,
 	       safeActiveElement, setPageElement, session, settings, storage, strings, version
 */
 
@@ -552,10 +552,10 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		}
 
 		// add button bar items (export, import, and clear)
-		if (hasSaves || has.fileAPI) {
+		if (hasSaves || Has.fileAPI) {
 			btnBar = document.createElement("ul");
 			btnBar.classList.add("buttons");
-			if (has.fileAPI) {
+			if (Has.fileAPI) {
 				btnBar.appendChild(createActionItem("export", "ui-close", strings.saves.labelExport, Save.export));
 				btnBar.appendChild(createActionItem("import", null, strings.saves.labelImport, function () {
 					jQuery("#saves-import-file", _dialogBody).trigger("click");
@@ -569,7 +569,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				} : null));
 			}
 			_dialogBody.appendChild(btnBar);
-			if (has.fileAPI) {
+			if (Has.fileAPI) {
 				// add the hidden `input[type=file]` element which will be triggered by the `#saves-import` button
 				_dialogBody.appendChild((function () {
 					var	input = document.createElement("input");

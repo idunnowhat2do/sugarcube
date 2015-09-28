@@ -12,12 +12,15 @@ var Macro = (function () { // eslint-disable-line no-unused-vars
 	"use strict";
 
 	var
+		/*
+			Core properties.
+		*/
 		_macros = {},
 		_tags   = {};
 
 
 	/*******************************************************************************************************************
-	 * `_macros` Object Manipulation Functions
+	 * Macros Functions
 	 ******************************************************************************************************************/
 	function macrosAdd(name, def, deep) {
 		if (Array.isArray(name)) {
@@ -151,7 +154,7 @@ var Macro = (function () { // eslint-disable-line no-unused-vars
 
 
 	/*******************************************************************************************************************
-	 * `_tags` Object Manipulation Functions
+	 * Tags Functions
 	 ******************************************************************************************************************/
 	function tagsRegister(parent, bodyTags) {
 		if (!parent) {
@@ -211,6 +214,9 @@ var Macro = (function () { // eslint-disable-line no-unused-vars
 	 * Exports
 	 ******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
+		/*
+			Macro Functions.
+		*/
 		add            : { value : macrosAdd },
 		delete         : { value : macrosDelete },
 		isEmpty        : { value : macrosIsEmpty },
@@ -218,7 +224,10 @@ var Macro = (function () { // eslint-disable-line no-unused-vars
 		get            : { value : macrosGet },
 		evalStatements : { value : macrosEvalStatements },
 		init           : { value : macrosInit },
-		// Tags
+
+		/*
+			Tags Functions.
+		*/
 		tags : { // eslint-disable-line key-spacing
 			value : Object.freeze(Object.defineProperties({}, {
 				register   : { value : tagsRegister },
@@ -236,7 +245,7 @@ var Macro = (function () { // eslint-disable-line no-unused-vars
  * MacroContext API
  **********************************************************************************************************************/
 /*
-	Setup the MacroContext constructor
+	Setup the MacroContext constructor.
 */
 function MacroContext(context) {
 	context = Object.assign({
@@ -250,7 +259,7 @@ function MacroContext(context) {
 		source  : ""
 	}, context);
 	if (context.macro === null || context.name === "" || context.parser === null) {
-		throw new Error("context object missing required properties");
+		throw new TypeError("context object missing required properties");
 	}
 	Object.defineProperties(this, {
 		parent : {
@@ -290,7 +299,7 @@ function MacroContext(context) {
 }
 
 /*
-	Setup the MacroContext prototype
+	Setup the MacroContext prototype.
 */
 Object.defineProperties(MacroContext.prototype, {
 	contextHas : {

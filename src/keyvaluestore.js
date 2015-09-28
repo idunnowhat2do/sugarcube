@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global has, technicalAlert */
+/* global Has, technicalAlert */
 
 var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 	"use strict";
@@ -198,12 +198,12 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 		var	engine = null,
 			name   = null;
 		if (persist) {
-			if (has.localStorage) {
+			if (Has.localStorage) {
 				engine = window.localStorage;
 				name   = "localStorage";
 			}
 		} else {
-			if (has.sessionStorage) {
+			if (Has.sessionStorage) {
 				engine = window.sessionStorage;
 				name   = "sessionStorage";
 			}

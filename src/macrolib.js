@@ -7,7 +7,7 @@
  *
  **********************************************************************************************************************/
 /*
-	global AudioWrapper, Macro, State, Story, Util, Wikifier, config, has, insertElement,insertText, postdisplay,
+	global AudioWrapper, Has, Macro, State, Story, Util, Wikifier, config, insertElement,insertText, postdisplay,
 	       predisplay, printableStringOrDefault, runtime, storage, strings, turns
 */
 
@@ -1331,7 +1331,7 @@ Macro.add("widget", {
 /***********************************************************************************************************************
  * Audio Macros
  **********************************************************************************************************************/
-if (!has.audio) {
+if (!Has.audio) {
 	Macro.add([ "audio", "stopallaudio", "cacheaudio", "playlist", "setplaylist" ], {
 		handler : function () { /* empty */ }
 	});

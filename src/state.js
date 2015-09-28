@@ -41,7 +41,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		Initializes the story state.
 	**/
 	function stateInit() {
-		if (DEBUG) { console.log("[State.init()]"); }
+		if (DEBUG) { console.log("[State/stateInit()]"); }
 
 		/*
 			Execute the StoryInit passage.
@@ -126,6 +126,8 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		Resets the story state.
 	**/
 	function stateReset() { // eslint-disable-line no-unused-vars
+		if (DEBUG) { console.log("[State/stateReset()]"); }
+
 		/*
 			Core properties.
 		*/
@@ -147,7 +149,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		Reinitializes the story state, forgetting the active session.
 	**/
 	function stateRestart() {
-		if (DEBUG) { console.log("[State.restart()]"); }
+		if (DEBUG) { console.log("[State/stateRestart()]"); }
 
 		/*
 			Delete the active session and reload the page.
@@ -160,7 +162,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		Restores the story state from the active session.
 	**/
 	function stateRestore() {
-		if (DEBUG) { console.log("[State.restore()]"); }
+		if (DEBUG) { console.log("[State/stateRestore()]"); }
 
 		/*
 			Attempt to restore an active session.
@@ -517,7 +519,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		Pushes a new moment onto the history, discarding future moments if necessary.
 	**/
 	function historyPush(moment) {
-		if (DEBUG) { console.log("[State.push()]"); }
+		if (DEBUG) { console.log("[State/historyPush()]"); }
 
 		/*
 			TODO: It might be good to have some assertions about the moment in here.
@@ -571,7 +573,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		Activate and show the moment at the given index within the history.
 	**/
 	function historyGoTo(idx) {
-		if (DEBUG) { console.log("[State.goTo(" + idx + ")]"); }
+		if (DEBUG) { console.log("[State/historyGoTo(" + idx + ")]"); }
 
 		if (
 			   idx == null /* lazy equality for null */
@@ -593,7 +595,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		Activate and show the moment at the given offset from the active moment within the history.
 	**/
 	function historyGo(offset) {
-		if (DEBUG) { console.log("[State.go(" + offset + ")]"); }
+		if (DEBUG) { console.log("[State/historyGo(" + offset + ")]"); }
 
 		if (offset == null || offset === 0) { // lazy equality for null
 			return false;
@@ -684,7 +686,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 	*/
 	/* legacy */
 	function stateDisplay(title, link, option) {
-		if (DEBUG) { console.log("[State.display()]"); }
+		if (DEBUG) { console.log("[State/stateDisplay()]"); }
 
 		// process option
 		var noHistory = false;
@@ -710,7 +712,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 	}
 
 	function statePlay(title, noHistory) {
-		if (DEBUG) { console.log("[State.play()]"); }
+		if (DEBUG) { console.log("[State/statePlay()]"); }
 
 		/*
 			Reset the runtime temp/scratch object.
@@ -900,7 +902,9 @@ var State = (function () { // eslint-disable-line no-unused-vars
 	 * Exports
 	 ******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
-		// State Functions
+		/*
+			State Functions.
+		*/
 		init             : { value : stateInit },
 		restart          : { value : stateRestart },
 		marshalForSave   : { value : stateMarshalForSave },
@@ -910,13 +914,17 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		expiredUnique    : { get : stateExpiredUnique },
 		lastPlay         : { get : stateLastPlay },
 
-		// Moment Functions
+		/*
+			Moment Functions.
+		*/
 		active      : { get : momentActive },
 		activeIndex : { get : momentActiveIndex },
 		passage     : { get : momentActiveTitle },     // shortcut for `Story.active.title`
 		variables   : { get : momentActiveVariables }, // shortcut for `Story.active.variables`
 
-		// History Functions
+		/*
+			History Functions.
+		*/
 		history     : { get : historyGet },
 		length      : { get : historyLength },
 		size        : { get : historySize },
@@ -933,11 +941,15 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		deltaEncode : { value : historyDeltaEncode },
 		deltaDecode : { value : historyDeltaDecode },
 
-		// PRNG Functions
+		/*
+			PRNG Functions.
+		*/
 		initPRNG : { value : prngInit },
 		random   : { value : prngRandom },
 
-		// Legacy Functions
+		/*
+			Legacy Functions.
+		*/
 		display : { value : stateDisplay },
 		show    : { value : stateShow },
 		play    : { value : statePlay }

@@ -12,9 +12,14 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 	"use strict";
 
 	var
+		/*
+			Core properties.
+		*/
 		_definitions = [],
 
-		// Setup the Setting Types enumeration
+		/*
+			Setup the Types enumeration (not really, but close enough).
+		*/
 		Types = Object.freeze({
 			Toggle : 0,
 			List   : 1
@@ -22,9 +27,9 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 
 
 	/*******************************************************************************************************************
-	 * Initialization
+	 * Settings Functions
 	 ******************************************************************************************************************/
-	function init() {
+	function settingsInit() {
 		/* legacy */
 		// attempt to migrate an existing `options` store to `settings`
 		if (storage.has("options")) {
@@ -56,9 +61,65 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 		});
 	}
 
+	function _settingsAllAtDefault() {
+		if (Object.keys(settings).length > 0) {
+			return !_definitions.some(function (definition) {
+				return settings[definition.name] !== definition.default;
+			});
+		}
+		return true;
+	}
+
+	function settingsCreate() {
+		return Object.create(null);
+	}
+
+	function settingsSave() {
+		if (Object.keys(settings).length === 0 || _settingsAllAtDefault()) {
+			storage.delete("settings");
+			return true;
+		}
+		return storage.set("settings", settings);
+	}
+
+	function settingsLoad() {
+		var loadedSettings = settingsCreate(),
+			fromStorage    = storage.get("settings");
+
+		// load the defaults
+		_definitions.forEach(function (definition) {
+			settings[definition.name] = definition.default;
+		});
+
+		// load from storage
+		if (fromStorage !== null) {
+			window.SugarCube.settings = settings = Object.assign(loadedSettings, fromStorage);
+		}
+	}
+
+	function settingsClear() {
+		window.SugarCube.settings = settings = settingsCreate();
+		return settingsSave();
+	}
+
+	function settingsReset(name) {
+		if (arguments.length === 0) {
+			settingsClear();
+			_definitions.forEach(function (definition) {
+				settings[definition.name] = definition.default;
+			});
+		} else {
+			if (name == null || !definitionsHas(name)) { // lazy equality for null
+				throw new Error('nonexistent setting "' + name + '"');
+			}
+			settings[name] = definitionsGet(name).default;
+		}
+		return settingsSave();
+	}
+
 
 	/*******************************************************************************************************************
-	 * `_definitions` Object Manipulation Functions
+	 * Definitions Functions
 	 ******************************************************************************************************************/
 	function definitionsForEach(callback, thisp) {
 		_definitions.forEach(callback, thisp);
@@ -168,74 +229,27 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 
 
 	/*******************************************************************************************************************
-	 * `settings` Object Manipulation Functions
-	 ******************************************************************************************************************/
-	function _settingsAllAtDefault() {
-		if (Object.keys(settings).length > 0) {
-			return !_definitions.some(function (definition) {
-				return settings[definition.name] !== definition.default;
-			});
-		}
-		return true;
-	}
-
-	function settingsCreate() {
-		return Object.create(null);
-	}
-
-	function settingsSave() {
-		if (Object.keys(settings).length === 0 || _settingsAllAtDefault()) {
-			storage.delete("settings");
-			return true;
-		}
-		return storage.set("settings", settings);
-	}
-
-	function settingsLoad() {
-		var loadedSettings = settingsCreate(),
-			fromStorage    = storage.get("settings");
-
-		// load the defaults
-		_definitions.forEach(function (definition) {
-			settings[definition.name] = definition.default;
-		});
-
-		// load from storage
-		if (fromStorage !== null) {
-			window.SugarCube.settings = settings = Object.assign(loadedSettings, fromStorage);
-		}
-	}
-
-	function settingsClear() {
-		window.SugarCube.settings = settings = settingsCreate();
-		return settingsSave();
-	}
-
-	function settingsReset(name) {
-		if (arguments.length === 0) {
-			settingsClear();
-			_definitions.forEach(function (definition) {
-				settings[definition.name] = definition.default;
-			});
-		} else {
-			if (name == null || !definitionsHas(name)) { // lazy equality for null
-				throw new Error('nonexistent setting "' + name + '"');
-			}
-			settings[name] = definitionsGet(name).default;
-		}
-		return settingsSave();
-	}
-
-
-	/*******************************************************************************************************************
 	 * Exports
 	 ******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
-		// Enumeration
-		Types     : { value : Types },
-		// Initialization
-		init      : { value : init },
-		// `_definitions` Object Manipulation Functions
+		/*
+			Enumerations.
+		*/
+		Types : { value : Types },
+
+		/*
+			Settings Functions.
+		*/
+		init   : { value : settingsInit },
+		create : { value : settingsCreate },
+		save   : { value : settingsSave },
+		load   : { value : settingsLoad },
+		clear  : { value : settingsClear },
+		reset  : { value : settingsReset },
+
+		/*
+			Definitions Functions.
+		*/
 		forEach   : { value : definitionsForEach },
 		add       : { value : definitionsAdd },
 		addToggle : { value : definitionsAddToggle },
@@ -243,13 +257,7 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 		isEmpty   : { value : definitionsIsEmpty },
 		has       : { value : definitionsHas },
 		get       : { value : definitionsGet },
-		delete    : { value : definitionsDelete },
-		// `settings` Object Manipulation Functions
-		create    : { value : settingsCreate },
-		save      : { value : settingsSave },
-		load      : { value : settingsLoad },
-		clear     : { value : settingsClear },
-		reset     : { value : settingsReset }
+		delete    : { value : definitionsDelete }
 	}));
 
 })();

@@ -89,7 +89,9 @@ var Passage = (function () { // eslint-disable-line no-unused-vars
 		}
 	}
 
-	// Setup the Passage prototype
+	/*
+		Setup the Passage prototype.
+	*/
 	Object.defineProperties(Passage.prototype, {
 		// getters
 		className : {
@@ -214,7 +216,9 @@ var Passage = (function () { // eslint-disable-line no-unused-vars
 		}
 	});
 
-	// Setup the Passage static methods
+	/*
+		Setup the Passage static methods.
+	*/
 	Object.defineProperties(Passage, {
 		getExcerptFromNode : {
 			value : function (node, count) {
