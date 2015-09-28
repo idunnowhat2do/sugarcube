@@ -16,7 +16,7 @@
 	NOTE: Most of the ES5 & ES6 polyfills now come from the `es5-shim.js` & `es6-shim.js` libraries, respectively.
 */
 
-/**
+/*
 	[ES7] Returns whether the given element was found within the array
 */
 if (!Array.prototype.includes) {
@@ -34,7 +34,7 @@ if (!Array.prototype.includes) {
 	});
 }
 
-/**
+/*
 	[ES5] We just do a simple shim, without the second argument, since that's all we need here
 */
 if (!Object.create || typeof Object.create !== "function") {
@@ -77,7 +77,7 @@ if (!Object.create || typeof Object.create !== "function") {
 /***********************************************************************************************************************
  * JavaScript Extensions, General
  **********************************************************************************************************************/
-/**
+/*
 	Returns a random value from the given array in the range of lower and upper, if they are specified
 */
 Object.defineProperty(Array, "random", {
@@ -92,13 +92,13 @@ Object.defineProperty(Array, "random", {
 		if (Array.isArray(array)) {
 			return array.random(lower, upper);
 		} else if (array.hasOwnProperty("length")) {
-			return Array.prototype.slice.call(array, 0).random(lower, upper);
+			return Array.from(array).random(lower, upper);
 		}
 		return undefined;
 	}
 });
 
-/**
+/*
 	Returns whether the given element was found within the array
 */
 Object.defineProperty(Array.prototype, "contains", {
@@ -114,7 +114,7 @@ Object.defineProperty(Array.prototype, "contains", {
 	}
 });
 
-/**
+/*
 	Returns whether all of the given elements were found within the array
 */
 Object.defineProperty(Array.prototype, "containsAll", {
@@ -143,7 +143,7 @@ Object.defineProperty(Array.prototype, "containsAll", {
 	}
 });
 
-/**
+/*
 	Returns whether any of the given elements were found within the array
 */
 Object.defineProperty(Array.prototype, "containsAny", {
@@ -172,7 +172,7 @@ Object.defineProperty(Array.prototype, "containsAny", {
 	}
 });
 
-/**
+/*
 	Returns the number of times the given element was found within the array
 */
 Object.defineProperty(Array.prototype, "count", {
@@ -197,7 +197,7 @@ Object.defineProperty(Array.prototype, "count", {
 	}
 });
 
-/**
+/*
 	Returns a new array consisting of the flattened source array (flat map reduce)
 */
 Object.defineProperty(Array.prototype, "flatten", {
@@ -215,7 +215,7 @@ Object.defineProperty(Array.prototype, "flatten", {
 	}
 });
 
-/**
+/*
 	Removes and returns a random value from the array in the range of lower and upper, if they are specified
 */
 Object.defineProperty(Array.prototype, "pluck", {
@@ -252,7 +252,7 @@ Object.defineProperty(Array.prototype, "pluck", {
 	}
 });
 
-/**
+/*
 	Returns a random value from the array in the range of lower and upper, if they are specified
 */
 Object.defineProperty(Array.prototype, "random", {
@@ -289,7 +289,7 @@ Object.defineProperty(Array.prototype, "random", {
 	}
 });
 
-/**
+/*
 	Randomly shuffles the array
 */
 Object.defineProperty(Array.prototype, "shuffle", {
@@ -314,7 +314,7 @@ Object.defineProperty(Array.prototype, "shuffle", {
 	}
 });
 
-/**
+/*
 	Returns a bound function that supplies the given arguments to the base function, followed
 	by the arguments are supplied to the bound function, whenever it is called
 */
@@ -341,7 +341,7 @@ Object.defineProperty(Function.prototype, "partial", {
 	}
 });
 
-/**
+/*
 	Returns the given numerical clamped to the specified bounds
 */
 Object.defineProperty(Math, "clamp", {
@@ -354,7 +354,7 @@ Object.defineProperty(Math, "clamp", {
 	}
 });
 
-/**
+/*
 	Returns a decimal number eased from 0 to 1
 
 	n.b. The magnitude of the returned value decreases if num < 0.5 or increases if num > 0.5
@@ -369,7 +369,7 @@ Object.defineProperty(Math, "easeInOut", {
 	}
 });
 
-/**
+/*
 	Returns the number clamped to the specified bounds
 */
 Object.defineProperty(Number.prototype, "clamp", {
@@ -384,7 +384,7 @@ Object.defineProperty(Number.prototype, "clamp", {
 	}
 });
 
-/**
+/*
 	Returns a copy of the given string with all RegExp metacharacters escaped
 */
 Object.defineProperty(RegExp, "escape", {
@@ -396,7 +396,7 @@ Object.defineProperty(RegExp, "escape", {
 	}
 });
 
-/**
+/*
 	Returns a formatted string, after replacing each format item in the given format string
 	with the text equivalent of the corresponding argument's value
 */
@@ -453,7 +453,7 @@ Object.defineProperty(String, "format", {
 	}
 });
 
-/**
+/*
 	Returns whether the given string was found within the string
 */
 Object.defineProperty(String.prototype, "contains", {
@@ -469,7 +469,7 @@ Object.defineProperty(String.prototype, "contains", {
 	}
 });
 
-/**
+/*
 	Returns the number of times the given string was found within the string
 */
 Object.defineProperty(String.prototype, "count", {
@@ -500,7 +500,7 @@ Object.defineProperty(String.prototype, "count", {
 	}
 });
 
-/**
+/*
 	Returns a copy of the base string with 'count' characters replaced with 'replacement', starting at 'start'
 */
 Object.defineProperty(String.prototype, "splice", {
@@ -547,7 +547,7 @@ Object.defineProperty(String.prototype, "splice", {
 	}
 });
 
-/**
+/*
 	Returns an array of strings, split from the string, or an empty array if the string is empty
 */
 Object.defineProperty(String.prototype, "splitOrEmpty", {
@@ -566,7 +566,7 @@ Object.defineProperty(String.prototype, "splitOrEmpty", {
 	}
 });
 
-/**
+/*
 	[FF-extension] Returns a string with all whitespace removed from the left side of the string
 */
 if (!String.prototype.trimLeft) {
@@ -584,7 +584,7 @@ if (!String.prototype.trimLeft) {
 	});
 }
 
-/**
+/*
 	[FF-extension] Returns a string with all whitespace removed from the right side of the string
 */
 if (!String.prototype.trimRight) {
@@ -602,7 +602,7 @@ if (!String.prototype.trimRight) {
 	});
 }
 
-/**
+/*
 	[DEPRECATED] Returns a string with all whitespace removed from the left side of the base string
 
 	n.b. Just a legacy alias for String.prototype.trimLeft now
@@ -613,7 +613,7 @@ Object.defineProperty(String.prototype, "ltrim", {
 	value        : String.prototype.trimLeft
 });
 
-/**
+/*
 	[DEPRECATED] Returns a string with all whitespace removed from the right side of the base string
 
 	n.b. Just a legacy alias for String.prototype.trimRight now
@@ -624,7 +624,7 @@ Object.defineProperty(String.prototype, "rtrim", {
 	value        : String.prototype.trimRight
 });
 
-/**
+/*
 	Returns an array of link titles, parsed from the string
 
 	n.b. Unused in SugarCube, only included for compatibility
@@ -659,15 +659,15 @@ Object.defineProperty(String.prototype, "readBracketedList", {
 /***********************************************************************************************************************
  * JavaScript Extensions, JSON/serialization
  **********************************************************************************************************************/
-/**
-	Define toJSON methods on each prototype we want to support
+/*
+	Define `toJSON()` methods on each prototype we wish to support.
 */
 Object.defineProperty(Date.prototype, "toJSON", {
 	configurable : true,
 	writable     : true,
 	value        : function () {
 		"use strict";
-		return JSON.reviveWrapper('new Date("' + this.toISOString() + '")');
+		return [ "(revive:date)", this.toISOString() ];
 	}
 });
 Object.defineProperty(Function.prototype, "toJSON", {
@@ -675,7 +675,7 @@ Object.defineProperty(Function.prototype, "toJSON", {
 	writable     : true,
 	value        : function () {
 		"use strict";
-		return JSON.reviveWrapper(this.toString());
+		return [ "(revive:eval)", this.toString() ];
 	}
 });
 Object.defineProperty(Map.prototype, "toJSON", {
@@ -683,7 +683,7 @@ Object.defineProperty(Map.prototype, "toJSON", {
 	writable     : true,
 	value        : function () {
 		"use strict";
-		return JSON.reviveWrapper('new Map(' + JSON.stringify(Array.from(this.entries())) + ')');
+		return [ "(revive:map)", Array.from(this) ];
 	}
 });
 Object.defineProperty(RegExp.prototype, "toJSON", {
@@ -691,7 +691,7 @@ Object.defineProperty(RegExp.prototype, "toJSON", {
 	writable     : true,
 	value        : function () {
 		"use strict";
-		return JSON.reviveWrapper(this.toString());
+		return [ "(revive:eval)", this.toString() ];
 	}
 });
 Object.defineProperty(Set.prototype, "toJSON", {
@@ -699,12 +699,12 @@ Object.defineProperty(Set.prototype, "toJSON", {
 	writable     : true,
 	value        : function () {
 		"use strict";
-		return JSON.reviveWrapper('new Set(' + JSON.stringify(Array.from(this.values())) + ')');
+		return [ "(revive:set)", Array.from(this) ];
 	}
 });
 
-/**
-	Utility method to allow users to easily wrap their code in the revive wrapper
+/*
+	Utility method to allow users to easily wrap their code in the revive wrapper.
 */
 Object.defineProperty(JSON, "reviveWrapper", {
 	configurable : true,
@@ -714,36 +714,64 @@ Object.defineProperty(JSON, "reviveWrapper", {
 		if (typeof code !== "string") {
 			throw new TypeError("JSON.reviveWrapper code parameter must be a string");
 		}
-		return "@@revive@@(" + code + ")";
+		return [ "(revive:eval)", code ];
 	}
 });
 
-/**
-	Backup the original JSON.parse and replace it with a revive wrapper aware version
+/*
+	Backup the original `JSON.parse()` and replace it with a revive wrapper aware version.
 */
-Object.defineProperty(JSON, "_real_parse", {
-	configurable : true,
-	writable     : true,
-	value        : JSON.parse
-});
-Object.defineProperty(JSON, "parse", {
-	configurable : true,
-	writable     : true,
-	value        : function (text, reviver) {
-		"use strict";
-		return JSON._real_parse(text, function (key, value) {
-			if (typeof value === "string" && value.slice(0, 10) === "@@revive@@") {
-				try {
-					value = eval(value.slice(10)); // eslint-disable-line no-eval
-				} catch (e) { /* no-op; although, perhaps, it would be better to throw an error here */ }
-			}
-			if (typeof reviver === "function") {
-				try {
-					value = reviver(key, value);
-				} catch (e) { /* no-op; although, perhaps, it would be better to throw an error here */ }
-			}
-			return value;
-		});
+Object.defineProperties(JSON, {
+	"_real_parse" : {
+		value : JSON.parse
+	},
+	"parse" : {
+		configurable : true,
+		writable     : true,
+		value        : function (text, reviver) {
+			"use strict";
+			return JSON._real_parse(text, function (key, value) {
+				/*
+					Attempt to revive wrapped values.
+				*/
+				if (Array.isArray(value) && value.length === 2) {
+					switch (value[0]) {
+					case "(revive:set)":
+						value = new Set(value[1]);
+						break;
+					case "(revive:map)":
+						value = new Map(value[1]);
+						break;
+					case "(revive:date)":
+						value = new Date(value[1]);
+						break;
+					case "(revive:eval)":
+						try {
+							value = eval(value[1]); // eslint-disable-line no-eval
+						} catch (e) { /* no-op; although, perhaps, it would be better to throw an error here */ }
+						break;
+					}
+				}
+
+				/* legacy */
+				else if (typeof value === "string" && value.slice(0, 10) === "@@revive@@") {
+					try {
+						value = eval(value.slice(10)); // eslint-disable-line no-eval
+					} catch (e) { /* no-op; although, perhaps, it would be better to throw an error here */ }
+				}
+				/* /legacy */
+
+				/*
+					Call the custom reviver, if specified.
+				*/
+				if (typeof reviver === "function") {
+					try {
+						value = reviver(key, value);
+					} catch (e) { /* no-op; although, perhaps, it would be better to throw an error here */ }
+				}
+				return value;
+			});
+		}
 	}
 });
 
@@ -751,7 +779,7 @@ Object.defineProperty(JSON, "parse", {
 /***********************************************************************************************************************
  * jQuery Plugins
  **********************************************************************************************************************/
-/**
+/*
 	`ariaClick([options,] fn)` method plugin.
 
 	Makes the target element(s) WAI-ARIA compatible clickables.
