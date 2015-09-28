@@ -11,7 +11,7 @@
 /***********************************************************************************************************************
  * Utility Functions
  **********************************************************************************************************************/
-/**
+/*
  	Returns a deep copy of the passed object
 
 	n.b. 1. clone() does not clone functions, however, since function definitions are immutable,
@@ -95,7 +95,7 @@ function clone(orig) {
 	return copy;
 }
 
-/**
+/*
 	[DEPRECATED] Returns the jQuery-wrapped target element(s) after making them accessible clickables (ARIA compatibility).
 */
 function addAccessibleClickHandler(targets, selector, fn, one, namespace) { // eslint-disable-line no-unused-vars
@@ -121,7 +121,7 @@ function addAccessibleClickHandler(targets, selector, fn, one, namespace) { // e
 	}, fn);
 }
 
-/**
+/*
  * Returns the new DOM element, optionally appending it to the passed DOM element (if any)
  */
 function insertElement(place, type, id, classNames, text, title) {
@@ -151,14 +151,14 @@ function insertElement(place, type, id, classNames, text, title) {
 	return el;
 }
 
-/**
+/*
  * Returns the new DOM element, after appending it to the passed DOM element
  */
 function insertText(place, text) {
 	return place.appendChild(document.createTextNode(text));
 }
 
-/**
+/*
  * Removes all children from the passed DOM node
  */
 function removeChildren(node) {
@@ -169,7 +169,7 @@ function removeChildren(node) {
 	}
 }
 
-/**
+/*
  * Removes the passed DOM node
  */
 function removeElement(node) { // eslint-disable-line no-unused-vars
@@ -180,7 +180,7 @@ function removeElement(node) { // eslint-disable-line no-unused-vars
 	}
 }
 
-/**
+/*
  * Converts <br> elements to <p> elements within the given node tree.
  */
 function convertBreaksToParagraphs(source) { // eslint-disable-line no-unused-vars
@@ -249,7 +249,7 @@ function convertBreaksToParagraphs(source) { // eslint-disable-line no-unused-va
 	source.appendChild(output);
 }
 
-/**
+/*
  * Wikifies a passage into a DOM element corresponding to the passed ID and returns the element
  */
 function setPageElement(id, titles, defaultText) { // eslint-disable-line no-unused-vars
@@ -277,7 +277,7 @@ function setPageElement(id, titles, defaultText) { // eslint-disable-line no-unu
 	return el;
 }
 
-/**
+/*
  * Appends a new <style> element to the document's <head>
  */
 function addStyle(css) { // eslint-disable-line no-unused-vars
@@ -320,7 +320,7 @@ function addStyle(css) { // eslint-disable-line no-unused-vars
 	style.add(css);
 }
 
-/**
+/*
  * Appends an error message to the passed DOM element
  */
 function throwError(place, message, title) { // eslint-disable-line no-unused-vars
@@ -328,7 +328,7 @@ function throwError(place, message, title) { // eslint-disable-line no-unused-va
 	return false;
 }
 
-/**
+/*
 	Returns the simple string representation of the passed value or, if there is none,
 	the passed default value.
  */
@@ -342,8 +342,20 @@ function printableStringOrDefault(val, defVal) { // eslint-disable-line no-unuse
 	case "object":
 		if (val === null) {
 			return defVal;
-		} else if (Array.isArray(val)) {
-			return val.flatten().join(", ");
+		} else if (Array.isArray(val) || val instanceof Set) {
+			return Array.from(val).map(function (v) {
+				return printableStringOrDefault(v, defVal);
+			}).join(", ");
+		} else if (val instanceof Map) {
+			return Array.from(val).map(function (kv) {
+				return "("
+					+ printableStringOrDefault(kv[0], defVal)
+					+ " \u21D2 "
+					+ printableStringOrDefault(kv[1], defVal)
+					+ ")";
+			}).join(", ");
+		} else if (val instanceof Date) {
+			return val.toLocaleString();
 		}
 		return "[object]";
 	case "function":
@@ -353,7 +365,7 @@ function printableStringOrDefault(val, defVal) { // eslint-disable-line no-unuse
 	return String(val);
 }
 
-/**
+/*
 	Returns `document.activeElement` or `null`.
  */
 function safeActiveElement() { // eslint-disable-line no-unused-vars
@@ -374,7 +386,7 @@ function safeActiveElement() { // eslint-disable-line no-unused-vars
 	}
 }
 
-/**
+/*
  * Fades a DOM element in or out
  *   n.b. Unused, included only for compatibility
  */
@@ -420,7 +432,7 @@ function fade(el, options) { // eslint-disable-line no-unused-vars
 	/* eslint-enable no-use-before-define */
 }
 
-/**
+/*
  * Scrolls the browser window to ensure that a DOM element is in view
  *   n.b. Unused, included only for compatibility
  */
@@ -491,7 +503,7 @@ function scrollWindowTo(el, increment) { // eslint-disable-line no-unused-vars
  **********************************************************************************************************************/
 var Util = Object.defineProperties({}, {
 
-	/**
+	/*
 		Returns whether the passed value is numeric.
 	*/
 	isNumeric : {
@@ -510,7 +522,7 @@ var Util = Object.defineProperties({}, {
 		}
 	},
 
-	/**
+	/*
 		Returns whether the passed value is boolean-ish.
 	*/
 	isBoolean : {
@@ -519,7 +531,7 @@ var Util = Object.defineProperties({}, {
 		}
 	},
 
-	/**
+	/*
 		Returns a lowercased and hyphen encoded version of the passed string.
 	*/
 	slugify : {
@@ -532,7 +544,7 @@ var Util = Object.defineProperties({}, {
 		}
 	},
 
-	/**
+	/*
 		Returns an entity encoded version of the passed string.
 	*/
 	escape : {
@@ -557,7 +569,7 @@ var Util = Object.defineProperties({}, {
 		}
 	},
 
-	/**
+	/*
 		Returns a decoded version of the passed entity encoded string.
 	*/
 	unescape : {
@@ -582,7 +594,7 @@ var Util = Object.defineProperties({}, {
 		}
 	},
 
-	/**
+	/*
 		Returns the evaluation of the passed expression, throwing if there were errors.
 	*/
 	evalExpression : {
@@ -593,7 +605,7 @@ var Util = Object.defineProperties({}, {
 		}
 	},
 
-	/**
+	/*
 		Evaluates the passed statements, throwing if there were errors.
 	*/
 	evalStatements : {
@@ -605,7 +617,7 @@ var Util = Object.defineProperties({}, {
 		}
 	},
 
-	/**
+	/*
 		Diff operations enumeration.
 	*/
 	DiffOp : {
@@ -617,7 +629,7 @@ var Util = Object.defineProperties({}, {
 		})
 	},
 
-	/**
+	/*
 		Returns a patch object containing the differences between the original and the destination objects.
 	*/
 	diff : {
@@ -722,7 +734,7 @@ var Util = Object.defineProperties({}, {
 		}
 	},
 
-	/**
+	/*
 		Returns an object resulting from updating the original object with the difference object.
 	*/
 	patch : {
@@ -755,7 +767,7 @@ var Util = Object.defineProperties({}, {
 		}
 	},
 
-	/**
+	/*
 		Returns the number of miliseconds represented by the passed CSS time string.
 	*/
 	fromCSSTime : {
@@ -774,7 +786,7 @@ var Util = Object.defineProperties({}, {
 		}
 	},
 
-	/**
+	/*
 		Returns the CSS time string represented by the passed number of milliseconds.
 	*/
 	toCSSTime : {
@@ -804,21 +816,21 @@ var Util = Object.defineProperties({}, {
 // Setup aliases
 Object.defineProperties(Util, {
 
-	/**
+	/*
 		[DEPRECATED] Backup Math.random, in case it's replaced later.
 	*/
 	random : {
 		value : Math.random
 	},
 
-	/**
+	/*
 		[DEPRECATED] Alias of `Util.escape`.
 	*/
 	entityEncode : {
 		value : Util.escape
 	},
 
-	/**
+	/*
 		[DEPRECATED] Alias of `Util.unescape`.
 	*/
 	entityDecode : {
