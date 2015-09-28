@@ -102,7 +102,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			+         '<div id="ui-bar-history">'
 			+             String.format('<button id="history-backward" tabindex="0" title="{0}" aria-label="{0}">\ue821</button>',
 							strings.uiBar.backward.replace(/%identity%/g, strings.identity))
-			+             String.format('<button id="history-jumpto" tabindex="0" title="{0}" aria-label="{0}">\ue823</button>',
+			+             String.format('<button id="history-jumpto" tabindex="0" title="{0}" aria-label="{0}">\ue839</button>',
 							strings.uiBar.jumpto.replace(/%identity%/g, strings.identity))
 			+             String.format('<button id="history-forward" tabindex="0" title="{0}" aria-label="{0}">\ue822</button>',
 							strings.uiBar.forward.replace(/%identity%/g, strings.identity))

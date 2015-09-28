@@ -127,8 +127,11 @@
 #ui-bar-history [id|="history"] {
 	padding: 0.2em 0.45em 0.35em;
 }
+#ui-bar-history #history-jumpto { /*37.0833×31.75*/
+	padding: 0.2em 0.665em 0.35em;
+}
 #ui-bar-history [id|="history"]:not(:first-child) {
-	margin-left: 1em;
+	margin-left: 1.2em;
 }
 #ui-bar-history [id|="history"]:hover {
 	background-color: #444;
