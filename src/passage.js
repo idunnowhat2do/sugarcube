@@ -41,52 +41,66 @@ var Passage = (function () { // eslint-disable-line no-unused-vars
 	 * Constructor
 	 ******************************************************************************************************************/
 	function Passage(title, el) {
-		this.title = Util.unescape(title);
-		this.domId = "passage-" + Util.slugify(this.title);
-		if (el) {
-			this.element = el;
-			this.tags    = el.hasAttribute("tags") ? el.getAttribute("tags").trim().splitOrEmpty(/\s+/) : [];
-			this.classes = [];
-			if (this.tags.length > 0) {
-				// tags to skip transforming into classes
-				//     debug      → special tag
-				//     nobr       → special tag
-				//     passage    → the default class
-				//     script     → special tag (only in Twine 1)
-				//     stylesheet → special tag (only in Twine 1)
-				//     twine.*    → special tag
-				//     widget     → special tag
-				var	tagClasses = [],
-					tagsToSkip;
-				if (TWINE1) { // for Twine 1
-					tagsToSkip = /^(?:debug|nobr|passage|script|stylesheet|widget|twine\..*)$/i;
-				} else { // for Twine 2
-					tagsToSkip = /^(?:debug|nobr|passage|widget|twine\..*)$/i;
-				}
-				for (var i = 0; i < this.tags.length; ++i) {
-					if (!tagsToSkip.test(this.tags[i])) {
-						tagClasses.push(Util.slugify(this.tags[i]));
+		//if (DEBUG) { console.log('[Passage()] title: `' + title + '` ; el:', el); }
+		
+		/*
+			The passage object's data properties should largely be immutable.
+		*/
+		Object.defineProperties(this, {
+			title : {
+				value : Util.unescape(title)
+			},
+			element : {
+				value : el || null
+			},
+			tags : {
+				value : Object.freeze(el && el.hasAttribute("tags") ? el.getAttribute("tags").trim().splitOrEmpty(/\s+/) : [])
+			}
+		});
+		// Properties dependant on the above set.
+		Object.defineProperties(this, {
+			domId : {
+				value : "passage-" + Util.slugify(this.title)
+			},
+			classes : {
+				value : Object.freeze(this.tags.length === 0 ? [] : (function (tags) {
+					// tags to skip transforming into classes
+					//     debug      → special tag
+					//     nobr       → special tag
+					//     passage    → the default class
+					//     script     → special tag (only in Twine 1)
+					//     stylesheet → special tag (only in Twine 1)
+					//     twine.*    → special tag
+					//     widget     → special tag
+					var	tagClasses = [],
+						tagsToSkip;
+					if (TWINE1) { // for Twine 1
+						tagsToSkip = /^(?:debug|nobr|passage|script|stylesheet|widget|twine\..*)$/i;
+					} else { // for Twine 2
+						tagsToSkip = /^(?:debug|nobr|passage|widget|twine\..*)$/i;
 					}
-				}
-				if (tagClasses.length > 0) {
+					for (var i = 0; i < tags.length; ++i) {
+						if (!tagsToSkip.test(tags[i])) {
+							tagClasses.push(Util.slugify(tags[i]));
+						}
+					}
+
 					/*
-						TODO: Should the following be done before the IF, or even at all?
+						TODO: I'm unsure as to why this is here or even if should be done at all.
+						      AFAIK, there really should never be classes on the passage elements
+						      themselves.  Was this a user requested feature?  Check the changelog.
 					*/
 					if (el.className) {
 						tagClasses = tagClasses.concat(el.className.split(/\s+/));
 					}
 
 					// sort and filter out non-uniques
-					this.classes = tagClasses.sort().filter(function (val, i, aref) { // eslint-disable-line no-shadow
+					return tagClasses.sort().filter(function (val, i, aref) { // eslint-disable-line no-shadow
 						return i === 0 || aref[i - 1] !== val;
 					});
-				}
+				})(this.tags))
 			}
-		} else {
-			this.element = null;
-			this.tags    = [];
-			this.classes = [];
-		}
+		});
 	}
 
 	/*
@@ -164,7 +178,7 @@ var Passage = (function () { // eslint-disable-line no-unused-vars
 
 		render : {
 			value : function () {
-				if (DEBUG) { console.log("[<Passage>.render()] title: " + this.title); }
+				if (DEBUG) { console.log('[<Passage>.render()] title: `' + this.title + '`'); }
 
 				// create the new passage element
 				var passage = insertElement(null, "div", this.domId, "passage");
