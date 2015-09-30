@@ -30,8 +30,10 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 	 * Settings Functions
 	 ******************************************************************************************************************/
 	function settingsInit() {
+		if (DEBUG) { console.log("[Setting/settingsInit()]"); }
+
 		/* legacy */
-		// attempt to migrate an existing `options` store to `settings`
+		// Attempt to migrate an existing `options` store to `settings`.
 		if (storage.has("options")) {
 			var old = storage.get("options");
 			if (old !== null) {
@@ -42,10 +44,10 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 		}
 		/* /legacy */
 
-		// load existing settings
+		// Load existing settings.
 		settingsLoad();
 
-		// execute onInit callbacks
+		// Execute onInit callbacks.
 		_definitions.forEach(function (definition) {
 			if (definition.hasOwnProperty("onInit")) {
 				var	thisp = {
@@ -86,12 +88,12 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 		var loadedSettings = settingsCreate(),
 			fromStorage    = storage.get("settings");
 
-		// load the defaults
+		// Load the defaults.
 		_definitions.forEach(function (definition) {
 			settings[definition.name] = definition.default;
 		});
 
-		// load from storage
+		// Load from storage.
 		if (fromStorage !== null) {
 			window.SugarCube.settings = settings = Object.assign(loadedSettings, fromStorage);
 		}
@@ -191,11 +193,11 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 	}
 
 	function definitionsAddToggle(/* name, def */) {
-		definitionsAdd.apply(this, [Types.Toggle].concat(Array.from(arguments)));
+		definitionsAdd.apply(null, [Types.Toggle].concat(Array.from(arguments)));
 	}
 
 	function definitionsAddList(/* name, def */) {
-		definitionsAdd.apply(this, [Types.List].concat(Array.from(arguments)));
+		definitionsAdd.apply(null, [Types.List].concat(Array.from(arguments)));
 	}
 
 	function definitionsIsEmpty() {
@@ -204,14 +206,14 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 
 	function definitionsHas(name) {
 		return _definitions.some(function (definition) {
-			return definition.name === this;
-		}, name);
+			return definition.name === name;
+		});
 	}
 
 	function definitionsGet(name) {
 		return _definitions.find(function (definition) {
-			return definition.name === this;
-		}, name);
+			return definition.name === name;
+		});
 	}
 
 	function definitionsDelete(name) {
