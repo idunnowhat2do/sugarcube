@@ -64,7 +64,7 @@ var Passage = (function () { // eslint-disable-line no-unused-vars
 			},
 			classes : {
 				value : Object.freeze(this.tags.length === 0 ? [] : (function (tags) {
-					// tags to skip transforming into classes
+					// Tags to skip transforming into classes.
 					//     debug      → special tag
 					//     nobr       → special tag
 					//     passage    → the default class
@@ -94,7 +94,7 @@ var Passage = (function () { // eslint-disable-line no-unused-vars
 						tagClasses = tagClasses.concat(el.className.split(/\s+/));
 					}
 
-					// sort and filter out non-uniques
+					// Sort and filter out non-uniques.
 					return tagClasses.sort().filter(function (val, i, aref) { // eslint-disable-line no-shadow
 						return i === 0 || aref[i - 1] !== val;
 					});

@@ -22,46 +22,34 @@
 	        reference will get its own clone of the original object).
 */
 function clone(orig) {
+	/*
+		Immediately return non-objects.
+	*/
 	if (typeof orig !== "object" || orig == null) { // lazy equality for null
 		return orig;
 	}
 
-	// honor native clone methods
+	/*
+		Honor native clone methods.
+	*/
 	if (typeof orig.clone === "function") {
 		return orig.clone(true);
 	} else if (orig.nodeType && typeof orig.cloneNode === "function") {
 		return orig.cloneNode(true);
 	}
 
-	// create a copy of the original
 	/*
-	var	type = Object.prototype.toString.call(orig),
-		copy;
-	if (type === "[object Date]") {
-		copy = new Date(orig.getTime());
-	} else if (type === "[object Map]") {
-		copy = new Map();
-		orig.forEach(function (v, k) { copy.set(k, clone(v)); });
-	} else if (type === "[object RegExp]") {
-		copy = new RegExp(orig);
-	} else if (type === "[object Set]") {
-		copy = new Set();
-		orig.forEach(function (v) { copy.add(clone(v)); });
-	} else if (Array.isArray(orig)) {
-		copy = [];
-	} else {
-		// try to ensure that the returned object has the same prototype as the original
-		var proto = Object.getPrototypeOf(orig);
-		copy = proto ? Object.create(proto) : orig.constructor.prototype;
-	}
+		Create a copy of the original.
 	*/
 	var copy;
 	if (Array.isArray(orig)) {
 		copy = [];
 	} else {
-		// this relies on `Object.prototype.toString()` and `Function.prototype.call()`
-		// performing as intended, which may not be the case if they've been replaced
-		// we don't have much choice, however, so it's not really an issue
+		/*
+			This relies on `Object.prototype.toString()` and `Function.prototype.call()`
+			performing as intended, which may not be the case if they've been replaced.
+			We don't have much choice, however, so it's not really something to worry about.
+		*/
 		switch (Object.prototype.toString.call(orig)) {
 		case "[object Date]":
 			copy = new Date(orig.getTime());
@@ -78,17 +66,21 @@ function clone(orig) {
 			orig.forEach(function (v) { copy.add(clone(v)); });
 			break;
 		default:
-			// try to ensure that the returned object has the same prototype as the original
+			// Try to ensure that the returned object has the same prototype as the original.
 			var proto = Object.getPrototypeOf(orig);
 			copy = proto ? Object.create(proto) : orig.constructor.prototype;
 			break;
 		}
 	}
 
-	// duplicate the original's own properties (includes expando properties on non-generic objects)
+	/*
+		Duplicate the original's own properties (incl. expando properties on non-generic objects).
+	*/
 	Object.keys(orig).forEach(function (name) {
-		// this does not preserve ES5 property attributes, however, neither does the
-		// delta coding and serialization code, so it's not really an issue
+		/*
+			This does not preserve ES5 property attributes.  Neither does the delta coding
+			or serialization code, however, so it's not really an issue for SugarCube.
+		*/
 		copy[name] = clone(orig[name]);
 	});
 
@@ -122,8 +114,8 @@ function addAccessibleClickHandler(targets, selector, fn, one, namespace) { // e
 }
 
 /*
- * Returns the new DOM element, optionally appending it to the passed DOM element (if any)
- */
+	Returns the new DOM element, optionally appending it to the passed DOM element, if any.
+*/
 function insertElement(place, type, id, classNames, text, title) {
 	var el = document.createElement(type);
 
@@ -152,15 +144,15 @@ function insertElement(place, type, id, classNames, text, title) {
 }
 
 /*
- * Returns the new DOM element, after appending it to the passed DOM element
- */
+	Returns the new DOM element, after appending it to the passed DOM element.
+*/
 function insertText(place, text) {
 	return place.appendChild(document.createTextNode(text));
 }
 
 /*
- * Removes all children from the passed DOM node
- */
+	Removes all children from the passed DOM node.
+*/
 function removeChildren(node) {
 	if (node) {
 		while (node.hasChildNodes()) {
@@ -170,8 +162,8 @@ function removeChildren(node) {
 }
 
 /*
- * Removes the passed DOM node
- */
+	Removes the passed DOM node.
+*/
 function removeElement(node) { // eslint-disable-line no-unused-vars
 	if (typeof node.remove === "function") {
 		node.remove();
@@ -181,8 +173,8 @@ function removeElement(node) { // eslint-disable-line no-unused-vars
 }
 
 /*
- * Converts <br> elements to <p> elements within the given node tree.
- */
+	Converts <br> elements to <p> elements within the given node tree.
+*/
 function convertBreaksToParagraphs(source) { // eslint-disable-line no-unused-vars
 	var	output = document.createDocumentFragment(),
 		para   = document.createElement("p"),
@@ -250,8 +242,8 @@ function convertBreaksToParagraphs(source) { // eslint-disable-line no-unused-va
 }
 
 /*
- * Wikifies a passage into a DOM element corresponding to the passed ID and returns the element
- */
+	Wikifies a passage into a DOM element corresponding to the passed ID and returns the element.
+*/
 function setPageElement(id, titles, defaultText) { // eslint-disable-line no-unused-vars
 	var el = typeof id === "object" ? id : document.getElementById(id);
 	if (el == null) { // lazy equality for null
@@ -278,8 +270,8 @@ function setPageElement(id, titles, defaultText) { // eslint-disable-line no-unu
 }
 
 /*
- * Appends a new <style> element to the document's <head>
- */
+	Appends a new <style> element to the document's <head>.
+*/
 function addStyle(css) { // eslint-disable-line no-unused-vars
 	var style = document.getElementById("style-story");
 	if (style === null) {
@@ -321,8 +313,8 @@ function addStyle(css) { // eslint-disable-line no-unused-vars
 }
 
 /*
- * Appends an error message to the passed DOM element
- */
+	Appends an error message to the passed DOM element.
+*/
 function throwError(place, message, title) { // eslint-disable-line no-unused-vars
 	insertElement(place, "span", null, "error", strings.errors.title + ": " + message, title);
 	return false;
@@ -331,7 +323,7 @@ function throwError(place, message, title) { // eslint-disable-line no-unused-va
 /*
 	Returns the simple string representation of the passed value or, if there is none,
 	the passed default value.
- */
+*/
 function printableStringOrDefault(val, defVal) { // eslint-disable-line no-unused-vars
 	switch (typeof val) {
 	case "number":
@@ -367,7 +359,7 @@ function printableStringOrDefault(val, defVal) { // eslint-disable-line no-unuse
 
 /*
 	Returns `document.activeElement` or `null`.
- */
+*/
 function safeActiveElement() { // eslint-disable-line no-unused-vars
 	/*
 		1. IE9 contains a bug where trying to access the active element of an iframe's
@@ -387,9 +379,10 @@ function safeActiveElement() { // eslint-disable-line no-unused-vars
 }
 
 /*
- * Fades a DOM element in or out
- *   n.b. Unused, included only for compatibility
- */
+	Fades a DOM element in or out
+
+	n.b. Unused, included only for compatibility
+*/
 function fade(el, options) { // eslint-disable-line no-unused-vars
 	/* eslint-disable no-use-before-define */
 	function tick() {
@@ -433,9 +426,10 @@ function fade(el, options) { // eslint-disable-line no-unused-vars
 }
 
 /*
- * Scrolls the browser window to ensure that a DOM element is in view
- *   n.b. Unused, included only for compatibility
- */
+	Scrolls the browser window to ensure that a DOM element is in view
+
+	n.b. Unused, included only for compatibility
+*/
 function scrollWindowTo(el, increment) { // eslint-disable-line no-unused-vars
 	/* eslint-disable no-use-before-define */
 	function tick() {

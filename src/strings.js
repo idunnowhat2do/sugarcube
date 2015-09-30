@@ -17,16 +17,23 @@
 	   found, they may be used as many times as desired.
 */
 var	strings = { // eslint-disable-line no-unused-vars
-		// identity
+
+		/*
+			Identity.
+		*/
 		identity : "game",
 
-		// general
+		/*
+			General.
+		*/
 		aborting : "Aborting",
 		cancel   : "Cancel",
 		close    : "Close",
 		ok       : "OK",
 
-		// errors
+		/*
+			Errors.
+		*/
 		errors : {
 			title              : "Error",
 			nonexistentPassage : 'the passage "%passage%" does not exist',
@@ -34,12 +41,16 @@ var	strings = { // eslint-disable-line no-unused-vars
 			saveIdMismatch     : "save is from the wrong %identity%"
 		},
 
-		// warnings
+		/*
+			Warnings.
+		*/
 		warnings : {
 			degraded : 'Apologies! Your browser either lacks some of the capabilities required by this %identity% or has disabled them, so this %identity% is running in a degraded mode. You may be able to continue, but some parts may not work properly.\n\nThe former may, probably, be solved by upgrading your browser. The latter may be solved by loosening its security restrictions' + (window.location.protocol === "file:" ? " or, perhaps, by viewing this %identity% via the HTTP protocol." : ".")
 		},
 
-		// ui-bar
+		/*
+			UI bar.
+		*/
 		uiBar : {
 			toggle   : "Toggle the UI bar",
 			backward : "Go backward within the %identity% history",
@@ -47,14 +58,18 @@ var	strings = { // eslint-disable-line no-unused-vars
 			jumpto   : "Jump to a specific point within the %identity% history"
 		},
 
-		// jumpto
+		/*
+			Jump To.
+		*/
 		jumpto : {
 			title       : "Jump To",
 			turn        : "Turn",
 			unavailable : "No jump points currently available\u2026"
 		},
 
-		// saves
+		/*
+			Saves.
+		*/
 		saves : {
 			title       : "Saves",
 			disallowed  : "Saving has been disallowed on this passage.",
@@ -73,7 +88,9 @@ var	strings = { // eslint-disable-line no-unused-vars
 			unknownDate : "unknown"
 		},
 
-		// settings
+		/*
+			Settings.
+		*/
 		settings : {
 			title : "Settings",
 			off   : "Off",
@@ -81,22 +98,29 @@ var	strings = { // eslint-disable-line no-unused-vars
 			reset : "Reset to Defaults"
 		},
 
-		// restart
+		/*
+			Restart.
+		*/
 		restart : {
 			title  : "Restart",
 			prompt : "Are you sure that you want to restart? Unsaved progress will be lost."
 		},
 
-		// share
+		/*
+			Share.
+		*/
 		share : {
 			title : "Share"
 		},
 
-		// alert
-		alert : {
-		},
+		/*
+			Alert.
+		*/
+		alert : { /* empty*/ },
 
-		// autosave autoload
+		/*
+			Autoload.
+		*/
 		autoload : {
 			title  : "Autoload",
 			cancel : "Go to start",
@@ -104,7 +128,9 @@ var	strings = { // eslint-disable-line no-unused-vars
 			prompt : "An autosave exists. Load it now or go to the start?"
 		},
 
-		// macros
+		/*
+			Macros.
+		*/
 		macros : {
 			back : {
 				text : "Back"
@@ -113,6 +139,7 @@ var	strings = { // eslint-disable-line no-unused-vars
 				text : "Return"
 			}
 		}
+
 	};
 /* eslint-enable max-len */
 

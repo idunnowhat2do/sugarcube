@@ -792,14 +792,14 @@ Object.defineProperties(JSON, {
 			if (evt.which === 13 || evt.which === 32) {
 				evt.preventDefault();
 
-				// to allow for delegation attempt to trigger the click event on `document.activeElement`
+				// to allow delegation, attempt to trigger the event on `document.activeElement`,
 				// if possible, elsewise on `this`
 				jQuery(safeActiveElement() || this).trigger("click");
 			}
 		},
 		onClickFnWrapper = function (fn) {
 			return function () {
-				// toggle "aria-pressed" status if the attribute exists
+				// toggle "aria-pressed" status, if the attribute exists
 				var $this = jQuery(this);
 				if ($this.is("[aria-pressed]")) {
 					$this.attr("aria-pressed", $this.attr("aria-pressed") === "true" ? "false" : "true");

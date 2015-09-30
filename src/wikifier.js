@@ -47,6 +47,9 @@
 	       printableStringOrDefault, removeChildren, removeElement, runtime, throwError
 */
 
+/*
+	TODO: The Wikifier, and associated code, could stand to receive a serious refactoring.
+*/
 /* eslint-disable max-len */
 var Wikifier = (function () { // eslint-disable-line no-unused-vars
 	"use strict";

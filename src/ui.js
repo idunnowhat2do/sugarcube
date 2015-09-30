@@ -11,6 +11,11 @@
 	       safeActiveElement, setPageElement, session, settings, storage, strings, version
 */
 
+/*
+	TODO: The UI object could stand to receive some refactoring.  It particular, it should
+	      probably be split into multiple objects (at least one for the dialog and one for
+	      everything else).
+*/
 var UI = (function () { // eslint-disable-line no-unused-vars
 	"use strict";
 

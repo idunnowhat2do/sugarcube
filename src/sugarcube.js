@@ -116,7 +116,9 @@ var	config = Object.seal({
 			updateStoryElements : true
 		}),
 
-		// transition properties
+		/*
+			Transition properties.
+		*/
 		transitionEndEventName : (function () {
 			var	teMap  = {
 					"transition"       : "transitionend",
@@ -140,10 +142,10 @@ var	config = Object.seal({
 */
 /* eslint-disable no-unused-vars */
 var	macros      = {},    // legacy macros object
-	tale        = Story, // legacy story manager object name (alias for `Story`)
-	state       = State, // legacy state manager object name (alias for `State`)
-	storage     = {},    // persistant storage manager
-	session     = {},    // session storage manager
+	tale        = Story, // legacy story manager object (alias for `Story`)
+	state       = State, // legacy state manager object (alias for `State`)
+	storage     = {},    // persistant storage manager object
+	session     = {},    // session storage manager object
 	settings    = {},    // settings object
 	setup       = {},    // setup object
 	prehistory  = {},    // pre-history task callbacks object
@@ -155,9 +157,9 @@ var	macros      = {},    // legacy macros object
 
 /**
 	The main function, which is the entry point for the story.
-*/
+**/
 jQuery(function () {
-	if (DEBUG) { console.log("[SugarCube main()]"); }
+	if (DEBUG) { console.log("[SugarCube/main()]"); }
 
 	/*
 		[WARNING!]
@@ -229,11 +231,6 @@ jQuery(function () {
 			Initialize the state (this should be done as late as possible, but before UI startup).
 		*/
 		State.init();
-
-		/*
-			[DEPRECATED] Call macros' "late" init methods.
-		*/
-		//Macro.init("lateInit");
 
 		/*
 			Start the user interface.
