@@ -12,6 +12,7 @@ var
 		Browser object (only used by `Has` below).
 	*/
 	Browser = Object.freeze((function () { // eslint-disable-line no-unused-vars
+		"use strict";
 		/* eslint-disable max-len */
 		var browser = {
 			userAgent : navigator.userAgent.toLowerCase()
@@ -49,15 +50,10 @@ var
 	/*
 		Capabilities object.
 	*/
-	Has = Object.freeze({ // eslint-disable-line no-unused-vars
-		/*
-			The extended Web Storage testing is required by implementation bugs in various
-			browsers.
+	Has = Object.freeze((function () { // eslint-disable-line no-unused-vars
+		"use strict";
 
-			Notably: Firefox bug #748620 [https://bugzilla.mozilla.org/show_bug.cgi?id=748620]
-			         and the iOS browser core throwing on setItem() calls when in private mode
-		*/
-		localStorage : "localStorage" in window && (function (store) {
+		function webStorageTest(store) {
 			try {
 				if (store != null && store.length >= 0) { // lazy equality for null
 					var	tkey = "SugarCube.localStorage.test",
@@ -68,34 +64,28 @@ var
 						return true;
 					}
 				}
-				return false;
-			} catch (e) {
-				return false;
-			}
-		})(window.localStorage),
-		sessionStorage : "sessionStorage" in window && (function (store) {
-			try {
-				if (store != null && store.length >= 0) { // lazy equality for null
-					var	tkey = "SugarCube.sessionStorage.test",
-						tval = "1701 Guilty Scott";
-					store.setItem(tkey, tval);
-					if (store.getItem(tkey) === tval) {
-						store.removeItem(tkey);
-						return true;
-					}
-				}
-				return false;
-			} catch (e) {
-				return false;
-			}
-		})(window.sessionStorage),
+			} catch (e) { /* no-op */ }
+			return false;
+		}
 
-		/*
-			It's probably safe to assume the existence of Blob by the existence of File.
-		*/
-		fileAPI : "File" in window && "FileList" in window && "FileReader" in window
-			&& !Browser.isMobile.any() && (!Browser.isOpera || Browser.operaVersion >= 15),
+		return {
+			/*
+				The extended Web Storage testing is required by implementation bugs in various
+				browsers.
 
-		audio : typeof document.createElement("audio").canPlayType === "function"
-	});
+				Notably: Firefox bug #748620 [https://bugzilla.mozilla.org/show_bug.cgi?id=748620]
+				         and the iOS browser core throwing on setItem() calls when in private mode
+			*/
+			localStorage   : "localStorage" in window && webStorageTest(window.localStorage),
+			sessionStorage : "sessionStorage" in window && webStorageTest(window.sessionStorage),
+
+			/*
+				It's probably safe to assume the existence of Blob by the existence of File.
+			*/
+			fileAPI : "File" in window && "FileList" in window && "FileReader" in window
+				&& !Browser.isMobile.any() && (!Browser.isOpera || Browser.operaVersion >= 15),
+
+			audio : typeof document.createElement("audio").canPlayType === "function"
+		};
+	})());
 
