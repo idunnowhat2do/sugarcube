@@ -25,23 +25,23 @@ function getWikifyEvalHandler(content, widgetArgs, callback) {
 			*/
 			try {
 				if (typeof widgetArgs !== "undefined") {
-					// cache the existing $args variable, if any
+					// Cache the existing $args variable, if any.
 					if (State.variables.hasOwnProperty("args")) {
 						argsCache = State.variables.args;
 					}
 
-					// setup the $args variable
+					// Setup the $args variable.
 					State.variables.args = widgetArgs;
 				}
 
-				// wikify the content and discard any output, unless there were errors
+				// Wikify the content and discard any output, unless there were errors.
 				Wikifier.wikifyEval(content);
 			} finally {
 				if (typeof widgetArgs !== "undefined") {
-					// teardown the $args variable
+					// Teardown the $args variable.
 					delete State.variables.args;
 
-					// restore the cached $args variable, if any
+					// Restore the cached $args variable, if any.
 					if (typeof argsCache !== "undefined") {
 						State.variables.args = argsCache;
 					}
@@ -49,7 +49,7 @@ function getWikifyEvalHandler(content, widgetArgs, callback) {
 			}
 		}
 
-		// call the given callback function, if any
+		// Call the given callback function, if any.
 		if (typeof callback === "function") {
 			callback.call(this);
 		}
@@ -78,7 +78,7 @@ Macro.add("actions", {
 				el;
 
 			if (typeof this.args[i] === "object" && this.args[i].isImage) {
-				// argument was in wiki image syntax
+				// Argument was in wiki image syntax.
 				image = document.createElement("img");
 				image.src = this.args[i].source;
 				if (this.args[i].hasOwnProperty("passage")) {
@@ -94,12 +94,12 @@ Macro.add("actions", {
 				setFn   = this.args[i].setFn;
 			} else {
 				if (typeof this.args[i] === "object") {
-					// argument was in wiki link syntax
+					// Argument was in wiki link syntax.
 					text    = this.args[i].text;
 					passage = this.args[i].link;
 					setFn   = this.args[i].setFn;
 				} else {
-					// argument was simply the passage name
+					// Argument was simply the passage name.
 					text = passage = this.args[i];
 				}
 			}
@@ -147,7 +147,7 @@ Macro.add([ "back", "return" ], {
 		if (this.args.length === 1) {
 			if (typeof this.args[0] === "object") {
 				if (this.args[0].isImage) {
-					// argument was in wiki image syntax
+					// Argument was in wiki image syntax.
 					image = document.createElement("img");
 					image.src = this.args[0].source;
 					if (this.args[0].hasOwnProperty("passage")) {
@@ -163,25 +163,25 @@ Macro.add([ "back", "return" ], {
 						passage = this.args[0].link;
 					}
 				} else {
-					// argument was in wiki link syntax
+					// Argument was in wiki link syntax.
 					if (this.args[0].count === 1) {
-						// simple link syntax: [[...]]
+						// Simple link syntax: `[[...]]`.
 						passage = this.args[0].link;
 					} else {
-						// pretty link syntax: [[...|...]]
+						// Pretty link syntax: `[[...|...]]`.
 						text    = this.args[0].text;
 						passage = this.args[0].link;
 					}
 				}
 			} else if (this.args.length === 1) {
-				// argument was simply the link text
+				// Argument was simply the link text.
 				text = this.args[0];
 			}
 		}
 
 		if (passage == null) { // lazy equality for null
-			// find the index and title of the most recent passage within the story history
-			// whose title does not match that of the active passage
+			// Find the index and title of the most recent passage within the story history
+			// whose title does not match that of the active passage.
 			for (var i = State.length - 2; i >= 0; --i) {
 				if (State.history[i].title !== State.passage) {
 					stateIdx = i;
@@ -189,7 +189,7 @@ Macro.add([ "back", "return" ], {
 					break;
 				}
 			}
-			// fallback to `State.expiredUnique` if we failed to find a passage
+			// Fallback to `State.expiredUnique` if we failed to find a passage.
 			if (passage == null && State.expiredUnique !== "") { // lazy equality for null
 				passage = State.expiredUnique;
 			}
@@ -198,8 +198,8 @@ Macro.add([ "back", "return" ], {
 				return this.error('passage "' + passage + '" does not exist');
 			}
 			if (this.name === "back") {
-				// find the index of the most recent passage within the story history whose
-				// title matches that of the specified passage
+				// Find the index of the most recent passage within the story history whose
+				// title matches that of the specified passage.
 				for (var i = State.length - 2; i >= 0; --i) { // eslint-disable-line no-redeclare
 					if (State.history[i].title === passage) {
 						stateIdx = i;
@@ -259,7 +259,7 @@ Macro.add("choice", {
 
 		if (this.args.length === 1) {
 			if (typeof this.args[0] === "object" && this.args[0].isImage) {
-				// argument was in wiki image syntax
+				// Argument was in wiki image syntax.
 				image = document.createElement("img");
 				image.src = this.args[0].source;
 				if (this.args[0].hasOwnProperty("passage")) {
@@ -275,17 +275,17 @@ Macro.add("choice", {
 				setFn   = this.args[0].setFn;
 			} else {
 				if (typeof this.args[0] === "object") {
-					// argument was in wiki link syntax
+					// Argument was in wiki link syntax.
 					text    = this.args[0].text;
 					passage = this.args[0].link;
 					setFn   = this.args[0].setFn;
 				} else {
-					// argument was simply the passage name
+					// Argument was simply the passage name.
 					text = passage = this.args[0];
 				}
 			}
 		} else {
-			// yes, the arguments are backwards
+			// Yes, the arguments are backwards.
 			passage  = this.args[0];
 			text = this.args[1];
 		}
@@ -337,10 +337,10 @@ Macro.add("display", {
 		var passage;
 
 		if (typeof this.args[0] === "object") {
-			// argument was in wiki link syntax
+			// Argument was in wiki link syntax.
 			passage = this.args[0].link;
 		} else {
-			// argument was simply the passage name
+			// Argument was simply the passage name.
 			passage = this.args[0];
 		}
 		if (!Story.has(passage)) {
@@ -365,7 +365,7 @@ Macro.add("nobr", {
 	skipArgs : true,
 	tags     : null,
 	handler  : function () {
-		// wikify the contents, after removing all newlines
+		// Wikify the contents, after removing all newlines.
 		new Wikifier(this.output, this.payload[0].contents.replace(/^\n+|\n+$/g, "").replace(/\n+/g, " "));
 	}
 });
@@ -401,10 +401,10 @@ Macro.add("silently", {
 		var	errTrap = document.createDocumentFragment(),
 			errList = [];
 
-		// wikify the contents
+		// Wikify the contents.
 		new Wikifier(errTrap, this.payload[0].contents.trim());
 
-		// discard the output, unless there were errors
+		// Discard the output, unless there were errors.
 		while (errTrap.hasChildNodes()) {
 			var fc = errTrap.firstChild;
 			if (fc.classList && fc.classList.contains("error")) {
@@ -432,7 +432,7 @@ Macro.add("if", {
 	handler  : function () {
 		try {
 			for (var i = 0, len = this.payload.length; i < len; ++i) {
-				// sanity checks
+				// Sanity checks.
 				switch (this.payload[i].name) {
 				case "else":
 					if (this.payload[i].arguments.length !== 0) {
@@ -466,7 +466,7 @@ Macro.add("if", {
 					}
 					break;
 				}
-				// conditional test
+				// Conditional test.
 				if (this.payload[i].name === "else" || !!Wikifier.evalExpression(this.payload[i].arguments)) {
 					new Wikifier(this.output, this.payload[i].contents);
 					break;
@@ -719,7 +719,7 @@ Macro.add([ "button", "click" ], {
 			passage;
 
 		if (typeof this.args[0] === "object" && this.args[0].isImage) {
-			// argument was in wiki image syntax
+			// Argument was in wiki image syntax.
 			var img = insertElement(el, "img");
 			img.src = this.args[0].source;
 			if (this.args[0].hasOwnProperty("passage")) {
@@ -735,11 +735,11 @@ Macro.add([ "button", "click" ], {
 		} else {
 			var text;
 			if (typeof this.args[0] === "object") {
-				// argument was in wiki link syntax
+				// Argument was in wiki link syntax.
 				text    = this.args[0].text;
 				passage = this.args[0].link;
 			} else {
-				// argument was simply the link text
+				// Argument was simply the link text.
 				text    = this.args[0];
 				passage = this.args.length > 1 ? this.args[1] : undefined;
 			}
@@ -791,7 +791,7 @@ Macro.add("checkbox", {
 			checkValue   = this.args[2],
 			el           = document.createElement("input");
 
-		// legacy error
+		// Legacy error.
 		if (varName[0] !== "$") {
 			return this.error('$variable name "' + varName + '" is missing its sigil ($)');
 		}
@@ -831,7 +831,7 @@ Macro.add("radiobutton", {
 			checkValue = this.args[1],
 			el         = document.createElement("input");
 
-		// legacy error
+		// Legacy error.
 		if (varName[0] !== "$") {
 			return this.error('$variable name "' + varName + '" is missing its sigil ($)');
 		}
@@ -879,7 +879,7 @@ Macro.add("textarea", {
 			autofocus    = this.args[2] === "autofocus",
 			el           = document.createElement("textarea");
 
-		// legacy error
+		// Legacy error.
 		if (varName[0] !== "$") {
 			return this.error('$variable name "' + varName + '" is missing its sigil ($)');
 		}
@@ -888,8 +888,8 @@ Macro.add("textarea", {
 		el.name = "textarea-" + varId;
 		el.rows = 4;
 		el.cols = 68;
-		// ideally, we should be setting the .defaultValue property here, but IE doesn't support
-		// it yet, so we have to use .textContent, which is equivalent to .defaultValue anyway
+		// Ideally, we should be setting the `.defaultValue` property here, but IE doesn't support
+		// it yet, so we have to use `.textContent`, which is equivalent to `.defaultValue` anyway.
 		el.textContent = defaultValue;
 		if (autofocus) {
 			el.setAttribute("autofocus", "autofocus");
@@ -902,7 +902,7 @@ Macro.add("textarea", {
 		});
 		this.output.appendChild(el);
 
-		// setup a single-use post-display task to autofocus the element, if necessary
+		// Setup a single-use post-display task to autofocus the element, if necessary.
 		if (autofocus) {
 			postdisplay["#autofocus:" + el.id] = function (task) {
 				setTimeout(function () { el.focus(); }, 1);
@@ -931,7 +931,7 @@ Macro.add("textbox", {
 			el           = document.createElement("input"),
 			passage;
 
-		// legacy error
+		// Legacy error.
 		if (varName[0] !== "$") {
 			return this.error('$variable name "' + varName + '" is missing its sigil ($)');
 		}
@@ -962,7 +962,7 @@ Macro.add("textbox", {
 				Wikifier.setValue(varName, this.value);
 			})
 			.on("keypress", function (evt) {
-				// if Return/Enter is pressed, set the $variable and, optionally, forward to another passage
+				// If Return/Enter is pressed, set the $variable and, optionally, forward to another passage.
 				if (evt.which === 13) { // 13 is Return/Enter
 					evt.preventDefault();
 					Wikifier.setValue(varName, this.value);
@@ -973,7 +973,7 @@ Macro.add("textbox", {
 			});
 		this.output.appendChild(el);
 
-		// setup a single-use post-display task to autofocus the element, if necessary
+		// Setup a single-use post-display task to autofocus the element, if necessary.
 		if (autofocus) {
 			postdisplay["#autofocus:" + el.id] = function (task) {
 				setTimeout(function () { el.focus(); }, 1);
@@ -1132,10 +1132,10 @@ Macro.add("goto", {
 		var passage;
 
 		if (typeof this.args[0] === "object") {
-			// argument was in wiki link syntax
+			// Argument was in wiki link syntax.
 			passage = this.args[0].link;
 		} else {
-			// argument was simply the passage name
+			// Argument was simply the passage name.
 			passage = this.args[0];
 		}
 		if (!Story.has(passage)) {
@@ -1191,12 +1191,12 @@ Macro.add("timed", {
 			}
 		}
 
-		// add an expando method to the `items` array for iteration
+		// Add an expando method to the `items` array for iteration.
 		Object.defineProperty(items, "nextItem", {
 			value : this.self.arrayNextItemFactory()
 		});
 
-		// register the timer and, possibly, a clean up task
+		// Register the timer and, possibly, a clean up task.
 		this.self.registerTimeout(insertElement(this.output, "span", null, "macro-timed timed-insertion-container"), items);
 	},
 	arrayNextItemFactory : function () {
@@ -1211,26 +1211,26 @@ Macro.add("timed", {
 			timerId  = null,
 			nextItem = items.nextItem(),
 			worker   = function () {
-				// first: bookkeeping
+				// First: bookkeeping.
 				delete timers[timerId];
 				if (turnId !== turns()) {
 					return;
 				}
 
-				// second: set the current item and setup the next worker, if any
+				// Second: set the current item and setup the next worker, if any.
 				var curItem = nextItem;
 				if ((nextItem = items.nextItem()) !== null) {
 					timers[(timerId = setTimeout(worker, nextItem.delay))] = true;
 				}
 
-				// third: wikify the content last to reduce drift
+				// Third: wikify the content last to reduce drift.
 				var frag = document.createDocumentFragment();
 				new Wikifier(frag, curItem.content);
 				container.appendChild(frag);
 			};
 		timers[(timerId = setTimeout(worker, nextItem.delay))] = true;
 
-		// setup a single-use `predisplay` task to remove pending timers
+		// Setup a single-use `predisplay` task to remove pending timers.
 		if (!predisplay.hasOwnProperty("#timed-timers-cleanup")) {
 			predisplay["#timed-timers-cleanup"] = function (task) {
 				var timerIds = Object.keys(timers);
@@ -1261,7 +1261,7 @@ Macro.add("widget", {
 				return this.error('cannot clobber existing macro "' + widgetName + '"');
 			}
 
-			// delete the existing widget
+			// Delete the existing widget.
 			Macro.delete(widgetName);
 		}
 
@@ -1272,12 +1272,12 @@ Macro.add("widget", {
 					return function () {
 						var argsCache;
 						try {
-							// cache the existing $args variable, if any
+							// Cache the existing $args variable, if any.
 							if (State.variables.hasOwnProperty("args")) {
 								argsCache = State.variables.args;
 							}
 
-							// setup the widget arguments array
+							// Setup the widget arguments array.
 							State.variables.args = [];
 							for (var i = 0, len = this.args.length; i < len; ++i) {
 								State.variables.args[i] = this.args[i];
@@ -1285,15 +1285,15 @@ Macro.add("widget", {
 							State.variables.args.raw = this.args.raw;
 							State.variables.args.full = this.args.full;
 
-							// setup the error trapping variables
+							// Setup the error trapping variables.
 							var	outFrag = document.createDocumentFragment(),
 								resFrag = document.createDocumentFragment(),
 								errList = [];
 
-							// wikify the widget contents
+							// Wikify the widget contents.
 							new Wikifier(resFrag, contents);
 
-							// carry over the output, unless there were errors
+							// Carry over the output, unless there were errors.
 							while (resFrag.hasChildNodes()) {
 								var fc = resFrag.firstChild;
 								if (fc.classList && fc.classList.contains("error")) {
@@ -1310,10 +1310,10 @@ Macro.add("widget", {
 						} catch (e) {
 							return this.error("cannot execute widget: " + e.message);
 						} finally {
-							// teardown the widget arguments array
+							// Teardown the widget arguments array.
 							delete State.variables.args;
 
-							// restore the cached $args variable, if any
+							// Restore the cached $args variable, if any.
 							if (typeof argsCache !== "undefined") {
 								State.variables.args = argsCache;
 							}
@@ -1365,7 +1365,7 @@ if (!Has.audio) {
 				passage,
 				raw;
 
-			// process arguments
+			// Process arguments.
 			var args = this.args.slice(1);
 			while (args.length > 0) {
 				var arg = args.shift();
@@ -1428,10 +1428,10 @@ if (!Has.audio) {
 					}
 					raw = args.shift();
 					if (typeof raw === "object") {
-						// argument was in wiki link syntax
+						// Argument was in wiki link syntax.
 						passage = raw.link;
 					} else {
-						// argument was simply the passage name
+						// Argument was simply the passage name.
 						passage = raw;
 					}
 					if (!Story.has(passage)) {
@@ -1537,9 +1537,9 @@ if (!Has.audio) {
 				var	ext  = match[1].toLowerCase(),
 					type = types.hasOwnProperty(ext) ? types[ext] : "audio/" + ext;
 
-				// determine and cache the canPlay status
+				// Determine and cache the `canPlay` status.
 				if (!canPlay.hasOwnProperty(type)) {
-					// some early implementations return "no" instead of the empty string
+					// Some early implementations return "no" instead of the empty string.
 					canPlay[type] = audio.canPlayType(type).replace(/^no$/i, "") !== "";
 				}
 
@@ -1551,7 +1551,7 @@ if (!Has.audio) {
 				}
 			}
 
-			// if it contains any <source> elements, wrap the <audio> element and add it to the tracks
+			// If it contains any <source> elements, wrap the <audio> element and add it to the tracks.
 			if (audio.hasChildNodes()) {
 				audio.preload = "auto";
 				this.self.tracks[id] = new AudioWrapper(audio);
@@ -1592,7 +1592,7 @@ if (!Has.audio) {
 				fadeTo,
 				raw;
 
-			// process arguments
+			// Process arguments.
 			var args = this.args.slice(0);
 			while (args.length > 0) {
 				var arg = args.shift();
@@ -1762,7 +1762,7 @@ if (!Has.audio) {
 			if (this.shuffle) {
 				this.list.shuffle();
 
-				// try not to immediately replay the last track when shuffling
+				// Try not to immediately replay the last track when shuffling.
 				if (this.list.length > 1 && this.list[0] === this.current) {
 					this.list.push(this.list.shift());
 				}

@@ -66,7 +66,7 @@ function passage() { // eslint-disable-line no-unused-vars
 	if there is no such passage.
 **/
 function previous(offset) { // eslint-disable-line no-unused-vars
-	// legacy behavior with an offset
+	// Legacy behavior with an offset.
 	if (arguments.length !== 0) {
 		if (offset < 1) {
 			throw new RangeError("previous offset parameter must be a positive integer greater than zero");
@@ -74,14 +74,14 @@ function previous(offset) { // eslint-disable-line no-unused-vars
 		return State.length > offset ? State.peek(offset).title : "";
 	}
 
-	// behavior without an offset
+	// Behavior without an offset.
 	for (var i = State.length - 2; i >= 0; --i) {
 		if (State.history[i].title !== State.passage) {
 			return State.history[i].title;
 		}
 	}
 
-	// fallback to `State.expiredUnique` if we failed to find a passage
+	// Fallback to `State.expiredUnique` if we failed to find a passage.
 	return State.expiredUnique;
 }
 
@@ -225,6 +225,6 @@ function visitedTags(/* variadic */) {
 	}
 	return count;
 }
-// Vanilla story format compatibility shim
+// Vanilla story format compatibility shim.
 var visitedTag = visitedTags; // eslint-disable-line no-unused-vars
 

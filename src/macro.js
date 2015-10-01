@@ -37,10 +37,10 @@ var Macro = (function () { // eslint-disable-line no-unused-vars
 
 		try {
 			if (typeof def === "object") {
-				// add the macro definition
+				// Add the macro definition.
 				_macros[name] = deep ? clone(def) : def;
 			} else {
-				// add the macro alias
+				// Add the macro alias.
 				if (macrosHas(def)) {
 					_macros[name] = deep ? clone(_macros[def]) : _macros[def];
 				} else {
@@ -49,9 +49,13 @@ var Macro = (function () { // eslint-disable-line no-unused-vars
 			}
 			Object.defineProperty(_macros, name, { writable : false });
 
-			/* legacy kludge */
+			/* legacy */
+			/*
+				Since `macrosGet()` may return legacy macros, we have to add a flag to (modern)
+				API macros, so that the macro formatter will know how to call the macro.
+			*/
 			_macros[name]._MACRO_API = true;
-			/* /legacy kludge */
+			/* /legacy */
 		} catch (e) {
 			if (e.name === "TypeError") {
 				throw new Error("cannot clobber protected macro <<" + name + ">>");
@@ -61,7 +65,7 @@ var Macro = (function () { // eslint-disable-line no-unused-vars
 			}
 		}
 
-		// tags post-processing
+		// Tags post-processing.
 		if (_macros[name].hasOwnProperty("tags")) {
 			if (_macros[name].tags == null) { // lazy equality for null
 				tagsRegister(name);
@@ -80,13 +84,13 @@ var Macro = (function () { // eslint-disable-line no-unused-vars
 		}
 
 		if (macrosHas(name)) {
-			// tags pre-processing
+			// Tags pre-processing.
 			if (_macros[name].hasOwnProperty("tags")) {
 				tagsUnregister(name);
 			}
 
 			try {
-				// remove the macro definition
+				// Remove the macro definition.
 				Object.defineProperty(_macros, name, { writable : true });
 				delete _macros[name];
 			} catch (e) {
@@ -287,7 +291,7 @@ function MacroContext(context) {
 			value : context.source
 		}
 	});
-	// extend the args array with the raw and full argument strings
+	// Extend the args array with the raw and full argument strings.
 	Object.defineProperties(this.args, {
 		raw : {
 			value : context.rawArgs

@@ -35,7 +35,7 @@ if (!Array.prototype.includes) {
 }
 
 /*
-	[ES5] We just do a simple shim, without the second argument, since that's all we need here
+	[ES5] We just do a simple shim, without the second argument, since that's all we need here.
 */
 if (!Object.create || typeof Object.create !== "function") {
 	Object.defineProperty(Object, "create", {
@@ -78,7 +78,7 @@ if (!Object.create || typeof Object.create !== "function") {
  * JavaScript Extensions, General
  **********************************************************************************************************************/
 /*
-	Returns a random value from the given array in the range of lower and upper, if they are specified
+	Returns a random value from the given array in the range of lower and upper, if they are specified.
 */
 Object.defineProperty(Array, "random", {
 	configurable : true,
@@ -99,7 +99,7 @@ Object.defineProperty(Array, "random", {
 });
 
 /*
-	Returns whether the given element was found within the array
+	Returns whether the given element was found within the array.
 */
 Object.defineProperty(Array.prototype, "contains", {
 	configurable : true,
@@ -115,7 +115,7 @@ Object.defineProperty(Array.prototype, "contains", {
 });
 
 /*
-	Returns whether all of the given elements were found within the array
+	Returns whether all of the given elements were found within the array.
 */
 Object.defineProperty(Array.prototype, "containsAll", {
 	configurable : true,
@@ -144,7 +144,7 @@ Object.defineProperty(Array.prototype, "containsAll", {
 });
 
 /*
-	Returns whether any of the given elements were found within the array
+	Returns whether any of the given elements were found within the array.
 */
 Object.defineProperty(Array.prototype, "containsAny", {
 	configurable : true,
@@ -173,7 +173,7 @@ Object.defineProperty(Array.prototype, "containsAny", {
 });
 
 /*
-	Returns the number of times the given element was found within the array
+	Returns the number of times the given element was found within the array.
 */
 Object.defineProperty(Array.prototype, "count", {
 	configurable : true,
@@ -198,7 +198,7 @@ Object.defineProperty(Array.prototype, "count", {
 });
 
 /*
-	Returns a new array consisting of the flattened source array (flat map reduce)
+	Returns a new array consisting of the flattened source array (flat map reduce).
 */
 Object.defineProperty(Array.prototype, "flatten", {
 	configurable : true,
@@ -216,7 +216,7 @@ Object.defineProperty(Array.prototype, "flatten", {
 });
 
 /*
-	Removes and returns a random value from the array in the range of lower and upper, if they are specified
+	Removes and returns a random value from the array in the range of lower and upper, if they are specified.
 */
 Object.defineProperty(Array.prototype, "pluck", {
 	configurable : true,
@@ -253,7 +253,7 @@ Object.defineProperty(Array.prototype, "pluck", {
 });
 
 /*
-	Returns a random value from the array in the range of lower and upper, if they are specified
+	Returns a random value from the array in the range of lower and upper, if they are specified.
 */
 Object.defineProperty(Array.prototype, "random", {
 	configurable : true,
@@ -290,7 +290,7 @@ Object.defineProperty(Array.prototype, "random", {
 });
 
 /*
-	Randomly shuffles the array
+	Randomly shuffles the array.
 */
 Object.defineProperty(Array.prototype, "shuffle", {
 	configurable : true,
@@ -316,7 +316,7 @@ Object.defineProperty(Array.prototype, "shuffle", {
 
 /*
 	Returns a bound function that supplies the given arguments to the base function, followed
-	by the arguments are supplied to the bound function, whenever it is called
+	by the arguments are supplied to the bound function, whenever it is called.
 */
 Object.defineProperty(Function.prototype, "partial", {
 	configurable : true,
@@ -342,7 +342,7 @@ Object.defineProperty(Function.prototype, "partial", {
 });
 
 /*
-	Returns the given numerical clamped to the specified bounds
+	Returns the given numerical clamped to the specified bounds.
 */
 Object.defineProperty(Math, "clamp", {
 	configurable : true,
@@ -355,9 +355,9 @@ Object.defineProperty(Math, "clamp", {
 });
 
 /*
-	Returns a decimal number eased from 0 to 1
+	Returns a decimal number eased from 0 to 1.
 
-	n.b. The magnitude of the returned value decreases if num < 0.5 or increases if num > 0.5
+	n.b. The magnitude of the returned value decreases if num < 0.5 or increases if num > 0.5.
 */
 Object.defineProperty(Math, "easeInOut", {
 	configurable : true,
@@ -370,7 +370,7 @@ Object.defineProperty(Math, "easeInOut", {
 });
 
 /*
-	Returns the number clamped to the specified bounds
+	Returns the number clamped to the specified bounds.
 */
 Object.defineProperty(Number.prototype, "clamp", {
 	configurable : true,
@@ -385,7 +385,7 @@ Object.defineProperty(Number.prototype, "clamp", {
 });
 
 /*
-	Returns a copy of the given string with all RegExp metacharacters escaped
+	Returns a copy of the given string with all RegExp metacharacters escaped.
 */
 Object.defineProperty(RegExp, "escape", {
 	configurable : true,
@@ -398,7 +398,7 @@ Object.defineProperty(RegExp, "escape", {
 
 /*
 	Returns a formatted string, after replacing each format item in the given format string
-	with the text equivalent of the corresponding argument's value
+	with the text equivalent of the corresponding argument's value.
 */
 Object.defineProperty(String, "format", {
 	configurable : true,
@@ -454,7 +454,7 @@ Object.defineProperty(String, "format", {
 });
 
 /*
-	Returns whether the given string was found within the string
+	Returns whether the given string was found within the string.
 */
 Object.defineProperty(String.prototype, "contains", {
 	configurable : true,
@@ -470,7 +470,7 @@ Object.defineProperty(String.prototype, "contains", {
 });
 
 /*
-	Returns the number of times the given string was found within the string
+	Returns the number of times the given string was found within the string.
 */
 Object.defineProperty(String.prototype, "count", {
 	configurable : true,
@@ -501,7 +501,7 @@ Object.defineProperty(String.prototype, "count", {
 });
 
 /*
-	Returns a copy of the base string with 'count' characters replaced with 'replacement', starting at 'start'
+	Returns a copy of the base string with `count` characters replaced with `replacement`, starting at `start`.
 */
 Object.defineProperty(String.prototype, "splice", {
 	configurable : true,
@@ -548,7 +548,7 @@ Object.defineProperty(String.prototype, "splice", {
 });
 
 /*
-	Returns an array of strings, split from the string, or an empty array if the string is empty
+	Returns an array of strings, split from the string, or an empty array if the string is empty.
 */
 Object.defineProperty(String.prototype, "splitOrEmpty", {
 	configurable : true,
@@ -567,7 +567,7 @@ Object.defineProperty(String.prototype, "splitOrEmpty", {
 });
 
 /*
-	[FF-extension] Returns a string with all whitespace removed from the left side of the string
+	[FF-extension] Returns a string with all whitespace removed from the left side of the string.
 */
 if (!String.prototype.trimLeft) {
 	Object.defineProperty(String.prototype, "trimLeft", {
@@ -585,7 +585,7 @@ if (!String.prototype.trimLeft) {
 }
 
 /*
-	[FF-extension] Returns a string with all whitespace removed from the right side of the string
+	[FF-extension] Returns a string with all whitespace removed from the right side of the string.
 */
 if (!String.prototype.trimRight) {
 	Object.defineProperty(String.prototype, "trimRight", {
@@ -603,9 +603,9 @@ if (!String.prototype.trimRight) {
 }
 
 /*
-	[DEPRECATED] Returns a string with all whitespace removed from the left side of the base string
+	[DEPRECATED] Returns a string with all whitespace removed from the left side of the base string.
 
-	n.b. Just a legacy alias for String.prototype.trimLeft now
+	n.b. Just a legacy alias for String.prototype.trimLeft now.
 */
 Object.defineProperty(String.prototype, "ltrim", {
 	configurable : true,
@@ -614,9 +614,9 @@ Object.defineProperty(String.prototype, "ltrim", {
 });
 
 /*
-	[DEPRECATED] Returns a string with all whitespace removed from the right side of the base string
+	[DEPRECATED] Returns a string with all whitespace removed from the right side of the base string.
 
-	n.b. Just a legacy alias for String.prototype.trimRight now
+	n.b. Just a legacy alias for String.prototype.trimRight now.
 */
 Object.defineProperty(String.prototype, "rtrim", {
 	configurable : true,
@@ -625,9 +625,9 @@ Object.defineProperty(String.prototype, "rtrim", {
 });
 
 /*
-	Returns an array of link titles, parsed from the string
+	Returns an array of link titles, parsed from the string.
 
-	n.b. Unused in SugarCube, only included for compatibility
+	n.b. Unused in SugarCube, only included for compatibility.
 */
 Object.defineProperty(String.prototype, "readBracketedList", {
 	configurable : true,
@@ -638,16 +638,14 @@ Object.defineProperty(String.prototype, "readBracketedList", {
 			throw new TypeError("String.prototype.readBracketedList called on null or undefined");
 		}
 
-		// RegExp groups: Double-square-bracket quoted | Unquoted
+		// RegExp groups: Double-square-bracket quoted | Unquoted.
 		var	re    = new RegExp("(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^\"'\\s]\\S*)", "gm"),
 			match,
 			names = [];
 		while ((match = re.exec(this)) !== null) {
-			if (match[1]) {
-				// Double-square-bracket quoted
+			if (match[1]) { // double-square-bracket quoted
 				names.push(match[1]);
-			} else if (match[2]) {
-				// Unquoted
+			} else if (match[2]) { // unquoted
 				names.push(match[2]);
 			}
 		}
@@ -786,32 +784,34 @@ Object.defineProperties(JSON, {
 */
 (function () {
 
-	// Event handler & utility functions
+	/*
+		Event handler & utility functions.
+	*/
 	var	onKeypressFn = function (evt) {
-			// 13 is Enter/Return, 32 is Space
+			// 13 is Enter/Return, 32 is Space.
 			if (evt.which === 13 || evt.which === 32) {
 				evt.preventDefault();
 
-				// to allow delegation, attempt to trigger the event on `document.activeElement`,
-				// if possible, elsewise on `this`
+				// To allow delegation, attempt to trigger the event on `document.activeElement`,
+				// if possible, elsewise on `this`.
 				jQuery(safeActiveElement() || this).trigger("click");
 			}
 		},
 		onClickFnWrapper = function (fn) {
 			return function () {
-				// toggle "aria-pressed" status, if the attribute exists
+				// Toggle "aria-pressed" status, if the attribute exists.
 				var $this = jQuery(this);
 				if ($this.is("[aria-pressed]")) {
 					$this.attr("aria-pressed", $this.attr("aria-pressed") === "true" ? "false" : "true");
 				}
 
-				// call the true handler
+				// Call the true handler.
 				fn.apply(this, arguments);
 			};
 		},
 		oneClickFnWrapper = function (fn) {
 			return onClickFnWrapper(function () {
-				// remove both event handlers (keypress & click) and the other components
+				// Remove both event handlers (keypress & click) and the other components.
 				jQuery(this)
 					.off(".aria-clickable")
 					.removeAttr("tabindex aria-controls aria-pressed")
@@ -821,12 +821,14 @@ Object.defineProperties(JSON, {
 					.filter("button")
 						.prop("disabled", true);
 
-				// call the true handler
+				// Call the true handler.
 				fn.apply(this, arguments);
 			});
 		};
 
-	// extend jQuery with an `ariaClick()` method
+	/*
+		Extend jQuery with an `ariaClick()` method.
+	*/
 	jQuery.fn.extend({
 		ariaClick : function (options, fn) {
 			if (arguments.length === 0) {
@@ -856,26 +858,26 @@ Object.defineProperties(JSON, {
 				options.pressed = options.pressed ? "true" : "false";
 			}
 
-			// set `type` to `button` to suppress "submit" semantics, for <button> elements
+			// Set `type` to `button` to suppress "submit" semantics, for <button> elements.
 			this.filter("button").prop("type", "button");
 
-			// set `role` to `button`, for non-<a>/-<button> elements
+			// Set `role` to `button`, for non-<a>/-<button> elements.
 			this.not("a,button").attr("role", "button");
 
-			// set `tabindex` to `0` to make them focusable (unnecessary on <button> elements, but it doesn't hurt)
+			// Set `tabindex` to `0` to make them focusable (unnecessary on <button> elements, but it doesn't hurt).
 			this.attr("tabindex", 0);
 
-			// set `aria-controls`
+			// Set `aria-controls`.
 			if (options.controls != null) { // lazy equality for null
 				this.attr("aria-controls", options.controls);
 			}
 
-			// set `aria-pressed`
+			// Set `aria-pressed`.
 			if (options.pressed != null) { // lazy equality for null
 				this.attr("aria-pressed", options.pressed);
 			}
 
-			// set `aria-label` and `title`
+			// Set `aria-label` and `title`.
 			if (options.label != null) { // lazy equality for null
 				this.attr({
 					"aria-label" : options.label,
@@ -883,16 +885,16 @@ Object.defineProperties(JSON, {
 				});
 			}
 
-			// set the keypress handlers, for non-<button> elements
-			//   n.b. for the single-use case, the click handler will also remove this handler
+			// Set the keypress handlers, for non-<button> elements.
+			//   n.b. For the single-use case, the click handler will also remove this handler.
 			this.not("button").on(
 				"keypress.aria-clickable" + options.namespace,
 				options.selector,
 				onKeypressFn
 			);
 
-			// set the click handlers
-			//   n.b. to ensure both handlers are properly removed, `one()` must not be used here
+			// Set the click handlers.
+			//   n.b. To ensure both handlers are properly removed, `one()` must not be used here.
 			this.on(
 				"click.aria-clickable" + options.namespace,
 				options.selector,

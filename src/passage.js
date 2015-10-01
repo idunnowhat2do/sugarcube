@@ -107,7 +107,7 @@ var Passage = (function () { // eslint-disable-line no-unused-vars
 		Setup the Passage prototype.
 	*/
 	Object.defineProperties(Passage.prototype, {
-		// getters
+		// Getters.
 		className : {
 			get : function () {
 				return this.classes.join(" ");
@@ -129,7 +129,7 @@ var Passage = (function () { // eslint-disable-line no-unused-vars
 			}
 		},
 
-		// methods
+		// Methods.
 		description : {
 			value : function () {
 				if (config.passages.descriptions != null) { // lazy equality for null
@@ -164,11 +164,11 @@ var Passage = (function () { // eslint-disable-line no-unused-vars
 		processText : {
 			value : function () {
 				var res = this.text;
-				// handle the nobr tag
+				// Handle the nobr tag.
 				if (this.tags.contains("nobr")) {
 					res = res.replace(/^\n+|\n+$/g, "").replace(/\n+/g, " ");
 				}
-				// check for image passage transclusion
+				// Check for image passage transclusion.
 				if (this.tags.contains("Twine.image")) {
 					res = "[img[" + res + "]]";
 				}
@@ -180,49 +180,49 @@ var Passage = (function () { // eslint-disable-line no-unused-vars
 			value : function () {
 				if (DEBUG) { console.log('[<Passage>.render()] title: `' + this.title + '`'); }
 
-				// create the new passage element
+				// Create the new passage element.
 				var passage = insertElement(null, "div", this.domId, "passage");
 				passage.setAttribute("data-passage", this.title);
 
-				// add classes (generated from tags) to the passage and <body>
+				// Add classes (generated from tags) to the passage and <body>.
 				for (var i = 0; i < this.classes.length; ++i) {
 					document.body.classList.add(this.classes[i]);
 					passage.classList.add(this.classes[i]);
 				}
 
-				// execute pre-render tasks
+				// Execute pre-render tasks.
 				Object.keys(prerender).forEach(function (task) {
 					if (typeof prerender[task] === "function") {
 						prerender[task].call(this, passage, task);
 					}
 				}, this);
 
-				// wikify the PassageHeader passage, if it exists, into the passage element
+				// Wikify the PassageHeader passage, if it exists, into the passage element.
 				if (Story.has("PassageHeader")) {
 					new Wikifier(passage, Story.get("PassageHeader").processText());
 				}
 
-				// wikify the passage into its element
+				// Wikify the passage into its element.
 				new Wikifier(passage, this.processText());
 
-				// wikify the PassageFooter passage, if it exists, into the passage element
+				// Wikify the PassageFooter passage, if it exists, into the passage element.
 				if (Story.has("PassageFooter")) {
 					new Wikifier(passage, Story.get("PassageFooter").processText());
 				}
 
-				// convert breaks to paragraphs within the output passage
+				// Convert breaks to paragraphs within the output passage.
 				if (config.cleanupWikifierOutput) {
 					convertBreaksToParagraphs(passage);
 				}
 
-				// execute post-render tasks
+				// Execute post-render tasks.
 				Object.keys(postrender).forEach(function (task) {
 					if (typeof postrender[task] === "function") {
 						postrender[task].call(this, passage, task);
 					}
 				}, this);
 
-				// create/update the excerpt cache to reflect the rendered text
+				// Create/update the excerpt cache to reflect the rendered text.
 				this._excerpt = Passage.getExcerptFromNode(passage);
 
 				return passage;
@@ -242,9 +242,9 @@ var Passage = (function () { // eslint-disable-line no-unused-vars
 					excerpt   = node.textContent.trim();
 				if (excerpt !== "") {
 					excerpt = excerpt
-						// compact whitespace
+						// Compact whitespace.
 						.replace(/\s+/g, " ")
-						// attempt to match the excerpt regexp
+						// Attempt to match the excerpt regexp.
 						.match(excerptRe);
 				}
 				return excerpt ? excerpt[1] + "\u2026" : "\u2026"; // horizontal ellipsis
@@ -257,27 +257,27 @@ var Passage = (function () { // eslint-disable-line no-unused-vars
 
 				var	excerptRe = new RegExp("(\\S+(?:\\s+\\S+){0," + (count > 0 ? count - 1 : 7) + "})"),
 					excerpt   = text
-						// strip macro tags (replace with a space)
+						// Strip macro tags (replace with a space).
 						.replace(/<<.*?>>/g, " ")
-						// strip html tags (replace with a space)
+						// Strip html tags (replace with a space).
 						.replace(/<.*?>/g, " ")
-						// the above might have left problematic whitespace, so trim
+						// The above might have left problematic whitespace, so trim.
 						.trim()
-						// strip wiki tables
+						// Strip wiki tables.
 						.replace(/^\s*\|.*\|.*?$/gm, "")
-						// strip wiki images
+						// Strip wiki images.
 						.replace(/\[[<>]?img\[[^\]]*\]\]/g, "")
-						// clean wiki links, i.e. remove all but the pretty link text
+						// Clean wiki links, i.e. remove all but the pretty link text.
 						.replace(/\[\[([^|\]]*)(?:|[^\]]*)?\]\]/g, "$1")
-						// clean wiki !headings
+						// Clean wiki !headings.
 						.replace(/^\s*!+(.*?)$/gm, "$1")
-						// clean wiki bold/italic/underline/highlight formatting
+						// Clean wiki bold/italic/underline/highlight formatting.
 						.replace(/\'{2}|\/{2}|_{2}|@{2}/g, "")
-						// a final trim
+						// A final trim.
 						.trim()
-						// compact whitespace
+						// Compact whitespace.
 						.replace(/\s+/g, " ")
-						// attempt to match the excerpt regexp
+						// Attempt to match the excerpt regexp.
 						.match(excerptRe);
 				return excerpt ? excerpt[1] + "\u2026" : "\u2026"; // horizontal ellipsis
 			}

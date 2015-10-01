@@ -63,21 +63,22 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 	 * Constructor
 	 ******************************************************************************************************************/
 	function Wikifier(place, source) {
-		// general Wikifier properties
+		// General Wikifier properties.
 		this.formatter = _formatterCache || Wikifier.compileFormatters();
 		this.output    = place != null ? place : document.createDocumentFragment(); // lazy equality for null
 		this.source    = source;
 		this.nextMatch = 0;
 
-		// formatter-related properties
+		// Formatter-related properties.
 		this._rawArgs  = "";
 		this._nobr     = [];
 
-		// wikify the source into the output buffer element
+		// Wikify the source into the output buffer element.
 		this.subWikify(this.output);
 
-		// remove the temp output buffer element; unnecessary, as the browser will eventually GC the element,
-		// however, it's better to clean up after ourselves and not generate garbage in the first place
+		// Remove the temp output buffer element; unnecessary, as the browser will eventually
+		// GC the element, however, it's better to clean up after ourselves and not generate
+		// garbage in the first place.
 		if (place == null && typeof this.output.remove === "function") { // lazy equality for null
 			this.output.remove();
 		}
@@ -90,7 +91,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 	Object.defineProperties(Wikifier.prototype, {
 		subWikify : {
 			value : function (output, terminator, terminatorIgnoreCase) {
-				// Temporarily replace the output buffer
+				// Temporarily replace the output buffer.
 				var oldOutput = this.output;
 				this.output = output;
 
@@ -98,45 +99,45 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					terminatorMatch,
 					formatterMatch;
 				do {
-					// Prepare the RegExp match positions
+					// Prepare the RegExp match positions.
 					this.formatter.formatterRegExp.lastIndex = this.nextMatch;
 					if (terminatorRegExp) {
 						terminatorRegExp.lastIndex = this.nextMatch;
 					}
 
-					// Get the first matches
+					// Get the first matches.
 					formatterMatch  = this.formatter.formatterRegExp.exec(this.source);
 					terminatorMatch = terminatorRegExp ? terminatorRegExp.exec(this.source) : null;
 
-					// Check for a terminator & formatter match
+					// Check for a terminator & formatter match.
 					if (terminatorMatch && (!formatterMatch || terminatorMatch.index <= formatterMatch.index)) { // terminator match
-						// Output any text before the match
+						// Output any text before the match.
 						if (terminatorMatch.index > this.nextMatch) {
 							this.outputText(this.output, this.nextMatch, terminatorMatch.index);
 						}
 
-						// Set the match parameters
+						// Set the match parameters.
 						this.matchStart  = terminatorMatch.index;
 						this.matchLength = terminatorMatch[0].length;
 						this.matchText   = terminatorMatch[0];
 						this.nextMatch   = terminatorRegExp.lastIndex;
 
-						// Restore the output pointer and exit
+						// Restore the output pointer and exit.
 						this.output = oldOutput;
 						return;
 					} else if (formatterMatch) { // formatter match
-						// Output any text before the match
+						// Output any text before the match.
 						if (formatterMatch.index > this.nextMatch) {
 							this.outputText(this.output, this.nextMatch, formatterMatch.index);
 						}
 
-						// Set the match parameters
+						// Set the match parameters.
 						this.matchStart  = formatterMatch.index;
 						this.matchLength = formatterMatch[0].length;
 						this.matchText   = formatterMatch[0];
 						this.nextMatch   = this.formatter.formatterRegExp.lastIndex;
 
-						// Figure out which formatter matched
+						// Figure out which formatter matched.
 						var matchingFormatter = -1;
 						for (var i = 1; i < formatterMatch.length; ++i) {
 							if (formatterMatch[i]) {
@@ -145,7 +146,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							}
 						}
 
-						// Call the formatter
+						// Call the formatter.
 						if (matchingFormatter !== -1) {
 							this.formatter.formatters[matchingFormatter].handler(this);
 							if (runtime.temp.break != null) { break; } // lazy equality for null
@@ -154,7 +155,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 				} while (terminatorMatch || formatterMatch);
 
 				if (runtime.temp.break == null) { // lazy equality for null
-					// Output any text after the last match
+					// Output any text after the last match.
 					if (this.nextMatch < this.source.length) {
 						this.outputText(this.output, this.nextMatch, this.source.length);
 						this.nextMatch = this.source.length;
@@ -164,11 +165,11 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					&& this.output.lastChild.nodeType === Node.ELEMENT_NODE
 					&& this.output.lastChild.nodeName.toUpperCase() === "BR"
 				) {
-					// In case of <<break>>/<<continue>>, remove the last <br>
+					// In case of <<break>>/<<continue>>, remove the last <br>.
 					removeElement(this.output.lastChild);
 				}
 
-				// Restore the output buffer
+				// Restore the output buffer.
 				this.output = oldOutput;
 			}
 		},
@@ -179,20 +180,21 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 			}
 		},
 
-		/**
-		 * Meant to be called by macros, this returns the raw, unprocessed, text given to the currently executing macro.
-		 * Unlike TiddlyWiki's default mechanism, this does not attempt to split up the arguments into an array.
-		 */
+		/*
+			Meant to be called by macros, this returns the raw, unprocessed, text given to the
+			currently executing macro.  Unlike TiddlyWiki's default mechanism, this does not
+			attempt to split up the arguments into an array.
+		*/
 		rawArgs : {
 			value : function () {
 				return this._rawArgs;
 			}
 		},
 
-		/**
-		 * Meant to be called by macros, this returns the text given to the currently executing macro after doing some
-		 * magic with certain Twine/Twee operators (like: eq, gt, and $variable).
-		 */
+		/*
+			Meant to be called by macros, this returns the text given to the currently executing
+			macro after doing TwineScript-to-JavaScript transformations (e.g. to, is, $variable).
+		*/
 		fullArgs : {
 			value : function () {
 				return Wikifier.parse(this.rawArgs());
@@ -205,9 +207,9 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 	 * Static Methods
 	 ******************************************************************************************************************/
 	Object.defineProperties(Wikifier, {
-		/**
-		 * Returns a compiled Wikifier formatter object
-		 */
+		/*
+			Returns a compiled Wikifier formatter object.
+		*/
 		compileFormatters : {
 			value : function () {
 				if (DEBUG) { console.log("[Wikifier.compileFormatters]"); }
@@ -224,33 +226,33 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 			}
 		},
 
-		/**
-		 * Returns the given string with all Twine/Twee operators converted to their JavaScript counterparts
-		 */
+		/*
+			Returns the given string with all Twine/Twee operators converted to their JavaScript counterparts.
+		*/
 		parse : {
 			value : function (expression) {
 				// Double quoted | Single quoted | Empty quotes | Operator delimiters | Barewords & Sigil
 				var	re    = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\\')|[^'])+)')|((?:\"\")|(?:''))|([=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}]+)|([^\"'=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}\\s]+))", "g"),
 					match,
 					map   = {
-						// $variable mapping
+						// $variable mapping.
 						"$"     : "State.variables.",
-						// assignment operators
+						// Assignment operators.
 						"to"    : "=",
-						// equality operators
+						// Equality operators.
 						"eq"    : "==",
 						"neq"   : "!=",
 						"is"    : "===",
 						"isnot" : "!==",
-						// relational operators
+						// Relational operators.
 						"gt"    : ">",
 						"gte"   : ">=",
 						"lt"    : "<",
 						"lte"   : "<=",
-						// logical operators
+						// Logical operators.
 						"and"   : "&&",
 						"or"    : "||",
-						// unary operators
+						// Unary operators.
 						"not"   : "!",
 						"def"   : '"undefined" !== typeof',
 						"ndef"  : '"undefined" === typeof'
@@ -259,21 +261,29 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 				while ((match = re.exec(expression)) !== null) {
 					// no-op: Double quoted | Single quoted | Empty quotes | Operator delimiters
 
-					// Barewords & Sigil
+					// Barewords & Sigil.
 					if (match[5]) {
 						var token = match[5];
 
-						// special cases
+						// Special cases.
 						if (token === "$") {
-							// if the token is "$", then it's either a naked dollar-sign or a function alias, so skip over it
+							/*
+								If the token is "$", then it's either a naked dollar-sign or a
+								function alias, so skip over it.
+							*/
 							continue;
 						} else if (token[0] === "$") {
-							// if the token starts with a "$", then it's a $variable, so just replace the sigil ("$")
+							/*
+								If the token starts with a "$", then it's a $variable, so just
+								replace the sigil ("$").
+							*/
 							token = "$";
 						} else if (token === "is") {
-							// if the token is "is", check to see if it's followed by "not", if so, convert them into the
-							// "isnot" operator; this is a safety feature, since "$a is not $b" probably sounds reasonable
-							// to most users
+							/*
+								If the token is `is`, check to see if it's followed by `not`, if so,
+								convert them into the `isnot` operator.  This is a safety feature,
+								since `$a is not $b` probably sounds reasonable to most users.
+							*/
 							var	start = re.lastIndex,
 								part  = expression.slice(start);
 							if (/^\s+not\b/.test(part)) {
@@ -282,8 +292,10 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							}
 						}
 
-						// n.b. do not simply use "map[token]" here, otherwise tokens which match
-						//      properties from the prototype chain will break the world (e.g. "toString")
+						/*
+							DO NOT simply use `map[token]` here, otherwise tokens which match
+							properties from the prototype chain will break the world.
+						*/
 						if (map.hasOwnProperty(token)) {
 							expression = expression.splice(
 								match.index,  // starting index
@@ -298,9 +310,9 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 			}
 		},
 
-		/**
-		 * Returns the value of the given story $variable
-		 */
+		/*
+			Returns the value of the given story $variable.
+		*/
 		getValue : {
 			value : function (storyVar) {
 				var	pNames = Wikifier.parseStoryVariable(storyVar),
@@ -321,9 +333,9 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 			}
 		},
 
-		/**
-		 * Sets the value of the given story $variable
-		 */
+		/*
+			Sets the value of the given story $variable.
+		*/
 		setValue : {
 			value : function (storyVar, newValue) {
 				var pNames = Wikifier.parseStoryVariable(storyVar);
@@ -348,9 +360,9 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 			}
 		},
 
-		/**
-		 * Returns the property name chain of the given story $variable, which may be of arbitrary complexity
-		 */
+		/*
+			Returns the property name chain of the given story $variable, which may be of arbitrary complexity.
+		*/
 		parseStoryVariable : {
 			value : function (varText) {
 				var	re     = /^(?:\$(\w+)|\.(\w+)|\[(?:(?:\"((?:\\.|[^\"\\])+)\")|(?:\'((?:\\.|[^\'\\])+)\')|(\$\w.*)|(\d+))\])/,
@@ -358,26 +370,26 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					pNames = [];
 
 				while ((match = re.exec(varText)) !== null) {
-					// Remove full match from varText
+					// Remove full match from varText.
 					varText = varText.slice(match[0].length);
 
 					if (match[1]) {
-						// Base variable
+						// Base variable.
 						pNames.push(match[1]);
 					} else if (match[2]) {
-						// Dot property
+						// Dot property.
 						pNames.push(match[2]);
 					} else if (match[3]) {
-						// Square-bracketed property (double quoted)
+						// Square-bracketed property (double quoted).
 						pNames.push(match[3]);
 					} else if (match[4]) {
-						// Square-bracketed property (single quoted)
+						// Square-bracketed property (single quoted).
 						pNames.push(match[4]);
 					} else if (match[5]) {
-						// Square-bracketed property (embedded $variable)
+						// Square-bracketed property (embedded $variable).
 						pNames.push(Wikifier.getValue(match[5]));
 					} else if (match[6]) {
-						// Square-bracketed property (numeric index)
+						// Square-bracketed property (numeric index).
 						pNames.push(Number(match[6]));
 					}
 				}
@@ -385,27 +397,27 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 			}
 		},
 
-		/**
-		 * Evaluate the given Twine expression and return the result, throwing if there were errors
-		 */
+		/*
+			Evaluate the given Twine expression and return the result, throwing if there were errors.
+		*/
 		evalExpression : {
 			value : function (expression) {
 				return Util.evalExpression(Wikifier.parse(expression));
 			}
 		},
 
-		/**
-		 * Evaluate the given Twine statements and return the result, throwing if there were errors
-		 */
+		/*
+			Evaluate the given Twine statements and return the result, throwing if there were errors.
+		*/
 		evalStatements : {
 			value : function (statements) {
 				return Util.evalStatements(Wikifier.parse(statements));
 			}
 		},
 
-		/**
-		 * Wikify the given text and discard the output, throwing if there were errors
-		 */
+		/*
+			Wikify the given text and discard the output, throwing if there were errors.
+		*/
 		wikifyEval : {
 			value : function (text) {
 				var errTrap = document.createDocumentFragment();
@@ -419,7 +431,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						errTrap.removeChild(fc);
 					}
 				} finally {
-					// unnecessary, but let's be tidy
+					// Unnecessary, but let's be tidy.
 					removeChildren(errTrap); // remove any remaining children
 					if (typeof errTrap.remove === "function") { // lazy equality for null
 						errTrap.remove();
@@ -428,9 +440,9 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 			}
 		},
 
-		/**
-		 * Create and return an internal link
-		 */
+		/*
+			Create and return an internal link.
+		*/
 		createInternalLink : {
 			value : function (place, passage, text, callback) {
 				var el = document.createElement("a");
@@ -461,9 +473,9 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 			}
 		},
 
-		/**
-		 * Create and return an external link
-		 */
+		/*
+			Create and return an external link.
+		*/
 		createExternalLink : {
 			value : function (place, url, text) {
 				var el = insertElement(place, "a", null, "link-external", text);
@@ -476,9 +488,9 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 			}
 		},
 
-		/**
-		 * Returns whether the given link source is external (probably)
-		 */
+		/*
+			Returns whether the given link source is external (probably).
+		*/
 		isExternalLink : {
 			value : function (link) {
 				if (Story.has(link)) {
@@ -497,7 +509,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 	 ******************************************************************************************************************/
 	Object.defineProperty(Wikifier, "textPrimitives", { value : {} });
 
-	// tier-1 primitives
+	// Tier-1 primitives.
 	Object.defineProperties(Wikifier.textPrimitives, {
 		anyLetter : {
 			value : _unicodeOk ? "[A-Za-z0-9_\\-\u00c0-\u017e]" : "[A-Za-z0-9_\\-\u00c0-\u00ff]"
@@ -508,7 +520,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 		}
 	});
 
-	// tier-2 primitives
+	// Tier-2 primitives.
 	Object.defineProperties(Wikifier.textPrimitives, {
 		inlineCSS : {
 			value : [
@@ -567,7 +579,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 
 		cssToDOMName : {
 			value : function (name) {
-				// Returns a DOM property name for a CSS property, parsed from the string
+				// Returns a DOM property name for a CSS property, parsed from the string.
 				if (!name.contains("-")) {
 					switch (name) {
 					case "bgcolor": name = "backgroundColor"; break;
@@ -688,13 +700,13 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 				// [[text|~link][setter]]
 				// [<>img[title|source][~link][setter]]
 
-				// scan left delimiter
+				// Scan left delimiter.
 				c = peek();
 				if (c === '[') {
-					// link
+					// Link.
 					isLink = item.isLink = true;
 				} else {
-					// image
+					// Image.
 					isLink = false;
 					switch (c) {
 					case '<':
@@ -713,7 +725,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					item.isImage = true;
 				}
 
-				// scan for sections
+				// Scan for sections.
 				if (next() !== '[') {
 					return error("malformed wiki {0}", isLink ? "link" : "image");
 				}
@@ -1242,7 +1254,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					}
 					el = insertElement(el, "img");
 					source = Wikifier.helpers.evalPassageId(markup.source);
-					// check for image passage transclusion
+					// Check for image passage transclusion.
 					if (source.slice(0, 5) !== "data:" && Story.has(source)) {
 						var passage = Story.get(source);
 						if (passage.tags.contains("Twine.image")) {
@@ -1276,8 +1288,8 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 				handler : function (w) {
 					var matchStart = this.lookaheadRegExp.lastIndex = w.matchStart;
 					if (this.parseTag(w)) {
-						// if parseBody() is called below, it will change the current working
-						// values, so we must cache them now
+						// If parseBody() is called below, it will mutate the current working
+						// values, so we must cache them now.
 						var	nextMatch = w.nextMatch,
 							name      = this.working.name,
 							handler   = this.working.handler,
@@ -1297,7 +1309,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 								if (typeof macro[handler] === "function") {
 									var args = !macro.hasOwnProperty("skipArgs") || !macro.skipArgs ? this.parseArgs(rawArgs) : [];
 
-									// new-style macros
+									// New-style macros.
 									if (macro.hasOwnProperty("_MACRO_API")) {
 										/*
 											Call the handler, modifying the execution context chain appropriately.
@@ -1322,7 +1334,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 											this.context = this.context.parent;
 										}
 									}
-									// old-style macros
+									// Old-style macros.
 									else {
 										var prevRawArgs = w._rawArgs;
 										w._rawArgs = rawArgs; // cache the raw arguments for use by Wikifier.rawArgs() & Wikifier.fullArgs()
@@ -1450,30 +1462,30 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						var arg;
 
 						if (match[1]) {
-							// Double quoted
+							// Double quoted.
 							arg = match[1];
 
-							// Evaluate the string to handle escaped characters
+							// Evaluate the string to handle escaped characters.
 							try {
 								arg = Util.evalExpression(arg);
 							} catch (e) {
 								throw new Error("unable to parse macro argument '" + arg + "': " + e.message);
 							}
 						} else if (match[2]) {
-							// Single quoted
+							// Single quoted.
 							arg = match[2];
 
-							// Evaluate the string to handle escaped characters
+							// Evaluate the string to handle escaped characters.
 							try {
 								arg = Util.evalExpression(arg);
 							} catch (e) {
 								throw new Error('unable to parse macro argument "' + arg + '": ' + e.message);
 							}
 						} else if (match[3]) {
-							// Empty quotes
+							// Empty quotes.
 							arg = "";
 						} else if (match[4]) {
-							// Double square-bracketed
+							// Double square-bracketed.
 							arg = match[4];
 
 							var markup = Wikifier.helpers.parseSquareBracketedMarkup({
@@ -1488,7 +1500,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 									+ arg.slice(markup.pos) + '" (pos: ' + markup.pos + ')');
 							}
 
-							// Convert to a link or image object
+							// Convert to a link or image object.
 							if (markup.isLink) {
 								// .isLink, [.text], [.forceInternal], .link, [.setter]
 								arg = { isLink : true };
@@ -1506,7 +1518,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 											isImage : true,
 											source  : source
 										};
-									// check for Twine 1.4 Base64 image passage transclusion
+									// Check for Twine 1.4 Base64 image passage transclusion.
 									if (source.slice(0, 5) !== "data:" && Story.has(source)) {
 										var passage = Story.get(source);
 										if (passage.tags.contains("Twine.image")) {
@@ -1531,21 +1543,21 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 									: null;
 							}
 						} else if (match[5]) {
-							// Barewords
+							// Barewords.
 							arg = match[5];
 
 							if (/^\$\w+/.test(arg)) {
-								// $variable, so substitute its value
+								// $variable, so substitute its value.
 								arg = Wikifier.getValue(arg);
 							} else if (/^(?:settings|setup)[\.\[]/.test(arg)) {
-								// settings or setup object, so try to evaluate it
+								// Settings or setup object, so try to evaluate it.
 								try {
 									arg = Wikifier.evalExpression(arg);
 								} catch (e) {
 									throw new Error('unable to parse macro argument "' + arg + '": ' + e.message);
 								}
 							} else if (/^(?:\{.*\}|\[.*\])$/.test(arg)) {
-								// Object or Array literal, so try to evaluate it
+								// Object or Array literal, so try to evaluate it.
 								//   n.b. Authors really shouldn't be passing object/array literals as arguments.  If they want to
 								//        pass a complex type, then store it in a variable and pass that instead.
 								try {
@@ -1554,19 +1566,19 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 									throw new Error('unable to parse macro argument "' + arg + '": ' + e.message);
 								}
 							} else if (arg === "null") {
-								// Null literal, so convert it into null
+								// Null literal, so convert it into null.
 								arg = null;
 							} else if (arg === "undefined") {
-								// Undefined literal, so convert it into undefined
+								// Undefined literal, so convert it into undefined.
 								arg = undefined;
 							} else if (arg === "true") {
-								// Boolean true literal, so convert it into boolean true
+								// Boolean true literal, so convert it into boolean true.
 								arg = true;
 							} else if (arg === "false") {
-								// Boolean false literal, so convert it into boolean false
+								// Boolean false literal, so convert it into boolean false.
 								arg = false;
 							} else if (!isNaN(parseFloat(arg)) && isFinite(arg)) {
-								// Numeric literal, so convert it into a number
+								// Numeric literal, so convert it into a number.
 								//   n.b. Octal literals are not handled correctly by Number() (e.g. Number("077") yields 77, not 63).
 								//        We could use eval("077") instead, which does correctly yield 63, however, it's probably far
 								//        more likely that the average Twine/Twee author would expect "077" to yield 77 rather than 63.
@@ -1690,7 +1702,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						}
 					}
 					if (blockLevel) {
-						// skip the leading and, if it exists, trailing newlines
+						// Skip the leading and, if it exists, trailing newlines.
 						w.nextMatch += blockMatch[0].length;
 						w.subWikify(el, "\\n?" + this.terminator);
 					} else {
@@ -1752,7 +1764,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 				}
 			},
 
-			{   // n.b. This formatter MUST come after any formatter which handles HTML tag-like constructs (e.g. html & rawText)
+			{   // This formatter MUST come after any formatter which handles HTML tag-like constructs (e.g. html & rawText).
 				name         : "htmlTag",
 				match        : "<\\w+(?:\\s+[^\\u0000-\\u001F\\u007F-\\u009F\\s\"'>\\/=]+(?:\\s*=\\s*(?:\"[^\"]*?\"|'[^']*?'|[^\\s\"'=<>`]+))?)*\\s*\\/?>",
 				tagPattern   : "<(\\w+)",
@@ -1820,7 +1832,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					if (passage !== "") {
 						if (el.tagName.toUpperCase() === "IMG") {
 							var source;
-							// check for image passage transclusion
+							// Check for image passage transclusion.
 							if (passage.slice(0, 5) !== "data:" && Story.has(passage)) {
 								passage = Story.get(passage);
 								if (passage.tags.contains("Twine.image")) {

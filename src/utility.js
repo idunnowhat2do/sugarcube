@@ -119,7 +119,7 @@ function addAccessibleClickHandler(targets, selector, fn, one, namespace) { // e
 function insertElement(place, type, id, classNames, text, title) {
 	var el = document.createElement(type);
 
-	// add attributes
+	// Add attributes/properties.
 	if (id) {
 		el.id = id;
 	}
@@ -130,12 +130,12 @@ function insertElement(place, type, id, classNames, text, title) {
 		el.title = title;
 	}
 
-	// add content
+	// Add content.
 	if (text) {
 		insertText(el, text);
 	}
 
-	// append it to the given node
+	// Append it to the given node.
 	if (place) {
 		place.appendChild(el);
 	}
@@ -401,11 +401,11 @@ function fade(el, options) { // eslint-disable-line no-unused-vars
 	function setOpacity(el, opacity) { // eslint-disable-line no-shadow
 		var l = Math.floor(opacity * 100);
 
-		// old IE
+		// Old IE.
 		el.style.zoom = 1;
 		el.style.filter = "alpha(opacity=" + l + ")";
 
-		// CSS
+		// CSS.
 		el.style.opacity = opacity;
 	}
 
@@ -468,7 +468,7 @@ function scrollWindowTo(el, increment) { // eslint-disable-line no-unused-vars
 		}
 	}
 
-	// normalize increment
+	// Normalize increment.
 	if (increment == null) { // lazy equality for null
 		increment = 0.1;
 	} else {
@@ -594,7 +594,7 @@ var Util = Object.defineProperties({}, {
 	evalExpression : {
 		value : function (expression) {
 			"use strict";
-			// the parens are to protect object literals from being confused with block statements
+			// The parens are to protect object literals from being confused with block statements.
 			return eval("(" + expression + ")"); // eslint-disable-line no-eval
 		}
 	},
@@ -605,7 +605,7 @@ var Util = Object.defineProperties({}, {
 	evalStatements : {
 		value : function (statements) {
 			"use strict";
-			// the enclosing anonymous function is to isolate the passed code within its own scope
+			// The enclosing anonymous function is to isolate the passed code within its own scope.
 			eval("(function(){" + statements + "\n})();"); // eslint-disable-line no-eval
 			return true;
 		}
@@ -645,35 +645,35 @@ var Util = Object.defineProperties({}, {
 					destP = dest[p];
 				if (orig.hasOwnProperty(p)) {
 					if (dest.hasOwnProperty(p)) {
-						// key exists in both
+						// Key exists in both.
 						if (origP === destP) {
-							// values are exactly the same, so do nothing
+							// Values are exactly the same, so do nothing.
 							continue;
 						}
 						if (typeof origP === typeof destP) {
-							// values are of the same basic type
+							// Values are of the same basic type.
 							if (typeof origP === "function") {
-								// values are functions
+								// Values are functions.
 								/* diff[p] = [ Util.DiffOp.Copy, destP ]; */
 								if (origP.toString() !== destP.toString()) {
 									diff[p] = [ Util.DiffOp.Copy, destP ];
 								}
 							} else if (typeof origP !== "object" || origP === null) {
-								// values are scalars or null
+								// Values are scalars or null.
 								diff[p] = [ Util.DiffOp.Copy, destP ];
 							} else {
-								// values are objects
+								// Values are objects.
 								var	origPType = objToString.call(origP),
 									destPType = objToString.call(destP);
 								if (origPType === destPType) {
-									// values are objects of the same prototype
+									// Values are objects of the same prototype.
 									if (origPType === "[object Date]") {
-										// special case: Date object
+										// Special case: Date object.
 										if (+origP !== +destP) {
 											diff[p] = [ Util.DiffOp.CopyDate, +destP ];
 										}
 									} else if (origPType === "[object RegExp]") {
-										// special case: RegExp object
+										// Special case: RegExp object.
 										if (origP.toString() !== destP.toString()) {
 											diff[p] = [ Util.DiffOp.Copy, clone(destP) ];
 										}
@@ -684,19 +684,19 @@ var Util = Object.defineProperties({}, {
 										}
 									}
 								} else {
-									// values are objects of different prototypes
+									// Values are objects of different prototypes.
 									diff[p] = [ Util.DiffOp.Copy, clone(destP) ];
 								}
 							}
 						} else {
-							// values are of different types
+							// Values are of different types.
 							diff[p] = [
 								Util.DiffOp.Copy,
 								typeof destP !== "object" || destP === null ? destP : clone(destP)
 							];
 						}
 					} else {
-						// key only exists in orig
+						// Key only exists in orig.
 						if (origIsArray && Util.isNumeric(p)) {
 							var np = +p;
 							if (!aOpRef) {
@@ -717,7 +717,7 @@ var Util = Object.defineProperties({}, {
 						}
 					}
 				} else {
-					// key only exists in dest
+					// Key only exists in dest.
 					diff[p] = [
 						Util.DiffOp.Copy,
 						typeof destP !== "object" || destP === null ? destP : clone(destP)
@@ -1133,11 +1133,11 @@ Object.defineProperties(AudioWrapper.prototype, {
 			this._faderId = setInterval((function (self) {
 				var min, max;
 				if (from < to) {
-					// fade in
+					// Fade in.
 					min = from;
 					max = to;
 				} else {
-					// fade out
+					// Fade out.
 					min = to;
 					max = from;
 				}

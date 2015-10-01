@@ -24,7 +24,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 	function savesInit() {
 		if (DEBUG) { console.log("[Save/savesInit()]"); }
 
-		// disable save slots and the autosave when Web Storage is unavailable
+		// Disable save slots and the autosave when Web Storage is unavailable.
 		if (storage.name === "cookie") {
 			savesObjClear();
 			config.saves.autosave = undefined;
@@ -36,12 +36,12 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 			config.saves.slots = 0;
 		}
 
-		// get the saves object
+		// Get the saves object.
 		var	saves   = savesObjGet(),
 			updated = false;
 
 		/* legacy */
-		// convert an ancient saves array into a new saves object
+		// Convert an ancient saves array into a new saves object.
 		if (Array.isArray(saves)) {
 			saves = {
 				autosave : null,
@@ -51,11 +51,11 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		}
 		/* /legacy */
 
-		// handle the author changing the number of save slots
+		// Handle the author changing the number of save slots.
 		if (config.saves.slots !== saves.slots.length) {
 			if (config.saves.slots < saves.slots.length) {
-				// attempt to decrease the number of slots; this will only compact
-				// the slots array, by removing empty slots, no saves will be deleted
+				// Attempt to decrease the number of slots; this will only compact
+				// the slots array, by removing empty slots, no saves will be deleted.
 				saves.slots.reverse();
 				saves.slots = saves.slots.filter(function (val) {
 					if (val === null && this.count > 0) {
@@ -66,14 +66,14 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 				}, { count : saves.slots.length - config.saves.slots });
 				saves.slots.reverse();
 			} else if (config.saves.slots > saves.slots.length) {
-				// attempt to increase the number of slots
+				// Attempt to increase the number of slots.
 				_appendSlots(saves.slots, config.saves.slots - saves.slots.length);
 			}
 			updated = true;
 		}
 
 		/* legacy */
-		// convert old-style saves
+		// Convert old-style saves.
 		var convertOldSave = function (saveObj) {
 			if (saveObj.hasOwnProperty("data")) {
 				delete saveObj.mode;
@@ -127,14 +127,14 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		/* /legacy */
 
 		/* legacy */
-		// remove save stores which are empty
+		// Remove save stores which are empty.
 		if (_savesObjIsEmpty(saves)) {
 			storage.delete("saves");
 			updated = false;
 		}
 		/* /legacy */
 
-		// if the saves object was updated, then update the store
+		// If the saves object was updated, then update the store.
 		if (updated) {
 			_savesObjSave(saves);
 		}
@@ -336,7 +336,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 		var	file   = event.target.files[0],
 			reader = new FileReader();
 
-		// add the handler that will capture the file information once the load is finished
+		// Add the handler that will capture the file information once the load is finished.
 		jQuery(reader).on("load", function (evt) {
 			if (!evt.target.result) {
 				return;
@@ -353,7 +353,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 			_unmarshal(saveObj);
 		});
 
-		// initiate the file load
+		// Initiate the file load.
 		reader.readAsText(file);
 	}
 
@@ -402,7 +402,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 			config.saves.onSave(saveObj);
 		}
 
-		// delta encode the state history
+		// Delta encode the state history.
 		saveObj.state.delta = State.deltaEncode(saveObj.state.history);
 		delete saveObj.state.history;
 
@@ -434,7 +434,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 			}
 			/* /legacy */
 
-			// delta decode the state history
+			// Delta decode the state history.
 			saveObj.state.history = State.deltaDecode(saveObj.state.delta);
 			delete saveObj.state.delta;
 
@@ -446,7 +446,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 				throw new Error(strings.errors.saveIdMismatch);
 			}
 
-			// restore the state
+			// Restore the state.
 			State.unmarshalForSave(saveObj.state); // may also throw exceptions
 		} catch (e) {
 			UI.alert(e.message[0].toUpperCase() + e.message.slice(1) + ".</p><p>" + strings.aborting + ".");

@@ -21,7 +21,7 @@ window.SugarCube = {};
 	Version object.
 */
 var	version = Object.freeze({
-		// data properties
+		// Data properties.
 		title      : "SugarCube",
 		major      : "{{BUILD_VERSION_MAJOR}}",
 		minor      : "{{BUILD_VERSION_MINOR}}",
@@ -33,7 +33,7 @@ var	version = Object.freeze({
 		extensions : {},
 		/* /legacy */
 
-		// method properties
+		// Method properties.
 		toString : function () {
 			return this.major + "." + this.minor + "." + this.patch
 				+ (this.prerelease ? "-" + this.prerelease : "") + "+" + this.build;

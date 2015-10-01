@@ -248,8 +248,8 @@ var Story = (function () { // eslint-disable-line no-unused-vars
 					/* no-op */
 					break;
 				case "object":
-					// currently, we assume that the only properties which are objects will
-					// either be arrays or array-like-objects
+					// Currently, we assume that the only properties which are objects will
+					// either be arrays or array-like-objects.
 					for (var j = 0, jend = passage[key].length; j < jend; ++j) {
 						/* eslint-disable eqeqeq */
 						if (passage[key][j] == value) { // lazy equality, since null & undefined are both possible

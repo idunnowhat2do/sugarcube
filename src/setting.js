@@ -47,7 +47,7 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 		// Load existing settings.
 		settingsLoad();
 
-		// Execute onInit callbacks.
+		// Execute `onInit` callbacks.
 		_definitions.forEach(function (definition) {
 			if (definition.hasOwnProperty("onInit")) {
 				var	thisp = {

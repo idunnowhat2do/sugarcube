@@ -23,7 +23,7 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 		case "webStorage":
 			driver = new KeyValueStoreDriverWebStorage(persist, storageId);
 			if (!driver._ok) {
-				// fallback to cookies
+				// Fallback to cookies.
 				driver = new KeyValueStoreDriverCookie(persist, storageId);
 			}
 			break;
@@ -120,22 +120,22 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 				/* legacy */
 				var legacy = false;
 				if (value.slice(0, 2) === "#~") {
-					// try it as a flagged, compressed value
+					// Try it as a flagged, compressed value.
 					value = this._driver.deserialize(value.slice(2));
 					legacy = true;
 				} else {
 					try {
 				/* /legacy */
-						// try it as an unflagged, compressed value
+						// Try it as an unflagged, compressed value.
 						value = this._driver.deserialize(value);
 				/* legacy */
 					} catch (e) {
-						// finally, try it as an uncompressed value
+						// Finally, try it as an uncompressed value.
 						value = JSON.parse(value);
 						legacy = true;
 					}
 				}
-				// attempt to upgrade the legacy value
+				// Attempt to upgrade the legacy value.
 				if (legacy && !this.set(key, value, true)) {
 					throw new Error('unable to upgrade legacy value for key "' + key + '" to new format');
 				}
@@ -252,8 +252,8 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 		length : {
 			get : function () {
 				/*
-					DO NOT do something like: return this._engine.length;
-					That will return the length of the entire store, rather than just our prefixed keys.
+					DO NOT do something like `return this._engine.length;` as that will return
+					the length of the entire store, rather than just our prefixed keys.
 				*/
 				return this.keys().length;
 			}
@@ -282,7 +282,7 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 					return false;
 				}
 
-				// we really should be checking keys here
+				// We really should be checking keys here.
 				return this._engine.getItem(this._prefix + key) != null; // lazy equality for null
 			}
 		},
@@ -463,7 +463,7 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 				}
 
 				try {
-					// undefined expiry means a session cookie
+					// Undefined expiry means a session cookie.
 					this._setCookie(key, value, this.persist ? "Tue, 19 Jan 2038 03:14:07 GMT" : undefined);
 				} catch (e) {
 					if (!quiet) {
@@ -495,7 +495,7 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 					}
 					return false;
 				}
-				// seems like we cannot simply use `.has()` to test because of IE shenanigans ?
+				// It seems like we cannot simply use `.has()` here for validation because of IE shenanigans?
 				//if (this.has(key)) {
 				var test = this.get(key);
 				if (test !== null && test !== "") {
