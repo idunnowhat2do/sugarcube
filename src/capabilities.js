@@ -9,41 +9,41 @@
 
 var
 	/*
-		Browser object (only used by `Has` below).
+		Browser object.
 	*/
 	Browser = Object.freeze((function () { // eslint-disable-line no-unused-vars
 		"use strict";
 		/* eslint-disable max-len */
-		var browser = {
+		var ua = {
 			userAgent : navigator.userAgent.toLowerCase()
 		};
 
-		browser.isGecko = navigator && navigator.product === "Gecko" && !/webkit|trident/.test(browser.userAgent);
+		ua.isGecko = navigator && navigator.product === "Gecko" && !/webkit|trident/.test(ua.userAgent);
 
-		browser.isIE      = /msie|trident/.test(browser.userAgent) && !browser.userAgent.contains("opera");
-		browser.ieVersion = (function () {
-			var ver = /(?:msie\s+|rv:)(\d{1,2}\.\d)/.exec(browser.userAgent);
+		ua.isIE      = /msie|trident/.test(ua.userAgent) && !ua.userAgent.contains("opera");
+		ua.ieVersion = (function () {
+			var ver = /(?:msie\s+|rv:)(\d{1,2}\.\d)/.exec(ua.userAgent);
 			return ver ? +ver[1] : 0;
 		})();
 
 		// opera <= 12: "opera/9.80 (windows nt 6.1; wow64) presto/2.12.388 version/12.16"
 		// opera >= 15: "mozilla/5.0 (windows nt 6.1; wow64) applewebkit/537.36 (khtml, like gecko) chrome/28.0.1500.52 safari/537.36 opr/15.0.1147.130"
-		browser.isOpera      = browser.userAgent.contains("opera") || browser.userAgent.contains(" opr/");
-		browser.operaVersion = (function () {
-			var	re  = new RegExp((/applewebkit|chrome/.test(browser.userAgent) ? "opr" : "version") + "\\/(\\d{1,2}\\.\\d+)"),
-				ver = re.exec(browser.userAgent);
+		ua.isOpera      = ua.userAgent.contains("opera") || ua.userAgent.contains(" opr/");
+		ua.operaVersion = (function () {
+			var	re  = new RegExp((/applewebkit|chrome/.test(ua.userAgent) ? "opr" : "version") + "\\/(\\d{1,2}\\.\\d+)"),
+				ver = re.exec(ua.userAgent);
 			return ver ? +ver[1] : 0;
 		})();
 
-		browser.isMobile = Object.freeze({
-			any        : function () { var b = browser.isMobile; return b.Android || b.BlackBerry || b.iOS || b.Windows; },
-			Android    : /android/.test(browser.userAgent),
-			BlackBerry : /blackberry/.test(browser.userAgent),
-			iOS        : /ip(?:hone|ad|od)/.test(browser.userAgent),
-			Windows    : /iemobile/.test(browser.userAgent)
+		ua.isMobile = Object.freeze({
+			any        : function () { var b = ua.isMobile; return b.Android || b.BlackBerry || b.iOS || b.Windows; },
+			Android    : /android/.test(ua.userAgent),
+			BlackBerry : /blackberry/.test(ua.userAgent),
+			iOS        : /ip(?:hone|ad|od)/.test(ua.userAgent),
+			Windows    : /iemobile/.test(ua.userAgent)
 		});
 
-		return browser;
+		return ua;
 		/* eslint-enable max-len */
 	})()),
 
@@ -88,4 +88,10 @@ var
 			audio : typeof document.createElement("audio").canPlayType === "function"
 		};
 	})());
+
+/* legacy */
+var
+	browser = Browser, // eslint-disable-line no-unused-vars
+	has     = Has;     // eslint-disable-line no-unused-vars
+/* /legacy */
 
