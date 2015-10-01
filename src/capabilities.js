@@ -53,7 +53,7 @@ var
 	Has = Object.freeze((function () { // eslint-disable-line no-unused-vars
 		"use strict";
 
-		function webStorageTest(store) {
+		function webStorageIsOK(store) {
 			try {
 				if (store != null && store.length >= 0) { // lazy equality for null
 					var	tkey = "SugarCube.localStorage.test",
@@ -76,8 +76,8 @@ var
 				Notably: Firefox bug #748620 [https://bugzilla.mozilla.org/show_bug.cgi?id=748620]
 				         and the iOS browser core throwing on setItem() calls when in private mode
 			*/
-			localStorage   : "localStorage" in window && webStorageTest(window.localStorage),
-			sessionStorage : "sessionStorage" in window && webStorageTest(window.sessionStorage),
+			localStorage   : "localStorage" in window && webStorageIsOK(window.localStorage),
+			sessionStorage : "sessionStorage" in window && webStorageIsOK(window.sessionStorage),
 
 			/*
 				It's probably safe to assume the existence of Blob by the existence of File.
@@ -90,6 +90,9 @@ var
 	})());
 
 /* legacy */
+/*
+	Create legacy aliases for `browser` and `has`.
+*/
 var
 	browser = Browser, // eslint-disable-line no-unused-vars
 	has     = Has;     // eslint-disable-line no-unused-vars

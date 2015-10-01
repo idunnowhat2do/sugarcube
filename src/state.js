@@ -549,8 +549,8 @@ var State = (function () { // eslint-disable-line no-unused-vars
 			Truncate the history, if necessary, by discarding moments from the bottom.
 		*/
 		if (config.history.maxStates !== 0) {
-			// using `slice()` or `splice()` here would be difficult, as we need to set the
-			// two expired passage name properties, so we use `shift()` within a loop
+			// Using `slice()` or `splice()` here would be difficult, as we need to set the
+			// two expired passage name properties, so we use `shift()` within a loop.
 			while (historySize() > config.history.maxStates) {
 				_expiredLast = _history.shift().title;
 				if (_expiredLast !== historyBottom().title) {
@@ -688,7 +688,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 	function stateDisplay(title, link, option) {
 		if (DEBUG) { console.log("[State/stateDisplay()]"); }
 
-		// process option
+		// Process the option parameter.
 		var noHistory = false;
 		switch (option) {
 		case undefined:
@@ -728,7 +728,9 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		*/
 		var passage = Story.get(title);
 
-		// execute the pre-history tasks
+		/*
+			Execute the pre-history tasks.
+		*/
 		Object.keys(prehistory).forEach(function (task) {
 			if (typeof prehistory[task] === "function") {
 				prehistory[task].call(this, task);
@@ -861,11 +863,11 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		*/
 		UI.patchOutlines(true); // initially hide outlines
 		jQuery("#story")
-			// add `link-external` to all `href` bearing `<a>` elements which don't have it
+			// Add `link-external` to all `href` bearing `<a>` elements which don't have it.
 			.find("a[href]:not(.link-external)")
 				.addClass("link-external")
 				.end()
-			// add `tabindex=0` to all interactive elements which don't have it
+			// Add `tabindex=0` to all interactive elements which don't have it.
 			.find("a,link,button,input,select,textarea")
 				.not("[tabindex]")
 					.attr("tabindex", 0);
@@ -956,6 +958,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 	}));
 
 })();
+
 /* legacy */
 /*
 	Create a legacy alias for `History`; the `state` alias is handled in `sugarcube.js`.
