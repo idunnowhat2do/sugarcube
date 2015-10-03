@@ -8,7 +8,7 @@
  **********************************************************************************************************************/
 /*
 	global AudioWrapper, Has, Macro, State, Story, Util, Wikifier, config, insertElement,insertText, postdisplay,
-	       predisplay, printableStringOrDefault, runtime, storage, strings, turns
+	       prehistory, printableStringOrDefault, runtime, storage, strings, turns
 */
 
 /***********************************************************************************************************************
@@ -60,7 +60,7 @@ function getWikifyEvalHandler(content, widgetArgs, callback) {
 /***********************************************************************************************************************
  * Links Macros
  **********************************************************************************************************************/
-/**
+/*
 	<<actions>>
 */
 Macro.add("actions", {
@@ -127,16 +127,28 @@ Macro.add("actions", {
 	}
 });
 
-/**
+/*
 	<<back>> & <<return>>
 */
 Macro.add([ "back", "return" ], {
 	handler : function () {
-		var	stateIdx = -1,
-			passage,
+		var	passage,
 			text,
 			image,
-			el;
+			el,
+			momentIndex     = -1,
+			findMomentIndex = function (title) {
+				/*
+					Find the index of the most recent moment within the in-play history (past only)
+					whose title does not match that of the active (present) moment's.
+				*/
+				for (var i = State.length - 2; i >= 0; --i) {
+					if (State.history[i].title === title) {
+						return i;
+					}
+				}
+				return -1;
+			};
 
 		/* legacy */
 		if (this.args.length > 1) {
@@ -180,17 +192,16 @@ Macro.add([ "back", "return" ], {
 		}
 
 		if (passage == null) { // lazy equality for null
-			// Find the index and title of the most recent passage within the story history
-			// whose title does not match that of the active passage.
-			for (var i = State.length - 2; i >= 0; --i) {
-				if (State.history[i].title !== State.passage) {
-					stateIdx = i;
-					passage = State.history[i].title;
-					break;
-				}
+			/*
+				Find the index and title of the most recent moment whose title does not match
+				that of the active (present) moment's.
+			*/
+			momentIndex = findMomentIndex(State.passage);
+			if (momentIndex !== -1) {
+				passage = State.history[momentIndex].title;
 			}
 			// Fallback to `State.expiredUnique` if we failed to find a passage.
-			if (passage == null && State.expiredUnique !== "") { // lazy equality for null
+			else if (State.expiredUnique !== "") {
 				passage = State.expiredUnique;
 			}
 		} else {
@@ -198,15 +209,12 @@ Macro.add([ "back", "return" ], {
 				return this.error('passage "' + passage + '" does not exist');
 			}
 			if (this.name === "back") {
-				// Find the index of the most recent passage within the story history whose
-				// title matches that of the specified passage.
-				for (var i = State.length - 2; i >= 0; --i) { // eslint-disable-line no-redeclare
-					if (State.history[i].title === passage) {
-						stateIdx = i;
-						break;
-					}
-				}
-				if (stateIdx === -1) {
+				/*
+					Find the index of the most recent moment whose title does not match that
+					of the specified passage.
+				*/
+				momentIndex = findMomentIndex(passage);
+				if (momentIndex === -1) {
 					return this.error('cannot find passage "' + passage + '" in the current story history');
 				}
 			}
@@ -215,18 +223,18 @@ Macro.add([ "back", "return" ], {
 		if (passage == null) { // lazy equality for null
 			return this.error("cannot find passage");
 		}
-//		if (this.name === "back" && stateIdx === -1) {
+//		if (this.name === "back" && momentIndex === -1) {
 //			// no-op; we're already at the first passage in the current story history
 //			return;
 //		}
 
-		if (this.name !== "back" || stateIdx !== -1) {
+		if (this.name !== "back" || momentIndex !== -1) {
 			el = document.createElement("a");
 			jQuery(el)
 				.addClass("link-internal")
 				.ariaClick({ one : true }, this.name === "return"
 					? function () { State.play(passage); }
-					: function () { State.goTo(stateIdx); });
+					: function () { State.goTo(momentIndex); });
 		} else {
 			el = document.createElement("span");
 			el.classList.add("link-disabled");
@@ -241,7 +249,7 @@ Macro.add([ "back", "return" ], {
 	}
 });
 
-/**
+/*
 	<<choice>>
 */
 Macro.add("choice", {
@@ -325,7 +333,7 @@ Macro.add("choice", {
 /***********************************************************************************************************************
  * Display Macros
  **********************************************************************************************************************/
-/**
+/*
 	<<display>>
 */
 Macro.add("display", {
@@ -358,7 +366,7 @@ Macro.add("display", {
 	}
 });
 
-/**
+/*
 	<<nobr>>
 */
 Macro.add("nobr", {
@@ -370,7 +378,7 @@ Macro.add("nobr", {
 	}
 });
 
-/**
+/*
 	<<print>>, <<=>>, & <<->>
 */
 Macro.add([ "print", "=", "-" ], {
@@ -391,7 +399,7 @@ Macro.add([ "print", "=", "-" ], {
 	}
 });
 
-/**
+/*
 	<<silently>>
 */
 Macro.add("silently", {
@@ -423,7 +431,7 @@ Macro.add("silently", {
 /***********************************************************************************************************************
  * Control Macros
  **********************************************************************************************************************/
-/**
+/*
 	<<if>>, <<elseif>>, & <<else>>
 */
 Macro.add("if", {
@@ -481,7 +489,7 @@ Macro.add("if", {
 	}
 });
 
-/**
+/*
 	<<for>>, <<break>>, & <<continue>>
 */
 Macro.add("for", {
@@ -564,7 +572,7 @@ Macro.add([ "break", "continue" ], {
 /***********************************************************************************************************************
  * Variables Macros
  **********************************************************************************************************************/
-/**
+/*
 	<<set>>
 */
 Macro.add("set", {
@@ -578,7 +586,7 @@ Macro.add("set", {
 	}
 });
 
-/**
+/*
 	<<unset>>
 */
 Macro.add("unset", {
@@ -589,7 +597,7 @@ Macro.add("unset", {
 		}
 
 		var	expression = this.args.full,
-			re         = /state\.active\.variables\.(\w+)/g,
+			re         = /State\.variables\.(\w+)/g,
 			match;
 
 		while ((match = re.exec(expression)) !== null) {
@@ -602,7 +610,7 @@ Macro.add("unset", {
 	}
 });
 
-/**
+/*
 	<<remember>>
 */
 Macro.add("remember", {
@@ -615,7 +623,7 @@ Macro.add("remember", {
 		var expression = this.args.full;
 		if (Macro.evalStatements(expression, this)) {
 			var	remember = storage.get("remember") || {},
-				re       = /state\.active\.variables\.(\w+)/g,
+				re       = /State\.variables\.(\w+)/g,
 				match;
 
 			while ((match = re.exec(expression)) !== null) {
@@ -638,7 +646,7 @@ Macro.add("remember", {
 	}
 });
 
-/**
+/*
 	<<forget>>
 */
 Macro.add("forget", {
@@ -649,7 +657,7 @@ Macro.add("forget", {
 		}
 
 		var	expression = this.args.full,
-			re         = /state\.active\.variables\.(\w+)/g,
+			re         = /State\.variables\.(\w+)/g,
 			match,
 			remember   = storage.get("remember"),
 			needStore  = false;
@@ -675,12 +683,12 @@ Macro.add("forget", {
 /***********************************************************************************************************************
  * Scripting Macros
  **********************************************************************************************************************/
-/**
+/*
 	<<run>>
 */
 Macro.add("run", "set"); // add <<run>> as an alias of <<set>>
 
-/**
+/*
 	<<script>>
 */
 Macro.add("script", {
@@ -695,7 +703,7 @@ Macro.add("script", {
 /***********************************************************************************************************************
  * Interactive Macros
  **********************************************************************************************************************/
-/**
+/*
 	<<button>> & <<click>>
 */
 Macro.add([ "button", "click" ], {
@@ -772,7 +780,7 @@ Macro.add([ "button", "click" ], {
 	}
 });
 
-/**
+/*
 	<<checkbox>>
 */
 Macro.add("checkbox", {
@@ -785,36 +793,49 @@ Macro.add("checkbox", {
 			return this.error("no " + errors.join(" or ") + " specified");
 		}
 
+		/*
+			Try to ensure that we receive the $variable's name (incl. sigil), not its value.
+		*/
+		if (typeof this.args[0] !== "string" || this.args[0].trim()[0] !== "$") {
+			return this.error('$variable name "' + this.args[0] + '" is missing its sigil ($)');
+		}
+
 		var	varName      = this.args[0].trim(),
 			varId        = Util.slugify(varName),
 			uncheckValue = this.args[1],
 			checkValue   = this.args[2],
 			el           = document.createElement("input");
 
-		// Legacy error.
-		if (varName[0] !== "$") {
-			return this.error('$variable name "' + varName + '" is missing its sigil ($)');
-		}
+		/*
+			Setup and append the input element to the output buffer.
+		*/
+		jQuery(el)
+			.attr({
+				"id"       : "checkbox-" + varId,
+				"name"     : "checkbox-" + varId,
+				"type"     : "checkbox",
+				"tabindex" : 0 // for accessiblity
+			})
+			.addClass("macro-" + this.name)
+			.on("change", function () {
+				Wikifier.setValue(varName, this.checked ? checkValue : uncheckValue);
+			})
+			.appendTo(this.output);
 
-		el.type = "checkbox";
-		el.id   = "checkbox-" + varId;
-		el.name = "checkbox-" + varId;
-		el.classList.add("macro-" + this.name);
-		el.setAttribute("tabindex", 0); // for accessiblity
+		/*
+			Set the $variable and input element to the appropriate value and state, as requested.
+		*/
 		if (this.args.length > 3 && this.args[3] === "checked") {
 			el.checked = true;
 			Wikifier.setValue(varName, checkValue);
 		} else {
 			Wikifier.setValue(varName, uncheckValue);
 		}
-		jQuery(el).on("change", function () {
-			Wikifier.setValue(varName, this.checked ? checkValue : uncheckValue);
-		});
-		this.output.appendChild(el);
+
 	}
 });
 
-/**
+/*
 	<<radiobutton>>
 */
 Macro.add("radiobutton", {
@@ -826,16 +847,21 @@ Macro.add("radiobutton", {
 			return this.error("no " + errors.join(" or ") + " specified");
 		}
 
+		/*
+			Try to ensure that we receive the $variable's name (incl. sigil), not its value.
+		*/
+		if (typeof this.args[0] !== "string" || this.args[0].trim()[0] !== "$") {
+			return this.error('$variable name "' + this.args[0] + '" is missing its sigil ($)');
+		}
+
 		var	varName    = this.args[0].trim(),
 			varId      = Util.slugify(varName),
 			checkValue = this.args[1],
 			el         = document.createElement("input");
 
-		// Legacy error.
-		if (varName[0] !== "$") {
-			return this.error('$variable name "' + varName + '" is missing its sigil ($)');
-		}
-
+		/*
+			Setup and increment the group counter.
+		*/
 		if (!runtime.temp.hasOwnProperty("radiobutton")) {
 			runtime.temp.radiobutton = {};
 		}
@@ -843,25 +869,35 @@ Macro.add("radiobutton", {
 			runtime.temp.radiobutton[varId] = 0;
 		}
 
-		el.type = "radio";
-		el.id   = "radiobutton-" + varId + "-" + runtime.temp.radiobutton[varId]++;
-		el.name = "radiobutton-" + varId;
-		el.classList.add("macro-" + this.name);
-		el.setAttribute("tabindex", 0); // for accessiblity
+		/*
+			Setup and append the input element to the output buffer.
+		*/
+		jQuery(el)
+			.attr({
+				"id"       : "radiobutton-" + varId + "-" + runtime.temp.radiobutton[varId]++,
+				"name"     : "radiobutton-" + varId,
+				"type"     : "radio",
+				"tabindex" : 0 // for accessiblity
+			})
+			.addClass("macro-" + this.name)
+			.on("change", function () {
+				if (this.checked) {
+					Wikifier.setValue(varName, checkValue);
+				}
+			})
+			.appendTo(this.output);
+
+		/*
+			Set the $variable to the checked value and the input element to checked, if requested.
+		*/
 		if (this.args.length > 2 && this.args[2] === "checked") {
 			el.checked = true;
 			Wikifier.setValue(varName, checkValue);
 		}
-		jQuery(el).on("change", function () {
-			if (this.checked) {
-				Wikifier.setValue(varName, checkValue);
-			}
-		});
-		this.output.appendChild(el);
 	}
 });
 
-/**
+/*
 	<<textarea>>
 */
 Macro.add("textarea", {
@@ -873,37 +909,52 @@ Macro.add("textarea", {
 			return this.error("no " + errors.join(" or ") + " specified");
 		}
 
+		/*
+			Try to ensure that we receive the $variable's name (incl. sigil), not its value.
+		*/
+		if (typeof this.args[0] !== "string" || this.args[0].trim()[0] !== "$") {
+			return this.error('$variable name "' + this.args[0] + '" is missing its sigil ($)');
+		}
+
 		var	varName      = this.args[0].trim(),
 			varId        = Util.slugify(varName),
 			defaultValue = this.args[1],
 			autofocus    = this.args[2] === "autofocus",
 			el           = document.createElement("textarea");
 
-		// Legacy error.
-		if (varName[0] !== "$") {
-			return this.error('$variable name "' + varName + '" is missing its sigil ($)');
-		}
+		/*
+			Setup and append the textarea element to the output buffer.
+		*/
+		jQuery(el)
+			.attr({
+				"id"       : "textarea-" + varId,
+				"name"     : "textarea-" + varId,
+				"rows"     : 4,
+				"cols"     : 68,
+				"tabindex" : 0 // for accessiblity
+			})
+			.addClass("macro-" + this.name)
+			.on("change", function () {
+				Wikifier.setValue(varName, this.value);
+			})
+			.appendTo(this.output);
 
-		el.id   = "textarea-" + varId;
-		el.name = "textarea-" + varId;
-		el.rows = 4;
-		el.cols = 68;
-		// Ideally, we should be setting the `.defaultValue` property here, but IE doesn't support
-		// it yet, so we have to use `.textContent`, which is equivalent to `.defaultValue` anyway.
-		el.textContent = defaultValue;
-		if (autofocus) {
-			el.setAttribute("autofocus", "autofocus");
-		}
-		el.classList.add("macro-" + this.name);
-		el.setAttribute("tabindex", 0); // for accessiblity
+		/*
+			Set the $variable and textarea element to the default value.
+		*/
 		Wikifier.setValue(varName, defaultValue);
-		jQuery(el).on("change", function () {
-			Wikifier.setValue(varName, this.value);
-		});
-		this.output.appendChild(el);
+		// Ideally, we should be setting the `.defaultValue` property here, but IE doesn't support
+		// it, so we have to use `.textContent`, which is equivalent to `.defaultValue` anyway.
+		el.textContent = defaultValue;
 
-		// Setup a single-use post-display task to autofocus the element, if necessary.
+		/*
+			Autofocus the textarea element, if requested.
+		*/
 		if (autofocus) {
+			// Set the element's "autofocus" attribute.
+			el.setAttribute("autofocus", "autofocus");
+
+			// Setup a single-use post-display task to autofocus the element.
 			postdisplay["#autofocus:" + el.id] = function (task) {
 				setTimeout(function () { el.focus(); }, 1);
 				delete postdisplay[task]; // single-use task
@@ -912,7 +963,7 @@ Macro.add("textarea", {
 	}
 });
 
-/**
+/*
 	<<textbox>>
 */
 Macro.add("textbox", {
@@ -924,17 +975,19 @@ Macro.add("textbox", {
 			return this.error("no " + errors.join(" or ") + " specified");
 		}
 
+		/*
+			Try to ensure that we receive the $variable's name (incl. sigil), not its value.
+		*/
+		if (typeof this.args[0] !== "string" || this.args[0].trim()[0] !== "$") {
+			return this.error('$variable name "' + this.args[0] + '" is missing its sigil ($)');
+		}
+
 		var	varName      = this.args[0].trim(),
 			varId        = Util.slugify(varName),
 			defaultValue = this.args[1],
 			autofocus    = false,
 			el           = document.createElement("input"),
 			passage;
-
-		// Legacy error.
-		if (varName[0] !== "$") {
-			return this.error('$variable name "' + varName + '" is missing its sigil ($)');
-		}
 
 		if (this.args.length > 3) {
 			passage   = this.args[2];
@@ -947,17 +1000,17 @@ Macro.add("textbox", {
 			}
 		}
 
-		el.type  = "text";
-		el.id    = "textbox-" + varId;
-		el.name  = "textbox-" + varId;
-		el.value = defaultValue;
-		if (autofocus) {
-			el.setAttribute("autofocus", "autofocus");
-		}
-		el.classList.add("macro-" + this.name);
-		el.setAttribute("tabindex", 0); // for accessiblity
-		Wikifier.setValue(varName, defaultValue);
+		/*
+			Setup and append the input element to the output buffer.
+		*/
 		jQuery(el)
+			.attr({
+				"id"       : "textbox-" + varId,
+				"name"     : "textbox-" + varId,
+				"type"     : "text",
+				"tabindex" : 0 // for accessiblity
+			})
+			.addClass("macro-" + this.name)
 			.on("change", function () {
 				Wikifier.setValue(varName, this.value);
 			})
@@ -970,11 +1023,23 @@ Macro.add("textbox", {
 						State.play(passage);
 					}
 				}
-			});
-		this.output.appendChild(el);
+			})
+			.appendTo(this.output);
 
-		// Setup a single-use post-display task to autofocus the element, if necessary.
+		/*
+			Set the $variable and input element to the default value.
+		*/
+		Wikifier.setValue(varName, defaultValue);
+		el.value = defaultValue;
+
+		/*
+			Autofocus the input element, if requested.
+		*/
 		if (autofocus) {
+			// Set the element's "autofocus" attribute.
+			el.setAttribute("autofocus", "autofocus");
+
+			// Setup a single-use post-display task to autofocus the element.
 			postdisplay["#autofocus:" + el.id] = function (task) {
 				setTimeout(function () { el.focus(); }, 1);
 				delete postdisplay[task]; // single-use task
@@ -987,7 +1052,7 @@ Macro.add("textbox", {
 /***********************************************************************************************************************
  * DOM (Classes) Macros
  **********************************************************************************************************************/
-/**
+/*
 	<<addclass>> & <<toggleclass>>
 */
 Macro.add([ "addclass", "toggleclass" ], {
@@ -1016,7 +1081,7 @@ Macro.add([ "addclass", "toggleclass" ], {
 	}
 });
 
-/**
+/*
 	<<removeclass>>
 */
 Macro.add("removeclass", {
@@ -1043,7 +1108,7 @@ Macro.add("removeclass", {
 /***********************************************************************************************************************
  * DOM (Content) Macros
  **********************************************************************************************************************/
-/**
+/*
 	<<copy>>
 */
 Macro.add("copy", {
@@ -1062,7 +1127,7 @@ Macro.add("copy", {
 	}
 });
 
-/**
+/*
 	<<append>>, <<prepend>>, & <<replace>>
 */
 Macro.add([ "append", "prepend", "replace" ], {
@@ -1097,7 +1162,7 @@ Macro.add([ "append", "prepend", "replace" ], {
 	}
 });
 
-/**
+/*
 	<<remove>>
 */
 Macro.add("remove", {
@@ -1120,7 +1185,7 @@ Macro.add("remove", {
 /***********************************************************************************************************************
  * Miscellaneous Macros
  **********************************************************************************************************************/
-/**
+/*
 	<<goto>>
 */
 Macro.add("goto", {
@@ -1156,7 +1221,7 @@ Macro.add("goto", {
 	}
 });
 
-/**
+/*
 	<<timed>>
 */
 Macro.add("timed", {
@@ -1191,60 +1256,49 @@ Macro.add("timed", {
 			}
 		}
 
-		// Add an expando method to the `items` array for iteration.
-		Object.defineProperty(items, "nextItem", {
-			value : this.self.arrayNextItemFactory()
-		});
-
 		// Register the timer and, possibly, a clean up task.
 		this.self.registerTimeout(insertElement(this.output, "span", null, "macro-timed timed-insertion-container"), items);
-	},
-	arrayNextItemFactory : function () {
-		return function () {
-			if (this.length === 0) { return null; }
-			return this.shift();
-		};
 	},
 	registerTimeout : function (container, items) {
 		var	turnId   = turns(),
 			timers   = this.timers,
 			timerId  = null,
-			nextItem = items.nextItem(),
+			nextItem = items.shift(),
 			worker   = function () {
-				// First: bookkeeping.
+				// 1. Bookkeeping.
 				delete timers[timerId];
 				if (turnId !== turns()) {
 					return;
 				}
 
-				// Second: set the current item and setup the next worker, if any.
+				// 2. Set the current item and setup the next worker, if any.
 				var curItem = nextItem;
-				if ((nextItem = items.nextItem()) !== null) {
+				if ((nextItem = items.shift()) != null) { // lazy equality for null
 					timers[(timerId = setTimeout(worker, nextItem.delay))] = true;
 				}
 
-				// Third: wikify the content last to reduce drift.
+				// 3. Wikify the content last to reduce drift.
 				var frag = document.createDocumentFragment();
 				new Wikifier(frag, curItem.content);
 				container.appendChild(frag);
 			};
 		timers[(timerId = setTimeout(worker, nextItem.delay))] = true;
 
-		// Setup a single-use `predisplay` task to remove pending timers.
-		if (!predisplay.hasOwnProperty("#timed-timers-cleanup")) {
-			predisplay["#timed-timers-cleanup"] = function (task) {
+		// Setup a single-use `prehistory` task to remove pending timers.
+		if (!prehistory.hasOwnProperty("#timed-timers-cleanup")) {
+			prehistory["#timed-timers-cleanup"] = function (task) {
 				var timerIds = Object.keys(timers);
 				for (var i = 0; i < timerIds.length; ++i) {
 					delete timers[timerIds[i]];
 					clearTimeout(timerIds[i]);
 				}
-				delete predisplay[task]; // single-use task
+				delete prehistory[task]; // single-use task
 			};
 		}
 	}
 });
 
-/**
+/*
 	<<widget>>
 */
 Macro.add("widget", {
