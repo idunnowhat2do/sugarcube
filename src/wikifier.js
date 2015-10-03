@@ -268,14 +268,14 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						// Special cases.
 						if (token === "$") {
 							/*
-								If the token is "$", then it's either a naked dollar-sign or a
+								If the token is `$`, then it's either a naked dollar-sign or a
 								function alias, so skip over it.
 							*/
 							continue;
 						} else if (token[0] === "$") {
 							/*
-								If the token starts with a "$", then it's a $variable, so just
-								replace the sigil ("$").
+								If the token starts with a `$`, then it's a $variable, so just
+								replace the sigil (`$`).
 							*/
 							token = "$";
 						} else if (token === "is") {
