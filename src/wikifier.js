@@ -1832,7 +1832,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					if (passage !== "") {
 						if (el.tagName.toUpperCase() === "IMG") {
 							var source;
-							// Check for image passage transclusion.
+							// Handle image passage transclusion.
 							if (passage.slice(0, 5) !== "data:" && Story.has(passage)) {
 								passage = Story.get(passage);
 								if (passage.tags.contains("Twine.image")) {

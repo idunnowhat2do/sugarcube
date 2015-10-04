@@ -12,6 +12,77 @@
  * Utility Functions
  **********************************************************************************************************************/
 /*
+	[DEPRECATED] Returns the jQuery-wrapped target element(s) after making them accessible clickables (ARIA compatibility).
+*/
+function addAccessibleClickHandler(targets, selector, fn, one, namespace) { // eslint-disable-line no-unused-vars
+	if (arguments.length < 2) {
+		throw new Error("addAccessibleClickHandler insufficient number of parameters");
+	}
+
+	if (typeof selector === "function") {
+		namespace = one;
+		one       = fn;
+		fn        = selector;
+		selector  = undefined;
+	}
+
+	if (typeof fn !== "function") {
+		throw new TypeError("addAccessibleClickHandler handler parameter must be a function");
+	}
+
+	return jQuery(targets).ariaClick({
+		namespace : namespace,
+		one       : !!one,
+		selector  : selector
+	}, fn);
+}
+
+/*
+	Appends a new <style> element to the document's <head>.
+*/
+function addStyle(css) { // eslint-disable-line no-unused-vars
+	var style = document.getElementById("style-story");
+	if (style === null) {
+		style      = document.createElement("style");
+		style.id   = "style-story";
+		style.type = "text/css";
+		document.head.appendChild(style);
+	}
+	style = new StyleWrapper(style);
+
+	// Check for wiki image transclusion.
+	var	matchRe = /\[[<>]?[Ii][Mm][Gg]\[(?:\s|\S)*?\]\]+/g;
+	if (matchRe.test(css)) {
+		css = css.replace(matchRe, function (wikiImage) {
+			var markup = Wikifier.helpers.parseSquareBracketedMarkup({
+				source     : wikiImage,
+				matchStart : 0
+			});
+			if (markup.hasOwnProperty("error") || markup.pos < wikiImage.length) {
+				return wikiImage;
+			}
+
+			var source = markup.source;
+			// Handle image passage transclusion.
+			if (source.slice(0, 5) !== "data:" && Story.has(source)) {
+				var passage = Story.get(source);
+				if (passage.tags.contains("Twine.image")) {
+					source = passage.text;
+				}
+			}
+			/*
+				The source may be URI- or Base64-encoded, so we cannot use encodeURIComponent()
+				here.  Instead, we simply encode any double quotes, since the URI will be
+				delimited by them.
+			*/
+			return 'url("' + source.replace(/"/g, "%22") + '")';
+		});
+	}
+
+	style.add(css);
+}
+
+/*
  	Returns a deep copy of the passed object
 
 	n.b. 1. clone() does not clone functions, however, since function definitions are immutable,
@@ -88,91 +159,6 @@ function clone(orig) {
 }
 
 /*
-	[DEPRECATED] Returns the jQuery-wrapped target element(s) after making them accessible clickables (ARIA compatibility).
-*/
-function addAccessibleClickHandler(targets, selector, fn, one, namespace) { // eslint-disable-line no-unused-vars
-	if (arguments.length < 2) {
-		throw new Error("addAccessibleClickHandler insufficient number of parameters");
-	}
-
-	if (typeof selector === "function") {
-		namespace = one;
-		one       = fn;
-		fn        = selector;
-		selector  = undefined;
-	}
-
-	if (typeof fn !== "function") {
-		throw new TypeError("addAccessibleClickHandler handler parameter must be a function");
-	}
-
-	return jQuery(targets).ariaClick({
-		namespace : namespace,
-		one       : !!one,
-		selector  : selector
-	}, fn);
-}
-
-/*
-	Returns the new DOM element, optionally appending it to the passed DOM element, if any.
-*/
-function insertElement(place, type, id, classNames, text, title) {
-	var el = document.createElement(type);
-
-	// Add attributes/properties.
-	if (id) {
-		el.id = id;
-	}
-	if (classNames) {
-		el.className = classNames;
-	}
-	if (title) {
-		el.title = title;
-	}
-
-	// Add content.
-	if (text) {
-		insertText(el, text);
-	}
-
-	// Append it to the given node.
-	if (place) {
-		place.appendChild(el);
-	}
-
-	return el;
-}
-
-/*
-	Returns the new DOM element, after appending it to the passed DOM element.
-*/
-function insertText(place, text) {
-	return place.appendChild(document.createTextNode(text));
-}
-
-/*
-	Removes all children from the passed DOM node.
-*/
-function removeChildren(node) {
-	if (node) {
-		while (node.hasChildNodes()) {
-			node.removeChild(node.firstChild);
-		}
-	}
-}
-
-/*
-	Removes the passed DOM node.
-*/
-function removeElement(node) { // eslint-disable-line no-unused-vars
-	if (typeof node.remove === "function") {
-		node.remove();
-	} else if (node.parentNode) {
-		node.parentNode.removeChild(node);
-	}
-}
-
-/*
 	Converts <br> elements to <p> elements within the given node tree.
 */
 function convertBreaksToParagraphs(source) { // eslint-disable-line no-unused-vars
@@ -242,82 +228,40 @@ function convertBreaksToParagraphs(source) { // eslint-disable-line no-unused-va
 }
 
 /*
-	Wikifies a passage into a DOM element corresponding to the passed ID and returns the element.
+	Returns the new DOM element, optionally appending it to the passed DOM element, if any.
 */
-function setPageElement(id, titles, defaultText) { // eslint-disable-line no-unused-vars
-	var el = typeof id === "object" ? id : document.getElementById(id);
-	if (el == null) { // lazy equality for null
-		return null;
+function insertElement(place, type, id, classNames, text, title) {
+	var el = document.createElement(type);
+
+	// Add attributes/properties.
+	if (id) {
+		el.id = id;
+	}
+	if (classNames) {
+		el.className = classNames;
+	}
+	if (title) {
+		el.title = title;
 	}
 
-	removeChildren(el);
-	if (!Array.isArray(titles)) {
-		titles = [ titles ];
+	// Add content.
+	if (text) {
+		insertText(el, text);
 	}
-	for (var i = 0, iend = titles.length; i < iend; ++i) {
-		if (Story.has(titles[i])) {
-			new Wikifier(el, Story.get(titles[i]).processText().trim());
-			return el;
-		}
+
+	// Append it to the given node.
+	if (place) {
+		place.appendChild(el);
 	}
-	if (defaultText != null) { // lazy equality for null
-		defaultText = defaultText.trim();
-		if (defaultText !== "") {
-			new Wikifier(el, defaultText);
-		}
-	}
+
 	return el;
 }
 
 /*
-	Appends a new <style> element to the document's <head>.
+	Returns the new DOM element, after appending it to the passed DOM element.
 */
-function addStyle(css) { // eslint-disable-line no-unused-vars
-	var style = document.getElementById("style-story");
-	if (style === null) {
-		style      = document.createElement("style");
-		style.id   = "style-story";
-		style.type = "text/css";
-		document.head.appendChild(style);
-	}
-	style = new StyleWrapper(style);
-
-	// Check for wiki image transclusion.
-	var	matchRe = /\[[<>]?[Ii][Mm][Gg]\[(?:\s|\S)*?\]\]+/g;
-	if (matchRe.test(css)) {
-		css = css.replace(matchRe, function (wikiImage) {
-			var markup = Wikifier.helpers.parseSquareBracketedMarkup({
-				source     : wikiImage,
-				matchStart : 0
-			});
-			if (markup.hasOwnProperty("error") || markup.pos < wikiImage.length) {
-				return wikiImage;
-			}
-
-			var source = markup.source;
-			// Check for image passage transclusion.
-			if (source.slice(0, 5) !== "data:" && Story.has(source)) {
-				var passage = Story.get(source);
-				if (passage.tags.contains("Twine.image")) {
-					source = passage.text;
-				}
-			}
-			// The source may be URI- or Base64-encoded, so we cannot use the
-			// standard encodeURIComponent() here.  Instead, we simply encode
-			// any double quotes, since the URI will be delimited by them.
-			return 'url("' + source.replace(/"/g, "%22") + '")';
-		});
-	}
-
-	style.add(css);
-}
-
-/*
-	Appends an error message to the passed DOM element.
-*/
-function throwError(place, message, title) { // eslint-disable-line no-unused-vars
-	insertElement(place, "span", null, "error", strings.errors.title + ": " + message, title);
-	return false;
+function insertText(place, text) {
+	return place.appendChild(document.createTextNode(text));
 }
 
 /*
@@ -358,6 +302,28 @@ function printableStringOrDefault(val, defVal) { // eslint-disable-line no-unuse
 }
 
 /*
+	Removes all children from the passed DOM node.
+*/
+function removeChildren(node) {
+	if (node) {
+		while (node.hasChildNodes()) {
+			node.removeChild(node.firstChild);
+		}
+	}
+}
+
+/*
+	Removes the passed DOM node.
+*/
+function removeElement(node) { // eslint-disable-line no-unused-vars
+	if (typeof node.remove === "function") {
+		node.remove();
+	} else if (node.parentNode) {
+		node.parentNode.removeChild(node);
+	}
+}
+
+/*
 	Returns `document.activeElement` or `null`.
 */
 function safeActiveElement() { // eslint-disable-line no-unused-vars
@@ -376,6 +342,42 @@ function safeActiveElement() { // eslint-disable-line no-unused-vars
 	} catch (e) {
 		return null;
 	}
+}
+
+/*
+	Wikifies a passage into a DOM element corresponding to the passed ID and returns the element.
+*/
+function setPageElement(id, titles, defaultText) { // eslint-disable-line no-unused-vars
+	var el = typeof id === "object" ? id : document.getElementById(id);
+	if (el == null) { // lazy equality for null
+		return null;
+	}
+
+	removeChildren(el);
+	if (!Array.isArray(titles)) {
+		titles = [ titles ];
+	}
+	for (var i = 0, iend = titles.length; i < iend; ++i) {
+		if (Story.has(titles[i])) {
+			new Wikifier(el, Story.get(titles[i]).processText().trim());
+			return el;
+		}
+	}
+	if (defaultText != null) { // lazy equality for null
+		defaultText = defaultText.trim();
+		if (defaultText !== "") {
+			new Wikifier(el, defaultText);
+		}
+	}
+	return el;
+}
+
+/*
+	Appends an error message to the passed DOM element.
+*/
+function throwError(place, message, title) { // eslint-disable-line no-unused-vars
+	insertElement(place, "span", null, "error", strings.errors.title + ": " + message, title);
+	return false;
 }
 
 /*

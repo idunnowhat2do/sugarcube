@@ -164,14 +164,19 @@ var Passage = (function () { // eslint-disable-line no-unused-vars
 		processText : {
 			value : function () {
 				var res = this.text;
-				// Handle the nobr tag.
+
+				// Handle the `nobr` tag.
 				if (this.tags.contains("nobr")) {
+					// Remove all leading & trailing newlines and compact all internal sequences
+					// of newlines into single spaces.
 					res = res.replace(/^\n+|\n+$/g, "").replace(/\n+/g, " ");
 				}
-				// Check for image passage transclusion.
+
+				// Handle image passage transclusion.
 				if (this.tags.contains("Twine.image")) {
 					res = "[img[" + res + "]]";
 				}
+
 				return res;
 			}
 		},

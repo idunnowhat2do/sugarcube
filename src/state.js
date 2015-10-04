@@ -73,7 +73,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		*/
 		config.history.maxStates = Math.max(1, Number(config.history.maxStates));
 		if (isNaN(config.history.maxStates) || !isFinite(config.history.maxStates)) {
-			// maybe this should throw instead?
+			// TODO: Maybe this should throw instead?
 			config.history.maxStates = 100;
 		}
 		if (config.history.maxStates === 1) {
@@ -365,7 +365,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 	/**
 		Returns the active (present) moment after setting it to either the given moment object
 		or the moment object at the given history index.  Additionally, updates the active session
-		and triggers a state update event.
+		and triggers a history update event.
 	**/
 	function momentActivate(moment) {
 		if (moment == null) { // lazy equality for null
@@ -421,7 +421,8 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		/*
 			Trigger a global `tw:historyupdate` event.
 
-			TODO: Should this be "tw:stateupdate", rather than "tw:historyupdate"?
+			n.b. We do this here because setting a new active moment is a core component of,
+			     virtually, all history updates.
 		*/
 		jQuery.event.trigger("tw:historyupdate");
 

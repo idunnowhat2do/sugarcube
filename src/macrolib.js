@@ -373,7 +373,10 @@ Macro.add("nobr", {
 	skipArgs : true,
 	tags     : null,
 	handler  : function () {
-		// Wikify the contents, after removing all newlines.
+		/*
+			Wikify the contents, after removing all leading & trailing newlines and compacting
+			all internal sequences of newlines into single spaces.
+		*/
 		new Wikifier(this.output, this.payload[0].contents.replace(/^\n+|\n+$/g, "").replace(/\n+/g, " "));
 	}
 });
