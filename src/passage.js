@@ -53,8 +53,13 @@ var Passage = (function () { // eslint-disable-line no-unused-vars
 			element : {
 				value : el || null
 			},
-			tags : {
-				value : Object.freeze(el && el.hasAttribute("tags") ? el.getAttribute("tags").trim().splitOrEmpty(/\s+/) : [])
+			tags : { /* sorted list of unique tags */
+				value : Object.freeze(el && el.hasAttribute("tags")
+					? el.getAttribute("tags").trim().splitOrEmpty(/\s+/).sort()
+						.filter(function (tag, i, aref) {
+							return i === 0 || aref[i - 1] !== tag;
+						})
+					: [])
 			}
 		});
 		// Properties dependant on the above set.
@@ -64,40 +69,33 @@ var Passage = (function () { // eslint-disable-line no-unused-vars
 			},
 			classes : {
 				value : Object.freeze(this.tags.length === 0 ? [] : (function (tags) {
-					// Tags to skip transforming into classes.
-					//     debug      → special tag
-					//     nobr       → special tag
-					//     passage    → the default class
-					//     script     → special tag (only in Twine 1)
-					//     stylesheet → special tag (only in Twine 1)
-					//     twine.*    → special tag
-					//     widget     → special tag
-					var	tagClasses = [],
-						tagsToSkip;
+					/*
+						Tags to skip transforming into classes:
+						    debug      → special tag
+						    nobr       → special tag
+						    passage    → the default class
+						    script     → special tag (only in Twine 1)
+						    stylesheet → special tag (only in Twine 1)
+						    twine.*    → special tag
+						    widget     → special tag
+					*/
+					var tagsToSkip;
 					if (TWINE1) { // for Twine 1
 						tagsToSkip = /^(?:debug|nobr|passage|script|stylesheet|widget|twine\..*)$/i;
 					} else { // for Twine 2
 						tagsToSkip = /^(?:debug|nobr|passage|widget|twine\..*)$/i;
 					}
-					for (var i = 0; i < tags.length; ++i) {
-						if (!tagsToSkip.test(tags[i])) {
-							tagClasses.push(Util.slugify(tags[i]));
-						}
-					}
 
-					/*
-						TODO: I'm unsure as to why this is here or even if should be done at all.
-						      AFAIK, there really should never be classes on the passage elements
-						      themselves.  Was this a user requested feature?  Check the changelog.
-					*/
-					if (el.className) {
-						tagClasses = tagClasses.concat(el.className.split(/\s+/));
-					}
-
-					// Sort and filter out non-uniques.
-					return tagClasses.sort().filter(function (val, i, aref) { // eslint-disable-line no-shadow
-						return i === 0 || aref[i - 1] !== val;
-					});
+					// Return the sorted list of unique classes.
+					return tags
+						// The `tags` array is already sorted and unique, so we only need
+						// to filter and map here.
+						.filter(function (tag) {
+							return !tagsToSkip.test(tag);
+						})
+						.map(function (tag) {
+							return Util.slugify(tag);
+						});
 				})(this.tags))
 			}
 		});
@@ -188,6 +186,7 @@ var Passage = (function () { // eslint-disable-line no-unused-vars
 				// Create the new passage element.
 				var passage = insertElement(null, "div", this.domId, "passage");
 				passage.setAttribute("data-passage", this.title);
+				passage.setAttribute("data-tags", this.tags.join(" "));
 
 				// Add classes (generated from tags) to the passage and <body>.
 				for (var i = 0; i < this.classes.length; ++i) {
