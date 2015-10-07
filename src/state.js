@@ -152,6 +152,18 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		if (DEBUG) { console.log("[State/stateRestart()]"); }
 
 		/*
+			Trigger the loading screen and scroll the window to the top.
+
+			n.b. The scroll is required by most browsers for the starting passage or it will
+			     remain at whatever its current scroll position is after the page reload.  We
+			     trigger the loading screen to hide unsightly flashing.
+		*/
+		document.documentElement.classList.add("init-loading");
+		if (State.passage === config.passages.start) {
+			window.scroll(0, 0);
+		}
+
+		/*
 			Delete the active session and reload the page.
 		*/
 		session.delete("state");
