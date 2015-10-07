@@ -132,23 +132,11 @@ Macro.add("actions", {
 */
 Macro.add([ "back", "return" ], {
 	handler : function () {
-		var	passage,
+		var	momentIndex = -1,
+			passage,
 			text,
 			image,
-			el,
-			momentIndex     = -1,
-			findMomentIndex = function (title) {
-				/*
-					Find the index of the most recent moment within the in-play history (past only)
-					whose title does not match that of the active (present) moment's.
-				*/
-				for (var i = State.length - 2; i >= 0; --i) {
-					if (State.history[i].title === title) {
-						return i;
-					}
-				}
-				return -1;
-			};
+			el;
 
 		/* legacy */
 		if (this.args.length > 1) {
@@ -196,12 +184,15 @@ Macro.add([ "back", "return" ], {
 				Find the index and title of the most recent moment whose title does not match
 				that of the active (present) moment's.
 			*/
-			momentIndex = findMomentIndex(State.passage);
-			if (momentIndex !== -1) {
-				passage = State.history[momentIndex].title;
+			for (var i = State.length - 2; i >= 0; --i) {
+				if (State.history[i].title !== State.passage) {
+					momentIndex = i;
+					passage = State.history[i].title;
+					break;
+				}
 			}
 			// Fallback to `State.expiredUnique` if we failed to find a passage.
-			else if (State.expiredUnique !== "") {
+			if (passage == null && State.expiredUnique !== "") { // lazy equality for null
 				passage = State.expiredUnique;
 			}
 		} else {
@@ -210,10 +201,15 @@ Macro.add([ "back", "return" ], {
 			}
 			if (this.name === "back") {
 				/*
-					Find the index of the most recent moment whose title does not match that
-					of the specified passage.
+					Find the index of the most recent moment whose title matches that of the
+					specified passage.
 				*/
-				momentIndex = findMomentIndex(passage);
+				for (var i = State.length - 2; i >= 0; --i) { // eslint-disable-line no-redeclare
+					if (State.history[i].title === passage) {
+						momentIndex = i;
+						break;
+					}
+				}
 				if (momentIndex === -1) {
 					return this.error('cannot find passage "' + passage + '" in the current story history');
 				}
