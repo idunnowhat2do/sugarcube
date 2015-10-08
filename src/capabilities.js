@@ -36,7 +36,7 @@ var
 		})();
 
 		ua.isMobile = Object.freeze({
-			any        : function () { var b = ua.isMobile; return b.Android || b.BlackBerry || b.iOS || b.Windows; },
+			any        : function () { var m = ua.isMobile; return m.Android || m.BlackBerry || m.iOS || m.Windows; },
 			Android    : /android/.test(ua.userAgent),
 			BlackBerry : /blackberry/.test(ua.userAgent),
 			iOS        : /ip(?:hone|ad|od)/.test(ua.userAgent),

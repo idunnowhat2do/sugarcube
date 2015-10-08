@@ -349,7 +349,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 						? evt.target.result
 						: LZString.decompressFromBase64(evt.target.result)
 				);
-			} catch (e) { /* no-op, _unmarshal() will handle the error */ }
+			} catch (e) { /* no-op; `_unmarshal()` will handle the error */ }
 			_unmarshal(saveObj);
 		});
 

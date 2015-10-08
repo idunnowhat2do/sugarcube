@@ -66,13 +66,14 @@ function passage() { // eslint-disable-line no-unused-vars
 	if there is no such passage.
 **/
 function previous(offset) { // eslint-disable-line no-unused-vars
-	// Legacy behavior with an offset.
+	/* legacy: behavior with an offset */
 	if (arguments.length !== 0) {
 		if (offset < 1) {
 			throw new RangeError("previous offset parameter must be a positive integer greater than zero");
 		}
 		return State.length > offset ? State.peek(offset).title : "";
 	}
+	/* /legacy */
 
 	// Behavior without an offset.
 	for (var i = State.length - 2; i >= 0; --i) {

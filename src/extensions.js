@@ -781,6 +781,8 @@ Object.defineProperties(JSON, {
 	`ariaClick([options,] fn)` method plugin.
 
 	Makes the target element(s) WAI-ARIA compatible clickables.
+
+	n.b. Has an external dependency in the `safeActiveElement()` function (see: `utility.js`).
 */
 (function () {
 
@@ -827,7 +829,7 @@ Object.defineProperties(JSON, {
 		};
 
 	/*
-		Extend jQuery with an `ariaClick()` method.
+		Extend jQuery's chainable methods with an `ariaClick()` method.
 	*/
 	jQuery.fn.extend({
 		ariaClick : function (options, fn) {

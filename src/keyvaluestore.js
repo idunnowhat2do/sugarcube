@@ -23,7 +23,7 @@ var KeyValueStore = (function () { // eslint-disable-line no-unused-vars
 		case "webStorage":
 			driver = new KeyValueStoreDriverWebStorage(persist, storageId);
 			if (!driver._ok) {
-				// Fallback to cookies.
+				// Fallback to cookies.  Perhaps, this should be handled externally?
 				driver = new KeyValueStoreDriverCookie(persist, storageId);
 			}
 			break;

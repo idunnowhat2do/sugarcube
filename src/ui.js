@@ -167,7 +167,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		store.parentNode.insertBefore(uiTree, store);
 
 		/*
-			Setup the document-wide delegated handlers.
+			Setup the document-wide/global event handlers.
 		*/
 		jQuery(document)
 			// Setup a handler for the history-backward/-forward buttons.
@@ -369,8 +369,8 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		dialogOpen(options, closeFn);
 	}
 
-	function uiOpenJumpTo(/* options, closeFn */) {
-		uiBuildJumpTo();
+	function uiOpenJumpto(/* options, closeFn */) {
+		uiBuildJumpto();
 		dialogOpen.apply(null, arguments);
 	}
 
@@ -415,8 +415,8 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		return true;
 	}
 
-	function uiBuildJumpTo() {
-		if (DEBUG) { console.log("[UI/uiBuildJumpTo()]"); }
+	function uiBuildJumpto() {
+		if (DEBUG) { console.log("[UI/uiBuildJumpto()]"); }
 
 		var list = document.createElement("ul");
 
@@ -1054,13 +1054,13 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			UI Functions, Built-ins.
 		*/
 		alert         : { value : uiOpenAlert },
-		jumpto        : { value : uiOpenJumpTo },
+		jumpto        : { value : uiOpenJumpto },
 		restart       : { value : uiOpenRestart },
 		saves         : { value : uiOpenSaves },
 		settings      : { value : uiOpenSettings },
 		share         : { value : uiOpenShare },
 		buildAutoload : { value : uiBuildAutoload },
-		buildJumpTo   : { value : uiBuildJumpTo },
+		buildJumpto   : { value : uiBuildJumpto },
 		buildRestart  : { value : uiBuildRestart },
 		buildSaves    : { value : uiBuildSaves },
 		buildSettings : { value : uiBuildSettings },
@@ -1080,13 +1080,13 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			Legacy aliases for deprecated method names.
 		*/
 		/* legacy */
-		buildLinkListFromPassage : { value : uiAssembleLinkList },
-		buildDialogJumpTo        : { value : uiBuildJumpTo },
-		buildDialogSaves         : { value : uiBuildSaves },
+		buildDialogAutoload      : { value : uiBuildAutoload },
+		buildDialogJumpto        : { value : uiBuildJumpto },
 		buildDialogRestart       : { value : uiBuildRestart },
+		buildDialogSaves         : { value : uiBuildSaves },
 		buildDialogSettings      : { value : uiBuildSettings },
 		buildDialogShare         : { value : uiBuildShare },
-		buildDialogAutoload      : { value : uiBuildAutoload }
+		buildLinkListFromPassage : { value : uiAssembleLinkList }
 		/* /legacy */
 	}));
 
