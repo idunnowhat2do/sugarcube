@@ -721,7 +721,7 @@ Macro.add([ "button", "click" ], {
 					wargs = State.variables.args;
 				}
 				return wargs;
-			}.call(this)),
+			}).call(this),
 			el      = document.createElement(this.name === "click" ? "a" : "button"),
 			passage;
 
