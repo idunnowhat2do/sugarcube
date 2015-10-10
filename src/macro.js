@@ -320,6 +320,18 @@ Object.defineProperties(MacroContext.prototype, {
 
 	contextSelect : {
 		value : function (filter) {
+			var	context = this;
+			while ((context = context.parent) !== null) {
+				if (filter(context)) {
+					return context;
+				}
+			}
+			return null;
+		}
+	},
+
+	contextSelectAll : {
+		value : function (filter) {
 			var	context = this,
 				result  = [];
 			while ((context = context.parent) !== null) {
