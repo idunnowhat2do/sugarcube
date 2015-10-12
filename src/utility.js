@@ -85,10 +85,10 @@ function addStyle(css) { // eslint-disable-line no-unused-vars
 /*
  	Returns a deep copy of the passed object
 
-	n.b. 1. clone() does not clone functions, however, since function definitions are immutable,
+	n.b. 1. `clone()` does not clone functions, however, since function definitions are immutable,
 	        the only issues are with expando properties and scope.  The former really should not
 	        be done.  The latter is problematic either way (damned if you do, damned if you don't).
-	     2. clone() does not maintain referential relationships (e.g. multiple references to the
+	     2. `clone()` does not maintain referential relationships (e.g. multiple references to the
 	        same object will, post-cloning, refer to different equivalent objects; i.e. each
 	        reference will get its own clone of the original object).
 */
@@ -110,42 +110,39 @@ function clone(orig) {
 	}
 
 	/*
-		Create a copy of the original.
+		Create a copy of the original object.
+
+		n.b. 1. Each non-generic object that we wish to support must receive a special case below.
+		     2. Since we're using the `instanceof` operator to identify special cases, this may
+		        fail to properly identify such cases if the author engages in cross-<iframe>
+		        object manipulation.  The solution to this problem would be for the author to
+		        pass messages between the frames, rather than doing direct cross-frame object
+		        manipulation.  That is, in fact, what they should be doing in the first place.
+		     3. We cannot use `Object.prototype.toString.call(orig)` to solve #2 because the shims
+		        for `Map` and `Set` return `[object Object]` rather than `[object Map]` and
+		        `[object Set]`.
 	*/
 	var copy;
-	if (Array.isArray(orig)) {
+	if (Array.isArray(orig)) { // considering #2, `orig instanceof Array` might be more appropriate
 		copy = [];
-	} else {
-		/*
-			This relies on `Object.prototype.toString()` and `Function.prototype.call()`
-			performing as intended, which may not be the case if they've been replaced.
-			We don't have much choice, however, so it's not really something to worry about.
-		*/
-		switch (Object.prototype.toString.call(orig)) {
-		case "[object Date]":
-			copy = new Date(orig.getTime());
-			break;
-		case "[object Map]":
-			copy = new Map();
-			orig.forEach(function (v, k) { copy.set(k, clone(v)); });
-			break;
-		case "[object RegExp]":
-			copy = new RegExp(orig);
-			break;
-		case "[object Set]":
-			copy = new Set();
-			orig.forEach(function (v) { copy.add(clone(v)); });
-			break;
-		default:
-			// Try to ensure that the returned object has the same prototype as the original.
-			var proto = Object.getPrototypeOf(orig);
-			copy = proto ? Object.create(proto) : orig.constructor.prototype;
-			break;
-		}
+	} else if (orig instanceof Date) {
+		copy = new Date(orig.getTime());
+	} else if (orig instanceof Map) {
+		copy = new Map();
+		orig.forEach(function (v, k) { copy.set(k, clone(v)); });
+	} else if (orig instanceof RegExp) {
+		copy = new RegExp(orig);
+	} else if (orig instanceof Set) {
+		copy = new Set();
+		orig.forEach(function (v) { copy.add(clone(v)); });
+	} else { // unknown or generic object
+		// Try to ensure that the returned object has the same prototype as the original.
+		copy = Object.create(Object.getPrototypeOf(orig));
 	}
 
 	/*
-		Duplicate the original's own properties (incl. expando properties on non-generic objects).
+		Duplicate the original object's own enumerable properties (n.b. this will include
+		expando properties on non-generic objects).
 	*/
 	Object.keys(orig).forEach(function (name) {
 		/*
