@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global State, Story, UI, config, escape, saveAs, storage, strings */
+/* global State, Story, UI, Util, config, escape, saveAs, storage, strings */
 
 var Save = (function () { // eslint-disable-line no-unused-vars
 	"use strict";
@@ -321,13 +321,13 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 	/*******************************************************************************************************************
 	 * Disk Functions
 	 ******************************************************************************************************************/
-	function exportSave() {
+	function exportSave(filename) {
 		if (typeof config.saves.isAllowed === "function" && !config.saves.isAllowed()) {
 			UI.alert(strings.saves.disallowed);
 			return;
 		}
 
-		var	saveName = Story.domId + ".save",
+		var	saveName = (filename == null ? Story.domId : Util.slugify(filename)) + ".save", // lazy equality for null
 			saveObj  = LZString.compressToBase64(JSON.stringify(_marshal()));
 		saveAs(new Blob([saveObj], { type : "text/plain;charset=UTF-8" }), saveName);
 	}
@@ -443,7 +443,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 			}
 
 			if (saveObj.id !== config.saves.id) {
-				throw new Error(strings.errors.saveIdMismatch);
+				throw new Error(strings.errors.saveIdMismatch.replace(/%identity%/g, strings.identity));
 			}
 
 			// Restore the state.

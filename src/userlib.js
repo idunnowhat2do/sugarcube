@@ -146,7 +146,7 @@ function tags(/* variadic */) { // eslint-disable-line no-unused-vars
 }
 
 /**
-	Returns the number of milliseconds that have passed since the current passage was rendered.
+	Returns the number of milliseconds which have passed since the current passage was rendered.
 **/
 function time() { // eslint-disable-line no-unused-vars
 	return State.lastPlay === null ? 0 : Date.now() - State.lastPlay;
