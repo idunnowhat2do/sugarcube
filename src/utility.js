@@ -570,15 +570,18 @@ var Util = Object.defineProperties({}, {
 			if (str == null) { // lazy equality for null
 				return "";
 			}
-			var	escapedHtmlRe    = /&(?:amp|lt|gt|quot|#39|#96);/g,
+			var	escapedHtmlRe    = /&(?:amp|lt|gt|quot|apos|#39|#x27|#96|#x60);/g,
 				hasEscapedHtmlRe = RegExp(escapedHtmlRe.source), // to drop the global flag
 				escapedHtmlMap   = {
 					"&amp;"  : "&",
 					"&lt;"   : "<",
 					"&gt;"   : ">",
 					"&quot;" : '"',
-					"&#39;"  : "'",
-					"&#96;"  : "`"
+					"&apos;" : "'", // apostrophe from XML shenanigans
+					"&#39;"  : "'", // apostrophe from decimal NCR
+					"&#x27;" : "'", // apostrophe from hexadecimal NCR (fuck you, Underscorejs)
+					"&#96;"  : "`", // backtick from decimal NCR
+					"&#x60;" : "`"  // backtick from hexadecimal NCR (fuck you, Underscorejs)
 				};
 			str = String(str);
 			return str && hasEscapedHtmlRe.test(str)
