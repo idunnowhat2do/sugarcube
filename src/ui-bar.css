@@ -84,9 +84,6 @@
 	left: 0;
 	right: 0;
 }
-#ui-bar-body {
-	overflow: auto;
-}
 #ui-bar a {
 	text-decoration: none;
 }
@@ -139,6 +136,7 @@
 }
 #ui-bar-body {
 	line-height: 1.5;
+	overflow: auto;
 }
 #ui-bar-body > :not(:first-child) {
 	margin-top: 2em;
