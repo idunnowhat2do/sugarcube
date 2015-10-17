@@ -151,7 +151,7 @@ var Story = (function () { // eslint-disable-line no-unused-vars
 
 				TODO: Maybe `$storydata.attr("name")` should be used instead of `"{{STORY_NAME}}"`?
 			*/
-			_storySetTitle("{{STORY_NAME}}");
+			_storySetTitle(Util.unescape("{{STORY_NAME}}"));
 		};
 
 	}
