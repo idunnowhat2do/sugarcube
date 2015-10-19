@@ -20,17 +20,15 @@ function getWikifyEvalHandler(content, widgetArgs, callback) {
 			var argsCache;
 			/*
 				There's no catch clause because this try/finally is here simply to ensure that
-				the `$args` variable is properly restored in the event that an exception is thrown
-				during the `Wikifier.wikifyEval()` call.
+				proper cleanup is done in the event that an exception is thrown during the
+				`Wikifier.wikifyEval()` call.
 			*/
 			try {
 				if (typeof widgetArgs !== "undefined") {
-					// Cache the existing $args variable, if any.
+					// Setup the `$args` variable, caching the existing value if necessary.
 					if (State.variables.hasOwnProperty("args")) {
 						argsCache = State.variables.args;
 					}
-
-					// Setup the $args variable.
 					State.variables.args = widgetArgs;
 				}
 
@@ -38,12 +36,11 @@ function getWikifyEvalHandler(content, widgetArgs, callback) {
 				Wikifier.wikifyEval(content);
 			} finally {
 				if (typeof widgetArgs !== "undefined") {
-					// Teardown the $args variable.
-					delete State.variables.args;
-
-					// Restore the cached $args variable, if any.
+					// Teardown the `$args` variable, restoring the cached value if necessary.
 					if (typeof argsCache !== "undefined") {
 						State.variables.args = argsCache;
+					} else {
+						delete State.variables.args;
 					}
 				}
 			}
@@ -1208,14 +1205,14 @@ Macro.add("goto", {
 		/*
 			Call State.play().
 
-			n.b. This does not terminate the current Wikifier call chain, though, ideally, it probably
-			     should, however, doing so wouldn't be trivial and there's the question of would that
-			     behavior be unwanted by users, who are used to the current behavior from similar macros
-			     and constructs.
+			n.b. This does not terminate the current Wikifier call chain, though, ideally, it
+			     probably should.  Doing so would not be trivial, however, and then there's the
+			     question of whether that behavior would be unwanted by users, who are used to
+			     the current behavior from similar macros and constructs.
 		*/
 		setTimeout(function () {
 			State.play(passage);
-		}, 40); // not too short, not too long
+		}, 40); // not too short, not too long; TODO: Make this 10 msec?
 	}
 });
 
@@ -1224,7 +1221,7 @@ Macro.add("goto", {
 */
 Macro.add("timed", {
 	tags    : [ "next" ],
-	timers  : {},
+	timers  : new Set(),
 	handler : function () {
 		if (this.args.length === 0) {
 			return this.error("no time value specified in <<timed>>");
@@ -1254,8 +1251,11 @@ Macro.add("timed", {
 			}
 		}
 
-		// Register the timer and, possibly, a clean up task.
-		this.self.registerTimeout(insertElement(this.output, "span", null, "macro-timed timed-insertion-container"), items);
+		// Register the timer and, possibly, a cleanup task.
+		this.self.registerTimeout(
+			insertElement(this.output, "span", null, "macro-timed timed-insertion-container"),
+			items
+		);
 	},
 	registerTimeout : function (container, items) {
 		var	turnId   = turns(),
@@ -1264,7 +1264,7 @@ Macro.add("timed", {
 			nextItem = items.shift(),
 			worker   = function () {
 				// 1. Bookkeeping.
-				delete timers[timerId];
+				timers.delete(timerId);
 				if (turnId !== turns()) {
 					return;
 				}
@@ -1272,7 +1272,8 @@ Macro.add("timed", {
 				// 2. Set the current item and setup the next worker, if any.
 				var curItem = nextItem;
 				if ((nextItem = items.shift()) != null) { // lazy equality for null
-					timers[(timerId = setTimeout(worker, nextItem.delay))] = true;
+					timerId = setTimeout(worker, nextItem.delay);
+					timers.add(timerId);
 				}
 
 				// 3. Wikify the content last to reduce drift.
@@ -1280,19 +1281,121 @@ Macro.add("timed", {
 				new Wikifier(frag, curItem.content);
 				container.appendChild(frag);
 			};
-		timers[(timerId = setTimeout(worker, nextItem.delay))] = true;
+
+		// Setup the timeout.
+		timerId = setTimeout(worker, nextItem.delay);
+		timers.add(timerId);
 
 		// Setup a single-use `prehistory` task to remove pending timers.
 		if (!prehistory.hasOwnProperty("#timed-timers-cleanup")) {
 			prehistory["#timed-timers-cleanup"] = function (task) {
-				var timerIds = Object.keys(timers);
-				for (var i = 0; i < timerIds.length; ++i) {
-					delete timers[timerIds[i]];
-					clearTimeout(timerIds[i]);
-				}
+				timers.forEach(function (timerId) { // eslint-disable-line no-shadow
+					clearTimeout(timerId);
+				});
+				timers.clear();
 				delete prehistory[task]; // single-use task
 			};
 		}
+	}
+});
+
+/*
+	<<repeat>> & <<stop>>
+*/
+Macro.add("repeat", {
+	tags    : null,
+	timers  : new Set(),
+	handler : function () {
+		if (this.args.length === 0) {
+			return this.error("no time value specified");
+		}
+
+		var	delay = this.args[0].trim();
+		try {
+			delay = Math.max(10, Util.fromCSSTime(delay));
+		} catch (e) {
+			return this.error(e.message);
+		}
+
+		// Register the timer and, possibly, a cleanup task.
+		this.self.registerInterval(
+			insertElement(this.output, "span", null, "macro-repeat repeat-insertion-container"),
+			this.payload[0].contents,
+			delay
+		);
+	},
+	registerInterval : function (container, content, delay) {
+		var	turnId  = turns(),
+			timers  = this.timers,
+			timerId = null;
+
+		// Setup the interval.
+		timerId = setInterval(function () {
+			// Terminate the timer if the turn IDs do not match.
+			if (turnId !== turns()) {
+				clearInterval(timerId);
+				timers.delete(timerId);
+				return;
+			}
+
+			var timerIdCache;
+			/*
+				There's no catch clause because this try/finally is here simply to ensure that
+				proper cleanup is done in the event that an exception is thrown during the
+				`Wikifier` call.
+
+				TODO: This is an absolutely horrific kludge.  Make this unnecessary, if possible.
+			*/
+			try {
+				runtime.temp.break = null;
+
+				// Setup the `repeatTimerId` value, caching the existing value if necessary.
+				if (runtime.temp.hasOwnProperty("repeatTimerId")) {
+					timerIdCache = runtime.temp.repeatTimerId;
+				}
+				runtime.temp.repeatTimerId = timerId;
+
+				// Wikify the content.
+				var frag = document.createDocumentFragment();
+				new Wikifier(frag, content);
+				container.appendChild(frag);
+			} finally {
+				// Teardown the `repeatTimerId` property, restoring the cached value if necessary.
+				if (typeof timerIdCache !== "undefined") {
+					runtime.temp.repeatTimerId = timerIdCache;
+				} else {
+					delete runtime.temp.repeatTimerId;
+				}
+
+				runtime.temp.break = null;
+			}
+		}, delay);
+		timers.add(timerId);
+
+		// Setup a single-use `prehistory` task to remove pending timers.
+		if (!prehistory.hasOwnProperty("#repeat-timers-cleanup")) {
+			prehistory["#repeat-timers-cleanup"] = function (task) {
+				timers.forEach(function (timerId) { // eslint-disable-line no-shadow
+					clearInterval(timerId);
+				});
+				timers.clear();
+				delete prehistory[task]; // single-use task
+			};
+		}
+	}
+});
+Macro.add("stop", {
+	skipArgs : true,
+	handler  : function () {
+		if (!runtime.temp.hasOwnProperty("repeatTimerId")) {
+			return this.error("must only be used in conjunction with its parent macro <<repeat>>");
+		}
+
+		var	timers  = Macro.get("repeat").timers,
+			timerId = runtime.temp.repeatTimerId;
+		clearInterval(timerId);
+		timers.delete(timerId);
+		runtime.temp.break = 2;
 	}
 });
 
@@ -1324,12 +1427,10 @@ Macro.add("widget", {
 					return function () {
 						var argsCache;
 						try {
-							// Cache the existing $args variable, if any.
+							// Setup the `$args` variable, caching the existing value if necessary.
 							if (State.variables.hasOwnProperty("args")) {
 								argsCache = State.variables.args;
 							}
-
-							// Setup the widget arguments array.
 							State.variables.args = [];
 							for (var i = 0, len = this.args.length; i < len; ++i) {
 								State.variables.args[i] = this.args[i];
@@ -1357,12 +1458,11 @@ Macro.add("widget", {
 						} catch (e) {
 							return this.error("cannot execute widget: " + e.message);
 						} finally {
-							// Teardown the widget arguments array.
-							delete State.variables.args;
-
-							// Restore the cached $args variable, if any.
+							// Teardown the `$args` variable, restoring the cached value if necessary.
 							if (typeof argsCache !== "undefined") {
 								State.variables.args = argsCache;
+							} else {
+								delete State.variables.args;
 							}
 						}
 					};
