@@ -423,17 +423,15 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 				var errTrap = document.createDocumentFragment();
 				try {
 					new Wikifier(errTrap, text);
-					while (errTrap.hasChildNodes()) {
-						var fc = errTrap.firstChild;
-						if (fc.classList && fc.classList.contains("error")) {
-							throw new Error(fc.textContent.replace(/^(?:(?:Uncaught\s+)?Error:\s+)+/, ""));
-						}
-						errTrap.removeChild(fc);
+
+					var errEl = errTrap.querySelector(".error");
+					if (errEl !== null) {
+						throw new Error(errEl.textContent.replace(/^(?:(?:Uncaught\s+)?Error:\s+)+/, ""));
 					}
 				} finally {
 					// Unnecessary, but let's be tidy.
 					removeChildren(errTrap); // remove any remaining children
-					if (typeof errTrap.remove === "function") { // lazy equality for null
+					if (typeof errTrap.remove === "function") {
 						errTrap.remove();
 					}
 				}

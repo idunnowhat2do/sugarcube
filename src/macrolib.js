@@ -412,12 +412,11 @@ Macro.add("silently", {
 		new Wikifier(errTrap, this.payload[0].contents.trim());
 
 		// Discard the output, unless there were errors.
-		while (errTrap.hasChildNodes()) {
-			var fc = errTrap.firstChild;
-			if (fc.classList && fc.classList.contains("error")) {
-				errList.push(fc.textContent);
-			}
-			errTrap.removeChild(fc);
+		Array.from(errTrap.querySelectorAll(".error")).forEach(function (errEl) {
+			errList.push(errEl.textContent);
+		});
+		if (typeof errTrap.remove === "function") {
+			errTrap.remove();
 		}
 		if (errList.length > 0) {
 			return this.error("error" + (errList.length === 1 ? "" : "s") + " within contents ("
@@ -1339,23 +1338,18 @@ Macro.add("widget", {
 							State.variables.args.full = this.args.full;
 
 							// Setup the error trapping variables.
-							var	outFrag = document.createDocumentFragment(),
-								resFrag = document.createDocumentFragment(),
+							var	resFrag = document.createDocumentFragment(),
 								errList = [];
 
 							// Wikify the widget contents.
 							new Wikifier(resFrag, contents);
 
 							// Carry over the output, unless there were errors.
-							while (resFrag.hasChildNodes()) {
-								var fc = resFrag.firstChild;
-								if (fc.classList && fc.classList.contains("error")) {
-									errList.push(fc.textContent);
-								}
-								outFrag.appendChild(fc);
-							}
+							Array.from(resFrag.querySelectorAll(".error")).forEach(function (errEl) {
+								errList.push(errEl.textContent);
+							});
 							if (errList.length === 0) {
-								this.output.appendChild(outFrag);
+								this.output.appendChild(resFrag);
 							} else {
 								return this.error("error" + (errList.length === 1 ? "" : "s")
 									+ " within widget contents (" + errList.join('; ') + ")");
