@@ -37,9 +37,11 @@ class Header (header.Header):
 				'if',
 				'nobr',
 				'prepend',
+				'repeat',
 				'replace',
 				'script',
 				'silently',
+				'timed',
 				'widget'
 				# deprecated macros
 				# (none, yay)
