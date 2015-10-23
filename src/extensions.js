@@ -17,7 +17,7 @@
 */
 
 /*
-	[ES7] Returns whether the given element was found within the array
+	[ES7] Returns whether the given element was found within the array.
 */
 if (!Array.prototype.includes) {
 	Object.defineProperty(Array.prototype, "includes", {
