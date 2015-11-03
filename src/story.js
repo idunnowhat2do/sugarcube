@@ -1177,7 +1177,7 @@ function Tale(instanceName) {
 			}
 		}
 
-		this.title = "{{STORY_NAME}}";
+		this.title = Util.unescape("{{STORY_NAME}}");
 	}
 
 	// update instance reference in SugarCube global object
