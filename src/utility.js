@@ -1032,12 +1032,22 @@ Object.defineProperties(AudioWrapper.prototype, {
 	*/
 	hasMetadata : {
 		value : function () {
-			return this.audio.readyState >= HTMLAudioElement.HAVE_METADATA;
+			/*
+				We must use `HTMLMediaElement` here instead of `HTMLAudioElement` since
+				Internet Explorer and Edge, bizarrely, do not populate `HTMLAudioElement`
+				with the various `HAVE_*DATA` properties (for comparison to `readyState`).
+			*/
+			return this.audio.readyState >= HTMLMediaElement.HAVE_METADATA;
 		}
 	},
 	hasData : {
 		value : function () {
-			return this.audio.readyState >= HTMLAudioElement.HAVE_CURRENT_DATA;
+			/*
+				We must use `HTMLMediaElement` here instead of `HTMLAudioElement` since
+				Internet Explorer and Edge, bizarrely, do not populate `HTMLAudioElement`
+				with the various `HAVE_*DATA` properties (for comparison to `readyState`).
+			*/
+			return this.audio.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
 		}
 	},
 	isPlaying : {
