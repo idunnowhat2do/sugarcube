@@ -345,13 +345,6 @@ function scrollWindowTo(el, increment) {
 var Util = Object.defineProperties({}, {
 
 	/**
-	 * Backup Math.random, in case it's replaced later
-	 */
-	random : {
-		value : Math.random
-	},
-
-	/**
 	 * Returns whether the passed value is numeric
 	 */
 	isNumeric : {
@@ -393,28 +386,55 @@ var Util = Object.defineProperties({}, {
 	},
 
 	/**
-	 * Returns an entity encoded version of the passed string
+	 * Returns an entity encoded version of the passed string.
 	 */
-	entityEncode : {
+	escape : {
 		value : function (str) {
-			return str
-				.replace(/&/g,  "&amp;")
-				.replace(/</g,  "&lt;")
-				.replace(/>/g,  "&gt;")
-				.replace(/\"/g, "&quot;");
+			if (str == null) { // lazy equality for null
+				return "";
+			}
+			var	htmlCharsRe    = /[&<>"'`]/g,
+				hasHtmlCharsRe = RegExp(htmlCharsRe.source), // to drop the global flag
+				htmlCharsMap   = {
+					"&" : "&amp;",
+					"<" : "&lt;",
+					">" : "&gt;",
+					'"' : "&quot;",
+					"'" : "&#39;",
+					"`" : "&#96;"
+				};
+			str = String(str);
+			return str && hasHtmlCharsRe.test(str)
+				? str.replace(htmlCharsRe, function (c) { return htmlCharsMap[c]; })
+				: str;
 		}
 	},
 
 	/**
-	 * Returns a decoded version of the passed entity encoded string
+	 * Returns a decoded version of the passed entity encoded string.
 	 */
-	entityDecode : {
+	unescape : {
 		value : function (str) {
-			return str
-				.replace(/&quot;/g, '"')
-				.replace(/&gt;/g,   ">")
-				.replace(/&lt;/g,   "<")
-				.replace(/&amp;/g,  "&");
+			if (str == null) { // lazy equality for null
+				return "";
+			}
+			var	escapedHtmlRe    = /&(?:amp|lt|gt|quot|apos|#39|#x27|#96|#x60);/g,
+				hasEscapedHtmlRe = RegExp(escapedHtmlRe.source), // to drop the global flag
+				escapedHtmlMap   = {
+					"&amp;"  : "&",
+					"&lt;"   : "<",
+					"&gt;"   : ">",
+					"&quot;" : '"',
+					"&apos;" : "'", // apostrophe from XML shenanigans
+					"&#39;"  : "'", // apostrophe from decimal NCR
+					"&#x27;" : "'", // apostrophe from hexadecimal NCR (fuck you, Underscorejs)
+					"&#96;"  : "`", // backtick from decimal NCR
+					"&#x60;" : "`"  // backtick from hexadecimal NCR (fuck you, Underscorejs)
+				};
+			str = String(str);
+			return str && hasEscapedHtmlRe.test(str)
+				? str.replace(escapedHtmlRe, function (c) { return escapedHtmlMap[c]; })
+				: str;
 		}
 	},
 
@@ -622,6 +642,32 @@ var Util = Object.defineProperties({}, {
 			}
 			return msec + "ms";
 		}
+	}
+
+});
+
+// Setup aliases
+Object.defineProperties(Util, {
+
+	/*
+		[DEPRECATED] Backup Math.random, in case it's replaced later.
+	*/
+	random : {
+		value : Math.random
+	},
+
+	/*
+		[DEPRECATED] Alias of `Util.escape`.
+	*/
+	entityEncode : {
+		value : Util.escape
+	},
+
+	/*
+		[DEPRECATED] Alias of `Util.unescape`.
+	*/
+	entityDecode : {
+		value : Util.unescape
 	}
 
 });
