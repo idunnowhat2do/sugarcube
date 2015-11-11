@@ -73,7 +73,7 @@ var	config = Object.seal({
 		*/
 		history : Object.seal({
 			controls  : true,
-			maxStates : 100
+			maxStates : 150
 		}),
 
 		/*
