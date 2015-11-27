@@ -34,9 +34,8 @@
 		"DEBUG"            : false,
 		"TWINE1"           : false,
 		"LZString"         : false,
-		"UUID"             : false,
 		"Audio"            : false,
-		"HTMLAudioElement" : false
+		"HTMLMediaElement" : false
 	},
     "env" : {
         "browser" : true,

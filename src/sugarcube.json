@@ -3,5 +3,5 @@
 	"major"      : 2,
 	"minor"      : 0,
 	"patch"      : 0,
-	"prerelease" : "rc.1"
+	"prerelease" : null
 }
