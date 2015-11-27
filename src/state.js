@@ -74,7 +74,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		config.history.maxStates = Math.max(1, Number(config.history.maxStates));
 		if (isNaN(config.history.maxStates) || !isFinite(config.history.maxStates)) {
 			// TODO: Maybe this should throw instead?
-			config.history.maxStates = 100;
+			config.history.maxStates = 150;
 		}
 		if (config.history.maxStates === 1) {
 			config.history.controls = false;
