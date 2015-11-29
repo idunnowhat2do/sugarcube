@@ -12,12 +12,6 @@
 */
 
 /*
-	Global SugarCube object which contains exported identifiers for debugging.  This also allows
-	scripts to easily detect whether they're running in SugarCube (e.g. `"SugarCube" in window`).
-*/
-window.SugarCube = {};
-
-/*
 	Version object.
 */
 var	version = Object.freeze({
@@ -138,7 +132,7 @@ var	config = Object.seal({
 	});
 
 /*
-	Internal variables, mostly for use by story authors.
+	Internal variables (mostly for use by story authors).
 */
 /* eslint-disable no-unused-vars */
 var	macros      = {},    // legacy macros object
@@ -154,6 +148,43 @@ var	macros      = {},    // legacy macros object
 	prerender   = {},    // pre-render task callbacks object
 	postrender  = {};    // post-render task callbacks object
 /* eslint-enable no-unused-vars */
+
+/*
+	Global `SugarCube` object.  Allows scripts to detect if they're running in SugarCube by testing for
+	the object (e.g. `"SugarCube" in window`) and, upon request, contains exported identifiers for
+	debugging purposes.
+*/
+window.SugarCube = Object.defineProperties({}, {
+	/*
+		Export identifiers for debugging purposes.
+	*/
+	_debug : {
+		value : function () {
+			window.alert("Exporting identifiers for debugging."); // eslint-disable-line no-alert
+			Object.defineProperties(window.SugarCube, {
+				Browser  : { value : Browser },
+				Has      : { value : Has },
+				Macro    : { value : Macro },
+				Passage  : { value : Passage },
+				Save     : { value : Save },
+				Setting  : { value : Setting },
+				State    : { value : State },
+				Story    : { value : Story },
+				UI       : { value : UI },
+				Util     : { value : Util },
+				Wikifier : { value : Wikifier },
+				config   : { value : config },
+				macros   : { value : macros },
+				runtime  : { value : runtime },
+				session  : { value : session },
+				settings : { value : settings },
+				setup    : { value : setup },
+				storage  : { value : storage },
+				version  : { value : version }
+			});
+		}
+	}
+});
 
 /**
 	The main function, which is the entry point for the story.
@@ -240,30 +271,5 @@ jQuery(function () {
 	} catch (e) {
 		return fatalAlert(null, e.message);
 	}
-
-	/*
-		Finally, export identifiers for debugging purposes.
-	*/
-	window.SugarCube = {
-		Browser  : Browser,
-		Has      : Has,
-		Macro    : Macro,
-		Passage  : Passage,
-		Save     : Save,
-		Setting  : Setting,
-		State    : State,
-		Story    : Story,
-		UI       : UI,
-		Util     : Util,
-		Wikifier : Wikifier,
-		config   : config,
-		macros   : macros,
-		runtime  : runtime,
-		session  : session,
-		settings : settings,
-		setup    : setup,
-		storage  : storage,
-		version  : version
-	};
 });
 
