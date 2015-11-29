@@ -207,7 +207,7 @@ jQuery(function () {
 		}
 
 		/*
-			Load the story data (this must be done before most anything else).
+			Load the story data (must be done before most anything else).
 		*/
 		Story.load();
 
@@ -226,7 +226,7 @@ jQuery(function () {
 		config.saves.id = Story.domId;
 
 		/*
-			Initialize the user interface (this must be done before story startup, specifically before user scripts).
+			Initialize the user interface (must be done before story initialization, specifically before user scripts).
 		*/
 		UI.init();
 
@@ -244,7 +244,7 @@ jQuery(function () {
 		Story.init();
 
 		/*
-			Initialize the save system (this must be done after story startup, but before state initialization).
+			Initialize the save system (must be done after story initialization, but before state initialization).
 		*/
 		Save.init();
 
@@ -259,7 +259,7 @@ jQuery(function () {
 		Macro.init();
 
 		/*
-			Initialize the state (this should be done as late as possible, but before UI startup).
+			Initialize the state (should be done as late as possible, but before UI startup).
 		*/
 		State.init();
 
