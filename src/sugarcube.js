@@ -90,7 +90,7 @@ var	config = Object.seal({
 		passages : Object.seal({
 			descriptions  : undefined,
 			displayTitles : false,
-			start         : undefined, // set by `Story.init()`
+			start         : undefined, // set by `Story.load()`
 			transitionOut : undefined
 		}),
 
@@ -176,9 +176,9 @@ jQuery(function () {
 		}
 
 		/*
-			Initialize the story (this must be done before most anything else).
+			Load the story data (this must be done before most anything else).
 		*/
-		Story.init();
+		Story.load();
 
 		/*
 			Instantiate the storage and session objects.
@@ -208,9 +208,9 @@ jQuery(function () {
 		}
 
 		/*
-			Start the story (largely load the user styles, scripts, and widgets).
+			Initialize the story (largely load the user styles, scripts, and widgets).
 		*/
-		Story.start();
+		Story.init();
 
 		/*
 			Initialize the save system (this must be done after story startup, but before state initialization).
