@@ -1344,12 +1344,13 @@ Macro.add("repeat", {
 				proper cleanup is done in the event that an exception is thrown during the
 				`Wikifier` call.
 
-				TODO: This is an absolutely horrific kludge.  Make this unnecessary, if possible.
+				TODO: This is an absolutely horrific kludge, which is very likely not entirely
+				reliable.  Make this unnecessary, if possible.
 			*/
 			try {
 				runtime.temp.break = null;
 
-				// Setup the `repeatTimerId` value, caching the existing value if necessary.
+				// Setup the `repeatTimerId` value, caching the existing value, if necessary.
 				if (runtime.temp.hasOwnProperty("repeatTimerId")) {
 					timerIdCache = runtime.temp.repeatTimerId;
 				}
@@ -1360,7 +1361,7 @@ Macro.add("repeat", {
 				new Wikifier(frag, content);
 				container.appendChild(frag);
 			} finally {
-				// Teardown the `repeatTimerId` property, restoring the cached value if necessary.
+				// Teardown the `repeatTimerId` property, restoring the cached value, if necessary.
 				if (typeof timerIdCache !== "undefined") {
 					runtime.temp.repeatTimerId = timerIdCache;
 				} else {
