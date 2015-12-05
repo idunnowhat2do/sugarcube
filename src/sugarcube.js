@@ -12,12 +12,6 @@
 */
 
 /*
-	Global SugarCube object which contains exported identifiers for debugging.  This also allows
-	scripts to easily detect whether they're running in SugarCube (e.g. `"SugarCube" in window`).
-*/
-window.SugarCube = {};
-
-/*
 	Version object.
 */
 var	version = Object.freeze({
@@ -138,7 +132,7 @@ var	config = Object.seal({
 	});
 
 /*
-	Internal variables, mostly for use by story authors.
+	Internal variables (mostly for use by story authors).
 */
 /* eslint-disable no-unused-vars */
 var	macros      = {},    // legacy macros object
@@ -154,6 +148,12 @@ var	macros      = {},    // legacy macros object
 	prerender   = {},    // pre-render task callbacks object
 	postrender  = {};    // post-render task callbacks object
 /* eslint-enable no-unused-vars */
+
+/*
+	Global `SugarCube` object.  Allows scripts to detect if they're running in SugarCube by testing for
+	the object (e.g. `"SugarCube" in window`) and contains exported identifiers for debugging purposes.
+*/
+window.SugarCube = {};
 
 /**
 	The main function, which is the entry point for the story.
