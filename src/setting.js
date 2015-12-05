@@ -37,10 +37,7 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 		if (storage.has("options")) {
 			var old = storage.get("options");
 			if (old !== null) {
-				settings = Object.assign(settingsCreate(), old);
-				if ("settings" in window.SugarCube) {
-					window.SugarCube.settings = settings;
-				}
+				window.SugarCube.settings = settings = Object.assign(settingsCreate(), old);
 			}
 			settingsSave();
 			storage.delete("options");
@@ -98,18 +95,12 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 
 		// Load from storage.
 		if (fromStorage !== null) {
-			settings = Object.assign(loadedSettings, fromStorage);
-			if ("settings" in window.SugarCube) {
-				window.SugarCube.settings = settings;
-			}
+			window.SugarCube.settings = settings = Object.assign(loadedSettings, fromStorage);
 		}
 	}
 
 	function settingsClear() {
-		settings = settingsCreate();
-		if ("settings" in window.SugarCube) {
-			window.SugarCube.settings = settings;
-		}
+		window.SugarCube.settings = settings = settingsCreate();
 		return settingsSave();
 	}
 
