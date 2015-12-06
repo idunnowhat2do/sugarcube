@@ -1230,7 +1230,7 @@ Macro.add("timed", {
 		var	items = [];
 		try {
 			items.push({
-				delay   : Math.max(10, Util.fromCSSTime(this.args[0].trim())),
+				delay   : Math.max(10, Util.fromCSSTime(String(this.args[0]).trim())),
 				content : this.payload[0].contents
 			});
 		} catch (e) {
@@ -1242,7 +1242,7 @@ Macro.add("timed", {
 					items.push({
 						delay : this.payload[i].arguments.length === 0
 							? items[items.length - 1].delay
-							: Math.max(10, Util.fromCSSTime(this.payload[i].arguments.trim())),
+							: Math.max(10, Util.fromCSSTime(String(this.payload[i].arguments).trim())),
 						content : this.payload[i].contents
 					});
 				}
@@ -1310,9 +1310,9 @@ Macro.add("repeat", {
 			return this.error("no time value specified");
 		}
 
-		var	delay = this.args[0].trim();
+		var	delay;
 		try {
-			delay = Math.max(10, Util.fromCSSTime(delay));
+			delay = Math.max(10, Util.fromCSSTime(String(this.args[0]).trim()));
 		} catch (e) {
 			return this.error(e.message);
 		}
