@@ -1376,7 +1376,7 @@ function defineStandardMacros() {
 		 * <<audio>>
 		 */
 		macros.add("audio", {
-			version : { major: 1, minor: 1, revision: 0 },
+			version : { major: 1, minor: 2, revision: 0 },
 			handler : function () {
 				if (this.args.length < 2) {
 					var errors = [];
@@ -1392,13 +1392,14 @@ function defineStandardMacros() {
 					return this.error("no track by ID: " + id);
 				}
 
-				var	audio   = tracks[id],
+				var	audio    = tracks[id],
 					action,
 					volume,
 					mute,
 					time,
 					loop,
 					fadeTo,
+					fadeOver = 5,
 					passage,
 					raw;
 
@@ -1429,6 +1430,26 @@ function defineStandardMacros() {
 						fadeTo = parseFloat(raw);
 						if (isNaN(fadeTo) || !isFinite(fadeTo)) {
 							return this.error("cannot parse fadeto: " + raw);
+						}
+						break;
+					case "fadeoverto":
+						if (args.length < 2) {
+							var errors = [];
+							if (args.length < 1) { errors.push("seconds"); }
+							if (args.length < 2) { errors.push("level"); }
+							return this.error("fadeoverto missing required " + errors.join(" and ")
+								+ " value" + (errors.length > 1 ? "s" : ""));
+						}
+						action = "fade";
+						raw = args.shift();
+						fadeOver = parseFloat(raw);
+						if (isNaN(fadeOver) || !isFinite(fadeOver)) {
+							return this.error("cannot parse fadeoverto: " + raw);
+						}
+						raw = args.shift();
+						fadeTo = parseFloat(raw);
+						if (isNaN(fadeTo) || !isFinite(fadeTo)) {
+							return this.error("cannot parse fadeoverto: " + raw);
 						}
 						break;
 					case "volume":
@@ -1524,7 +1545,7 @@ function defineStandardMacros() {
 								audio.volume = 0;
 							}
 						}
-						audio.fade(audio.volume, fadeTo);
+						audio.fadeWithDuration(fadeOver, audio.volume, fadeTo);
 						break;
 					}
 				} catch (e) {
@@ -1616,19 +1637,20 @@ function defineStandardMacros() {
 		 * <<playlist>>
 		 */
 		macros.add("playlist", {
-			version : { major: 1, minor: 2, revision: 0 },
+			version : { major: 1, minor: 3, revision: 0 },
 			handler : function () {
 				if (this.args.length === 0) {
 					return this.error("no actions specified");
 				}
 
-				var	self    = this.self,
+				var	self     = this.self,
 					action,
 					volume,
 					mute,
 					loop,
 					shuffle,
 					fadeTo,
+					fadeOver = 5,
 					raw;
 
 				// process arguments
@@ -1658,6 +1680,26 @@ function defineStandardMacros() {
 						fadeTo = parseFloat(raw);
 						if (isNaN(fadeTo) || !isFinite(fadeTo)) {
 							return this.error("cannot parse fadeto: " + raw);
+						}
+						break;
+					case "fadeoverto":
+						if (args.length < 2) {
+							var errors = [];
+							if (args.length < 1) { errors.push("seconds"); }
+							if (args.length < 2) { errors.push("level"); }
+							return this.error("fadeoverto missing required " + errors.join(" and ")
+								+ " value" + (errors.length > 1 ? "s" : ""));
+						}
+						action = "fade";
+						raw = args.shift();
+						fadeOver = parseFloat(raw);
+						if (isNaN(fadeOver) || !isFinite(fadeOver)) {
+							return this.error("cannot parse fadeoverto: " + raw);
+						}
+						raw = args.shift();
+						fadeTo = parseFloat(raw);
+						if (isNaN(fadeTo) || !isFinite(fadeTo)) {
+							return this.error("cannot parse fadeoverto: " + raw);
 						}
 						break;
 					case "volume":
@@ -1724,7 +1766,7 @@ function defineStandardMacros() {
 								self.setVolume(0);
 							}
 						}
-						self.fade(fadeTo);
+						self.fade(fadeOver, fadeTo);
 						break;
 					}
 				} catch (e) {
@@ -1750,7 +1792,7 @@ function defineStandardMacros() {
 					this.current.stop();
 				}
 			},
-			fade : function (to) {
+			fade : function (over, to) {
 				if (this.list.length === 0) {
 					this.buildList();
 				}
@@ -1759,7 +1801,7 @@ function defineStandardMacros() {
 				} else {
 					this.current.volume = this.volume;
 				}
-				this.current.fade(this.current.volume, to);
+				this.current.fadeWithDuration(over, this.current.volume, to);
 				this.volume = to; // kludgey, but necessary
 			},
 			mute : function () {
