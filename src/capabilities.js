@@ -56,7 +56,7 @@ var
 		function webStorageIsOK(store) {
 			try {
 				if (store != null && store.length >= 0) { // lazy equality for null
-					var	tkey = "SugarCube.localStorage.test",
+					var	tkey = "SugarCube.WebStorage.test",
 						tval = "1701 Guilty Scott";
 					store.setItem(tkey, tval);
 					if (store.getItem(tkey) === tval) {
