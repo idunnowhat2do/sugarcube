@@ -1230,7 +1230,7 @@ Macro.add("timed", {
 		var	items = [];
 		try {
 			items.push({
-				delay   : Math.max(10, Util.fromCSSTime(this.args[0].trim())),
+				delay   : Math.max(10, Util.fromCSSTime(String(this.args[0]).trim())),
 				content : this.payload[0].contents
 			});
 		} catch (e) {
@@ -1242,7 +1242,7 @@ Macro.add("timed", {
 					items.push({
 						delay : this.payload[i].arguments.length === 0
 							? items[items.length - 1].delay
-							: Math.max(10, Util.fromCSSTime(this.payload[i].arguments.trim())),
+							: Math.max(10, Util.fromCSSTime(String(this.payload[i].arguments).trim())),
 						content : this.payload[i].contents
 					});
 				}
@@ -1310,9 +1310,9 @@ Macro.add("repeat", {
 			return this.error("no time value specified");
 		}
 
-		var	delay = this.args[0].trim();
+		var	delay;
 		try {
-			delay = Math.max(10, Util.fromCSSTime(delay));
+			delay = Math.max(10, Util.fromCSSTime(String(this.args[0]).trim()));
 		} catch (e) {
 			return this.error(e.message);
 		}
@@ -1344,12 +1344,13 @@ Macro.add("repeat", {
 				proper cleanup is done in the event that an exception is thrown during the
 				`Wikifier` call.
 
-				TODO: This is an absolutely horrific kludge.  Make this unnecessary, if possible.
+				TODO: This is an absolutely horrific kludge, which is very likely not entirely
+				reliable.  Make this unnecessary, if possible.
 			*/
 			try {
 				runtime.temp.break = null;
 
-				// Setup the `repeatTimerId` value, caching the existing value if necessary.
+				// Setup the `repeatTimerId` value, caching the existing value, if necessary.
 				if (runtime.temp.hasOwnProperty("repeatTimerId")) {
 					timerIdCache = runtime.temp.repeatTimerId;
 				}
@@ -1360,7 +1361,7 @@ Macro.add("repeat", {
 				new Wikifier(frag, content);
 				container.appendChild(frag);
 			} finally {
-				// Teardown the `repeatTimerId` property, restoring the cached value if necessary.
+				// Teardown the `repeatTimerId` property, restoring the cached value, if necessary.
 				if (typeof timerIdCache !== "undefined") {
 					runtime.temp.repeatTimerId = timerIdCache;
 				} else {
@@ -1483,7 +1484,7 @@ if (!Has.audio) {
 		handler : function () { /* empty */ }
 	});
 } else {
-	/**
+	/*
 		<<audio>>
 	*/
 	Macro.add("audio", {
@@ -1502,13 +1503,14 @@ if (!Has.audio) {
 				return this.error("no track by ID: " + id);
 			}
 
-			var	audio   = tracks[id],
+			var	audio    = tracks[id],
 				action,
 				volume,
 				mute,
 				time,
 				loop,
 				fadeTo,
+				fadeOver = 5,
 				passage,
 				raw;
 
@@ -1539,6 +1541,26 @@ if (!Has.audio) {
 					fadeTo = parseFloat(raw);
 					if (isNaN(fadeTo) || !isFinite(fadeTo)) {
 						return this.error("cannot parse fadeto: " + raw);
+					}
+					break;
+				case "fadeoverto":
+					if (args.length < 2) {
+						var errors = []; // eslint-disable-line no-redeclare
+						if (args.length < 1) { errors.push("seconds"); }
+						if (args.length < 2) { errors.push("level"); }
+						return this.error("fadeoverto missing required " + errors.join(" and ")
+							+ " value" + (errors.length > 1 ? "s" : ""));
+					}
+					action = "fade";
+					raw = args.shift();
+					fadeOver = parseFloat(raw);
+					if (isNaN(fadeOver) || !isFinite(fadeOver)) {
+						return this.error("cannot parse fadeoverto: " + raw);
+					}
+					raw = args.shift();
+					fadeTo = parseFloat(raw);
+					if (isNaN(fadeTo) || !isFinite(fadeTo)) {
+						return this.error("cannot parse fadeoverto: " + raw);
 					}
 					break;
 				case "volume":
@@ -1634,7 +1656,7 @@ if (!Has.audio) {
 							audio.volume = 0;
 						}
 					}
-					audio.fade(audio.volume, fadeTo);
+					audio.fadeWithDuration(fadeOver, audio.volume, fadeTo);
 					break;
 				}
 			} catch (e) {
@@ -1643,7 +1665,7 @@ if (!Has.audio) {
 		}
 	});
 
-	/**
+	/*
 		<<stopallaudio>>
 	*/
 	Macro.add("stopallaudio", {
@@ -1655,7 +1677,7 @@ if (!Has.audio) {
 		}
 	});
 
-	/**
+	/*
 		<<cacheaudio>>
 	*/
 	Macro.add("cacheaudio", {
@@ -1721,7 +1743,7 @@ if (!Has.audio) {
 		tracks  : {}
 	});
 
-	/**
+	/*
 		<<playlist>>
 	*/
 	Macro.add("playlist", {
@@ -1730,13 +1752,14 @@ if (!Has.audio) {
 				return this.error("no actions specified");
 			}
 
-			var	self    = this.self,
+			var	self     = this.self,
 				action,
 				volume,
 				mute,
 				loop,
 				shuffle,
 				fadeTo,
+				fadeOver = 5,
 				raw;
 
 			// Process arguments.
@@ -1766,6 +1789,26 @@ if (!Has.audio) {
 					fadeTo = parseFloat(raw);
 					if (isNaN(fadeTo) || !isFinite(fadeTo)) {
 						return this.error("cannot parse fadeto: " + raw);
+					}
+					break;
+				case "fadeoverto":
+					if (args.length < 2) {
+						var errors = [];
+						if (args.length < 1) { errors.push("seconds"); }
+						if (args.length < 2) { errors.push("level"); }
+						return this.error("fadeoverto missing required " + errors.join(" and ")
+							+ " value" + (errors.length > 1 ? "s" : ""));
+					}
+					action = "fade";
+					raw = args.shift();
+					fadeOver = parseFloat(raw);
+					if (isNaN(fadeOver) || !isFinite(fadeOver)) {
+						return this.error("cannot parse fadeoverto: " + raw);
+					}
+					raw = args.shift();
+					fadeTo = parseFloat(raw);
+					if (isNaN(fadeTo) || !isFinite(fadeTo)) {
+						return this.error("cannot parse fadeoverto: " + raw);
 					}
 					break;
 				case "volume":
@@ -1832,7 +1875,7 @@ if (!Has.audio) {
 							self.setVolume(0);
 						}
 					}
-					self.fade(fadeTo);
+					self.fade(fadeOver, fadeTo);
 					break;
 				}
 			} catch (e) {
@@ -1858,7 +1901,7 @@ if (!Has.audio) {
 				this.current.stop();
 			}
 		},
-		fade : function (to) {
+		fade : function (over, to) {
 			if (this.list.length === 0) {
 				this.buildList();
 			}
@@ -1867,7 +1910,7 @@ if (!Has.audio) {
 			} else {
 				this.current.volume = this.volume;
 			}
-			this.current.fade(this.current.volume, to);
+			this.current.fadeWithDuration(over, this.current.volume, to);
 			this.volume = to; // kludgey, but necessary
 		},
 		mute : function () {
@@ -1924,7 +1967,7 @@ if (!Has.audio) {
 		shuffle : false
 	});
 
-	/**
+	/*
 		<<setplaylist>>
 	*/
 	Macro.add("setplaylist", {

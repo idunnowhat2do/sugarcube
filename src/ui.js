@@ -254,7 +254,13 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		if (!Story.has("StoryMenu")) {
 			jQuery("#menu-story").remove();
 		}
-		uiSetStoryElements();
+		if (!config.ui.updateStoryElements) {
+			/*
+				We only need to set the story elements here if `config.ui.updateStoryElements`
+				is falsy, since otherwise they will be set by `State.play()`.
+			*/
+			uiSetStoryElements();
+		}
 
 		// Setup the Saves menu item.
 		dialogAddClickHandler("#menu-item-saves a", null, uiBuildSaves)
@@ -658,7 +664,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		}
 
 		// Add button bar items (export, import, and clear).
-		if (hasSaves || Has.fileAPI) {
+		if (savesOk || Has.fileAPI) {
 			btnBar = document.createElement("ul");
 			btnBar.classList.add("buttons");
 			if (Has.fileAPI) {

@@ -1,4 +1,4 @@
-<!DOCTYPE html><!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html>
 <html class="init-no-js">
 <head>
 <meta charset="UTF-8" />

@@ -4,14 +4,13 @@
 	  - Description : Node.js-hosted build script for SugarCube
 	  - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
 	  - Copyright   : Copyright © 2014–2015 Thomas Michael Edwards. All rights reserved.
-	  - Version     : 1.2.18, 2015-09-28
+	  - Version     : 1.2.19, 2015-12-05
 */
 "use strict";
 
 /*******************************************************************************
  * CONFIGURATION
  ******************************************************************************/
-var LINETERM = "\r\n";
 var CONFIG = {
 	js : [
 		// the ordering here is significant
@@ -127,17 +126,11 @@ function copyFile(src, dest) {
 
 function readFileContents(filename) {
 	try {
-		/*
 		// the replace() is necessary because Node.js only offers binary mode file
 		// access, regardless of platform, so we convert DOS-style line terminators
 		// to UNIX-style, just in case someone adds/edits a file and gets DOS-style
 		// line termination all over it
-		return _fs.readFileSync(filename, { encoding: "utf8" }).replace(/\r\n/g, LINETERM);
-		*/
-		/*
-			For the moment, let's force DOS-style line terminators to enable the MotW.
-		*/
-		return _fs.readFileSync(filename, { encoding: "utf8" }).replace(/(?:\r\n|\n|\r)/g, LINETERM);
+		return _fs.readFileSync(filename, { encoding: "utf8" }).replace(/\r\n/g, "\n");
 	} catch (e) {
 		die('cannot open file "' + filename + '" for reading (reason: ' + e.message + ')');
 	}
@@ -156,7 +149,7 @@ function concatFiles(filenames, callback) {
 			var contents = readFileContents(_path.normalize(filename));
 			return (typeof callback === "function") ? callback(filename, contents) : contents;
 		});
-	return output.join(LINETERM);
+	return output.join("\n");
 }
 
 function compileJavaScript(filenames, options) {
@@ -166,7 +159,7 @@ function compileJavaScript(filenames, options) {
 		return [
 			"window.TWINE1=" + (!!options.twine1),
 			"window.DEBUG=" + (_opt.options.debug || false)
-		].join(";" + LINETERM) + ";" + LINETERM + jsSource;
+		].join(";\n") + ";\n" + jsSource;
 	} else {
 		try {
 			var	uglifyjs = require("uglify-js"),

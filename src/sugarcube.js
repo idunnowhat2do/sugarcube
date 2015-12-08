@@ -12,12 +12,6 @@
 */
 
 /*
-	Global SugarCube object which contains exported identifiers for debugging.  This also allows
-	scripts to easily detect whether they're running in SugarCube (e.g. `"SugarCube" in window`).
-*/
-window.SugarCube = {};
-
-/*
 	Version object.
 */
 var	version = Object.freeze({
@@ -90,7 +84,7 @@ var	config = Object.seal({
 		passages : Object.seal({
 			descriptions  : undefined,
 			displayTitles : false,
-			start         : undefined, // set by `Story.init()`
+			start         : undefined, // set by `Story.load()`
 			transitionOut : undefined
 		}),
 
@@ -138,7 +132,7 @@ var	config = Object.seal({
 	});
 
 /*
-	Internal variables, mostly for use by story authors.
+	Internal variables (mostly for use by story authors).
 */
 /* eslint-disable no-unused-vars */
 var	macros      = {},    // legacy macros object
@@ -154,6 +148,12 @@ var	macros      = {},    // legacy macros object
 	prerender   = {},    // pre-render task callbacks object
 	postrender  = {};    // post-render task callbacks object
 /* eslint-enable no-unused-vars */
+
+/*
+	Global `SugarCube` object.  Allows scripts to detect if they're running in SugarCube by testing for
+	the object (e.g. `"SugarCube" in window`) and contains exported identifiers for debugging purposes.
+*/
+window.SugarCube = {};
 
 /**
 	The main function, which is the entry point for the story.
@@ -176,9 +176,9 @@ jQuery(function () {
 		}
 
 		/*
-			Initialize the story (this must be done before most anything else).
+			Load the story data (must be done before most anything else).
 		*/
-		Story.init();
+		Story.load();
 
 		/*
 			Instantiate the storage and session objects.
@@ -195,7 +195,7 @@ jQuery(function () {
 		config.saves.id = Story.domId;
 
 		/*
-			Initialize the user interface (this must be done before story startup, specifically before user scripts).
+			Initialize the user interface (must be done before story initialization, specifically before user scripts).
 		*/
 		UI.init();
 
@@ -208,12 +208,12 @@ jQuery(function () {
 		}
 
 		/*
-			Start the story (largely load the user styles, scripts, and widgets).
+			Initialize the story (largely load the user styles, scripts, and widgets).
 		*/
-		Story.start();
+		Story.init();
 
 		/*
-			Initialize the save system (this must be done after story startup, but before state initialization).
+			Initialize the save system (must be done after story initialization, but before state initialization).
 		*/
 		Save.init();
 
@@ -228,7 +228,7 @@ jQuery(function () {
 		Macro.init();
 
 		/*
-			Initialize the state (this should be done as late as possible, but before UI startup).
+			Initialize the state (should be done as late as possible, but before UI startup).
 		*/
 		State.init();
 

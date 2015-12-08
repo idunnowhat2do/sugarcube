@@ -31,15 +31,15 @@ var Story = (function () { // eslint-disable-line no-unused-vars
 	 * Story Functions
 	 ******************************************************************************************************************/
 	/*
-		n.b. The `storyInit()` function is done as a function expression assigned to a variable
+		n.b. The `storyLoad()` function is done as a function expression assigned to a variable
 		     here, rather than simply as a function definition, so that the build script's
 		     conditional compilation feature can work.
 	*/
-	var storyInit;
+	var storyLoad;
 	if (TWINE1) { // for Twine 1
 
-		storyInit = function () {
-			if (DEBUG) { console.log("[Story/storyInit()][Twine 1]"); }
+		storyLoad = function () {
+			if (DEBUG) { console.log("[Story/storyLoad()][Twine 1]"); }
 
 			/*
 				Set the default starting passage title.
@@ -95,8 +95,8 @@ var Story = (function () { // eslint-disable-line no-unused-vars
 
 	} else { // for Twine 2
 
-		storyInit = function () { // eslint-disable-line no-redeclare
-			if (DEBUG) { console.log("[Story/storyInit()][Twine 2]"); }
+		storyLoad = function () { // eslint-disable-line no-redeclare
+			if (DEBUG) { console.log("[Story/storyLoad()][Twine 2]"); }
 
 			var	$storydata = jQuery("#store-area>tw-storydata"),
 				startNode  = $storydata.attr("startnode") || "";
@@ -156,7 +156,9 @@ var Story = (function () { // eslint-disable-line no-unused-vars
 
 	}
 
-	function storyStart() {
+	function storyInit() {
+		if (DEBUG) { console.log("[Story/storyInit()]"); }
+
 		/*
 			Add the story styles.
 		*/
@@ -299,8 +301,8 @@ var Story = (function () { // eslint-disable-line no-unused-vars
 		/*
 			Story Functions.
 		*/
+		load  : { value : storyLoad },
 		init  : { value : storyInit },
-		start : { value : storyStart },
 		title : { get : storyTitle }, // a setter is probably not required here
 		domId : { get : storyDomId },
 
