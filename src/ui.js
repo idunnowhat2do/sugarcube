@@ -664,7 +664,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		}
 
 		// Add button bar items (export, import, and clear).
-		if (hasSaves || Has.fileAPI) {
+		if (savesOk || Has.fileAPI) {
 			btnBar = document.createElement("ul");
 			btnBar.classList.add("buttons");
 			if (Has.fileAPI) {
