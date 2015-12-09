@@ -925,7 +925,7 @@ Macro.add("textarea", {
 				"id"       : "textarea-" + varId,
 				"name"     : "textarea-" + varId,
 				"rows"     : 4,
-				"cols"     : 68,
+				//"cols"     : 68, // instead of setting "cols" we set the `min-width` in CSS
 				"tabindex" : 0 // for accessiblity
 			})
 			.addClass("macro-" + this.name)

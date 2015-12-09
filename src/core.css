@@ -119,8 +119,11 @@ input, select, textarea {
 select {
 	padding: 0.34em 0.4em;
 }
-input[type="text"], textarea {
-	min-width: 20em;
+input[type="text"] {
+	min-width: 18em;
+}
+textarea {
+	min-width: 30em;
 }
 input[type="checkbox"], input[type="file"], input[type="radio"], select {
 	cursor: pointer;
