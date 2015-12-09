@@ -95,7 +95,7 @@ var Story = (function () { // eslint-disable-line no-unused-vars
 
 	} else { // for Twine 2
 
-		storyLoad = function () { // eslint-disable-line no-redeclare
+		storyLoad = function () {
 			if (DEBUG) { console.log("[Story/storyLoad()][Twine 2]"); }
 
 			var	$storydata = jQuery("#store-area>tw-storydata"),
