@@ -749,9 +749,19 @@ function AudioWrapper(audio) {
 			value    : null
 		}
 	});
+	if (this.audio.preload !== "metadata" && this.audio.preload !== "auto") {
+		this.audio.preload = "metadata";
+	}
 }
 
-// Setup the AudioWrapper prototype
+/*
+	Setup the AudioWrapper prototype
+
+	n.b. The various data constants (e.g. for comparison to `readyState` or `networkState`)
+	     are not defined by all browsers on the descendant elements `HTMLAudioElement` and
+	     `HTMLVideoElement` (notably, IE/Edge do not).  Therefore, the base media element,
+	     `HTMLMediaElement`, must be used to reference the constants.
+*/
 Object.defineProperties(AudioWrapper.prototype, {
 	/*
 		Getters/Setters
@@ -805,27 +815,22 @@ Object.defineProperties(AudioWrapper.prototype, {
 	*/
 	hasMetadata : {
 		value : function () {
-			/*
-				We must use `HTMLMediaElement` here instead of `HTMLAudioElement` since
-				Internet Explorer and Edge, bizarrely, do not populate `HTMLAudioElement`
-				with the various `HAVE_*DATA` properties (for comparison to `readyState`).
-			*/
 			return this.audio.readyState >= HTMLMediaElement.HAVE_METADATA;
 		}
 	},
 	hasData : {
 		value : function () {
-			/*
-				We must use `HTMLMediaElement` here instead of `HTMLAudioElement` since
-				Internet Explorer and Edge, bizarrely, do not populate `HTMLAudioElement`
-				with the various `HAVE_*DATA` properties (for comparison to `readyState`).
-			*/
 			return this.audio.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
+		}
+	},
+	noSource : {
+		value : function () {
+			return this.audio.networkState === HTMLMediaElement.NETWORK_NO_SOURCE;
 		}
 	},
 	isPlaying : {
 		value : function () {
-			return !(this.audio.ended || this.audio.paused);
+			return !(this.audio.ended || this.audio.paused || !this.hasData());
 		}
 	},
 	isEnded : {
@@ -912,17 +917,18 @@ Object.defineProperties(AudioWrapper.prototype, {
 			if (!this.hasData()) {
 				this.load();
 			}
+			duration = Math.clamp(duration, 1, this.duration || 5);
 
 			var interval = 25, // in milliseconds
 				delta    = (to - from) / (duration / (interval / 1000));
 			this._faderId = setInterval((function (self) {
 				var min, max;
 				if (from < to) {
-					// fade in
+					// Fade in.
 					min = from;
 					max = to;
 				} else {
-					// fade out
+					// Fade out.
 					min = to;
 					max = from;
 				}
@@ -943,7 +949,7 @@ Object.defineProperties(AudioWrapper.prototype, {
 						self._faderId = null;
 					}
 				};
-			}(this)), interval);
+			})(this), interval);
 		}
 	},
 	fade : {
