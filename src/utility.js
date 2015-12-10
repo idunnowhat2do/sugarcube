@@ -1141,42 +1141,51 @@ Object.defineProperties(AudioWrapper.prototype, {
 			if (from === to) {
 				return;
 			}
-			if (!this.hasData()) {
-				this.load();
-			}
-			duration = Math.clamp(duration, 1, this.duration || 5);
+			this.volume = from;
 
-			var interval = 25, // in milliseconds
-				delta    = (to - from) / (duration / (interval / 1000));
-			this._faderId = setInterval((function (self) {
-				var min, max;
-				if (from < to) {
-					// Fade in.
-					min = from;
-					max = to;
-				} else {
-					// Fade out.
-					min = to;
-					max = from;
-				}
-				self.volume = from;
-				self.play();
-				return function () {
-					if (!self.isPlaying()) {
-						clearInterval(self._faderId);
-						self._faderId = null;
-						return;
-					}
-					self.volume = Math.clamp(self.volume + delta, min, max);
-					if (self.volume === 0) {
-						self.pause();
-					}
-					if (self.volume === to) {
-						clearInterval(self._faderId);
-						self._faderId = null;
-					}
-				};
-			})(this), interval);
+			/*
+				We listen for the `timeupdate` event here, rather than `playing`, because
+				various browsers (notably, mobile browsers) are poor at firing media events
+				in a timely fashion, so we use `timeupdate` to ensure that we don't start
+				the fade until the track is actually progressing.
+			*/
+			jQuery(this.audio)
+				.off("timeupdate.AudioWrapper:fadeWithDuration")
+				.one("timeupdate.AudioWrapper:fadeWithDuration", (function (self) {
+					return function () {
+						var min, max;
+						if (from < to) {
+							// Fade in.
+							min = from;
+							max = to;
+						} else {
+							// Fade out.
+							min = to;
+							max = from;
+						}
+						duration = Math.clamp(duration, 1, self.duration || 5);
+						var	interval = 25, // in milliseconds
+							delta    = (to - from) / (duration / (interval / 1000));
+						self._faderId = setInterval(function () {
+							if (!self.isPlaying()) {
+								clearInterval(self._faderId);
+								self._faderId = null;
+								return;
+							}
+							self.volume = Math.clamp(self.volume + delta, min, max);
+							if (self.volume === 0) {
+								self.pause();
+							}
+							if (self.volume === to) {
+								clearInterval(self._faderId);
+								self._faderId = null;
+							}
+						}, interval);
+
+					};
+				})(this));
+
+			this.play();
 		}
 	},
 	fade : {
@@ -1192,6 +1201,44 @@ Object.defineProperties(AudioWrapper.prototype, {
 	fadeOut : {
 		value : function () {
 			this.fade(this.volume, 0);
+		}
+	},
+
+	onPlay : {
+		value : function (callback) {
+			if (typeof callback === "function") {
+				jQuery(this.audio).on("playing.AudioWrapper:onPlay", callback);
+			} else {
+				jQuery(this.audio).off("playing.AudioWrapper:onPlay");
+			}
+		}
+	},
+	onePlay : {
+		value : function (callback) {
+			if (typeof callback === "function") {
+				jQuery(this.audio).one("playing.AudioWrapper:onePlay", callback);
+			} else {
+				jQuery(this.audio).off("playing.AudioWrapper:onePlay");
+			}
+		}
+	},
+
+	onPause : {
+		value : function (callback) {
+			if (typeof callback === "function") {
+				jQuery(this.audio).on("pause.AudioWrapper:onPause", callback);
+			} else {
+				jQuery(this.audio).off("pause.AudioWrapper:onPause");
+			}
+		}
+	},
+	onePause : {
+		value : function (callback) {
+			if (typeof callback === "function") {
+				jQuery(this.audio).one("pause.AudioWrapper:onePause", callback);
+			} else {
+				jQuery(this.audio).off("pause.AudioWrapper:onePause");
+			}
 		}
 	},
 
