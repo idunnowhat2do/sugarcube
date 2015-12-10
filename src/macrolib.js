@@ -1691,6 +1691,11 @@ if (!Has.audio) {
 
 			var	types   = this.self.types,
 				canPlay = this.self.canPlay,
+				/*
+					Use `document.createElement("audio")` in favor of `new Audio()` as the
+					latter is treated differently (i.e. unfavorably) in certain cases, chiefly
+					in mobile browsers.
+				*/
 				audio   = document.createElement("audio"),
 				id      = this.args[0],
 				extRe   = /^.+?(?:\.([^\.\/\\]+?))$/;

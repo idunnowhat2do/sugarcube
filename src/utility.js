@@ -1181,7 +1181,6 @@ Object.defineProperties(AudioWrapper.prototype, {
 								self._faderId = null;
 							}
 						}, interval);
-
 					};
 				})(this));
 
