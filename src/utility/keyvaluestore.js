@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * keyvaluestore.js
+ * utility/keyvaluestore.js
  *
  * Copyright © 2013–2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
