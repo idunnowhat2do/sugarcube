@@ -3,7 +3,7 @@
 	build.js
 	  - Description : Node.js-hosted build script for SugarCube
 	  - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
-	  - Copyright   : Copyright © 2014–2015 Thomas Michael Edwards. All rights reserved.
+	  - Copyright   : Copyright © 2014–2016 Thomas Michael Edwards. All rights reserved.
 	  - Version     : 1.2.20, 2015-12-12
 */
 "use strict";
