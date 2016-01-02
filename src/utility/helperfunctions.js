@@ -108,14 +108,14 @@ function printableStringOrDefault(val, defVal) { // eslint-disable-line no-unuse
 			}).join(", ");
 		} else if (val instanceof Map) {
 			return Array.from(val).map(function (kv) {
-				return "("
-					+ printableStringOrDefault(kv[0], defVal)
+				return printableStringOrDefault(kv[0], defVal)
 					+ " \u21D2 "
-					+ printableStringOrDefault(kv[1], defVal)
-					+ ")";
-			}).join(", ");
+					+ printableStringOrDefault(kv[1], defVal);
+			}).join("; ");
 		} else if (val instanceof Date) {
 			return val.toLocaleString();
+		} else if (typeof val.toString === "function" && val.toString !== Object.prototype.toString) {
+			return val.toString();
 		}
 		return "[object]";
 	case "function":
