@@ -7,7 +7,7 @@
  *
  **********************************************************************************************************************/
 /*
-	global Save, SeedablePRNG, Story, UI, Util, Wikifier, clone, config, postdisplay, predisplay, prehistory,
+	global Save, PRNGWrapper, Story, UI, Util, Wikifier, clone, config, postdisplay, predisplay, prehistory,
 	       removeChildren, runtime, session, technicalAlert
 */
 
@@ -142,7 +142,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 			Miscellaneous properties.
 		*/
 		_lastPlay = null;
-		_prng     = _prng === null ? null : new SeedablePRNG(_prng.seed, false);
+		_prng     = _prng === null ? null : new PRNGWrapper(_prng.seed, false);
 	}
 
 	/**
@@ -425,7 +425,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 			      state, rather than having to unmarshal the PRNG every time.
 		*/
 		if (_prng !== null) {
-			_prng = SeedablePRNG.unmarshal({
+			_prng = PRNGWrapper.unmarshal({
 				seed : _prng.seed,
 				pull : _active.pull
 			});
@@ -686,7 +686,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 				+ " Twine 2: Story JavaScript) or the StoryInit special passage");
 		}
 
-		_prng = new SeedablePRNG(seed, useEntropy);
+		_prng = new PRNGWrapper(seed, useEntropy);
 		_active.pull = _prng.pull;
 	}
 

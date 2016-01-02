@@ -4,7 +4,7 @@
 	  - Description : Node.js-hosted build script for SugarCube
 	  - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
 	  - Copyright   : Copyright © 2014–2015 Thomas Michael Edwards. All rights reserved.
-	  - Version     : 1.2.19, 2015-12-05
+	  - Version     : 1.2.20, 2015-12-12
 */
 "use strict";
 
@@ -15,12 +15,16 @@ var CONFIG = {
 	js : [
 		// the ordering here is significant
 		"src/intro.js",
-		"src/extensions.js",
-		"src/capabilities.js",
 		"src/error.js",
 		"src/strings.js",
-		"src/keyvaluestore.js",
-		"src/utility.js",
+		"src/utility/extensions.js",
+		"src/utility/capabilities.js",
+		"src/utility/keyvaluestore.js",
+		"src/utility/helperfunctions.js",
+		"src/utility/audiowrapper.js",
+		"src/utility/prngwrapper.js",
+		"src/utility/stylewrapper.js",
+		"src/util.js",
 		"src/wikifier.js",
 		"src/macro.js",
 		"src/macrolib.js",
@@ -30,27 +34,27 @@ var CONFIG = {
 		"src/passage.js",
 		"src/story.js",
 		"src/state.js",
-		"src/userlib.js",
+		"src/userfunctions.js",
 		"src/sugarcube.js",
 		"src/outro.js"
 	],
 	css : [
 		// the ordering here is significant
-		"src/normalize.css",
-		"src/init-screen.css",
-		"src/fonts.css",
-		"src/core.css",
-		"src/ui-bar.css",
-		"src/ui-dialog.css"
+		"src/css/normalize.css",
+		"src/css/init-screen.css",
+		"src/css/fonts.css",
+		"src/css/core.css",
+		"src/css/ui-bar.css",
+		"src/css/ui-dialog.css"
 	],
 	twine1 : {
 		build : {
-			src  : "src/format-twine1.tpl",
+			src  : "src/templates/format-twine1.tpl",
 			dest : "dist/twine1/sugarcube-2/header.html"
 		},
 		copy : [
 			{
-				src  : "src/format-twine1.py",
+				src  : "src/templates/format-twine1.py",
 				dest : "dist/twine1/sugarcube-2/sugarcube-2.py"
 			},
 			{
@@ -61,9 +65,9 @@ var CONFIG = {
 	},
 	twine2 : {
 		build : {
-				src  : "src/format-twine2.tpl",
+				src  : "src/templates/format-twine2.tpl",
 				dest : "dist/twine2/SugarCube-2/format.js",
-				json : "src/format-twine2.json"
+				json : "src/templates/format-twine2.json"
 		},
 		copy : [
 			{

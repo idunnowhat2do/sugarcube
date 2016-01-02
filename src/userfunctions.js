@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- * userlib.js
+ * userfunctions.js
  *
  * Copyright © 2013–2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
@@ -8,9 +8,6 @@
  **********************************************************************************************************************/
 /* global State, Story */
 
-/***********************************************************************************************************************
- * User Utility Functions
- **********************************************************************************************************************/
 /**
 	Returns a random value from its given arguments.
 **/
@@ -25,6 +22,9 @@ function either(/* variadic */) { // eslint-disable-line no-unused-vars
 	Returns the number of turns that have passed since the last instance of the given passage
 	occurred within the story history or `-1` if it does not exist.  If multiple passages are
 	given, returns the lowest count (which can be `-1`).
+
+	n.b. Expired moments are no longer part of the story history and thus cannot be accounted
+	     for with this function.
 **/
 function lastVisited(/* variadic */) { // eslint-disable-line no-unused-vars
 	if (State.isEmpty() || arguments.length === 0) {
@@ -153,11 +153,12 @@ function time() { // eslint-disable-line no-unused-vars
 }
 
 /**
-	Returns the number of passages that the player has moved through (incl. the starting passage).
+	Returns the number of passages that the player has visited.
 
-	n.b. Passages that were visited, but have been unwound (e.g. via the browser's `Back`
-	     button or the `<<back>>` macro) are no longer part of the story history and thus
-	     do not count toward the total.
+	n.b. Passages which were visited but have been undone (e.g. via the Backward button or
+	     the `<<back>>` macro) are no longer part of the in-play story history and thus are
+	     not tallied.  Passages which were visited but have expired from the story history,
+	     on the other hand, are tallied.
 **/
 function turns() { // eslint-disable-line no-unused-vars
 	return State.expired + State.length;
@@ -173,6 +174,9 @@ function variables() { // eslint-disable-line no-unused-vars
 /**
 	Returns the number of times that the passage with the given title exists within the story
 	history.  If multiple passage titles are given, returns the lowest count.
+
+	n.b. Expired moments are no longer part of the story history and thus cannot be accounted
+	     for with this function.
 **/
 function visited(/* variadic */) { // eslint-disable-line no-unused-vars
 	if (State.isEmpty()) {
@@ -200,7 +204,10 @@ function visited(/* variadic */) { // eslint-disable-line no-unused-vars
 }
 
 /**
-	Returns the number of passages within the story history which are tagged with *all* of the given tags.
+	Returns the number of passages within the story history which are tagged with all of the given tags.
+
+	n.b. Expired moments are no longer part of the story history and thus cannot be accounted
+	     for with this function.
 **/
 function visitedTags(/* variadic */) {
 	if (arguments.length === 0) {
