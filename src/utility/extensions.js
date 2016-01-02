@@ -673,7 +673,8 @@ Object.defineProperty(Function.prototype, "toJSON", {
 	writable     : true,
 	value        : function () {
 		"use strict";
-		return [ "(revive:eval)", this.toString() ];
+		// The parenthesis are necessary here to force evaluation as an expression.
+		return [ "(revive:eval)", '(' + this.toString() + ')' ];
 	}
 });
 Object.defineProperty(Map.prototype, "toJSON", {
