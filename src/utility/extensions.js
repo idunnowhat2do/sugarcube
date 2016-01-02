@@ -673,8 +673,14 @@ Object.defineProperty(Function.prototype, "toJSON", {
 	writable     : true,
 	value        : function () {
 		"use strict";
-		// The parenthesis are necessary here to force evaluation as an expression.
-		return [ "(revive:eval)", '(' + this.toString() + ')' ];
+		/*
+			The wrapping parenthesis here are necessary to force the function expression code
+			string, returned by `this.toString()`, to be evaluated as an expression during
+			revival.  Without them, the function expression, which is likely nameless, will
+			be evaluated as a function definition—which will throw a syntax error exception,
+			since function definitions must have a name.
+		*/
+		return [ "(revive:eval)", "(" + this.toString() + ")" ];
 	}
 });
 Object.defineProperty(Map.prototype, "toJSON", {
@@ -783,7 +789,7 @@ Object.defineProperties(JSON, {
 
 	Makes the target element(s) WAI-ARIA compatible clickables.
 
-	n.b. Has an external dependency in the `safeActiveElement()` function (see: `utility.js`).
+	n.b. Has an external dependency in the `safeActiveElement()` function (see: `utility/helperfunctions.js`).
 */
 (function () {
 
