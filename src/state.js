@@ -71,7 +71,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 			n.b. We do this here to give authors every opportunity to modify the `config.history.maxStates`
 			     property.
 		*/
-		config.history.maxStates = Math.max(1, Number(config.history.maxStates));
+		config.history.maxStates = Math.max(0, Number(config.history.maxStates));
 		if (isNaN(config.history.maxStates) || !isFinite(config.history.maxStates)) {
 			// TODO: Maybe this should throw instead?
 			config.history.maxStates = 150;
