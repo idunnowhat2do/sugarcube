@@ -58,6 +58,7 @@ var	config = Object.seal({
 		/*
 			General properties.
 		*/
+		debug                 : false,
 		addVisitedLinkClass   : false,
 		cleanupWikifierOutput : false,
 		loadDelay             : 0,

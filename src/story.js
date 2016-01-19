@@ -51,6 +51,7 @@ var Story = (function () { // eslint-disable-line no-unused-vars
 				var testPlay = "START_AT";
 				if (testPlay !== "") {
 					if (DEBUG) { console.log('    > starting passage set to: "' + testPlay + '" (Test Play)'); }
+					config.debug = true;
 					return testPlay;
 				}
 
@@ -105,6 +106,14 @@ var Story = (function () { // eslint-disable-line no-unused-vars
 				Set the default starting passage title.
 			*/
 			config.passages.start = null; // no default in Twine 2
+
+			/*
+				Process story options.
+
+				n.b. Currently, the only option of interest to us is `debug` (it may be the
+				     only one period), so we simply use `<RegExp>.test()` to check for it.
+			*/
+			config.debug = /\bdebug\b/.test($storydata.attr("options"));
 
 			/*
 				Process stylesheet passages.
