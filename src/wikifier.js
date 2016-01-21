@@ -1271,7 +1271,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					"(\\[(?:[<>]?[Ii][Mm][Gg])?\\[[^\\r\\n]*?\\]\\]+)", // 4=double square-bracketed
 					"([^\"'`\\s]\\S*)"                                  // 5=barewords
 				].join("|") + ")",
-				working : { name : "", handler : "", arguments : "", index : 0 }, // the working parse object
+				working : { source : "", name : "", handler : "", arguments : "", index : 0 }, // the working parse object
 				context : null, // last execution context object (top-level macros, hierarchically, have a null context)
 				handler : function (w) {
 					var matchStart = this.lookaheadRegExp.lastIndex = w.matchStart;
@@ -1279,6 +1279,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						// If parseBody() is called below, it will mutate the current working
 						// values, so we must cache them now.
 						var	nextMatch = w.nextMatch,
+							source    = this.working.source,
 							name      = this.working.name,
 							handler   = this.working.handler,
 							rawArgs   = this.working.arguments;
@@ -1315,7 +1316,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 												args    : args,
 												payload : payload,
 												parser  : w,
-												source  : w.source.slice(matchStart, w.nextMatch)
+												source  : source // w.source.slice(matchStart, w.nextMatch)
 											});
 											macro[handler].call(this.context);
 										} finally {
@@ -1345,6 +1346,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							return throwError(w.output, "cannot execute " + (macro && macro.isWidget ? "widget" : "macro") + " <<" + name + ">>: " + e.message,
 								w.source.slice(matchStart, w.nextMatch));
 						} finally {
+							this.working.source    = "";
 							this.working.name      = "";
 							this.working.handler   = "";
 							this.working.arguments = "";
@@ -1358,6 +1360,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
 					if (lookaheadMatch && lookaheadMatch.index === w.matchStart && lookaheadMatch[1]) {
 						w.nextMatch = this.lookaheadRegExp.lastIndex;
+						this.working.source = w.source.slice(lookaheadMatch.index, this.lookaheadRegExp.lastIndex);
 						var fnSigil = lookaheadMatch[1].indexOf("::");
 						if (fnSigil !== -1) {
 							this.working.name = lookaheadMatch[1].slice(0, fnSigil);
@@ -1380,6 +1383,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						bodyTags     = Array.isArray(tags) ? tags : false,
 						end          = -1,
 						opened       = 1,
+						curSource    = this.working.source,
 						curTag       = this.working.name,
 						curArgument  = this.working.arguments,
 						contentStart = w.nextMatch,
@@ -1391,10 +1395,11 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							continue;
 						}
 
-						var	tagName  = this.working.name,
-							tagArgs  = this.working.arguments,
-							tagBegin = this.working.index,
-							tagEnd   = w.nextMatch;
+						var	tagSource = this.working.source,
+							tagName   = this.working.name,
+							tagArgs   = this.working.arguments,
+							tagBegin  = this.working.index,
+							tagEnd    = w.nextMatch;
 
 						switch (tagName) {
 						case openTag:
@@ -1411,10 +1416,12 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 								for (var i = 0, iend = bodyTags.length; i < iend; ++i) {
 									if (tagName === bodyTags[i]) {
 										payload.push({
+											source    : curSource,
 											name      : curTag,
 											arguments : curArgument,
 											contents  : w.source.slice(contentStart, tagBegin)
 										});
+										curSource    = tagSource;
 										curTag       = tagName;
 										curArgument  = tagArgs;
 										contentStart = tagEnd;
@@ -1425,6 +1432,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						}
 						if (opened === 0) {
 							payload.push({
+								source    : curSource,
 								name      : curTag,
 								arguments : curArgument,
 								contents  : w.source.slice(contentStart, tagBegin)
