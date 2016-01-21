@@ -43,8 +43,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global Macro, MacroContext, State, Story, Util, config, insertElement, insertText, macros,
-	       printableStringOrDefault, removeChildren, removeElement, runtime, throwError
+	global Macro, MacroContext, State, Story, Util, config, evalJavaScript, evalTwineScript, insertElement, insertText,
+	       macros, printableStringOrDefault, removeChildren, removeElement, runtime, throwError
 */
 
 /*
@@ -398,24 +398,6 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 		},
 
 		/*
-			Evaluate the given Twine expression and return the result, throwing if there were errors.
-		*/
-		evalExpression : {
-			value : function (expression) {
-				return Util.evalExpression(Wikifier.parse(expression));
-			}
-		},
-
-		/*
-			Evaluate the given Twine statements and return the result, throwing if there were errors.
-		*/
-		evalStatements : {
-			value : function (statements) {
-				return Util.evalStatements(Wikifier.parse(statements));
-			}
-		},
-
-		/*
 			Wikify the given text and discard the output, throwing if there were errors.
 		*/
 		wikifyEval : {
@@ -498,7 +480,13 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 				var urlRegExp = new RegExp("^" + Wikifier.textPrimitives.url, "gim");
 				return urlRegExp.test(link) || /[\.\/\\#]/.test(link);
 			}
-		}
+		},
+
+		/*
+			Legacy Aliases.
+		*/
+		evalExpression : { value : evalTwineScript }, // External (see: utility/helperfunctions.js).
+		evalStatements : { value : evalTwineScript }  // External (see: utility/helperfunctions.js).
 	});
 
 
@@ -593,11 +581,11 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 			}
 		},
 
-		evalExpression : {
+		evalText : {
 			value : function (text) {
 				var result;
 				try {
-					result = Wikifier.evalExpression(text);
+					result = evalTwineScript(text);
 					if (result == null || typeof result === "function") { // use lazy equality for null
 						result = text;
 					} else {
@@ -616,7 +604,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 		evalPassageId : {
 			value : function (passage) {
 				if (passage != null && !Story.has(passage)) { // lazy equality for null; `0` is a valid name, so we cannot simply evaluate `passage`
-					passage = Wikifier.helpers.evalExpression(passage);
+					passage = Wikifier.helpers.evalText(passage);
 				}
 				return passage;
 			}
@@ -848,7 +836,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 	Object.defineProperty(Wikifier, "formatters", {
 		value : [
 			{
-				name    : "dollarSign",
+				name    : "doubleDollarSign",
 				match   : "\\${2}",
 				handler : function (w) {
 					insertText(w.output, "$");
@@ -865,6 +853,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					} else {
 						new Wikifier(w.output, result);
 					}
+
 				}
 			},
 
@@ -1202,11 +1191,12 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					}
 
 					w.nextMatch = markup.pos;
+
 					// text=(text), forceInternal=(~), link=link, setter=(setter)
 					var	link  = Wikifier.helpers.evalPassageId(markup.link),
-						text  = markup.hasOwnProperty("text") ? Wikifier.helpers.evalExpression(markup.text) : link,
+						text  = markup.hasOwnProperty("text") ? Wikifier.helpers.evalText(markup.text) : link,
 						setFn = markup.hasOwnProperty("setter")
-							? (function (ex) { return function () { Wikifier.evalStatements(ex); }; })(Wikifier.parse(markup.setter))
+							? (function (ex) { return function () { evalTwineScript(ex); }; })(markup.setter)
 							: null;
 					if (markup.forceInternal || !Wikifier.isExternalLink(link)) {
 						Wikifier.createInternalLink(w.output, link, text, setFn);
@@ -1238,7 +1228,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					// align=(left|right), title=(title), source=source, forceInternal=(~), link=(link), setter=(setter)
 					var	el     = w.output,
 						setFn  = markup.hasOwnProperty("setter")
-							? (function (ex) { return function () { Wikifier.evalStatements(ex); }; })(Wikifier.parse(markup.setter))
+							? (function (ex) { return function () { evalTwineScript(ex); }; })(markup.setter)
 							: null,
 						source;
 					if (markup.hasOwnProperty("link")) {
@@ -1262,7 +1252,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					}
 					el.src = source;
 					if (markup.hasOwnProperty("title")) {
-						el.title = Wikifier.helpers.evalExpression(markup.title);
+						el.title = Wikifier.helpers.evalText(markup.title);
 					}
 					if (markup.hasOwnProperty("align")) {
 						el.align = markup.align;
@@ -1465,7 +1455,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 
 							// Evaluate the string to handle escaped characters.
 							try {
-								arg = Util.evalExpression(arg);
+								arg = evalJavaScript(arg);
 							} catch (e) {
 								throw new Error("unable to parse macro argument '" + arg + "': " + e.message);
 							}
@@ -1475,7 +1465,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 
 							// Evaluate the string to handle escaped characters.
 							try {
-								arg = Util.evalExpression(arg);
+								arg = evalJavaScript(arg);
 							} catch (e) {
 								throw new Error('unable to parse macro argument "' + arg + '": ' + e.message);
 							}
@@ -1504,10 +1494,10 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 								arg = { isLink : true };
 								arg.count    = markup.hasOwnProperty("text") ? 2 : 1;
 								arg.link     = Wikifier.helpers.evalPassageId(markup.link);
-								arg.text     = markup.hasOwnProperty("text") ? Wikifier.helpers.evalExpression(markup.text) : arg.link;
+								arg.text     = markup.hasOwnProperty("text") ? Wikifier.helpers.evalText(markup.text) : arg.link;
 								arg.external = !markup.forceInternal && Wikifier.isExternalLink(arg.link);
 								arg.setFn    = markup.hasOwnProperty("setter")
-									? (function (ex) { return function () { Wikifier.evalStatements(ex); }; })(Wikifier.parse(markup.setter))
+									? (function (ex) { return function () { evalTwineScript(ex); }; })(markup.setter)
 									: null;
 							} else if (markup.isImage) {
 								// .isImage, [.align], [.title], .source, [.forceInternal], [.link], [.setter]
@@ -1530,14 +1520,14 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 									arg.align = markup.align;
 								}
 								if (markup.hasOwnProperty("title")) {
-									arg.title = Wikifier.helpers.evalExpression(markup.title);
+									arg.title = Wikifier.helpers.evalText(markup.title);
 								}
 								if (markup.hasOwnProperty("link")) {
 									arg.link     = Wikifier.helpers.evalPassageId(markup.link);
 									arg.external = !markup.forceInternal && Wikifier.isExternalLink(arg.link);
 								}
 								arg.setFn = markup.hasOwnProperty("setter")
-									? (function (ex) { return function () { Wikifier.evalStatements(ex); }; })(Wikifier.parse(markup.setter))
+									? (function (ex) { return function () { evalTwineScript(ex); }; })(markup.setter)
 									: null;
 							}
 						} else if (match[5]) {
@@ -1550,7 +1540,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							} else if (/^(?:settings|setup)[\.\[]/.test(arg)) {
 								// Settings or setup object, so try to evaluate it.
 								try {
-									arg = Wikifier.evalExpression(arg);
+									arg = evalTwineScript(arg);
 								} catch (e) {
 									throw new Error('unable to parse macro argument "' + arg + '": ' + e.message);
 								}
@@ -1559,7 +1549,8 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 								//   n.b. Authors really shouldn't be passing object/array literals as arguments.  If they want to
 								//        pass a complex type, then store it in a variable and pass that instead.
 								try {
-									arg = Wikifier.evalExpression(arg);
+									// The parens are to protect object literals from being confused with block statements.
+									arg = evalTwineScript("(" + arg + ")");
 								} catch (e) {
 									throw new Error('unable to parse macro argument "' + arg + '": ' + e.message);
 								}
@@ -1844,7 +1835,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							if (setter != null) { // lazy equality for null
 								setter = (typeof setter !== "string" ? String(setter) : setter).trim();
 								if (setter !== "") {
-									callback = (function (ex) { return function () { Wikifier.evalStatements(ex); }; })(Wikifier.parse(setter));
+									callback = (function (ex) { return function () { evalTwineScript(ex); }; })(setter);
 								}
 							}
 							if (Story.has(passage)) {

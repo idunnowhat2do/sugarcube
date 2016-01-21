@@ -7,8 +7,9 @@
  *
  **********************************************************************************************************************/
 /*
-	global AudioWrapper, Has, Macro, State, Story, Util, Wikifier, config, insertElement,insertText, postdisplay,
-	       prehistory, printableStringOrDefault, runtime, storage, strings, turns
+	global AudioWrapper, Has, Macro, State, Story, Util, Wikifier, config, evalJavaScript, evalTwineScript,
+	       insertElement, insertText, postdisplay, prehistory, printableStringOrDefault, runtime, storage, strings,
+	       turns
 */
 
 /***********************************************************************************************************************
@@ -385,7 +386,7 @@ Macro.add([ "print", "=", "-" ], {
 		}
 
 		try {
-			var	result = printableStringOrDefault(Util.evalExpression(this.args.full), null);
+			var	result = printableStringOrDefault(evalJavaScript(this.args.full), null);
 			if (result !== null) {
 				new Wikifier(this.output, this.name === "-" ? Util.escape(result) : result);
 			}
@@ -470,7 +471,7 @@ Macro.add("if", {
 					break;
 				}
 				// Conditional test.
-				if (this.payload[i].name === "else" || !!Wikifier.evalExpression(this.payload[i].arguments)) {
+				if (this.payload[i].name === "else" || !!evalTwineScript(this.payload[i].arguments)) {
 					new Wikifier(this.output, this.payload[i].contents);
 					break;
 				}
@@ -515,12 +516,12 @@ Macro.add("for", {
 			runtime.temp.break = null;
 			if (init) {
 				try {
-					Util.evalExpression(init);
+					evalJavaScript(init);
 				} catch (e) {
 					return this.error("bad init expression: " + e.message);
 				}
 			}
-			while (Util.evalExpression(condition)) {
+			while (evalJavaScript(condition)) {
 				if (--safety < 0) {
 					return this.error("exceeded configured maximum loop iterations ("
 						+ config.macros.maxLoopIterations + ")");
@@ -539,7 +540,7 @@ Macro.add("for", {
 				}
 				if (post) {
 					try {
-						Util.evalExpression(post);
+						evalJavaScript(post);
 					} catch (e) {
 						return this.error("bad post expression: " + e.message);
 					}
@@ -577,7 +578,11 @@ Macro.add("set", {
 			return this.error("no expression specified");
 		}
 
-		Macro.evalStatements(this.args.full, this);
+		try {
+			evalJavaScript(this.args.full);
+		} catch (e) {
+			return this.error("bad evaluation: " + e.message);
+		}
 	}
 });
 
@@ -591,11 +596,10 @@ Macro.add("unset", {
 			return this.error("no $variable list specified");
 		}
 
-		var	expression = this.args.full,
-			re         = /State\.variables\.(\w+)/g,
+		var	re    = /State\.variables\.(\w+)/g,
 			match;
 
-		while ((match = re.exec(expression)) !== null) {
+		while ((match = re.exec(this.args.full)) !== null) {
 			var name = match[1];
 
 			if (State.variables.hasOwnProperty(name)) {
@@ -615,20 +619,23 @@ Macro.add("remember", {
 			return this.error("no expression specified");
 		}
 
-		var expression = this.args.full;
-		if (Macro.evalStatements(expression, this)) {
-			var	remember = storage.get("remember") || {},
-				re       = /State\.variables\.(\w+)/g,
-				match;
+		try {
+			evalJavaScript(this.args.full);
+		} catch (e) {
+			return this.error("bad evaluation: " + e.message);
+		}
 
-			while ((match = re.exec(expression)) !== null) {
-				var name = match[1];
+		var	remember = storage.get("remember") || {},
+			re       = /State\.variables\.(\w+)/g,
+			match;
 
-				remember[name] = State.variables[name];
-			}
-			if (!storage.set("remember", remember)) {
-				return this.error("unknown error, cannot remember: " + this.args.raw);
-			}
+		while ((match = re.exec(this.args.full)) !== null) {
+			var name = match[1];
+
+			remember[name] = State.variables[name];
+		}
+		if (!storage.set("remember", remember)) {
+			return this.error("unknown error, cannot remember: " + this.args.raw);
 		}
 	},
 	init : function () {
@@ -651,13 +658,12 @@ Macro.add("forget", {
 			return this.error("no $variable list specified");
 		}
 
-		var	expression = this.args.full,
-			re         = /State\.variables\.(\w+)/g,
+		var	re        = /State\.variables\.(\w+)/g,
 			match,
-			remember   = storage.get("remember"),
-			needStore  = false;
+			remember  = storage.get("remember"),
+			needStore = false;
 
-		while ((match = re.exec(expression)) !== null) {
+		while ((match = re.exec(this.args.full)) !== null) {
 			var name = match[1];
 
 			if (State.variables.hasOwnProperty(name)) {
@@ -690,7 +696,18 @@ Macro.add("script", {
 	skipArgs : true,
 	tags     : null,
 	handler  : function () {
-		Macro.evalStatements(this.payload[0].contents, this);
+		var output = document.createDocumentFragment();
+		try {
+			evalJavaScript(this.payload[0].contents, output, this);
+		} catch (e) {
+			return this.error(
+				"bad evaluation: " + e.message,
+				"<<" + this.name + ">>" + this.payload[0].contents + "<</" + this.name + ">>"
+			);
+		}
+		if (output.hasChildNodes()) {
+			this.output.appendChild(output);
+		}
 	}
 });
 

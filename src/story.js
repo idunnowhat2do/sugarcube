@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global Passage, Util, Wikifier, addStyle, config, technicalAlert */
+/* global Passage, Util, Wikifier, addStyle, config, evalJavaScript, technicalAlert */
 
 var Story = (function () { // eslint-disable-line no-unused-vars
 	"use strict";
@@ -180,7 +180,7 @@ var Story = (function () { // eslint-disable-line no-unused-vars
 		*/
 		for (var i = 0; i < _scripts.length; ++i) { // eslint-disable-line no-redeclare
 			try {
-				eval(_scripts[i].text); // eslint-disable-line no-eval
+				evalJavaScript(_scripts[i].text); // eslint-disable-line no-eval
 			} catch (e) {
 				technicalAlert(_scripts[i].title, e.message);
 			}
