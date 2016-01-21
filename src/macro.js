@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global Wikifier, clone, macros, throwError */
+/* global Wikifier, clone, config, evalJavaScript, macros, throwError */
 
 var Macro = (function () { // eslint-disable-line no-unused-vars
 	"use strict";
@@ -121,25 +121,6 @@ var Macro = (function () { // eslint-disable-line no-unused-vars
 		return macro;
 	}
 
-	/* eslint-disable no-extra-strict */
-	function macrosEvalStatements(statements, thisp) {
-		"use strict";
-		try {
-			/* eslint-disable no-eval */
-			eval(thisp == null /* lazy equality for null */
-				? 'var output = document.createElement("div");(function(){' + statements + '\n})();'
-				: "var output = thisp.output;(function(){" + statements + "\n}).call(thisp);");
-			/* eslint-enable no-eval */
-			return true;
-		} catch (e) {
-			if (thisp == null) { // lazy equality for null
-				throw e;
-			}
-			return thisp.error("bad evaluation: " + e.message);
-		}
-	}
-	/* eslint-enable no-extra-strict */
-
 	function macrosInit(handler) { // eslint-disable-line no-unused-vars
 		handler = handler || "init";
 		Object.keys(_macros).forEach(function (name) {
@@ -221,25 +202,29 @@ var Macro = (function () { // eslint-disable-line no-unused-vars
 		/*
 			Macro Functions.
 		*/
-		add            : { value : macrosAdd },
-		delete         : { value : macrosDelete },
-		isEmpty        : { value : macrosIsEmpty },
-		has            : { value : macrosHas },
-		get            : { value : macrosGet },
-		evalStatements : { value : macrosEvalStatements },
-		init           : { value : macrosInit },
+		add     : { value : macrosAdd },
+		delete  : { value : macrosDelete },
+		isEmpty : { value : macrosIsEmpty },
+		has     : { value : macrosHas },
+		get     : { value : macrosGet },
+		init    : { value : macrosInit },
 
 		/*
 			Tags Functions.
 		*/
-		tags : { // eslint-disable-line key-spacing
+		tags : {
 			value : Object.freeze(Object.defineProperties({}, {
 				register   : { value : tagsRegister },
 				unregister : { value : tagsUnregister },
 				has        : { value : tagsHas },
 				get        : { value : tagsGet }
 			}))
-		}
+		},
+
+		/*
+			Legacy Aliases.
+		*/
+		evalStatements : { value : evalJavaScript } // External (see: utility/helperfunctions.js).
 	}));
 
 })();
