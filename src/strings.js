@@ -51,7 +51,7 @@ var	strings = { // eslint-disable-line no-unused-vars
 		/*
 			Debug View.
 		*/
-		debug : {
+		debugView : {
 			title  : "Debug View",
 			toggle : "Toggle the debug view"
 		},

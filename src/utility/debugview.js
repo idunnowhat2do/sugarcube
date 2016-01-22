@@ -42,9 +42,9 @@ Object.defineProperties(DebugView, {
 	init : {
 		value : function () {
 			// Inject the the debug view toggle button into the UI bar.
-			jQuery('<button id="debug-view-toggle">' + strings.debug.title + '</button>')
+			jQuery('<button id="debug-view-toggle">' + strings.debugView.title + '</button>')
 				.ariaClick({
-					label : strings.debug.toggle
+					label : strings.debugView.toggle
 				}, function () {
 					DebugView.toggle();
 				})
