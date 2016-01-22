@@ -7,7 +7,7 @@
  *
  **********************************************************************************************************************/
 /*
-	global Save, PRNGWrapper, Story, UI, Util, Wikifier, clone, config, postdisplay, predisplay, prehistory,
+	global DebugView, Save, PRNGWrapper, Story, UI, Util, Wikifier, clone, config, postdisplay, predisplay, prehistory,
 	       removeChildren, runtime, session, technicalAlert
 */
 
@@ -78,6 +78,15 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		}
 		if (config.history.maxStates === 1) {
 			config.history.controls = false;
+		}
+
+		/*
+			Finalize the `config.debug` property here, before any passages are displayed.
+
+			n.b. We do this here to give authors every opportunity to modify the `config.debug` property.
+		*/
+		if (config.debug) {
+			DebugView.init();
 		}
 
 		/*

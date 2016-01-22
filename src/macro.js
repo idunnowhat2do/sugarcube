@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global Wikifier, clone, config, evalJavaScript, macros, throwError */
+/* global DebugView, Wikifier, clone, config, evalJavaScript, macros, throwError */
 
 var Macro = (function () { // eslint-disable-line no-unused-vars
 	"use strict";
@@ -266,14 +266,22 @@ function MacroContext(context) {
 		payload : {
 			value : context.payload
 		},
+		source : {
+			value : context.source
+		},
 		parser : {
 			value : context.parser
 		},
-		output : {
+		_output : {
 			value : context.parser.output
 		},
-		source : {
-			value : context.source
+		_debugView : {
+			writable : true,
+			value    : null
+		},
+		_debugViewEnabled : {
+			writable : true,
+			value    : config.debug
 		}
 	});
 	// Extend the args array with the raw and full argument strings.
@@ -328,9 +336,50 @@ Object.defineProperties(MacroContext.prototype, {
 		}
 	},
 
+	createDebugView : {
+		value : function (name, title) {
+			this._debugView = new DebugView(
+				this._output,
+				"macro",
+				name ? name : this.name,
+				title ? title : this.source
+			);
+			if (this.payload !== null && this.payload.length > 0) {
+				this._debugView.modes({ nonvoid : true });
+			}
+			this._debugViewEnabled = true;
+			return this._debugView;
+		}
+	},
+
+	removeDebugView : {
+		value : function () {
+			if (this._debugView !== null) {
+				this._debugView.remove();
+				this._debugView = null;
+			}
+			this._debugViewEnabled = false;
+		}
+	},
+
+	debugView : {
+		get : function () {
+			if (this._debugViewEnabled) {
+				return this._debugView !== null ? this._debugView : this.createDebugView();
+			}
+			return null;
+		}
+	},
+
+	output : {
+		get : function () {
+			return this._debugViewEnabled ? this.debugView.output : this._output;
+		}
+	},
+
 	error : {
-		value : function (message) {
-			return throwError(this.output, "<<" + this.name + ">>: " + message, this.source);
+		value : function (message, title) {
+			return throwError(this._output, "<<" + this.name + ">>: " + message, title ? title : this.source);
 		}
 	}
 });

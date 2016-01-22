@@ -335,6 +335,10 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 	}
 
 	function uiAssembleLinkList(passage, list) {
+		// Cache the value of `config.debug` and then disable it during this method's run.
+		var debugState = config.debug;
+		config.debug = false;
+
 		if (list == null) { // lazy equality for null
 			list = document.createElement("ul");
 		}
@@ -360,6 +364,10 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				}
 			}
 		}
+
+		// Restore `config.debug` to its original value.
+		config.debug = debugState;
+
 		return list;
 	}
 

@@ -43,8 +43,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global Macro, MacroContext, State, Story, Util, config, evalJavaScript, evalTwineScript, insertElement, insertText,
-	       macros, printableStringOrDefault, removeChildren, removeElement, runtime, throwError
+	global DebugView, Macro, MacroContext, State, Story, Util, config, evalJavaScript, evalTwineScript, insertElement,
+	       insertText, macros, printableStringOrDefault, removeChildren, removeElement, runtime, throwError
 */
 
 /*
@@ -851,7 +851,13 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					if (result === null) {
 						insertText(w.output, w.matchText);
 					} else {
-						new Wikifier(w.output, result);
+						new Wikifier(
+							(config.debug
+								? new DebugView(w.output, "$variable", w.matchText, w.matchText) // Debug view setup.
+								: w
+							).output,
+							result
+						);
 					}
 
 				}
@@ -1198,10 +1204,17 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						setFn = markup.hasOwnProperty("setter")
 							? (function (ex) { return function () { evalTwineScript(ex); }; })(markup.setter)
 							: null;
+
+					// Debug view setup.
+					var	output = (config.debug
+							? new DebugView(w.output, "wiki-link", "[[link]]", w.source.slice(w.matchStart, w.nextMatch))
+							: w
+						).output;
+
 					if (markup.forceInternal || !Wikifier.isExternalLink(link)) {
-						Wikifier.createInternalLink(w.output, link, text, setFn);
+						Wikifier.createInternalLink(output, link, text, setFn);
 					} else {
-						Wikifier.createExternalLink(w.output, link, text);
+						Wikifier.createExternalLink(output, link, text);
 					}
 				}
 			},
@@ -1225,8 +1238,21 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					}
 
 					w.nextMatch = markup.pos;
+
+					// Debug view setup.
+					var	debugView;
+					if (config.debug) {
+						debugView = new DebugView(
+							w.output,
+							"wiki-image",
+							markup.hasOwnProperty("link") ? "[img[][link]]" : "[img[]]",
+							w.source.slice(w.matchStart, w.nextMatch)
+						);
+						debugView.modes({ block : true });
+					}
+
 					// align=(left|right), title=(title), source=source, forceInternal=(~), link=(link), setter=(setter)
-					var	el     = w.output,
+					var	el     = (config.debug ? debugView : w).output,
 						setFn  = markup.hasOwnProperty("setter")
 							? (function (ex) { return function () { evalTwineScript(ex); }; })(markup.setter)
 							: null,
@@ -1786,7 +1812,9 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							terminatorMatch = terminatorRegExp.exec(w.source);
 						}
 						if (isVoid || terminatorMatch) {
-							var el = document.createElement(w.output.tagName);
+							var	debugView,
+								output    = w.output,
+								el        = document.createElement(w.output.tagName);
 							el.innerHTML = w.matchText;
 							while (el.firstChild) {
 								el = el.firstChild;
@@ -1794,6 +1822,21 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 
 							if (el.hasAttribute("data-passage")) {
 								this.processDataAttributes(el);
+
+								// Debug view setup.
+								if (config.debug) {
+									debugView = new DebugView(
+										w.output,
+										"html-" + tagName,
+										tagName,
+										w.matchText
+									);
+									debugView.modes({
+										block   : tagName === "img",
+										nonvoid : terminatorMatch
+									});
+									output = debugView.output;
+								}
 							}
 
 							if (terminatorMatch) {
@@ -1804,13 +1847,26 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 								}
 								try {
 									w.subWikify(el, terminator, true); // ignore case during match
+
+									/*
+										Debug view setup.  If the current element has any debug view
+										children which have "block" mode set, then set its debug view
+										to the same.  Just makes things look a bit nicer.
+
+										We don't bother checking if the current debug view has "block"
+										mode set as only `<img>` elements could have that set at this
+										point and, as void elements, they cannot enter here.
+									*/
+									if (config.debug && jQuery(".debug.block", el).length > 0) {
+										debugView.modes({ block : true });
+									}
 								} finally {
 									if (w._nobr.length !== 0) {
 										w._nobr.shift();
 									}
 								}
 							}
-							w.output.appendChild(el);
+							output.appendChild(el);
 						} else {
 							throwError(w.output, 'HTML tag "' + tag + '" is not closed', w.matchText + "\u2026");
 						}

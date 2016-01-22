@@ -349,6 +349,17 @@ Macro.add("display", {
 			return this.error('passage "' + passage + '" does not exist');
 		}
 
+		// Custom debug view setup.
+		if (config.debug) {
+			this.debugView.modes({
+				/*
+				parent : true,
+				block  : true
+				*/
+				block : true
+			});
+		}
+
 		var el = this.output;
 
 		passage = Story.get(passage);
@@ -367,6 +378,17 @@ Macro.add("nobr", {
 	skipArgs : true,
 	tags     : null,
 	handler  : function () {
+		// Custom debug view setup.
+		if (config.debug) {
+			this.debugView.modes({
+				/*
+				parent : true,
+				block  : true
+				*/
+				//block : true
+			});
+		}
+
 		/*
 			Wikify the contents, after removing all leading & trailing newlines and compacting
 			all internal sequences of newlines into single spaces.
@@ -403,22 +425,33 @@ Macro.add("silently", {
 	skipArgs : true,
 	tags     : null,
 	handler  : function () {
-		var	errTrap = document.createDocumentFragment(),
-			errList = [];
+		var frag = document.createDocumentFragment();
+		new Wikifier(frag, this.payload[0].contents.trim());
 
-		// Wikify the contents.
-		new Wikifier(errTrap, this.payload[0].contents.trim());
-
-		// Discard the output, unless there were errors.
-		Array.from(errTrap.querySelectorAll(".error")).forEach(function (errEl) {
-			errList.push(errEl.textContent);
-		});
-		if (typeof errTrap.remove === "function") {
-			errTrap.remove();
-		}
-		if (errList.length > 0) {
-			return this.error("error" + (errList.length === 1 ? "" : "s") + " within contents ("
-				+ errList.join('; ') + ")");
+		if (config.debug) {
+			// Custom debug view setup.
+			this.debugView.modes({
+				/*
+				parent : true,
+				block  : true,
+				hidden : true
+				*/
+				hidden : true
+			});
+			this.output.appendChild(frag);
+		} else {
+			// Discard the output, unless there were errors.
+			var errList = [];
+			Array.from(frag.querySelectorAll(".error")).forEach(function (errEl) {
+				errList.push(errEl.textContent);
+			});
+			if (typeof frag.remove === "function") {
+				frag.remove();
+			}
+			if (errList.length > 0) {
+				return this.error("error" + (errList.length === 1 ? "" : "s") + " within contents ("
+					+ errList.join('; ') + ")");
+			}
 		}
 	}
 });
@@ -435,7 +468,10 @@ Macro.add("if", {
 	tags     : [ "elseif", "else" ],
 	handler  : function () {
 		try {
-			for (var i = 0, len = this.payload.length; i < len; ++i) {
+			var	i       = 0,
+				len     = this.payload.length,
+				success = false;
+			for (/* empty */; i < len; ++i) {
 				// Sanity checks.
 				switch (this.payload[i].name) {
 				case "else":
@@ -470,11 +506,46 @@ Macro.add("if", {
 					}
 					break;
 				}
+
+				// Custom debug view setup for the current clause.
+				if (config.debug) {
+					this
+						.createDebugView(this.payload[i].name, this.payload[i].source)
+						.modes({ nonvoid : false });
+				}
+
 				// Conditional test.
 				if (this.payload[i].name === "else" || !!evalTwineScript(this.payload[i].arguments)) {
+					success = true;
 					new Wikifier(this.output, this.payload[i].contents);
 					break;
+				} else if (config.debug) {
+					// Custom debug view setup for a failed conditional.
+					this.debugView.modes({ failure : true });
 				}
+			}
+
+			// Custom debug view setup for the remaining clauses.
+			if (config.debug) {
+				for (++i; i < len; ++i) {
+					this
+						.createDebugView(this.payload[i].name, this.payload[i].source)
+						.modes({
+							nonvoid : false,
+							failure : true
+						});
+				}
+
+				/*
+					Fake a debug view for `<</if>>`.  We do this to aid the checking of nesting
+					and as a quick indicator of if any of the clauses matched.
+				*/
+				this
+					.createDebugView("/" + this.name, "<</" + this.name + ">>")
+					.modes({
+						nonvoid : false,
+						failure : !success
+					});
 			}
 		} catch (e) {
 			return this.error(
@@ -510,6 +581,17 @@ Macro.add("for", {
 			} else {
 				return this.error("invalid 3-part syntax, format: init ; condition ; post");
 			}
+		}
+
+		// Custom debug view setup.
+		if (config.debug) {
+			this.debugView.modes({
+				/*
+				parent : true,
+				block  : true
+				*/
+				block : true
+			});
 		}
 
 		try {
@@ -561,6 +643,11 @@ Macro.add([ "break", "continue" ], {
 		} else {
 			return this.error("must only be used in conjunction with its parent macro <<for>>");
 		}
+
+		// Custom debug view setup.
+		if (config.debug) {
+			this.createDebugView();
+		}
 	}
 });
 
@@ -582,6 +669,12 @@ Macro.add("set", {
 			evalJavaScript(this.args.full);
 		} catch (e) {
 			return this.error("bad evaluation: " + e.message);
+		}
+
+		// Custom debug view setup.
+		if (config.debug) {
+			this.debugView.modes({ hidden : true });
+			jQuery(this.output).text(this.args.raw);
 		}
 	}
 });
@@ -605,6 +698,12 @@ Macro.add("unset", {
 			if (State.variables.hasOwnProperty(name)) {
 				delete State.variables[name];
 			}
+		}
+
+		// Custom debug view setup.
+		if (config.debug) {
+			this.debugView.modes({ hidden : true });
+			jQuery(this.output).text(this.args.raw);
 		}
 	}
 });
@@ -636,6 +735,12 @@ Macro.add("remember", {
 		}
 		if (!storage.set("remember", remember)) {
 			return this.error("unknown error, cannot remember: " + this.args.raw);
+		}
+
+		// Custom debug view setup.
+		if (config.debug) {
+			this.debugView.modes({ hidden : true });
+			jQuery(this.output).text(this.args.raw);
 		}
 	},
 	init : function () {
@@ -677,6 +782,12 @@ Macro.add("forget", {
 		if (needStore && !storage.set("remember", remember)) {
 			return this.error("unknown error, cannot update remember store");
 		}
+
+		// Custom debug view setup.
+		if (config.debug) {
+			this.debugView.modes({ hidden : true });
+			jQuery(this.output).text(this.args.raw);
+		}
 	}
 });
 
@@ -696,13 +807,28 @@ Macro.add("script", {
 	skipArgs : true,
 	tags     : null,
 	handler  : function () {
+		// Custom debug view setup.
+		if (config.debug) {
+			this.createDebugView(
+				this.name,
+				//"<<" + this.name + ">>" + this.payload[0].contents + "<</" + this.name + ">>"
+				this.source + this.payload[0].contents + "<</" + this.name + ">>"
+			);
+		}
+
 		var output = document.createDocumentFragment();
 		try {
 			evalJavaScript(this.payload[0].contents, output, this);
 		} catch (e) {
+			// Custom debug view setup.
+			if (config.debug) {
+				this.removeDebugView();
+			}
+
 			return this.error(
 				"bad evaluation: " + e.message,
-				"<<" + this.name + ">>" + this.payload[0].contents + "<</" + this.name + ">>"
+				//"<<" + this.name + ">>" + this.payload[0].contents + "<</" + this.name + ">>"
+				this.source + this.payload[0].contents + "<</" + this.name + ">>"
 			);
 		}
 		if (output.hasChildNodes()) {
@@ -1268,6 +1394,17 @@ Macro.add("timed", {
 			}
 		}
 
+		// Custom debug view setup.
+		if (config.debug) {
+			this.debugView.modes({
+				/*
+				parent : true,
+				block  : true
+				*/
+				block : true
+			});
+		}
+
 		// Register the timer and, possibly, a cleanup task.
 		this.self.registerTimeout(
 			insertElement(this.output, "span", null, "macro-timed timed-insertion-container"),
@@ -1332,6 +1469,17 @@ Macro.add("repeat", {
 			delay = Math.max(10, Util.fromCSSTime(String(this.args[0]).trim()));
 		} catch (e) {
 			return this.error(e.message);
+		}
+
+		// Custom debug view setup.
+		if (config.debug) {
+			this.debugView.modes({
+				/*
+				parent : true,
+				block  : true
+				*/
+				block : true
+			});
 		}
 
 		// Register the timer and, possibly, a cleanup task.
@@ -1414,6 +1562,11 @@ Macro.add("stop", {
 		clearInterval(timerId);
 		timers.delete(timerId);
 		runtime.temp.break = 2;
+
+		// Custom debug view setup.
+		if (config.debug) {
+			this.createDebugView();
+		}
 	}
 });
 
@@ -1436,6 +1589,14 @@ Macro.add("widget", {
 
 			// Delete the existing widget.
 			Macro.delete(widgetName);
+		}
+
+		// Custom debug view setup.
+		if (config.debug) {
+			this.createDebugView(
+				this.name,
+				this.source + this.payload[0].contents + "<</" + this.name + ">>"
+			);
 		}
 
 		try {
@@ -1483,10 +1644,25 @@ Macro.add("widget", {
 								delete State.variables.args;
 							}
 						}
+
+						/*
+						// Custom debug view setup.
+						if (config.debug) {
+							this.debugView.modes({
+								//nonvoid : true
+								block : true
+							});
+						}
+						*/
 					};
 				})(this.payload[0].contents)
 			});
 		} catch (e) {
+			// Custom debug view setup.
+			if (config.debug) {
+				this.removeDebugView();
+			}
+
 			return this.error('cannot create widget macro "' + widgetName + '": ' + e.message);
 		}
 	}

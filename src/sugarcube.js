@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global Browser, Has, KeyValueStore, Macro, Passage, Save, Setting, State, Story, UI, Util, Wikifier, fatalAlert,
-	       strings
+	global Browser, DebugView, Has, KeyValueStore, Macro, Passage, Save, Setting, State, Story, UI, Util, Wikifier,
+	       fatalAlert, strings
 */
 
 /*
@@ -246,25 +246,26 @@ jQuery(function () {
 		Finally, export identifiers for debugging purposes.
 	*/
 	window.SugarCube = {
-		Browser  : Browser,
-		Has      : Has,
-		Macro    : Macro,
-		Passage  : Passage,
-		Save     : Save,
-		Setting  : Setting,
-		State    : State,
-		Story    : Story,
-		UI       : UI,
-		Util     : Util,
-		Wikifier : Wikifier,
-		config   : config,
-		macros   : macros,
-		runtime  : runtime,
-		session  : session,
-		settings : settings,
-		setup    : setup,
-		storage  : storage,
-		version  : version
+		Browser   : Browser,
+		DebugView : DebugView,
+		Has       : Has,
+		Macro     : Macro,
+		Passage   : Passage,
+		Save      : Save,
+		Setting   : Setting,
+		State     : State,
+		Story     : Story,
+		UI        : UI,
+		Util      : Util,
+		Wikifier  : Wikifier,
+		config    : config,
+		macros    : macros,
+		runtime   : runtime,
+		session   : session,
+		settings  : settings,
+		setup     : setup,
+		storage   : storage,
+		version   : version
 	};
 });
 

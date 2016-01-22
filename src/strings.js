@@ -49,6 +49,14 @@ var	strings = { // eslint-disable-line no-unused-vars
 		},
 
 		/*
+			Debug View.
+		*/
+		debug : {
+			title  : "Debug View",
+			toggle : "Toggle the debug view"
+		},
+
+		/*
 			UI bar.
 		*/
 		uiBar : {

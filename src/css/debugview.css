@@ -1,0 +1,121 @@
+/***********************************************************************************************************************
+ *
+ * debugview.css
+ *
+ * Copyright © 2016 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
+ *
+ **********************************************************************************************************************/
+
+/*
+	Patches to the UI bar styles.
+*/
+#ui-bar-body > #debug-view-toggle:first-child {
+	margin-top: 1em;
+}
+#ui-bar-body > #debug-view-toggle:first-child + * {
+	margin-top: 1em;
+}
+
+
+/*
+	UI bar debug view toggle button styles.
+*/
+#debug-view-toggle {
+	text-transform: uppercase;
+}
+#debug-view-toggle:before,
+#debug-view-toggle:after {
+	font-family: "tme-fa-icons";
+	font-style: normal;
+	font-weight: normal;
+	font-variant: normal;
+	text-transform: none;
+	line-height: 1;
+	speak: none;
+}
+#debug-view-toggle:before {
+	content: "\e838\00a0";
+}
+html:not(.debug-view) #debug-view-toggle {
+	color: #eee;
+	background-color: transparent;
+	border: 1px solid #444;
+	padding: 0.4em;
+}
+html:not(.debug-view) #debug-view-toggle:hover {
+	background-color: #333;
+	border-color: #eee;
+}
+html:not(.debug-view) #debug-view-toggle:after {
+	content: "\00a0\00a0\e830";
+}
+html.debug-view #debug-view-toggle {
+	background-color: #282;
+	border-color: #4a4;
+}
+html.debug-view #debug-view-toggle:hover {
+	background-color: #4a4;
+	border-color: #6c6;
+}
+html.debug-view #debug-view-toggle:after {
+	content: "\00a0\00a0\e831";
+}
+
+
+/*
+	Default debug view styles.
+*/
+html:not(.debug-view) .debug.hidden {
+	display: none;
+}
+html.debug-view .debug {
+	padding: 0.25em;
+	background-color: #234; /* #541, #151 */
+}
+html.debug-view .debug[title] {
+	cursor: help;
+}
+html.debug-view .debug.block {
+	display: inline-block;
+}
+html.debug-view .debug.failure {
+	background-color: #555;
+	text-decoration: line-through;
+}
+
+html.debug-view .debug[data-name][data-type]:before,
+html.debug-view .debug[data-name][data-type].nonvoid:after {
+	background-color: rgba(0,0,0,0.25);
+	font-family: monospace, monospace;
+	white-space: pre;
+}
+html.debug-view .debug[data-name][data-type]:before {
+	content: attr(data-name);
+}
+html.debug-view .debug[data-name][data-type|="macro"]:before {
+	content: "<<" attr(data-name) ">>";
+}
+html.debug-view .debug[data-name][data-type|="macro"].nonvoid:after {
+	content: "<</" attr(data-name) ">>";
+}
+/*
+html.debug-view .debug[data-name][data-type|="macro"]:empty:before {
+	content: "<<" attr(data-name) "\00a0/>>";
+}
+html.debug-view .debug[data-name][data-type|="macro"].nonvoid:empty:after {
+	content: none;
+}
+*/
+html.debug-view .debug[data-name][data-type|="html"]:before {
+	content: "<" attr(data-name) ">";
+}
+html.debug-view .debug[data-name][data-type|="html"].nonvoid:after {
+	content: "</" attr(data-name) ">";
+}
+html.debug-view .debug[data-name][data-type]:not(:empty):before {
+	margin-right: 0.25em;
+}
+html.debug-view .debug[data-name][data-type].nonvoid:not(:empty):after {
+	margin-left: 0.25em;
+}

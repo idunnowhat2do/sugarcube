@@ -149,7 +149,7 @@ audio, canvas, progress, video {
 }
 
 .error {
-	padding: 0.4em;
+	padding: 0.25em;
 	background-color: #511;
 	border-left: 0.5em solid #c22;
 }
