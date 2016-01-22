@@ -133,11 +133,11 @@ function printableStringOrDefault(val, defVal) { // eslint-disable-line no-unuse
 				return printableStringOrDefault(v, defVal);
 			}).join(", ");
 		} else if (val instanceof Map) {
-			return Array.from(val).map(function (kv) {
+			return "(\u202F" + Array.from(val).map(function (kv) {
 				return printableStringOrDefault(kv[0], defVal)
 					+ " \u21D2 "
 					+ printableStringOrDefault(kv[1], defVal);
-			}).join("; ");
+			}).join("; ") + "\u202F)";
 		} else if (val instanceof Date) {
 			return val.toLocaleString();
 		} else if (typeof val.toString === "function" && val.toString !== Object.prototype.toString) {
