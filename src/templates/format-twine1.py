@@ -50,6 +50,8 @@ class Header (header.Header):
 	def passageTitleColor(self, passage):
 		additionalSpecialPassages = [
 				'PassageDone',
+				'PassageFooter',
+				'PassageHeader',
 				'PassageReady',
 				'StoryBanner',
 				'StoryCaption',
