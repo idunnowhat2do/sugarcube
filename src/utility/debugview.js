@@ -81,6 +81,13 @@ Object.defineProperties(DebugView, {
 	Setup the DebugView prototype.
 */
 Object.defineProperties(DebugView.prototype, {
+	append : {
+		value : function (el) {
+			jQuery(this.view).append(el);
+			return this;
+		}
+	},
+
 	output : {
 		get : function () {
 			return this.view;

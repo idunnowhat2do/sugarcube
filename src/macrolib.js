@@ -7,7 +7,7 @@
  *
  **********************************************************************************************************************/
 /*
-	global AudioWrapper, Has, Macro, State, Story, Util, Wikifier, config, evalJavaScript, evalTwineScript,
+	global AudioWrapper, DebugView, Has, Macro, State, Story, Util, Wikifier, config, evalJavaScript, evalTwineScript,
 	       insertElement, insertText, postdisplay, prehistory, printableStringOrDefault, runtime, storage, strings,
 	       turns
 */
@@ -521,7 +521,10 @@ Macro.add("if", {
 					break;
 				} else if (config.debug) {
 					// Custom debug view setup for a failed conditional.
-					this.debugView.modes({ failure : true });
+					this.debugView.modes({
+						hidden  : true,
+						invalid : true
+					});
 				}
 			}
 
@@ -532,7 +535,8 @@ Macro.add("if", {
 						.createDebugView(this.payload[i].name, this.payload[i].source)
 						.modes({
 							nonvoid : false,
-							failure : true
+							hidden  : true,
+							invalid : true
 						});
 				}
 
@@ -544,7 +548,8 @@ Macro.add("if", {
 					.createDebugView("/" + this.name, "<</" + this.name + ">>")
 					.modes({
 						nonvoid : false,
-						failure : !success
+						hidden  : !success,
+						invalid : !success
 					});
 			}
 		} catch (e) {
@@ -674,7 +679,7 @@ Macro.add("set", {
 		// Custom debug view setup.
 		if (config.debug) {
 			this.debugView.modes({ hidden : true });
-			jQuery(this.output).text(this.args.raw);
+			//jQuery(this.output).text(this.args.raw);
 		}
 	}
 });
@@ -703,7 +708,7 @@ Macro.add("unset", {
 		// Custom debug view setup.
 		if (config.debug) {
 			this.debugView.modes({ hidden : true });
-			jQuery(this.output).text(this.args.raw);
+			//jQuery(this.output).text(this.args.raw);
 		}
 	}
 });
@@ -740,7 +745,7 @@ Macro.add("remember", {
 		// Custom debug view setup.
 		if (config.debug) {
 			this.debugView.modes({ hidden : true });
-			jQuery(this.output).text(this.args.raw);
+			//jQuery(this.output).text(this.args.raw);
 		}
 	},
 	init : function () {
@@ -786,7 +791,7 @@ Macro.add("forget", {
 		// Custom debug view setup.
 		if (config.debug) {
 			this.debugView.modes({ hidden : true });
-			jQuery(this.output).text(this.args.raw);
+			//jQuery(this.output).text(this.args.raw);
 		}
 	}
 });
@@ -811,7 +816,6 @@ Macro.add("script", {
 		if (config.debug) {
 			this.createDebugView(
 				this.name,
-				//"<<" + this.name + ">>" + this.payload[0].contents + "<</" + this.name + ">>"
 				this.source + this.payload[0].contents + "<</" + this.name + ">>"
 			);
 		}
@@ -827,7 +831,6 @@ Macro.add("script", {
 
 			return this.error(
 				"bad evaluation: " + e.message,
-				//"<<" + this.name + ">>" + this.payload[0].contents + "<</" + this.name + ">>"
 				this.source + this.payload[0].contents + "<</" + this.name + ">>"
 			);
 		}
@@ -849,6 +852,14 @@ Macro.add([ "button", "click" ], {
 	handler : function () {
 		if (this.args.length === 0) {
 			return this.error("no " + (this.name === "click" ? "link" : "button") + " text specified");
+		}
+
+		// Custom debug view setup.
+		if (config.debug) {
+			this.createDebugView(
+				this.name,
+				this.source + this.payload[0].contents + "<</" + this.name + ">>"
+			);
 		}
 
 		var	widgetArgs = (function () { // eslint-disable-line no-extra-parens
@@ -1054,6 +1065,11 @@ Macro.add("textarea", {
 			return this.error('$variable name "' + this.args[0] + '" is missing its sigil ($)');
 		}
 
+		// Custom debug view setup.
+		if (config.debug) {
+			this.debugView.modes({ block : true });
+		}
+
 		var	varName      = this.args[0].trim(),
 			varId        = Util.slugify(varName),
 			defaultValue = this.args[1],
@@ -1118,6 +1134,11 @@ Macro.add("textbox", {
 		*/
 		if (typeof this.args[0] !== "string" || this.args[0].trim()[0] !== "$") {
 			return this.error('$variable name "' + this.args[0] + '" is missing its sigil ($)');
+		}
+
+		// Custom debug view setup.
+		if (config.debug) {
+			this.debugView.modes({ block : true });
 		}
 
 		var	varName      = this.args[0].trim(),
@@ -1373,6 +1394,8 @@ Macro.add("timed", {
 		var	items = [];
 		try {
 			items.push({
+				name    : this.name,
+				source  : this.source,
 				delay   : Math.max(10, Util.fromCSSTime(String(this.args[0]).trim())),
 				content : this.payload[0].contents
 			});
@@ -1381,9 +1404,12 @@ Macro.add("timed", {
 		}
 		if (this.payload.length > 1) {
 			try {
-				for (var i = 1, len = this.payload.length; i < len; ++i) {
+				var i, len;
+				for (i = 1, len = this.payload.length; i < len; ++i) {
 					items.push({
-						delay : this.payload[i].arguments.length === 0
+						name   : this.payload[i].name,
+						source : this.payload[i].source,
+						delay  : this.payload[i].arguments.length === 0
 							? items[items.length - 1].delay
 							: Math.max(10, Util.fromCSSTime(String(this.payload[i].arguments).trim())),
 						content : this.payload[i].contents
@@ -1433,7 +1459,22 @@ Macro.add("timed", {
 				// 3. Wikify the content last to reduce drift.
 				var frag = document.createDocumentFragment();
 				new Wikifier(frag, curItem.content);
-				container.appendChild(frag);
+
+				var output = container;
+
+				/*
+					Custom debug view setup for `<<next>>`.
+				*/
+				if (config.debug && curItem.name === "next") {
+					output = (new DebugView(
+						container,
+						"macro",
+						curItem.name,
+						curItem.source
+					)).output;
+				}
+
+				output.appendChild(frag);
 			};
 
 		// Setup the timeout.

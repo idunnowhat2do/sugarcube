@@ -402,21 +402,25 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 		*/
 		wikifyEval : {
 			value : function (text) {
-				var errTrap = document.createDocumentFragment();
-				try {
-					new Wikifier(errTrap, text);
+				/*
+				var frag = document.createDocumentFragment();
+				new Wikifier(frag, text);
 
-					var errEl = errTrap.querySelector(".error");
-					if (errEl !== null) {
-						throw new Error(errEl.textContent.replace(/^(?:(?:Uncaught\s+)?Error:\s+)+/, ""));
-					}
-				} finally {
-					// Unnecessary, but let's be tidy.
-					removeChildren(errTrap); // remove any remaining children
-					if (typeof errTrap.remove === "function") {
-						errTrap.remove();
-					}
+				var errors = frag.querySelector(".error");
+				if (errors !== null) {
+					throw new Error(errors.textContent.replace(/^(?:(?:Uncaught\s+)?Error:\s+)+/, ""));
 				}
+				*/
+
+				var output = document.createDocumentFragment();
+				new Wikifier(output, text);
+
+				var errors = output.querySelector(".error");
+				if (errors !== null) {
+					throw new Error(errors.textContent.replace(/^(?:(?:Uncaught\s+)?Error:\s+)+/, ""));
+				}
+
+				return output;
 			}
 		},
 

@@ -45,6 +45,10 @@ var	version = Object.freeze({
 	Runtime object (internal use only).
 */
 var	runtime = Object.defineProperties({}, {
+		debug : {
+			writable : true,
+			value    : {}
+		},
 		temp : {
 			writable : true,
 			value    : {}

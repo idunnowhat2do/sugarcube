@@ -48,7 +48,18 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		*/
 		if (Story.has("StoryInit")) {
 			try {
-				Wikifier.wikifyEval(Story.get("StoryInit").text);
+				var debugBuffer = Wikifier.wikifyEval(Story.get("StoryInit").text);
+				if (config.debug) {
+					var debugView = new DebugView(
+						document.createDocumentFragment(),
+						"special",
+						"StoryInit",
+						"StoryInit"
+					);
+					debugView.modes({ hidden : true });
+					debugView.append(debugBuffer);
+					runtime.debug.storyInitCache = debugView.output;
+				}
 			} catch (e) {
 				technicalAlert("StoryInit", e.message);
 			}
@@ -748,6 +759,11 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		runtime.temp = {};
 
 		/*
+			Debug view setup.
+		*/
+		var debugView, debugBuffer;
+
+		/*
 			Retrieve the passage by the given title.
 
 			n.b. The `title` parameter may be empty, a string, or a number (though using a number
@@ -785,7 +801,21 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		}, passage);
 		if (Story.has("PassageReady")) {
 			try {
-				Wikifier.wikifyEval(Story.get("PassageReady").text);
+				debugBuffer = Wikifier.wikifyEval(Story.get("PassageReady").text);
+				if (config.debug) {
+					debugView = new DebugView(
+						document.createDocumentFragment(),
+						"special",
+						"PassageReady",
+						"PassageReady"
+					);
+					debugView.modes({ hidden : true });
+					debugView.append(debugBuffer);
+					/*
+						The view's output is used just after the incoming passage is rendered,
+						so we don't bother to cache it.
+					*/
+				}
 			} catch (e) {
 				technicalAlert("PassageReady", e.message);
 			}
@@ -796,6 +826,22 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		*/
 		var incoming = passage.render();
 		_lastPlay = Date.now();
+
+		/*
+			If in test mode, prepend the output of `StoryInit` and `PassageReady` to the
+			incoming buffer.
+		*/
+		if (config.debug) {
+			// PassageReady.
+			if (debugView != null && debugView.output != null) { // lazy equality for null
+				jQuery(incoming).prepend(debugView.output);
+			}
+
+			// StoryInit (only for the first moment/turn).
+			if (historyLength() === 1 && runtime.debug.storyInitCache != null) { // lazy equality for null
+				jQuery(incoming).prepend(runtime.debug.storyInitCache);
+			}
+		}
 
 		/*
 			Add the rendered passage to the page.
@@ -869,7 +915,20 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		*/
 		if (Story.has("PassageDone")) {
 			try {
-				Wikifier.wikifyEval(Story.get("PassageDone").text);
+				debugBuffer = Wikifier.wikifyEval(Story.get("PassageDone").text);
+				if (config.debug) {
+					debugView = new DebugView(
+						document.createDocumentFragment(),
+						"special",
+						"PassageDone",
+						"PassageDone"
+					);
+					debugView.modes({ hidden : true });
+					debugView.append(debugBuffer);
+
+					// Append the `PassageDone` debug view to the incoming buffer.
+					incoming.appendChild(debugView.output);
+				}
 			} catch (e) {
 				technicalAlert("PassageDone", e.message);
 			}
