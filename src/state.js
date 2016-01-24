@@ -761,7 +761,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		/*
 			Debug view setup.
 		*/
-		var debugView, debugBuffer;
+		var passageReadyOutput, passageDoneOutput;
 
 		/*
 			Retrieve the passage by the given title.
@@ -801,21 +801,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		}, passage);
 		if (Story.has("PassageReady")) {
 			try {
-				debugBuffer = Wikifier.wikifyEval(Story.get("PassageReady").text);
-				if (config.debug) {
-					debugView = new DebugView(
-						document.createDocumentFragment(),
-						"special",
-						"PassageReady",
-						"PassageReady"
-					);
-					debugView.modes({ hidden : true });
-					debugView.append(debugBuffer);
-					/*
-						The view's output is used just after the incoming passage is rendered,
-						so we don't bother to cache it.
-					*/
-				}
+				passageReadyOutput = Wikifier.wikifyEval(Story.get("PassageReady").text);
 			} catch (e) {
 				technicalAlert("PassageReady", e.message);
 			}
@@ -826,22 +812,6 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		*/
 		var incoming = passage.render();
 		_lastPlay = Date.now();
-
-		/*
-			If in test mode, prepend the output of `StoryInit` and `PassageReady` to the
-			incoming buffer.
-		*/
-		if (config.debug) {
-			// PassageReady.
-			if (debugView != null && debugView.output != null) { // lazy equality for null
-				jQuery(incoming).prepend(debugView.output);
-			}
-
-			// StoryInit (only for the first moment/turn).
-			if (historyLength() === 1 && runtime.debug.storyInitCache != null) { // lazy equality for null
-				jQuery(incoming).prepend(runtime.debug.storyInitCache);
-			}
-		}
 
 		/*
 			Add the rendered passage to the page.
@@ -915,20 +885,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		*/
 		if (Story.has("PassageDone")) {
 			try {
-				debugBuffer = Wikifier.wikifyEval(Story.get("PassageDone").text);
-				if (config.debug) {
-					debugView = new DebugView(
-						document.createDocumentFragment(),
-						"special",
-						"PassageDone",
-						"PassageDone"
-					);
-					debugView.modes({ hidden : true });
-					debugView.append(debugBuffer);
-
-					// Append the `PassageDone` debug view to the incoming buffer.
-					incoming.appendChild(debugView.output);
-				}
+				passageDoneOutput = Wikifier.wikifyEval(Story.get("PassageDone").text);
 			} catch (e) {
 				technicalAlert("PassageDone", e.message);
 			}
@@ -941,6 +898,42 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		if (config.ui.updateStoryElements) {
 			UI.setStoryElements();
 		}
+
+		/*
+			Add the completed debug views for `StoryInit`, `PassageReady`, and `PassageDone`
+			to the incoming passage element.
+		*/
+		if (config.debug) {
+			var debugView;
+
+			// Prepend the `PassageReady` debug view.
+			debugView = new DebugView(
+				document.createDocumentFragment(),
+				"special",
+				"PassageReady",
+				"PassageReady"
+			);
+			debugView.modes({ hidden : true });
+			debugView.append(passageReadyOutput);
+			jQuery(incoming).prepend(debugView.output);
+
+			// Append the `PassageDone` debug view.
+			debugView = new DebugView(
+				document.createDocumentFragment(),
+				"special",
+				"PassageDone",
+				"PassageDone"
+			);
+			debugView.modes({ hidden : true });
+			debugView.append(passageDoneOutput);
+			jQuery(incoming).append(debugView.output);
+
+			// Prepend the cached `StoryInit` debug view, if we're showing the first moment/turn.
+			if (historyLength() === 1 && runtime.debug.storyInitCache != null) { // lazy equality for null
+				jQuery(incoming).prepend(runtime.debug.storyInitCache);
+			}
+		}
+
 
 		/*
 			Last second post-processing for accessibility and other things.

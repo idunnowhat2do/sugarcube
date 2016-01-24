@@ -351,13 +351,7 @@ Macro.add("display", {
 
 		// Custom debug view setup.
 		if (config.debug) {
-			this.debugView.modes({
-				/*
-				parent : true,
-				block  : true
-				*/
-				block : true
-			});
+			this.debugView.modes({ block : true });
 		}
 
 		var el = this.output;
@@ -378,17 +372,6 @@ Macro.add("nobr", {
 	skipArgs : true,
 	tags     : null,
 	handler  : function () {
-		// Custom debug view setup.
-		if (config.debug) {
-			this.debugView.modes({
-				/*
-				parent : true,
-				block  : true
-				*/
-				//block : true
-			});
-		}
-
 		/*
 			Wikify the contents, after removing all leading & trailing newlines and compacting
 			all internal sequences of newlines into single spaces.
@@ -430,14 +413,7 @@ Macro.add("silently", {
 
 		if (config.debug) {
 			// Custom debug view setup.
-			this.debugView.modes({
-				/*
-				parent : true,
-				block  : true,
-				hidden : true
-				*/
-				hidden : true
-			});
+			this.debugView.modes({ hidden : true });
 			this.output.appendChild(frag);
 		} else {
 			// Discard the output, unless there were errors.
@@ -590,13 +566,7 @@ Macro.add("for", {
 
 		// Custom debug view setup.
 		if (config.debug) {
-			this.debugView.modes({
-				/*
-				parent : true,
-				block  : true
-				*/
-				block : true
-			});
+			this.debugView.modes({ block : true });
 		}
 
 		try {
@@ -812,23 +782,18 @@ Macro.add("script", {
 	skipArgs : true,
 	tags     : null,
 	handler  : function () {
-		// Custom debug view setup.
-		if (config.debug) {
-			this.createDebugView(
-				this.name,
-				this.source + this.payload[0].contents + "<</" + this.name + ">>"
-			);
-		}
-
 		var output = document.createDocumentFragment();
 		try {
 			evalJavaScript(this.payload[0].contents, output, this);
-		} catch (e) {
+
 			// Custom debug view setup.
 			if (config.debug) {
-				this.removeDebugView();
+				this.createDebugView(
+					this.name,
+					this.source + this.payload[0].contents + "<</" + this.name + ">>"
+				);
 			}
-
+		} catch (e) {
 			return this.error(
 				"bad evaluation: " + e.message,
 				this.source + this.payload[0].contents + "<</" + this.name + ">>"
@@ -1422,13 +1387,7 @@ Macro.add("timed", {
 
 		// Custom debug view setup.
 		if (config.debug) {
-			this.debugView.modes({
-				/*
-				parent : true,
-				block  : true
-				*/
-				block : true
-			});
+			this.debugView.modes({ block : true });
 		}
 
 		// Register the timer and, possibly, a cleanup task.
@@ -1514,13 +1473,7 @@ Macro.add("repeat", {
 
 		// Custom debug view setup.
 		if (config.debug) {
-			this.debugView.modes({
-				/*
-				parent : true,
-				block  : true
-				*/
-				block : true
-			});
+			this.debugView.modes({ block : true });
 		}
 
 		// Register the timer and, possibly, a cleanup task.
@@ -1550,8 +1503,8 @@ Macro.add("repeat", {
 				proper cleanup is done in the event that an exception is thrown during the
 				`Wikifier` call.
 
-				TODO: This is an absolutely horrific kludge, which is very likely not entirely
-				reliable.  Make this unnecessary, if possible.
+				TODO: This is a kludge, which is very likely not entirely reliable.  Make this
+				unnecessary, if possible.
 			*/
 			try {
 				runtime.temp.break = null;
@@ -1632,14 +1585,6 @@ Macro.add("widget", {
 			Macro.delete(widgetName);
 		}
 
-		// Custom debug view setup.
-		if (config.debug) {
-			this.createDebugView(
-				this.name,
-				this.source + this.payload[0].contents + "<</" + this.name + ">>"
-			);
-		}
-
 		try {
 			Macro.add(widgetName, {
 				isWidget : true,
@@ -1698,12 +1643,15 @@ Macro.add("widget", {
 					};
 				})(this.payload[0].contents)
 			});
-		} catch (e) {
+
 			// Custom debug view setup.
 			if (config.debug) {
-				this.removeDebugView();
+				this.createDebugView(
+					this.name,
+					this.source + this.payload[0].contents + "<</" + this.name + ">>"
+				);
 			}
-
+		} catch (e) {
 			return this.error('cannot create widget macro "' + widgetName + '": ' + e.message);
 		}
 	}
@@ -1893,6 +1841,11 @@ if (!Has.audio) {
 					audio.fadeWithDuration(fadeOver, audio.volume, fadeTo);
 					break;
 				}
+
+				// Custom debug view setup.
+				if (config.debug) {
+					this.createDebugView();
+				}
 			} catch (e) {
 				return this.error("error playing audio: " + e.message);
 			}
@@ -1908,6 +1861,11 @@ if (!Has.audio) {
 			Object.keys(tracks).forEach(function (id) {
 				tracks[id].stop();
 			});
+
+			// Custom debug view setup.
+			if (config.debug) {
+				this.createDebugView();
+			}
 		}
 	});
 
@@ -1963,6 +1921,11 @@ if (!Has.audio) {
 			if (audio.hasChildNodes()) {
 				audio.preload = "auto";
 				this.self.tracks[id] = new AudioWrapper(audio);
+			}
+
+			// Custom debug view setup.
+			if (config.debug) {
+				this.createDebugView();
 			}
 		},
 		types : Object.freeze({
@@ -2117,6 +2080,11 @@ if (!Has.audio) {
 					self.fade(fadeOver, fadeTo);
 					break;
 				}
+
+				// Custom debug view setup.
+				if (config.debug) {
+					this.createDebugView();
+				}
 			} catch (e) {
 				return this.error("error playing audio: " + e.message);
 			}
@@ -2244,6 +2212,11 @@ if (!Has.audio) {
 			playlist.muted   = false;
 			playlist.loop    = true;
 			playlist.shuffle = false;
+
+			// Custom debug view setup.
+			if (config.debug) {
+				this.createDebugView();
+			}
 		}
 	});
 }
