@@ -396,7 +396,7 @@ Macro.add([ "print", "=", "-" ], {
 				new Wikifier(this.output, this.name === "-" ? Util.escape(result) : result);
 			}
 		} catch (e) {
-			return this.error("bad expression: " + e.message);
+			return this.error("bad evaluation: " + e.message);
 		}
 	}
 });
