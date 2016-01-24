@@ -2,7 +2,7 @@
 #
 # sugarcube.py
 #
-# Copyright (c) 2013-2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+# Copyright (c) 2013-2016 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
 # Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
 #
 ########################################################################################################################
@@ -50,6 +50,8 @@ class Header (header.Header):
 	def passageTitleColor(self, passage):
 		additionalSpecialPassages = [
 				'PassageDone',
+				'PassageFooter',
+				'PassageHeader',
 				'PassageReady',
 				'StoryBanner',
 				'StoryCaption',

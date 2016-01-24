@@ -2,7 +2,7 @@
  *
  * strings.js
  *
- * Copyright © 2013–2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Copyright © 2013–2016 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
@@ -46,6 +46,14 @@ var	strings = { // eslint-disable-line no-unused-vars
 		*/
 		warnings : {
 			degraded : 'Apologies! Your browser either lacks some of the capabilities required by this %identity% or has disabled them, so this %identity% is running in a degraded mode. You may be able to continue, but some parts may not work properly.\n\nThe former may, probably, be solved by upgrading your browser. The latter may be solved by loosening its security restrictions' + (window.location.protocol === "file:" ? " or, perhaps, by viewing this %identity% via the HTTP protocol." : ".")
+		},
+
+		/*
+			Debug View.
+		*/
+		debugView : {
+			title  : "Debug View",
+			toggle : "Toggle the debug view"
 		},
 
 		/*

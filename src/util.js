@@ -2,11 +2,11 @@
  *
  * util.js
  *
- * Copyright © 2013–2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Copyright © 2013–2016 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global clone */
+/* global clone, evalJavaScript */
 
 var Util = (function () { // eslint-disable-line no-unused-vars
 	"use strict";
@@ -143,27 +143,6 @@ var Util = (function () { // eslint-disable-line no-unused-vars
 			throw new Error("invalid milliseconds: " + what);
 		}
 		return msec + "ms";
-	}
-
-
-	/*******************************************************************************************************************
-	 * Eval Functions
-	 ******************************************************************************************************************/
-	/**
-		Returns the evaluation of the passed expression, throwing if there were errors.
-	**/
-	function utilEvalExpression(expression) {
-		// The parens are to protect object literals from being confused with block statements.
-		return eval("(" + expression + ")"); // eslint-disable-line no-eval
-	}
-
-	/**
-		Evaluates the passed statements, throwing if there were errors.
-	**/
-	function utilEvalStatements(statements) {
-		// The enclosing anonymous function is to isolate the passed code within its own scope.
-		eval("(function(){" + statements + "\n})();"); // eslint-disable-line no-eval
-		return true;
 	}
 
 
@@ -337,12 +316,6 @@ var Util = (function () { // eslint-disable-line no-unused-vars
 		toCSSTime   : { value : utilToCSSTime },
 
 		/*
-			Eval Functions.
-		*/
-		evalExpression : { value : utilEvalExpression },
-		evalStatements : { value : utilEvalStatements },
-
-		/*
 			Diff Functions.
 		*/
 		diff  : { value : utilDiff },
@@ -351,9 +324,11 @@ var Util = (function () { // eslint-disable-line no-unused-vars
 		/*
 			Legacy Aliases.
 		*/
-		random       : { value : Math.random },
-		entityEncode : { value : utilEscape },
-		entityDecode : { value : utilUnescape }
+		random         : { value : Math.random },
+		entityEncode   : { value : utilEscape },
+		entityDecode   : { value : utilUnescape },
+		evalExpression : { value : evalJavaScript }, // External (see: utility/helperfunctions.js).
+		evalStatements : { value : evalJavaScript }  // External (see: utility/helperfunctions.js).
 	}));
 
 })();

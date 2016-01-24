@@ -2,7 +2,7 @@
  *
  * utility/helperfunctions.js
  *
- * Copyright © 2013–2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Copyright © 2013–2016 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
@@ -86,6 +86,32 @@ function clone(orig) { // eslint-disable-line no-unused-vars
 
 
 /***********************************************************************************************************************
+ * Eval Functions
+ **********************************************************************************************************************/
+/* eslint-disable no-eval, no-extra-parens, no-extra-strict, no-shadow, no-unused-vars */
+/*
+	Evaluates the given JavaScript code and returns the result, throwing if there were errors.
+*/
+function evalJavaScript(code, output, thisp) {
+	"use strict";
+	return (function (code, output) {
+		return eval(code);
+	}).call(thisp, String(code), output);
+}
+
+/*
+	Evaluates the given TwineScript code and returns the result, throwing if there were errors.
+*/
+function evalTwineScript(code, output, thisp) {
+	"use strict";
+	return (function (code, output) {
+		return eval(code);
+	}).call(thisp, Wikifier.parse(String(code)), output);
+}
+/* eslint-enable no-eval, no-extra-parens, no-extra-strict, no-shadow, no-unused-vars */
+
+
+/***********************************************************************************************************************
  * Miscellaneous Functions
  **********************************************************************************************************************/
 /*
@@ -107,11 +133,11 @@ function printableStringOrDefault(val, defVal) { // eslint-disable-line no-unuse
 				return printableStringOrDefault(v, defVal);
 			}).join(", ");
 		} else if (val instanceof Map) {
-			return Array.from(val).map(function (kv) {
+			return "(\u202F" + Array.from(val).map(function (kv) {
 				return printableStringOrDefault(kv[0], defVal)
 					+ " \u21D2 "
 					+ printableStringOrDefault(kv[1], defVal);
-			}).join("; ");
+			}).join("; ") + "\u202F)";
 		} else if (val instanceof Date) {
 			return val.toLocaleString();
 		} else if (typeof val.toString === "function" && val.toString !== Object.prototype.toString) {

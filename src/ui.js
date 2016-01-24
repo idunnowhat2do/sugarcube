@@ -2,7 +2,7 @@
  *
  * ui.js
  *
- * Copyright © 2013–2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Copyright © 2013–2016 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
@@ -335,6 +335,10 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 	}
 
 	function uiAssembleLinkList(passage, list) {
+		// Cache the value of `config.debug` and then disable it during this method's run.
+		var debugState = config.debug;
+		config.debug = false;
+
 		if (list == null) { // lazy equality for null
 			list = document.createElement("ul");
 		}
@@ -360,6 +364,10 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				}
 			}
 		}
+
+		// Restore `config.debug` to its original value.
+		config.debug = debugState;
+
 		return list;
 	}
 

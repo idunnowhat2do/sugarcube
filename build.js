@@ -3,8 +3,8 @@
 	build.js
 	  - Description : Node.js-hosted build script for SugarCube
 	  - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
-	  - Copyright   : Copyright © 2014–2015 Thomas Michael Edwards. All rights reserved.
-	  - Version     : 1.2.20, 2015-12-12
+	  - Copyright   : Copyright © 2014–2016 Thomas Michael Edwards. All rights reserved.
+	  - Version     : 1.2.21, 2016-01-22
 */
 "use strict";
 
@@ -24,6 +24,7 @@ var CONFIG = {
 		"src/utility/audiowrapper.js",
 		"src/utility/prngwrapper.js",
 		"src/utility/stylewrapper.js",
+		"src/utility/debugview.js",
 		"src/util.js",
 		"src/wikifier.js",
 		"src/macro.js",
@@ -45,7 +46,8 @@ var CONFIG = {
 		"src/css/fonts.css",
 		"src/css/core.css",
 		"src/css/ui-bar.css",
-		"src/css/ui-dialog.css"
+		"src/css/ui-dialog.css",
+		"src/css/debugview.css"
 	],
 	twine1 : {
 		build : {

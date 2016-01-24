@@ -2,7 +2,7 @@
  *
  * wikifier.js
  *
- * Copyright © 2013–2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Copyright © 2013–2016 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  ***********************************************************************************************************************
@@ -43,8 +43,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global Macro, MacroContext, State, Story, Util, config, insertElement, insertText, macros,
-	       printableStringOrDefault, removeChildren, removeElement, runtime, throwError
+	global DebugView, Macro, MacroContext, State, Story, Util, config, evalJavaScript, evalTwineScript, insertElement,
+	       insertText, macros, printableStringOrDefault, removeChildren, removeElement, runtime, throwError
 */
 
 /*
@@ -398,43 +398,29 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 		},
 
 		/*
-			Evaluate the given Twine expression and return the result, throwing if there were errors.
-		*/
-		evalExpression : {
-			value : function (expression) {
-				return Util.evalExpression(Wikifier.parse(expression));
-			}
-		},
-
-		/*
-			Evaluate the given Twine statements and return the result, throwing if there were errors.
-		*/
-		evalStatements : {
-			value : function (statements) {
-				return Util.evalStatements(Wikifier.parse(statements));
-			}
-		},
-
-		/*
 			Wikify the given text and discard the output, throwing if there were errors.
 		*/
 		wikifyEval : {
 			value : function (text) {
-				var errTrap = document.createDocumentFragment();
-				try {
-					new Wikifier(errTrap, text);
+				/*
+				var frag = document.createDocumentFragment();
+				new Wikifier(frag, text);
 
-					var errEl = errTrap.querySelector(".error");
-					if (errEl !== null) {
-						throw new Error(errEl.textContent.replace(/^(?:(?:Uncaught\s+)?Error:\s+)+/, ""));
-					}
-				} finally {
-					// Unnecessary, but let's be tidy.
-					removeChildren(errTrap); // remove any remaining children
-					if (typeof errTrap.remove === "function") {
-						errTrap.remove();
-					}
+				var errors = frag.querySelector(".error");
+				if (errors !== null) {
+					throw new Error(errors.textContent.replace(/^(?:(?:Uncaught\s+)?Error:\s+)+/, ""));
 				}
+				*/
+
+				var output = document.createDocumentFragment();
+				new Wikifier(output, text);
+
+				var errors = output.querySelector(".error");
+				if (errors !== null) {
+					throw new Error(errors.textContent.replace(/^(?:(?:Uncaught\s+)?Error:\s+)+/, ""));
+				}
+
+				return output;
 			}
 		},
 
@@ -498,7 +484,13 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 				var urlRegExp = new RegExp("^" + Wikifier.textPrimitives.url, "gim");
 				return urlRegExp.test(link) || /[\.\/\\#]/.test(link);
 			}
-		}
+		},
+
+		/*
+			Legacy Aliases.
+		*/
+		evalExpression : { value : evalTwineScript }, // External (see: utility/helperfunctions.js).
+		evalStatements : { value : evalTwineScript }  // External (see: utility/helperfunctions.js).
 	});
 
 
@@ -593,11 +585,11 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 			}
 		},
 
-		evalExpression : {
+		evalText : {
 			value : function (text) {
 				var result;
 				try {
-					result = Wikifier.evalExpression(text);
+					result = evalTwineScript(text);
 					if (result == null || typeof result === "function") { // use lazy equality for null
 						result = text;
 					} else {
@@ -616,7 +608,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 		evalPassageId : {
 			value : function (passage) {
 				if (passage != null && !Story.has(passage)) { // lazy equality for null; `0` is a valid name, so we cannot simply evaluate `passage`
-					passage = Wikifier.helpers.evalExpression(passage);
+					passage = Wikifier.helpers.evalText(passage);
 				}
 				return passage;
 			}
@@ -848,7 +840,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 	Object.defineProperty(Wikifier, "formatters", {
 		value : [
 			{
-				name    : "dollarSign",
+				name    : "doubleDollarSign",
 				match   : "\\${2}",
 				handler : function (w) {
 					insertText(w.output, "$");
@@ -863,8 +855,15 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					if (result === null) {
 						insertText(w.output, w.matchText);
 					} else {
-						new Wikifier(w.output, result);
+						new Wikifier(
+							(config.debug
+								? new DebugView(w.output, "$variable", w.matchText, w.matchText) // Debug view setup.
+								: w
+							).output,
+							result
+						);
 					}
+
 				}
 			},
 
@@ -1202,16 +1201,24 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					}
 
 					w.nextMatch = markup.pos;
+
 					// text=(text), forceInternal=(~), link=link, setter=(setter)
 					var	link  = Wikifier.helpers.evalPassageId(markup.link),
-						text  = markup.hasOwnProperty("text") ? Wikifier.helpers.evalExpression(markup.text) : link,
+						text  = markup.hasOwnProperty("text") ? Wikifier.helpers.evalText(markup.text) : link,
 						setFn = markup.hasOwnProperty("setter")
-							? (function (ex) { return function () { Wikifier.evalStatements(ex); }; })(Wikifier.parse(markup.setter))
+							? (function (ex) { return function () { evalTwineScript(ex); }; })(markup.setter)
 							: null;
+
+					// Debug view setup.
+					var	output = (config.debug
+							? new DebugView(w.output, "wiki-link", "[[link]]", w.source.slice(w.matchStart, w.nextMatch))
+							: w
+						).output;
+
 					if (markup.forceInternal || !Wikifier.isExternalLink(link)) {
-						Wikifier.createInternalLink(w.output, link, text, setFn);
+						Wikifier.createInternalLink(output, link, text, setFn);
 					} else {
-						Wikifier.createExternalLink(w.output, link, text);
+						Wikifier.createExternalLink(output, link, text);
 					}
 				}
 			},
@@ -1235,10 +1242,23 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					}
 
 					w.nextMatch = markup.pos;
+
+					// Debug view setup.
+					var	debugView;
+					if (config.debug) {
+						debugView = new DebugView(
+							w.output,
+							"wiki-image",
+							markup.hasOwnProperty("link") ? "[img[][link]]" : "[img[]]",
+							w.source.slice(w.matchStart, w.nextMatch)
+						);
+						debugView.modes({ block : true });
+					}
+
 					// align=(left|right), title=(title), source=source, forceInternal=(~), link=(link), setter=(setter)
-					var	el     = w.output,
+					var	el     = (config.debug ? debugView : w).output,
 						setFn  = markup.hasOwnProperty("setter")
-							? (function (ex) { return function () { Wikifier.evalStatements(ex); }; })(Wikifier.parse(markup.setter))
+							? (function (ex) { return function () { evalTwineScript(ex); }; })(markup.setter)
 							: null,
 						source;
 					if (markup.hasOwnProperty("link")) {
@@ -1262,7 +1282,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					}
 					el.src = source;
 					if (markup.hasOwnProperty("title")) {
-						el.title = Wikifier.helpers.evalExpression(markup.title);
+						el.title = Wikifier.helpers.evalText(markup.title);
 					}
 					if (markup.hasOwnProperty("align")) {
 						el.align = markup.align;
@@ -1281,7 +1301,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					"(\\[(?:[<>]?[Ii][Mm][Gg])?\\[[^\\r\\n]*?\\]\\]+)", // 4=double square-bracketed
 					"([^\"'`\\s]\\S*)"                                  // 5=barewords
 				].join("|") + ")",
-				working : { name : "", handler : "", arguments : "", index : 0 }, // the working parse object
+				working : { source : "", name : "", handler : "", arguments : "", index : 0 }, // the working parse object
 				context : null, // last execution context object (top-level macros, hierarchically, have a null context)
 				handler : function (w) {
 					var matchStart = this.lookaheadRegExp.lastIndex = w.matchStart;
@@ -1289,6 +1309,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						// If parseBody() is called below, it will mutate the current working
 						// values, so we must cache them now.
 						var	nextMatch = w.nextMatch,
+							source    = this.working.source,
 							name      = this.working.name,
 							handler   = this.working.handler,
 							rawArgs   = this.working.arguments;
@@ -1325,7 +1346,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 												args    : args,
 												payload : payload,
 												parser  : w,
-												source  : w.source.slice(matchStart, w.nextMatch)
+												source  : source // w.source.slice(matchStart, w.nextMatch)
 											});
 											macro[handler].call(this.context);
 										} finally {
@@ -1355,6 +1376,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							return throwError(w.output, "cannot execute " + (macro && macro.isWidget ? "widget" : "macro") + " <<" + name + ">>: " + e.message,
 								w.source.slice(matchStart, w.nextMatch));
 						} finally {
+							this.working.source    = "";
 							this.working.name      = "";
 							this.working.handler   = "";
 							this.working.arguments = "";
@@ -1368,6 +1390,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
 					if (lookaheadMatch && lookaheadMatch.index === w.matchStart && lookaheadMatch[1]) {
 						w.nextMatch = this.lookaheadRegExp.lastIndex;
+						this.working.source = w.source.slice(lookaheadMatch.index, this.lookaheadRegExp.lastIndex);
 						var fnSigil = lookaheadMatch[1].indexOf("::");
 						if (fnSigil !== -1) {
 							this.working.name = lookaheadMatch[1].slice(0, fnSigil);
@@ -1390,6 +1413,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						bodyTags     = Array.isArray(tags) ? tags : false,
 						end          = -1,
 						opened       = 1,
+						curSource    = this.working.source,
 						curTag       = this.working.name,
 						curArgument  = this.working.arguments,
 						contentStart = w.nextMatch,
@@ -1401,10 +1425,11 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							continue;
 						}
 
-						var	tagName  = this.working.name,
-							tagArgs  = this.working.arguments,
-							tagBegin = this.working.index,
-							tagEnd   = w.nextMatch;
+						var	tagSource = this.working.source,
+							tagName   = this.working.name,
+							tagArgs   = this.working.arguments,
+							tagBegin  = this.working.index,
+							tagEnd    = w.nextMatch;
 
 						switch (tagName) {
 						case openTag:
@@ -1421,10 +1446,12 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 								for (var i = 0, iend = bodyTags.length; i < iend; ++i) {
 									if (tagName === bodyTags[i]) {
 										payload.push({
+											source    : curSource,
 											name      : curTag,
 											arguments : curArgument,
 											contents  : w.source.slice(contentStart, tagBegin)
 										});
+										curSource    = tagSource;
 										curTag       = tagName;
 										curArgument  = tagArgs;
 										contentStart = tagEnd;
@@ -1435,6 +1462,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						}
 						if (opened === 0) {
 							payload.push({
+								source    : curSource,
 								name      : curTag,
 								arguments : curArgument,
 								contents  : w.source.slice(contentStart, tagBegin)
@@ -1465,7 +1493,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 
 							// Evaluate the string to handle escaped characters.
 							try {
-								arg = Util.evalExpression(arg);
+								arg = evalJavaScript(arg);
 							} catch (e) {
 								throw new Error("unable to parse macro argument '" + arg + "': " + e.message);
 							}
@@ -1475,7 +1503,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 
 							// Evaluate the string to handle escaped characters.
 							try {
-								arg = Util.evalExpression(arg);
+								arg = evalJavaScript(arg);
 							} catch (e) {
 								throw new Error('unable to parse macro argument "' + arg + '": ' + e.message);
 							}
@@ -1504,10 +1532,10 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 								arg = { isLink : true };
 								arg.count    = markup.hasOwnProperty("text") ? 2 : 1;
 								arg.link     = Wikifier.helpers.evalPassageId(markup.link);
-								arg.text     = markup.hasOwnProperty("text") ? Wikifier.helpers.evalExpression(markup.text) : arg.link;
+								arg.text     = markup.hasOwnProperty("text") ? Wikifier.helpers.evalText(markup.text) : arg.link;
 								arg.external = !markup.forceInternal && Wikifier.isExternalLink(arg.link);
 								arg.setFn    = markup.hasOwnProperty("setter")
-									? (function (ex) { return function () { Wikifier.evalStatements(ex); }; })(Wikifier.parse(markup.setter))
+									? (function (ex) { return function () { evalTwineScript(ex); }; })(markup.setter)
 									: null;
 							} else if (markup.isImage) {
 								// .isImage, [.align], [.title], .source, [.forceInternal], [.link], [.setter]
@@ -1530,14 +1558,14 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 									arg.align = markup.align;
 								}
 								if (markup.hasOwnProperty("title")) {
-									arg.title = Wikifier.helpers.evalExpression(markup.title);
+									arg.title = Wikifier.helpers.evalText(markup.title);
 								}
 								if (markup.hasOwnProperty("link")) {
 									arg.link     = Wikifier.helpers.evalPassageId(markup.link);
 									arg.external = !markup.forceInternal && Wikifier.isExternalLink(arg.link);
 								}
 								arg.setFn = markup.hasOwnProperty("setter")
-									? (function (ex) { return function () { Wikifier.evalStatements(ex); }; })(Wikifier.parse(markup.setter))
+									? (function (ex) { return function () { evalTwineScript(ex); }; })(markup.setter)
 									: null;
 							}
 						} else if (match[5]) {
@@ -1550,7 +1578,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							} else if (/^(?:settings|setup)[\.\[]/.test(arg)) {
 								// Settings or setup object, so try to evaluate it.
 								try {
-									arg = Wikifier.evalExpression(arg);
+									arg = evalTwineScript(arg);
 								} catch (e) {
 									throw new Error('unable to parse macro argument "' + arg + '": ' + e.message);
 								}
@@ -1559,7 +1587,8 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 								//   n.b. Authors really shouldn't be passing object/array literals as arguments.  If they want to
 								//        pass a complex type, then store it in a variable and pass that instead.
 								try {
-									arg = Wikifier.evalExpression(arg);
+									// The parens are to protect object literals from being confused with block statements.
+									arg = evalTwineScript("(" + arg + ")");
 								} catch (e) {
 									throw new Error('unable to parse macro argument "' + arg + '": ' + e.message);
 								}
@@ -1787,7 +1816,9 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							terminatorMatch = terminatorRegExp.exec(w.source);
 						}
 						if (isVoid || terminatorMatch) {
-							var el = document.createElement(w.output.tagName);
+							var	debugView,
+								output    = w.output,
+								el        = document.createElement(w.output.tagName);
 							el.innerHTML = w.matchText;
 							while (el.firstChild) {
 								el = el.firstChild;
@@ -1795,6 +1826,21 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 
 							if (el.hasAttribute("data-passage")) {
 								this.processDataAttributes(el);
+
+								// Debug view setup.
+								if (config.debug) {
+									debugView = new DebugView(
+										w.output,
+										"html-" + tagName,
+										tagName,
+										w.matchText
+									);
+									debugView.modes({
+										block   : tagName === "img",
+										nonvoid : terminatorMatch
+									});
+									output = debugView.output;
+								}
 							}
 
 							if (terminatorMatch) {
@@ -1805,13 +1851,26 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 								}
 								try {
 									w.subWikify(el, terminator, true); // ignore case during match
+
+									/*
+										Debug view setup.  If the current element has any debug view
+										children which have "block" mode set, then set its debug view
+										to the same.  Just makes things look a bit nicer.
+
+										We don't bother checking if the current debug view has "block"
+										mode set as only `<img>` elements could have that set at this
+										point and, as void elements, they cannot enter here.
+									*/
+									if (config.debug && jQuery(".debug.block", el).length > 0) {
+										debugView.modes({ block : true });
+									}
 								} finally {
 									if (w._nobr.length !== 0) {
 										w._nobr.shift();
 									}
 								}
 							}
-							w.output.appendChild(el);
+							output.appendChild(el);
 						} else {
 							throwError(w.output, 'HTML tag "' + tag + '" is not closed', w.matchText + "\u2026");
 						}
@@ -1844,7 +1903,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							if (setter != null) { // lazy equality for null
 								setter = (typeof setter !== "string" ? String(setter) : setter).trim();
 								if (setter !== "") {
-									callback = (function (ex) { return function () { Wikifier.evalStatements(ex); }; })(Wikifier.parse(setter));
+									callback = (function (ex) { return function () { evalTwineScript(ex); }; })(setter);
 								}
 							}
 							if (Story.has(passage)) {

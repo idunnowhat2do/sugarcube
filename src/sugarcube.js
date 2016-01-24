@@ -2,13 +2,13 @@
  *
  * sugarcube.js
  *
- * Copyright © 2013–2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Copyright © 2013–2016 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
 /*
-	global Browser, Has, KeyValueStore, Macro, Passage, Save, Setting, State, Story, UI, Util, Wikifier, fatalAlert,
-	       strings
+	global Browser, DebugView, Has, KeyValueStore, Macro, Passage, Save, Setting, State, Story, UI, Util, Wikifier,
+	       fatalAlert, strings
 */
 
 /*
@@ -45,6 +45,10 @@ var	version = Object.freeze({
 	Runtime object (internal use only).
 */
 var	runtime = Object.defineProperties({}, {
+		debug : {
+			writable : true,
+			value    : {}
+		},
 		temp : {
 			writable : true,
 			value    : {}
@@ -58,6 +62,7 @@ var	config = Object.seal({
 		/*
 			General properties.
 		*/
+		debug                 : false,
 		addVisitedLinkClass   : false,
 		cleanupWikifierOutput : false,
 		loadDelay             : 0,
@@ -245,25 +250,26 @@ jQuery(function () {
 		Finally, export identifiers for debugging purposes.
 	*/
 	window.SugarCube = {
-		Browser  : Browser,
-		Has      : Has,
-		Macro    : Macro,
-		Passage  : Passage,
-		Save     : Save,
-		Setting  : Setting,
-		State    : State,
-		Story    : Story,
-		UI       : UI,
-		Util     : Util,
-		Wikifier : Wikifier,
-		config   : config,
-		macros   : macros,
-		runtime  : runtime,
-		session  : session,
-		settings : settings,
-		setup    : setup,
-		storage  : storage,
-		version  : version
+		Browser   : Browser,
+		DebugView : DebugView,
+		Has       : Has,
+		Macro     : Macro,
+		Passage   : Passage,
+		Save      : Save,
+		Setting   : Setting,
+		State     : State,
+		Story     : Story,
+		UI        : UI,
+		Util      : Util,
+		Wikifier  : Wikifier,
+		config    : config,
+		macros    : macros,
+		runtime   : runtime,
+		session   : session,
+		settings  : settings,
+		setup     : setup,
+		storage   : storage,
+		version   : version
 	};
 });
 

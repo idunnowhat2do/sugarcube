@@ -2,11 +2,11 @@
  *
  * story.js
  *
- * Copyright © 2013–2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Copyright © 2013–2016 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global Passage, Util, Wikifier, addStyle, config, technicalAlert */
+/* global Passage, Util, Wikifier, addStyle, config, evalJavaScript, technicalAlert */
 
 var Story = (function () { // eslint-disable-line no-unused-vars
 	"use strict";
@@ -51,6 +51,7 @@ var Story = (function () { // eslint-disable-line no-unused-vars
 				var testPlay = "START_AT";
 				if (testPlay !== "") {
 					if (DEBUG) { console.log('    > starting passage set to: "' + testPlay + '" (Test Play)'); }
+					config.debug = true;
 					return testPlay;
 				}
 
@@ -105,6 +106,14 @@ var Story = (function () { // eslint-disable-line no-unused-vars
 				Set the default starting passage title.
 			*/
 			config.passages.start = null; // no default in Twine 2
+
+			/*
+				Process story options.
+
+				n.b. Currently, the only option of interest to us is `debug` (it may be the
+				     only one period), so we simply use `<RegExp>.test()` to check for it.
+			*/
+			config.debug = /\bdebug\b/.test($storydata.attr("options"));
 
 			/*
 				Process stylesheet passages.
@@ -171,7 +180,7 @@ var Story = (function () { // eslint-disable-line no-unused-vars
 		*/
 		for (var i = 0; i < _scripts.length; ++i) { // eslint-disable-line no-redeclare
 			try {
-				eval(_scripts[i].text); // eslint-disable-line no-eval
+				evalJavaScript(_scripts[i].text); // eslint-disable-line no-eval
 			} catch (e) {
 				technicalAlert(_scripts[i].title, e.message);
 			}

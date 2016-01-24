@@ -2,12 +2,12 @@
  *
  * state.js
  *
- * Copyright © 2013–2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Copyright © 2013–2016 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
 /*
-	global Save, PRNGWrapper, Story, UI, Util, Wikifier, clone, config, postdisplay, predisplay, prehistory,
+	global DebugView, Save, PRNGWrapper, Story, UI, Util, Wikifier, clone, config, postdisplay, predisplay, prehistory,
 	       removeChildren, runtime, session, technicalAlert
 */
 
@@ -48,7 +48,18 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		*/
 		if (Story.has("StoryInit")) {
 			try {
-				Wikifier.wikifyEval(Story.get("StoryInit").text);
+				var debugBuffer = Wikifier.wikifyEval(Story.get("StoryInit").text);
+				if (config.debug) {
+					var debugView = new DebugView(
+						document.createDocumentFragment(),
+						"special",
+						"StoryInit",
+						"StoryInit"
+					);
+					debugView.modes({ hidden : true });
+					debugView.append(debugBuffer);
+					runtime.debug.storyInitCache = debugView.output;
+				}
 			} catch (e) {
 				technicalAlert("StoryInit", e.message);
 			}
@@ -71,13 +82,22 @@ var State = (function () { // eslint-disable-line no-unused-vars
 			n.b. We do this here to give authors every opportunity to modify the `config.history.maxStates`
 			     property.
 		*/
-		config.history.maxStates = Math.max(1, Number(config.history.maxStates));
+		config.history.maxStates = Math.max(0, Number(config.history.maxStates));
 		if (isNaN(config.history.maxStates) || !isFinite(config.history.maxStates)) {
 			// TODO: Maybe this should throw instead?
 			config.history.maxStates = 150;
 		}
 		if (config.history.maxStates === 1) {
 			config.history.controls = false;
+		}
+
+		/*
+			Finalize the `config.debug` property here, before any passages are displayed.
+
+			n.b. We do this here to give authors every opportunity to modify the `config.debug` property.
+		*/
+		if (config.debug) {
+			DebugView.init();
 		}
 
 		/*
@@ -739,6 +759,11 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		runtime.temp = {};
 
 		/*
+			Debug view setup.
+		*/
+		var passageReadyOutput, passageDoneOutput;
+
+		/*
 			Retrieve the passage by the given title.
 
 			n.b. The `title` parameter may be empty, a string, or a number (though using a number
@@ -776,7 +801,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		}, passage);
 		if (Story.has("PassageReady")) {
 			try {
-				Wikifier.wikifyEval(Story.get("PassageReady").text);
+				passageReadyOutput = Wikifier.wikifyEval(Story.get("PassageReady").text);
 			} catch (e) {
 				technicalAlert("PassageReady", e.message);
 			}
@@ -860,7 +885,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		*/
 		if (Story.has("PassageDone")) {
 			try {
-				Wikifier.wikifyEval(Story.get("PassageDone").text);
+				passageDoneOutput = Wikifier.wikifyEval(Story.get("PassageDone").text);
 			} catch (e) {
 				technicalAlert("PassageDone", e.message);
 			}
@@ -873,6 +898,42 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		if (config.ui.updateStoryElements) {
 			UI.setStoryElements();
 		}
+
+		/*
+			Add the completed debug views for `StoryInit`, `PassageReady`, and `PassageDone`
+			to the incoming passage element.
+		*/
+		if (config.debug) {
+			var debugView;
+
+			// Prepend the `PassageReady` debug view.
+			debugView = new DebugView(
+				document.createDocumentFragment(),
+				"special",
+				"PassageReady",
+				"PassageReady"
+			);
+			debugView.modes({ hidden : true });
+			debugView.append(passageReadyOutput);
+			jQuery(incoming).prepend(debugView.output);
+
+			// Append the `PassageDone` debug view.
+			debugView = new DebugView(
+				document.createDocumentFragment(),
+				"special",
+				"PassageDone",
+				"PassageDone"
+			);
+			debugView.modes({ hidden : true });
+			debugView.append(passageDoneOutput);
+			jQuery(incoming).append(debugView.output);
+
+			// Prepend the cached `StoryInit` debug view, if we're showing the first moment/turn.
+			if (historyLength() === 1 && runtime.debug.storyInitCache != null) { // lazy equality for null
+				jQuery(incoming).prepend(runtime.debug.storyInitCache);
+			}
+		}
+
 
 		/*
 			Last second post-processing for accessibility and other things.

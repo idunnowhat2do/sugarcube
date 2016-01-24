@@ -2,11 +2,11 @@
  *
  * macro.js
  *
- * Copyright © 2013–2015 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Copyright © 2013–2016 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global Wikifier, clone, macros, throwError */
+/* global DebugView, Wikifier, clone, config, evalJavaScript, macros, throwError */
 
 var Macro = (function () { // eslint-disable-line no-unused-vars
 	"use strict";
@@ -121,25 +121,6 @@ var Macro = (function () { // eslint-disable-line no-unused-vars
 		return macro;
 	}
 
-	/* eslint-disable no-extra-strict */
-	function macrosEvalStatements(statements, thisp) {
-		"use strict";
-		try {
-			/* eslint-disable no-eval */
-			eval(thisp == null /* lazy equality for null */
-				? 'var output = document.createElement("div");(function(){' + statements + '\n})();'
-				: "var output = thisp.output;(function(){" + statements + "\n}).call(thisp);");
-			/* eslint-enable no-eval */
-			return true;
-		} catch (e) {
-			if (thisp == null) { // lazy equality for null
-				throw e;
-			}
-			return thisp.error("bad evaluation: " + e.message);
-		}
-	}
-	/* eslint-enable no-extra-strict */
-
 	function macrosInit(handler) { // eslint-disable-line no-unused-vars
 		handler = handler || "init";
 		Object.keys(_macros).forEach(function (name) {
@@ -221,25 +202,29 @@ var Macro = (function () { // eslint-disable-line no-unused-vars
 		/*
 			Macro Functions.
 		*/
-		add            : { value : macrosAdd },
-		delete         : { value : macrosDelete },
-		isEmpty        : { value : macrosIsEmpty },
-		has            : { value : macrosHas },
-		get            : { value : macrosGet },
-		evalStatements : { value : macrosEvalStatements },
-		init           : { value : macrosInit },
+		add     : { value : macrosAdd },
+		delete  : { value : macrosDelete },
+		isEmpty : { value : macrosIsEmpty },
+		has     : { value : macrosHas },
+		get     : { value : macrosGet },
+		init    : { value : macrosInit },
 
 		/*
 			Tags Functions.
 		*/
-		tags : { // eslint-disable-line key-spacing
+		tags : {
 			value : Object.freeze(Object.defineProperties({}, {
 				register   : { value : tagsRegister },
 				unregister : { value : tagsUnregister },
 				has        : { value : tagsHas },
 				get        : { value : tagsGet }
 			}))
-		}
+		},
+
+		/*
+			Legacy Aliases.
+		*/
+		evalStatements : { value : evalJavaScript } // External (see: utility/helperfunctions.js).
 	}));
 
 })();
@@ -281,14 +266,22 @@ function MacroContext(context) {
 		payload : {
 			value : context.payload
 		},
+		source : {
+			value : context.source
+		},
 		parser : {
 			value : context.parser
 		},
-		output : {
+		_output : {
 			value : context.parser.output
 		},
-		source : {
-			value : context.source
+		_debugView : {
+			writable : true,
+			value    : null
+		},
+		_debugViewEnabled : {
+			writable : true,
+			value    : config.debug
 		}
 	});
 	// Extend the args array with the raw and full argument strings.
@@ -343,9 +336,50 @@ Object.defineProperties(MacroContext.prototype, {
 		}
 	},
 
+	createDebugView : {
+		value : function (name, title) {
+			this._debugView = new DebugView(
+				this._output,
+				"macro",
+				name ? name : this.name,
+				title ? title : this.source
+			);
+			if (this.payload !== null && this.payload.length > 0) {
+				this._debugView.modes({ nonvoid : true });
+			}
+			this._debugViewEnabled = true;
+			return this._debugView;
+		}
+	},
+
+	removeDebugView : {
+		value : function () {
+			if (this._debugView !== null) {
+				this._debugView.remove();
+				this._debugView = null;
+			}
+			this._debugViewEnabled = false;
+		}
+	},
+
+	debugView : {
+		get : function () {
+			if (this._debugViewEnabled) {
+				return this._debugView !== null ? this._debugView : this.createDebugView();
+			}
+			return null;
+		}
+	},
+
+	output : {
+		get : function () {
+			return this._debugViewEnabled ? this.debugView.output : this._output;
+		}
+	},
+
 	error : {
-		value : function (message) {
-			return throwError(this.output, "<<" + this.name + ">>: " + message, this.source);
+		value : function (message, title) {
+			return throwError(this._output, "<<" + this.name + ">>: " + message, title ? title : this.source);
 		}
 	}
 });
