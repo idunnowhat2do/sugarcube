@@ -99,7 +99,7 @@ Object.defineProperties(DebugView.prototype, {
 			return this.view.getAttribute("data-type");
 		},
 		set : function (type) {
-			this.view.setAttribute("data-type", type != null ? type : "");
+			this.view.setAttribute("data-type", type != null ? type : ""); // lazy equality for null
 		}
 	},
 
@@ -108,7 +108,7 @@ Object.defineProperties(DebugView.prototype, {
 			return this.view.getAttribute("data-name");
 		},
 		set : function (name) {
-			this.view.setAttribute("data-name", name != null ? name : "");
+			this.view.setAttribute("data-name", name != null ? name : ""); // lazy equality for null
 		}
 	},
 
