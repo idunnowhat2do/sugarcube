@@ -425,8 +425,11 @@ Macro.add("silently", {
 				frag.remove();
 			}
 			if (errList.length > 0) {
-				return this.error("error" + (errList.length === 1 ? "" : "s") + " within contents ("
-					+ errList.join('; ') + ")");
+				return this.error(
+					"error" + (errList.length === 1 ? "" : "s") + " within contents (" + errList.join("; ") + ")",
+					this.source + this.payload[0].contents + "<</" + this.name + ">>"
+				);
+
 			}
 		}
 	}
