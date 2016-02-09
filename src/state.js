@@ -907,26 +907,30 @@ var State = (function () { // eslint-disable-line no-unused-vars
 			var debugView;
 
 			// Prepend the `PassageReady` debug view.
-			debugView = new DebugView(
-				document.createDocumentFragment(),
-				"special",
-				"PassageReady",
-				"PassageReady"
-			);
-			debugView.modes({ hidden : true });
-			debugView.append(passageReadyOutput);
-			jQuery(incoming).prepend(debugView.output);
+			if (passageReadyOutput != null) { // lazy equality for null
+				debugView = new DebugView(
+					document.createDocumentFragment(),
+					"special",
+					"PassageReady",
+					"PassageReady"
+				);
+				debugView.modes({ hidden : true });
+				debugView.append(passageReadyOutput);
+				jQuery(incoming).prepend(debugView.output);
+			}
 
 			// Append the `PassageDone` debug view.
-			debugView = new DebugView(
-				document.createDocumentFragment(),
-				"special",
-				"PassageDone",
-				"PassageDone"
-			);
-			debugView.modes({ hidden : true });
-			debugView.append(passageDoneOutput);
-			jQuery(incoming).append(debugView.output);
+			if (passageDoneOutput != null) { // lazy equality for null
+				debugView = new DebugView(
+					document.createDocumentFragment(),
+					"special",
+					"PassageDone",
+					"PassageDone"
+				);
+				debugView.modes({ hidden : true });
+				debugView.append(passageDoneOutput);
+				jQuery(incoming).append(debugView.output);
+			}
 
 			// Prepend the cached `StoryInit` debug view, if we're showing the first moment/turn.
 			if (historyLength() === 1 && runtime.debug.storyInitCache != null) { // lazy equality for null
