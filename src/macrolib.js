@@ -784,7 +784,7 @@ Macro.add("script", {
 	handler  : function () {
 		var output = document.createDocumentFragment();
 		try {
-			evalJavaScript(this.payload[0].contents, output, this);
+			evalJavaScript(this.payload[0].contents, output);
 
 			// Custom debug view setup.
 			if (config.debug) {

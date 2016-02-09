@@ -92,21 +92,21 @@ function clone(orig) { // eslint-disable-line no-unused-vars
 /*
 	Evaluates the given JavaScript code and returns the result, throwing if there were errors.
 */
-function evalJavaScript(code, output, thisp) {
+function evalJavaScript(code, output) {
 	"use strict";
 	return (function (code, output) {
 		return eval(code);
-	}).call(thisp, String(code), output);
+	}).call({ output : output }, String(code), output);
 }
 
 /*
 	Evaluates the given TwineScript code and returns the result, throwing if there were errors.
 */
-function evalTwineScript(code, output, thisp) {
+function evalTwineScript(code, output) {
 	"use strict";
 	return (function (code, output) {
 		return eval(code);
-	}).call(thisp, Wikifier.parse(String(code)), output);
+	}).call({ output : output }, Wikifier.parse(String(code)), output);
 }
 /* eslint-enable no-eval, no-extra-parens, no-extra-strict, no-shadow, no-unused-vars */
 
