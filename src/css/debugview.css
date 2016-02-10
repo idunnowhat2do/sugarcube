@@ -75,6 +75,7 @@ html.debug-view .debug[title] {
 }
 html.debug-view .debug.block {
 	display: inline-block;
+	vertical-align: middle;
 }
 html.debug-view .debug.invalid {
 	text-decoration: line-through;
