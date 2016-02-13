@@ -514,11 +514,11 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 	Object.defineProperties(Wikifier.textPrimitives, {
 		inlineCSS : {
 			value : [
-					"(?:(" + Wikifier.textPrimitives.anyLetter + "+)\\(([^\\)\\|\\n]+)\\):)", // [1,2]=style(value):
-					"(?:(" + Wikifier.textPrimitives.anyLetter + "+):([^;\\|\\n]+);)",        // [3,4]=style:value;
-					"(?:((?:\\." + Wikifier.textPrimitives.anyLetter + "+)+);)",              // [5]  =.className;
-					"(?:((?:#" + Wikifier.textPrimitives.anyLetter + "+)+);)"                 // [6]  =#id;
-				].join("|")
+				"(?:(" + Wikifier.textPrimitives.anyLetter + "+)\\(([^\\)\\|\\n]+)\\):)", // [1,2]=style(value):
+				"(?:(" + Wikifier.textPrimitives.anyLetter + "+):([^;\\|\\n]+);)",        // [3,4]=style:value;
+				"(?:((?:\\." + Wikifier.textPrimitives.anyLetter + "+)+);)",              // [5]  =.className;
+				"(?:((?:#" + Wikifier.textPrimitives.anyLetter + "+)+);)"                 // [6]  =#id;
+			].join("|")
 		}
 	});
 
@@ -849,7 +849,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 
 			{
 				name    : "$variable",
-				match   : "\\$\\w+(?:(?:\\.[A-Za-z_$]\\w*)|(?:\\[\\d+\\])|(?:\\[\"(?:\\\\.|[^\"\\\\])+\"\\])|(?:\\['(?:\\\\.|[^'\\\\])+'\\])|(?:\\[\\$\\w+\\]))*",
+				match   : "\\$[A-Za-z_$][\\w$]*(?:(?:\\.[A-Za-z_$][\\w$]*)|(?:\\[\\d+\\])|(?:\\[\"(?:\\\\.|[^\"\\\\])+\"\\])|(?:\\['(?:\\\\.|[^'\\\\])+'\\])|(?:\\[\\$[A-Za-z_$][\\w$]*\\]))*",
 				handler : function (w) {
 					var	result = printableStringOrDefault(Wikifier.getValue(w.matchText), null);
 					if (result === null) {
@@ -863,7 +863,6 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							result
 						);
 					}
-
 				}
 			},
 
