@@ -96,7 +96,7 @@ function evalJavaScript(code, output) {
 	"use strict";
 	return (function (code, output) {
 		return eval(code);
-	}).call({ output : output }, String(code), output);
+	}).call(output ? { output : output } : null, String(code), output);
 }
 
 /*
@@ -106,7 +106,7 @@ function evalTwineScript(code, output) {
 	"use strict";
 	return (function (code, output) {
 		return eval(code);
-	}).call({ output : output }, Wikifier.parse(String(code)), output);
+	}).call(output ? { output : output } : null, Wikifier.parse(String(code)), output);
 }
 /* eslint-enable no-eval, no-extra-parens, no-extra-strict, no-shadow, no-unused-vars */
 
