@@ -220,3 +220,15 @@ audio, canvas, progress, video {
 .passage .error {
 	white-space: nowrap;
 }
+
+/* Macro styling. */
+.macro-repeat-insert,
+.macro-timed-insert {
+	-webkit-transition: opacity 400ms ease-in;
+	-moz-transition: opacity 400ms ease-in;
+	transition: opacity 400ms ease-in;
+}
+.macro-repeat-in,
+.macro-timed-in {
+	opacity: 0;
+}

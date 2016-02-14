@@ -1396,38 +1396,48 @@ Macro.add("timed", {
 
 		// Register the timer and, possibly, a cleanup task.
 		this.self.registerTimeout(
-			insertElement(this.output, "span", null, "macro-timed timed-insertion-container"),
-			items
+			insertElement(this.output, "span", null, "macro-" + this.name),
+			items,
+			this.args.length > 1 && /^(?:transition|t8n)$/.test(this.args[1])
 		);
 	},
-	registerTimeout : function (container, items) {
+	registerTimeout : function (container, items, transition) {
 		var	turnId   = turns(),
 			timers   = this.timers,
 			timerId  = null,
 			nextItem = items.shift(),
 			worker   = function () {
-				// 1. Bookkeeping.
+				/*
+					1. Bookkeeping.
+				*/
 				timers.delete(timerId);
+
 				if (turnId !== turns()) {
 					return;
 				}
 
-				// 2. Set the current item and setup the next worker, if any.
+				/*
+					2. Set the current item and setup the next worker, if any.
+				*/
 				var curItem = nextItem;
+
 				if ((nextItem = items.shift()) != null) { // lazy equality for null
 					timerId = setTimeout(worker, nextItem.delay);
 					timers.add(timerId);
 				}
 
-				// 3. Wikify the content last to reduce drift.
+				/*
+					3. Wikify the content last to reduce temporal drift.
+				*/
 				var frag = document.createDocumentFragment();
 				new Wikifier(frag, curItem.content);
 
+				/*
+					4. Output.
+				*/
 				var output = container;
 
-				/*
-					Custom debug view setup for `<<next>>`.
-				*/
+				// Custom debug view setup for `<<next>>`.
 				if (config.debug && curItem.name === "next") {
 					output = (new DebugView(
 						container,
@@ -1437,7 +1447,18 @@ Macro.add("timed", {
 					)).output;
 				}
 
+				if (transition) {
+					output = insertElement(output, "span", null, "macro-timed-insert");
+					output.classList.add("macro-timed-in");
+				}
+
 				output.appendChild(frag);
+
+				if (transition) {
+					setTimeout(function () {
+						output.classList.remove("macro-timed-in");
+					}, minDOMActionDelay);
+				}
 			};
 
 		// Setup the timeout.
@@ -1482,12 +1503,13 @@ Macro.add("repeat", {
 
 		// Register the timer and, possibly, a cleanup task.
 		this.self.registerInterval(
-			insertElement(this.output, "span", null, "macro-repeat repeat-insertion-container"),
+			insertElement(this.output, "span", null, "macro-" + this.name),
 			this.payload[0].contents,
-			delay
+			delay,
+			this.args.length > 1 && /^(?:transition|t8n)$/.test(this.args[1])
 		);
 	},
-	registerInterval : function (container, content, delay) {
+	registerInterval : function (container, content, delay, transition) {
 		var	turnId  = turns(),
 			timers  = this.timers,
 			timerId = null;
@@ -1522,7 +1544,21 @@ Macro.add("repeat", {
 				// Wikify the content.
 				var frag = document.createDocumentFragment();
 				new Wikifier(frag, content);
-				container.appendChild(frag);
+
+				var output = container;
+
+				if (transition) {
+					output = insertElement(output, "span", null, "macro-repeat-insert");
+					output.classList.add("macro-repeat-in");
+				}
+
+				output.appendChild(frag);
+
+				if (transition) {
+					setTimeout(function () {
+						output.classList.remove("macro-repeat-in");
+					}, minDOMActionDelay);
+				}
 			} finally {
 				// Teardown the `repeatTimerId` property, restoring the cached value, if necessary.
 				if (typeof timerIdCache !== "undefined") {
@@ -1634,16 +1670,6 @@ Macro.add("widget", {
 								delete State.variables.args;
 							}
 						}
-
-						/*
-						// Custom debug view setup.
-						if (config.debug) {
-							this.debugView.modes({
-								//nonvoid : true
-								block : true
-							});
-						}
-						*/
 					};
 				})(this.payload[0].contents)
 			});
