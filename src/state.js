@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global DebugView, Save, PRNGWrapper, Story, UI, Util, Wikifier, clone, config, postdisplay, predisplay, prehistory,
-	       removeChildren, session, technicalAlert, temp
+	global DebugView, Save, PRNGWrapper, Story, UI, Util, Wikifier, clone, config, minDOMActionDelay, postdisplay,
+	       predisplay, prehistory, removeChildren, session, technicalAlert, temp
 */
 
 var State = (function () { // eslint-disable-line no-unused-vars
@@ -849,7 +849,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 								if (outgoing.parentNode) {
 									outgoing.parentNode.removeChild(outgoing);
 								}
-							}, config.passages.transitionOut); // in milliseconds
+							}, Math.max(minDOMActionDelay, config.passages.transitionOut));
 						}
 					} else {
 						outgoing.parentNode.removeChild(outgoing);
@@ -863,7 +863,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		passages.appendChild(incoming);
 		setTimeout(function () {
 			incoming.classList.remove("passage-in");
-		}, 1);
+		}, minDOMActionDelay);
 
 		/*
 			Set the document title.

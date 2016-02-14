@@ -141,6 +141,13 @@ var	temp = Object.defineProperties({}, {
 	});
 
 /*
+	Constants (not actually constants).
+*/
+/* eslint-disable no-unused-vars */
+var minDOMActionDelay = 40; // minimum delay for DOM actions (in milliseconds)
+/* eslint-enable no-unused-vars */
+
+/*
 	Internal variables (mostly for use by story authors).
 */
 /* eslint-disable no-unused-vars */

@@ -460,7 +460,7 @@ function fade(el, options) { // eslint-disable-line no-unused-vars
 		current = 1;
 	}
 	setOpacity(proxy, current);
-	intervalId = window.setInterval(tick, 25);
+	intervalId = window.setInterval(tick, 25); // TODO: should this be `minDOMActionDelay`?
 	/* eslint-enable no-use-before-define */
 }
 
@@ -526,7 +526,7 @@ function scrollWindowTo(el, increment) { // eslint-disable-line no-unused-vars
 		distance   = Math.abs(start - end),
 		progress   = 0,
 		direction  = start > end ? -1 : 1,
-		intervalId = window.setInterval(tick, 25);
+		intervalId = window.setInterval(tick, 25); // TODO: should this be `minDOMActionDelay`?
 	/* eslint-enable no-use-before-define */
 }
 

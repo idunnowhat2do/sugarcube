@@ -8,7 +8,8 @@
  **********************************************************************************************************************/
 /*
 	global AudioWrapper, DebugView, Has, Macro, State, Story, Util, Wikifier, config, evalJavaScript, insertElement,
-	       insertText, postdisplay, prehistory, printableStringOrDefault, storage, strings, temp, turns
+	       insertText, minDOMActionDelay, postdisplay, prehistory, printableStringOrDefault, storage, strings, temp,
+	       turns
 */
 
 /***********************************************************************************************************************
@@ -1073,7 +1074,9 @@ Macro.add("textarea", {
 
 			// Setup a single-use post-display task to autofocus the element.
 			postdisplay["#autofocus:" + el.id] = function (task) {
-				setTimeout(function () { el.focus(); }, 1);
+				setTimeout(function () {
+					el.focus();
+				}, minDOMActionDelay);
 				delete postdisplay[task]; // single-use task
 			};
 		}
@@ -1163,7 +1166,9 @@ Macro.add("textbox", {
 
 			// Setup a single-use post-display task to autofocus the element.
 			postdisplay["#autofocus:" + el.id] = function (task) {
-				setTimeout(function () { el.focus(); }, 1);
+				setTimeout(function () {
+					el.focus();
+				}, minDOMActionDelay);
 				delete postdisplay[task]; // single-use task
 			};
 		}
@@ -1339,12 +1344,12 @@ Macro.add("goto", {
 		*/
 		setTimeout(function () {
 			State.play(passage);
-		}, 40); // not too short, not too long; TODO: Make this 10 msec?
+		}, minDOMActionDelay);
 	}
 });
 
 /*
-	<<timed>>
+	<<timed>> & <<next>>
 */
 Macro.add("timed", {
 	tags    : [ "next" ],
@@ -1359,7 +1364,7 @@ Macro.add("timed", {
 			items.push({
 				name    : this.name,
 				source  : this.source,
-				delay   : Math.max(10, Util.fromCSSTime(String(this.args[0]).trim())),
+				delay   : Math.max(minDOMActionDelay, Util.fromCSSTime(String(this.args[0]).trim())),
 				content : this.payload[0].contents
 			});
 		} catch (e) {
@@ -1374,7 +1379,7 @@ Macro.add("timed", {
 						source : this.payload[i].source,
 						delay  : this.payload[i].args.length === 0
 							? items[items.length - 1].delay
-							: Math.max(10, Util.fromCSSTime(String(this.payload[i].args[0]).trim())),
+							: Math.max(minDOMActionDelay, Util.fromCSSTime(String(this.payload[i].args[0]).trim())),
 						content : this.payload[i].contents
 					});
 				}
@@ -1464,7 +1469,7 @@ Macro.add("repeat", {
 
 		var	delay;
 		try {
-			delay = Math.max(10, Util.fromCSSTime(String(this.args[0]).trim()));
+			delay = Math.max(minDOMActionDelay, Util.fromCSSTime(String(this.args[0]).trim()));
 		} catch (e) {
 			return this.error(e.message);
 		}
