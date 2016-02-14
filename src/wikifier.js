@@ -1363,13 +1363,16 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 				handler : function (w) {
 					var matchStart = this.lookaheadRegExp.lastIndex = w.matchStart;
 					if (this.parseTag(w)) {
-						// If parseBody() is called below, it will mutate the current working
-						// values, so we must cache them now.
+						/*
+							If `parseBody()` is called below, it will modify the current working
+							values, so we must cache them now.
+						*/
 						var	nextMatch = w.nextMatch,
 							source    = this.working.source,
 							name      = this.working.name,
 							handler   = this.working.handler,
 							rawArgs   = this.working.arguments;
+
 						try {
 							var macro = Macro.get(name);
 							if (macro) {
@@ -1377,7 +1380,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 								if (macro.hasOwnProperty("tags")) {
 									payload = this.parseBody(w, macro.tags);
 									if (!payload) {
-										w.nextMatch = nextMatch; // parseBody() changes this during processing, so we reset it here
+										w.nextMatch = nextMatch; // we must reset `w.nextMatch` here, as `parseBody()` modifies it
 										return throwError(w.output, "cannot find a closing tag for macro <<" + name + ">>",
 											w.source.slice(matchStart, w.nextMatch) + "\u2026");
 									}
@@ -1385,35 +1388,44 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 								if (typeof macro[handler] === "function") {
 									var args = !macro.hasOwnProperty("skipArgs") || !macro.skipArgs ? this.parseArgs(rawArgs) : [];
 
-									// New-style macros.
+									/*
+										New-style macros.
+									*/
 									if (macro.hasOwnProperty("_MACRO_API")) {
 										/*
-											Call the handler, modifying the execution context chain appropriately.
+											Add the macro's execution context to the context chain.
+										*/
+										this.context = new MacroContext({
+											parent  : this.context,
+											macro   : macro,
+											name    : name,
+											rawArgs : rawArgs,
+											args    : args,
+											payload : payload,
+											parser  : w,
+											source  : source
+										});
 
-											n.b. There's no catch clause because this try/finally is here simply to
-											     ensure that the execution context is properly restored in the event
+										/*
+											Call the handler.
+
+											n.b. There's no catch clause here because this try/finally exists simply
+											     to ensure that the execution context is properly restored in the event
 											     that an uncaught exception is thrown during the handler call.
 										*/
 										try {
-											this.context = new MacroContext({
-												parent  : this.context,
-												macro   : macro,
-												name    : name,
-												rawArgs : rawArgs,
-												args    : args,
-												payload : payload,
-												parser  : w,
-												source  : source // w.source.slice(matchStart, w.nextMatch)
-											});
 											macro[handler].call(this.context);
 										} finally {
 											this.context = this.context.parent;
 										}
 									}
-									// Old-style macros.
+
+									/*
+										Old-style macros.
+									*/
 									else {
 										var prevRawArgs = w._rawArgs;
-										w._rawArgs = rawArgs; // cache the raw arguments for use by Wikifier.rawArgs() & Wikifier.fullArgs()
+										w._rawArgs = rawArgs; // cache the raw arguments for use by `Wikifier.rawArgs()` & `Wikifier.fullArgs()`
 										macro[handler](w.output, name, args, w, payload);
 										w._rawArgs = prevRawArgs;
 									}
