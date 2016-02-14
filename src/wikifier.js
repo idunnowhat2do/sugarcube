@@ -893,461 +893,6 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 	Object.defineProperty(Wikifier, "formatters", {
 		value : [
 			{
-				name    : "doubleDollarSign",
-				match   : "\\${2}",
-				handler : function (w) {
-					insertText(w.output, "$");
-				}
-			},
-
-			{
-				name  : "nakedVariable",
-				match : Wikifier.textPrimitives.variable
-					+ "(?:(?:\\."
-					+ Wikifier.textPrimitives.identifier
-					+ ")|(?:\\[\\d+\\])|(?:\\[\"(?:\\\\.|[^\"\\\\])+\"\\])|(?:\\['(?:\\\\.|[^'\\\\])+'\\])|(?:\\["
-					+ Wikifier.textPrimitives.variable
-					+ "\\]))*",
-				handler : function (w) {
-					var	result = printableStringOrDefault(Wikifier.getValue(w.matchText), null);
-					if (result === null) {
-						insertText(w.output, w.matchText);
-					} else {
-						new Wikifier(
-							(config.debug
-								? new DebugView(w.output, "variable", w.matchText, w.matchText) // Debug view setup.
-								: w
-							).output,
-							result
-						);
-					}
-				}
-			},
-
-			{
-				name           : "table",
-				match          : "^\\|(?:[^\\n]*)\\|(?:[fhck]?)$",
-				lookahead      : "^\\|([^\\n]*)\\|([fhck]?)$",
-				rowTerminator  : "\\|(?:[fhck]?)$\\n?",
-				cellPattern    : "(?:\\|([^\\n\\|]*)\\|)|(\\|[fhck]?$\\n?)",
-				cellTerminator : "(?:\\x20*)\\|",
-				rowTypes       : { "c" : "caption", "h" : "thead", "" : "tbody", "f" : "tfoot" },
-				handler        : function (w) {
-					var	table           = insertElement(w.output, "table"),
-						lookaheadRegExp = new RegExp(this.lookahead, "gm"),
-						curRowType      = null,
-						nextRowType,
-						rowContainer,
-						rowElement,
-						prevColumns     = [],
-						rowCount        = 0,
-						matched;
-					w.nextMatch = w.matchStart;
-					do {
-						lookaheadRegExp.lastIndex = w.nextMatch;
-						var	lookaheadMatch = lookaheadRegExp.exec(w.source);
-						matched = lookaheadMatch && lookaheadMatch.index === w.nextMatch;
-						if (matched) {
-							nextRowType = lookaheadMatch[2];
-							if (nextRowType === "k") {
-								table.className = lookaheadMatch[1];
-								w.nextMatch += lookaheadMatch[0].length + 1;
-							} else {
-								if (nextRowType !== curRowType) {
-									rowContainer = insertElement(table, this.rowTypes[nextRowType]);
-								}
-								curRowType = nextRowType;
-								if (curRowType === "c") {
-									if (rowCount === 0) {
-										rowContainer.setAttribute("align", "top");
-									} else {
-										rowContainer.setAttribute("align", "bottom");
-									}
-									w.nextMatch = w.nextMatch + 1;
-									w.subWikify(rowContainer, this.rowTerminator);
-								} else {
-									rowElement = insertElement(rowContainer, "tr");
-									this.rowHandler(w, rowElement, prevColumns);
-								}
-								++rowCount;
-							}
-						}
-					} while (matched);
-				},
-				rowHandler : function (w, e, prevColumns) {
-					var	col          = 0,
-						curColCount  = 1,
-						cellRegExp   = new RegExp(this.cellPattern, "gm"),
-						matched;
-					do {
-						cellRegExp.lastIndex = w.nextMatch;
-						var	cellMatch = cellRegExp.exec(w.source);
-						matched = cellMatch && cellMatch.index === w.nextMatch;
-						if (matched) {
-							if (cellMatch[1] === "~") {
-								var last = prevColumns[col];
-								if (last) {
-									++last.rowCount;
-									last.element.setAttribute("rowSpan", last.rowCount);
-									last.element.setAttribute("rowspan", last.rowCount);
-									last.element.valign = "center";
-								}
-								w.nextMatch = cellMatch.index + cellMatch[0].length - 1;
-							} else if (cellMatch[1] === ">") {
-								++curColCount;
-								w.nextMatch = cellMatch.index + cellMatch[0].length - 1;
-							} else if (cellMatch[2]) {
-								w.nextMatch = cellMatch.index + cellMatch[0].length;
-								break;
-							} else {
-								var	spaceLeft  = false,
-									spaceRight = false,
-									cell;
-								++w.nextMatch;
-								var css = Wikifier.helpers.inlineCSS(w);
-								while (w.source.substr(w.nextMatch, 1) === " ") {
-									spaceLeft = true;
-									++w.nextMatch;
-								}
-								if (w.source.substr(w.nextMatch, 1) === "!") {
-									cell = insertElement(e, "th");
-									++w.nextMatch;
-								} else {
-									cell = insertElement(e, "td");
-								}
-								prevColumns[col] = { rowCount : 1, element : cell };
-								/* UNUSED?
-								var	lastColCount   = 1,
-									lastColElement = cell;
-								*/
-								if (curColCount > 1) {
-									cell.setAttribute("colSpan", curColCount);
-									cell.setAttribute("colspan", curColCount);
-									curColCount = 1;
-								}
-								for (var i = 0; i < css.styles.length; ++i) {
-									cell.style[css.styles[i].style] = css.styles[i].value;
-								}
-								for (var i = 0; i < css.classes.length; ++i) { // eslint-disable-line no-redeclare
-									cell.classList.add(css.classes[i]);
-								}
-								if (css.id !== "") {
-									cell.id = css.id;
-								}
-								w.subWikify(cell, this.cellTerminator);
-								if (w.matchText.substr(w.matchText.length - 2, 1) === " ") {
-									spaceRight = true;
-								}
-								if (spaceLeft && spaceRight) {
-									cell.align = "center";
-								} else if (spaceLeft) {
-									cell.align = "right";
-								} else if (spaceRight) {
-									cell.align = "left";
-								}
-								w.nextMatch = w.nextMatch - 1;
-							}
-							++col;
-						}
-					} while (matched);
-				}
-			},
-
-			{
-				name       : "heading",
-				match      : "^!{1,6}",
-				terminator : "\\n",
-				handler    : function (w) {
-					var isHeading = (function (nodes) {
-							var hasGCS = typeof window.getComputedStyle === "function";
-							for (var i = nodes.length - 1; i >= 0; --i) {
-								var node = nodes[i];
-								switch (node.nodeType) {
-								case Node.ELEMENT_NODE:
-									var tagName = node.nodeName.toUpperCase();
-									if (tagName === "BR") {
-										return true;
-									}
-									var styles = hasGCS ? window.getComputedStyle(node, null) : node.currentStyle;
-									if (styles && styles.display) {
-										if (styles.display === "none") {
-											continue;
-										}
-										return styles.display === "block";
-									}
-									/*
-										WebKit/Blink-based browsers do not attach any computed style
-										information to elements until they're inserted into the DOM
-										(and probably visible), not even the default browser styles
-										and any user styles.  So, we make an assumption based on the
-										element.
-									*/
-									switch (tagName) {
-									case "ADDRESS":
-									case "ARTICLE":
-									case "ASIDE":
-									case "BLOCKQUOTE":
-									case "CENTER":
-									case "DIV":
-									case "DL":
-									case "FIGURE":
-									case "FOOTER":
-									case "FORM":
-									case "H1":
-									case "H2":
-									case "H3":
-									case "H4":
-									case "H5":
-									case "H6":
-									case "HEADER":
-									case "HR":
-									case "MAIN":
-									case "NAV":
-									case "OL":
-									case "P":
-									case "PRE":
-									case "SECTION":
-									case "TABLE":
-									case "UL":
-										return true;
-									}
-									return false;
-								case Node.COMMENT_NODE:
-									continue;
-								default:
-									return false;
-								}
-							}
-							return true;
-						})(w.output.childNodes);
-					if (isHeading) {
-						w.subWikify(insertElement(w.output, "h" + w.matchLength), this.terminator);
-					} else {
-						insertText(w.output, w.matchText);
-					}
-				}
-			},
-
-			{
-				name         : "list",
-				match        : "^(?:(?:\\*+)|(?:#+))",
-				lookahead    : "^(?:(\\*+)|(#+))",
-				terminator   : "\\n",
-				outerElement : "ul",
-				itemElement  : "li",
-				handler      : function (w) {
-					w.nextMatch = w.matchStart;
-					var	lookaheadRegExp = new RegExp(this.lookahead, "gm"),
-						placeStack      = [w.output],
-						curType         = null,
-						newType,
-						curLevel        = 0,
-						newLevel,
-						matched,
-						i;
-					do {
-						lookaheadRegExp.lastIndex = w.nextMatch;
-						var	lookaheadMatch = lookaheadRegExp.exec(w.source);
-						matched = lookaheadMatch && lookaheadMatch.index === w.nextMatch;
-						if (matched) {
-							if (lookaheadMatch[2]) {
-								newType = "ol";
-							} else {
-								newType = "ul";
-							}
-							newLevel = lookaheadMatch[0].length;
-							w.nextMatch += lookaheadMatch[0].length;
-							if (newLevel > curLevel) {
-								for (i = curLevel; i < newLevel; ++i) {
-									placeStack.push(insertElement(placeStack[placeStack.length - 1], newType));
-								}
-							} else if (newLevel < curLevel) {
-								for (i = curLevel; i > newLevel; --i) {
-									placeStack.pop();
-								}
-							} else if (newLevel === curLevel && newType !== curType) {
-								placeStack.pop();
-								placeStack.push(insertElement(placeStack[placeStack.length - 1], newType));
-							}
-							curLevel = newLevel;
-							curType = newType;
-							w.subWikify(insertElement(placeStack[placeStack.length - 1], "li"), this.terminator);
-						}
-					} while (matched);
-				}
-			},
-
-			{
-				name       : "quoteByBlock",
-				match      : "^<<<\\n",
-				terminator : "^<<<\\n",
-				handler    : function (w) {
-					w.subWikify(insertElement(w.output, "blockquote"), this.terminator);
-				}
-			},
-
-			{
-				name       : "quoteByLine",
-				match      : "^>+",
-				terminator : "\\n",
-				element    : "blockquote",
-				handler    : function (w) {
-					var	lookaheadRegExp = new RegExp(this.match, "gm"),
-						placeStack      = [w.output],
-						curLevel        = 0,
-						newLevel        = w.matchLength,
-						matched,
-						i;
-					do {
-						if (newLevel > curLevel) {
-							for (i = curLevel; i < newLevel; ++i) {
-								placeStack.push(insertElement(placeStack[placeStack.length - 1], this.element));
-							}
-						} else {
-							if (newLevel < curLevel) {
-								for (i = curLevel; i > newLevel; --i) {
-									placeStack.pop();
-								}
-							}
-						}
-						curLevel = newLevel;
-						w.subWikify(placeStack[placeStack.length - 1], this.terminator);
-						insertElement(placeStack[placeStack.length - 1], "br");
-						lookaheadRegExp.lastIndex = w.nextMatch;
-						var	lookaheadMatch = lookaheadRegExp.exec(w.source);
-						matched = lookaheadMatch && lookaheadMatch.index === w.nextMatch;
-						if (matched) {
-							newLevel = lookaheadMatch[0].length;
-							w.nextMatch += lookaheadMatch[0].length;
-						}
-					} while (matched);
-				}
-			},
-
-			{
-				name    : "rule",
-				match   : "^----+$\\n?|<hr ?/?>\\n?",
-				handler : function (w) {
-					insertElement(w.output, "hr");
-				}
-			},
-
-			{
-				name      : "monospacedByLine",
-				match     : "^\\{\\{\\{\\n",
-				lookahead : "^\\{\\{\\{\\n((?:^[^\\n]*\\n)+?)(^\\}\\}\\}$\\n?)",
-				handler   : function (w) {
-					var lookaheadRegExp = new RegExp(this.lookahead, "gm");
-					lookaheadRegExp.lastIndex = w.matchStart;
-					var lookaheadMatch = lookaheadRegExp.exec(w.source);
-					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
-						insertElement(w.output, "pre", null, null, lookaheadMatch[1]);
-						w.nextMatch = lookaheadRegExp.lastIndex;
-					}
-				}
-			},
-
-			{
-				name    : "prettyLink",
-				match   : "\\[\\[[^[]",
-				handler : function (w) {
-					var markup = Wikifier.helpers.parseSquareBracketedMarkup(w);
-					if (markup.hasOwnProperty("error")) {
-						w.outputText(w.output, w.matchStart, w.nextMatch);
-						return;
-					}
-
-					w.nextMatch = markup.pos;
-
-					// text=(text), forceInternal=(~), link=link, setter=(setter)
-					var	link  = Wikifier.helpers.evalPassageId(markup.link),
-						text  = markup.hasOwnProperty("text") ? Wikifier.helpers.evalText(markup.text) : link,
-						setFn = markup.hasOwnProperty("setter")
-							? (function (ex) { return function () { evalTwineScript(ex); }; })(markup.setter)
-							: null;
-
-					// Debug view setup.
-					var	output = (config.debug
-							? new DebugView(w.output, "wiki-link", "[[link]]", w.source.slice(w.matchStart, w.nextMatch))
-							: w
-						).output;
-
-					if (markup.forceInternal || !Wikifier.isExternalLink(link)) {
-						Wikifier.createInternalLink(output, link, text, setFn);
-					} else {
-						Wikifier.createExternalLink(output, link, text);
-					}
-				}
-			},
-
-			{
-				name    : "urlLink",
-				match   : Wikifier.textPrimitives.url,
-				handler : function (w) {
-					w.outputText(Wikifier.createExternalLink(w.output, w.matchText), w.matchStart, w.nextMatch);
-				}
-			},
-
-			{
-				name    : "image",
-				match   : "\\[[<>]?[Ii][Mm][Gg]\\[",
-				handler : function (w) {
-					var markup = Wikifier.helpers.parseSquareBracketedMarkup(w);
-					if (markup.hasOwnProperty("error")) {
-						w.outputText(w.output, w.matchStart, w.nextMatch);
-						return;
-					}
-
-					w.nextMatch = markup.pos;
-
-					// Debug view setup.
-					var	debugView;
-					if (config.debug) {
-						debugView = new DebugView(
-							w.output,
-							"wiki-image",
-							markup.hasOwnProperty("link") ? "[img[][link]]" : "[img[]]",
-							w.source.slice(w.matchStart, w.nextMatch)
-						);
-						debugView.modes({ block : true });
-					}
-
-					// align=(left|right), title=(title), source=source, forceInternal=(~), link=(link), setter=(setter)
-					var	el     = (config.debug ? debugView : w).output,
-						setFn  = markup.hasOwnProperty("setter")
-							? (function (ex) { return function () { evalTwineScript(ex); }; })(markup.setter)
-							: null,
-						source;
-					if (markup.hasOwnProperty("link")) {
-						var link = Wikifier.helpers.evalPassageId(markup.link);
-						if (markup.forceInternal || !Wikifier.isExternalLink(link)) {
-							el = Wikifier.createInternalLink(el, link, null, setFn);
-						} else {
-							el = Wikifier.createExternalLink(el, link);
-						}
-						el.classList.add("link-image");
-					}
-					el = insertElement(el, "img");
-					source = Wikifier.helpers.evalPassageId(markup.source);
-					// Check for image passage transclusion.
-					if (source.slice(0, 5) !== "data:" && Story.has(source)) {
-						var passage = Story.get(source);
-						if (passage.tags.contains("Twine.image")) {
-							el.setAttribute("data-passage", passage.title);
-							source = passage.text;
-						}
-					}
-					el.src = source;
-					if (markup.hasOwnProperty("title")) {
-						el.title = Wikifier.helpers.evalText(markup.title);
-					}
-					if (markup.hasOwnProperty("align")) {
-						el.align = markup.align;
-					}
-				}
-			},
-
-			{
 				name            : "macro",
 				match           : "<<",
 				lookaheadRegExp : /<<(\/?[A-Za-z][^>\s]*|[=-])(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|(?:\[(?:[<>]?[Ii][Mm][Gg])?\[[^\r\n]*?\]\]+)|[^>]|(?:>(?!>)))*)>>/gm,
@@ -1717,6 +1262,553 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 			},
 
 			{
+				name    : "prettyLink",
+				match   : "\\[\\[[^[]",
+				handler : function (w) {
+					var markup = Wikifier.helpers.parseSquareBracketedMarkup(w);
+					if (markup.hasOwnProperty("error")) {
+						w.outputText(w.output, w.matchStart, w.nextMatch);
+						return;
+					}
+
+					w.nextMatch = markup.pos;
+
+					// text=(text), forceInternal=(~), link=link, setter=(setter)
+					var	link  = Wikifier.helpers.evalPassageId(markup.link),
+						text  = markup.hasOwnProperty("text") ? Wikifier.helpers.evalText(markup.text) : link,
+						setFn = markup.hasOwnProperty("setter")
+							? (function (ex) { return function () { evalTwineScript(ex); }; })(markup.setter)
+							: null;
+
+					// Debug view setup.
+					var	output = (config.debug
+							? new DebugView(w.output, "wiki-link", "[[link]]", w.source.slice(w.matchStart, w.nextMatch))
+							: w
+						).output;
+
+					if (markup.forceInternal || !Wikifier.isExternalLink(link)) {
+						Wikifier.createInternalLink(output, link, text, setFn);
+					} else {
+						Wikifier.createExternalLink(output, link, text);
+					}
+				}
+			},
+
+			{
+				name    : "urlLink",
+				match   : Wikifier.textPrimitives.url,
+				handler : function (w) {
+					w.outputText(Wikifier.createExternalLink(w.output, w.matchText), w.matchStart, w.nextMatch);
+				}
+			},
+
+			{
+				name    : "image",
+				match   : "\\[[<>]?[Ii][Mm][Gg]\\[",
+				handler : function (w) {
+					var markup = Wikifier.helpers.parseSquareBracketedMarkup(w);
+					if (markup.hasOwnProperty("error")) {
+						w.outputText(w.output, w.matchStart, w.nextMatch);
+						return;
+					}
+
+					w.nextMatch = markup.pos;
+
+					// Debug view setup.
+					var	debugView;
+					if (config.debug) {
+						debugView = new DebugView(
+							w.output,
+							"wiki-image",
+							markup.hasOwnProperty("link") ? "[img[][link]]" : "[img[]]",
+							w.source.slice(w.matchStart, w.nextMatch)
+						);
+						debugView.modes({ block : true });
+					}
+
+					// align=(left|right), title=(title), source=source, forceInternal=(~), link=(link), setter=(setter)
+					var	el     = (config.debug ? debugView : w).output,
+						setFn  = markup.hasOwnProperty("setter")
+							? (function (ex) { return function () { evalTwineScript(ex); }; })(markup.setter)
+							: null,
+						source;
+					if (markup.hasOwnProperty("link")) {
+						var link = Wikifier.helpers.evalPassageId(markup.link);
+						if (markup.forceInternal || !Wikifier.isExternalLink(link)) {
+							el = Wikifier.createInternalLink(el, link, null, setFn);
+						} else {
+							el = Wikifier.createExternalLink(el, link);
+						}
+						el.classList.add("link-image");
+					}
+					el = insertElement(el, "img");
+					source = Wikifier.helpers.evalPassageId(markup.source);
+					// Check for image passage transclusion.
+					if (source.slice(0, 5) !== "data:" && Story.has(source)) {
+						var passage = Story.get(source);
+						if (passage.tags.contains("Twine.image")) {
+							el.setAttribute("data-passage", passage.title);
+							source = passage.text;
+						}
+					}
+					el.src = source;
+					if (markup.hasOwnProperty("title")) {
+						el.title = Wikifier.helpers.evalText(markup.title);
+					}
+					if (markup.hasOwnProperty("align")) {
+						el.align = markup.align;
+					}
+				}
+			},
+
+			{
+				name    : "formatByChar",
+				match   : "''|//|__|\\^\\^|~~|==|\\{\\{\\{",
+				handler : function (w) {
+					switch (w.matchText) {
+					case "''":
+						w.subWikify(insertElement(w.output, "strong"), "''");
+						break;
+					case "//":
+						w.subWikify(insertElement(w.output, "em"), "//");
+						break;
+					case "__":
+						w.subWikify(insertElement(w.output, "u"), "__");
+						break;
+					case "^^":
+						w.subWikify(insertElement(w.output, "sup"), "\\^\\^");
+						break;
+					case "~~":
+						w.subWikify(insertElement(w.output, "sub"), "~~");
+						break;
+					case "==":
+						w.subWikify(insertElement(w.output, "s"), "==");
+						break;
+					case "{{{":
+						var lookaheadRegExp = /\{\{\{((?:.|\n)*?)\}\}\}/gm;
+						lookaheadRegExp.lastIndex = w.matchStart;
+						var lookaheadMatch = lookaheadRegExp.exec(w.source);
+						if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
+							insertElement(w.output, "code", null, null, lookaheadMatch[1]);
+							w.nextMatch = lookaheadRegExp.lastIndex;
+						}
+						break;
+					}
+				}
+			},
+
+			{
+				name      : "monospacedByLine",
+				match     : "^\\{\\{\\{\\n",
+				lookahead : "^\\{\\{\\{\\n((?:^[^\\n]*\\n)+?)(^\\}\\}\\}$\\n?)",
+				handler   : function (w) {
+					var lookaheadRegExp = new RegExp(this.lookahead, "gm");
+					lookaheadRegExp.lastIndex = w.matchStart;
+					var lookaheadMatch = lookaheadRegExp.exec(w.source);
+					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
+						insertElement(w.output, "pre", null, null, lookaheadMatch[1]);
+						w.nextMatch = lookaheadRegExp.lastIndex;
+					}
+				}
+			},
+
+			{
+				name        : "customStyle",
+				match       : "@@",
+				terminator  : "@@",
+				blockRegExp : /\s*\n/gm,
+				handler     : function (w) {
+					var	css = Wikifier.helpers.inlineCSS(w);
+					this.blockRegExp.lastIndex = w.nextMatch; // must follow the call to .inlineCSS()
+					var	blockMatch = this.blockRegExp.exec(w.source),
+						blockLevel = blockMatch && blockMatch.index === w.nextMatch,
+						el         = insertElement(w.output, blockLevel ? "div" : "span");
+					if (css.styles.length === 0 && css.classes.length === 0 && css.id === "") {
+						el.className = "marked";
+					} else {
+						for (var i = 0; i < css.styles.length; ++i) {
+							el.style[css.styles[i].style] = css.styles[i].value;
+						}
+						for (var i = 0; i < css.classes.length; ++i) { // eslint-disable-line no-redeclare
+							el.classList.add(css.classes[i]);
+						}
+						if (css.id !== "") {
+							el.id = css.id;
+						}
+					}
+					if (blockLevel) {
+						// Skip the leading and, if it exists, trailing newlines.
+						w.nextMatch += blockMatch[0].length;
+						w.subWikify(el, "\\n?" + this.terminator);
+					} else {
+						w.subWikify(el, this.terminator);
+					}
+				}
+			},
+
+			{
+				name            : "rawText",
+				match           : "\"{3}|<nowiki>",
+				lookaheadRegExp : /(?:\"{3}|<nowiki>)((?:.|\n)*?)(?:\"{3}|<\/nowiki>)/gm,
+				handler         : function (w) {
+					this.lookaheadRegExp.lastIndex = w.matchStart;
+					var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
+					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
+						insertElement(w.output, "span", null, null, lookaheadMatch[1]);
+						w.nextMatch = this.lookaheadRegExp.lastIndex;
+					}
+				}
+			},
+
+			{
+				name    : "rule",
+				match   : "^----+$\\n?|<hr ?/?>\\n?",
+				handler : function (w) {
+					insertElement(w.output, "hr");
+				}
+			},
+
+			{
+				name    : "emdash",
+				match   : "--",
+				handler : function (w) {
+					insertText(w.output, "\u2014");
+				}
+			},
+
+			{
+				name    : "doubleDollarSign",
+				match   : "\\${2}",
+				handler : function (w) {
+					insertText(w.output, "$");
+				}
+			},
+
+			{
+				name  : "nakedVariable",
+				match : Wikifier.textPrimitives.variable
+					+ "(?:(?:\\."
+					+ Wikifier.textPrimitives.identifier
+					+ ")|(?:\\[\\d+\\])|(?:\\[\"(?:\\\\.|[^\"\\\\])+\"\\])|(?:\\['(?:\\\\.|[^'\\\\])+'\\])|(?:\\["
+					+ Wikifier.textPrimitives.variable
+					+ "\\]))*",
+				handler : function (w) {
+					var	result = printableStringOrDefault(Wikifier.getValue(w.matchText), null);
+					if (result === null) {
+						insertText(w.output, w.matchText);
+					} else {
+						new Wikifier(
+							(config.debug
+								? new DebugView(w.output, "variable", w.matchText, w.matchText) // Debug view setup.
+								: w
+							).output,
+							result
+						);
+					}
+				}
+			},
+
+			{
+				name       : "heading",
+				match      : "^!{1,6}",
+				terminator : "\\n",
+				handler    : function (w) {
+					var isHeading = (function (nodes) {
+							var hasGCS = typeof window.getComputedStyle === "function";
+							for (var i = nodes.length - 1; i >= 0; --i) {
+								var node = nodes[i];
+								switch (node.nodeType) {
+								case Node.ELEMENT_NODE:
+									var tagName = node.nodeName.toUpperCase();
+									if (tagName === "BR") {
+										return true;
+									}
+									var styles = hasGCS ? window.getComputedStyle(node, null) : node.currentStyle;
+									if (styles && styles.display) {
+										if (styles.display === "none") {
+											continue;
+										}
+										return styles.display === "block";
+									}
+									/*
+										WebKit/Blink-based browsers do not attach any computed style
+										information to elements until they're inserted into the DOM
+										(and probably visible), not even the default browser styles
+										and any user styles.  So, we make an assumption based on the
+										element.
+									*/
+									switch (tagName) {
+									case "ADDRESS":
+									case "ARTICLE":
+									case "ASIDE":
+									case "BLOCKQUOTE":
+									case "CENTER":
+									case "DIV":
+									case "DL":
+									case "FIGURE":
+									case "FOOTER":
+									case "FORM":
+									case "H1":
+									case "H2":
+									case "H3":
+									case "H4":
+									case "H5":
+									case "H6":
+									case "HEADER":
+									case "HR":
+									case "MAIN":
+									case "NAV":
+									case "OL":
+									case "P":
+									case "PRE":
+									case "SECTION":
+									case "TABLE":
+									case "UL":
+										return true;
+									}
+									return false;
+								case Node.COMMENT_NODE:
+									continue;
+								default:
+									return false;
+								}
+							}
+							return true;
+						})(w.output.childNodes);
+					if (isHeading) {
+						w.subWikify(insertElement(w.output, "h" + w.matchLength), this.terminator);
+					} else {
+						insertText(w.output, w.matchText);
+					}
+				}
+			},
+
+			{
+				name           : "table",
+				match          : "^\\|(?:[^\\n]*)\\|(?:[fhck]?)$",
+				lookahead      : "^\\|([^\\n]*)\\|([fhck]?)$",
+				rowTerminator  : "\\|(?:[fhck]?)$\\n?",
+				cellPattern    : "(?:\\|([^\\n\\|]*)\\|)|(\\|[fhck]?$\\n?)",
+				cellTerminator : "(?:\\x20*)\\|",
+				rowTypes       : { "c" : "caption", "h" : "thead", "" : "tbody", "f" : "tfoot" },
+				handler        : function (w) {
+					var	table           = insertElement(w.output, "table"),
+						lookaheadRegExp = new RegExp(this.lookahead, "gm"),
+						curRowType      = null,
+						nextRowType,
+						rowContainer,
+						rowElement,
+						prevColumns     = [],
+						rowCount        = 0,
+						matched;
+					w.nextMatch = w.matchStart;
+					do {
+						lookaheadRegExp.lastIndex = w.nextMatch;
+						var	lookaheadMatch = lookaheadRegExp.exec(w.source);
+						matched = lookaheadMatch && lookaheadMatch.index === w.nextMatch;
+						if (matched) {
+							nextRowType = lookaheadMatch[2];
+							if (nextRowType === "k") {
+								table.className = lookaheadMatch[1];
+								w.nextMatch += lookaheadMatch[0].length + 1;
+							} else {
+								if (nextRowType !== curRowType) {
+									rowContainer = insertElement(table, this.rowTypes[nextRowType]);
+								}
+								curRowType = nextRowType;
+								if (curRowType === "c") {
+									if (rowCount === 0) {
+										rowContainer.setAttribute("align", "top");
+									} else {
+										rowContainer.setAttribute("align", "bottom");
+									}
+									w.nextMatch = w.nextMatch + 1;
+									w.subWikify(rowContainer, this.rowTerminator);
+								} else {
+									rowElement = insertElement(rowContainer, "tr");
+									this.rowHandler(w, rowElement, prevColumns);
+								}
+								++rowCount;
+							}
+						}
+					} while (matched);
+				},
+				rowHandler : function (w, e, prevColumns) {
+					var	col          = 0,
+						curColCount  = 1,
+						cellRegExp   = new RegExp(this.cellPattern, "gm"),
+						matched;
+					do {
+						cellRegExp.lastIndex = w.nextMatch;
+						var	cellMatch = cellRegExp.exec(w.source);
+						matched = cellMatch && cellMatch.index === w.nextMatch;
+						if (matched) {
+							if (cellMatch[1] === "~") {
+								var last = prevColumns[col];
+								if (last) {
+									++last.rowCount;
+									last.element.setAttribute("rowSpan", last.rowCount);
+									last.element.setAttribute("rowspan", last.rowCount);
+									last.element.valign = "center";
+								}
+								w.nextMatch = cellMatch.index + cellMatch[0].length - 1;
+							} else if (cellMatch[1] === ">") {
+								++curColCount;
+								w.nextMatch = cellMatch.index + cellMatch[0].length - 1;
+							} else if (cellMatch[2]) {
+								w.nextMatch = cellMatch.index + cellMatch[0].length;
+								break;
+							} else {
+								var	spaceLeft  = false,
+									spaceRight = false,
+									cell;
+								++w.nextMatch;
+								var css = Wikifier.helpers.inlineCSS(w);
+								while (w.source.substr(w.nextMatch, 1) === " ") {
+									spaceLeft = true;
+									++w.nextMatch;
+								}
+								if (w.source.substr(w.nextMatch, 1) === "!") {
+									cell = insertElement(e, "th");
+									++w.nextMatch;
+								} else {
+									cell = insertElement(e, "td");
+								}
+								prevColumns[col] = { rowCount : 1, element : cell };
+								/* UNUSED?
+								var	lastColCount   = 1,
+									lastColElement = cell;
+								*/
+								if (curColCount > 1) {
+									cell.setAttribute("colSpan", curColCount);
+									cell.setAttribute("colspan", curColCount);
+									curColCount = 1;
+								}
+								for (var i = 0; i < css.styles.length; ++i) {
+									cell.style[css.styles[i].style] = css.styles[i].value;
+								}
+								for (var i = 0; i < css.classes.length; ++i) { // eslint-disable-line no-redeclare
+									cell.classList.add(css.classes[i]);
+								}
+								if (css.id !== "") {
+									cell.id = css.id;
+								}
+								w.subWikify(cell, this.cellTerminator);
+								if (w.matchText.substr(w.matchText.length - 2, 1) === " ") {
+									spaceRight = true;
+								}
+								if (spaceLeft && spaceRight) {
+									cell.align = "center";
+								} else if (spaceLeft) {
+									cell.align = "right";
+								} else if (spaceRight) {
+									cell.align = "left";
+								}
+								w.nextMatch = w.nextMatch - 1;
+							}
+							++col;
+						}
+					} while (matched);
+				}
+			},
+
+			{
+				name         : "list",
+				match        : "^(?:(?:\\*+)|(?:#+))",
+				lookahead    : "^(?:(\\*+)|(#+))",
+				terminator   : "\\n",
+				outerElement : "ul",
+				itemElement  : "li",
+				handler      : function (w) {
+					w.nextMatch = w.matchStart;
+					var	lookaheadRegExp = new RegExp(this.lookahead, "gm"),
+						placeStack      = [w.output],
+						curType         = null,
+						newType,
+						curLevel        = 0,
+						newLevel,
+						matched,
+						i;
+					do {
+						lookaheadRegExp.lastIndex = w.nextMatch;
+						var	lookaheadMatch = lookaheadRegExp.exec(w.source);
+						matched = lookaheadMatch && lookaheadMatch.index === w.nextMatch;
+						if (matched) {
+							if (lookaheadMatch[2]) {
+								newType = "ol";
+							} else {
+								newType = "ul";
+							}
+							newLevel = lookaheadMatch[0].length;
+							w.nextMatch += lookaheadMatch[0].length;
+							if (newLevel > curLevel) {
+								for (i = curLevel; i < newLevel; ++i) {
+									placeStack.push(insertElement(placeStack[placeStack.length - 1], newType));
+								}
+							} else if (newLevel < curLevel) {
+								for (i = curLevel; i > newLevel; --i) {
+									placeStack.pop();
+								}
+							} else if (newLevel === curLevel && newType !== curType) {
+								placeStack.pop();
+								placeStack.push(insertElement(placeStack[placeStack.length - 1], newType));
+							}
+							curLevel = newLevel;
+							curType = newType;
+							w.subWikify(insertElement(placeStack[placeStack.length - 1], "li"), this.terminator);
+						}
+					} while (matched);
+				}
+			},
+
+			{
+				name       : "quoteByBlock",
+				match      : "^<<<\\n",
+				terminator : "^<<<\\n",
+				handler    : function (w) {
+					w.subWikify(insertElement(w.output, "blockquote"), this.terminator);
+				}
+			},
+
+			{
+				name       : "quoteByLine",
+				match      : "^>+",
+				terminator : "\\n",
+				element    : "blockquote",
+				handler    : function (w) {
+					var	lookaheadRegExp = new RegExp(this.match, "gm"),
+						placeStack      = [w.output],
+						curLevel        = 0,
+						newLevel        = w.matchLength,
+						matched,
+						i;
+					do {
+						if (newLevel > curLevel) {
+							for (i = curLevel; i < newLevel; ++i) {
+								placeStack.push(insertElement(placeStack[placeStack.length - 1], this.element));
+							}
+						} else {
+							if (newLevel < curLevel) {
+								for (i = curLevel; i > newLevel; --i) {
+									placeStack.pop();
+								}
+							}
+						}
+						curLevel = newLevel;
+						w.subWikify(placeStack[placeStack.length - 1], this.terminator);
+						insertElement(placeStack[placeStack.length - 1], "br");
+						lookaheadRegExp.lastIndex = w.nextMatch;
+						var	lookaheadMatch = lookaheadRegExp.exec(w.source);
+						matched = lookaheadMatch && lookaheadMatch.index === w.nextMatch;
+						if (matched) {
+							newLevel = lookaheadMatch[0].length;
+							w.nextMatch += lookaheadMatch[0].length;
+						}
+					} while (matched);
+				}
+			},
+
+			{
 				name            : "html",
 				match           : "<[Hh][Tt][Mm][Ll]>",
 				lookaheadRegExp : /<[Hh][Tt][Mm][Ll]>((?:.|\n)*?)<\/[Hh][Tt][Mm][Ll]>/gm,
@@ -1764,84 +1856,6 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 			},
 
 			{
-				name    : "formatByChar",
-				match   : "''|//|__|\\^\\^|~~|==|\\{\\{\\{",
-				handler : function (w) {
-					switch (w.matchText) {
-					case "''":
-						w.subWikify(insertElement(w.output, "strong"), "''");
-						break;
-					case "//":
-						w.subWikify(insertElement(w.output, "em"), "//");
-						break;
-					case "__":
-						w.subWikify(insertElement(w.output, "u"), "__");
-						break;
-					case "^^":
-						w.subWikify(insertElement(w.output, "sup"), "\\^\\^");
-						break;
-					case "~~":
-						w.subWikify(insertElement(w.output, "sub"), "~~");
-						break;
-					case "==":
-						w.subWikify(insertElement(w.output, "s"), "==");
-						break;
-					case "{{{":
-						var lookaheadRegExp = /\{\{\{((?:.|\n)*?)\}\}\}/gm;
-						lookaheadRegExp.lastIndex = w.matchStart;
-						var lookaheadMatch = lookaheadRegExp.exec(w.source);
-						if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
-							insertElement(w.output, "code", null, null, lookaheadMatch[1]);
-							w.nextMatch = lookaheadRegExp.lastIndex;
-						}
-						break;
-					}
-				}
-			},
-
-			{
-				name        : "customStyle",
-				match       : "@@",
-				terminator  : "@@",
-				blockRegExp : /\s*\n/gm,
-				handler     : function (w) {
-					var	css = Wikifier.helpers.inlineCSS(w);
-					this.blockRegExp.lastIndex = w.nextMatch; // must follow the call to .inlineCSS()
-					var	blockMatch = this.blockRegExp.exec(w.source),
-						blockLevel = blockMatch && blockMatch.index === w.nextMatch,
-						el         = insertElement(w.output, blockLevel ? "div" : "span");
-					if (css.styles.length === 0 && css.classes.length === 0 && css.id === "") {
-						el.className = "marked";
-					} else {
-						for (var i = 0; i < css.styles.length; ++i) {
-							el.style[css.styles[i].style] = css.styles[i].value;
-						}
-						for (var i = 0; i < css.classes.length; ++i) { // eslint-disable-line no-redeclare
-							el.classList.add(css.classes[i]);
-						}
-						if (css.id !== "") {
-							el.id = css.id;
-						}
-					}
-					if (blockLevel) {
-						// Skip the leading and, if it exists, trailing newlines.
-						w.nextMatch += blockMatch[0].length;
-						w.subWikify(el, "\\n?" + this.terminator);
-					} else {
-						w.subWikify(el, this.terminator);
-					}
-				}
-			},
-
-			{
-				name    : "emdash",
-				match   : "--",
-				handler : function (w) {
-					insertText(w.output, "\u2014");
-				}
-			},
-
-			{
 				name    : "lineContinuation",
 				match   : "\\\\[\\s\\u00a0\\u2028\\u2029]*?(?:\\n|$)", // Unicode space-character escapes required for IE < 11 (maybe < 10?)
 				handler : function (w) {
@@ -1855,20 +1869,6 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 				handler : function (w) {
 					if (w._nobr.length === 0 || !w._nobr[0]) {
 						insertElement(w.output, "br");
-					}
-				}
-			},
-
-			{
-				name            : "rawText",
-				match           : "\"{3}|<nowiki>",
-				lookaheadRegExp : /(?:\"{3}|<nowiki>)((?:.|\n)*?)(?:\"{3}|<\/nowiki>)/gm,
-				handler         : function (w) {
-					this.lookaheadRegExp.lastIndex = w.matchStart;
-					var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
-					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
-						insertElement(w.output, "span", null, null, lookaheadMatch[1]);
-						w.nextMatch = this.lookaheadRegExp.lastIndex;
 					}
 				}
 			},
