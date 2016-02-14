@@ -625,7 +625,7 @@ Macro.add([ "break", "continue" ], {
 
 		// Custom debug view setup.
 		if (config.debug) {
-			this.createDebugView();
+			this.debugView.modes({ hidden : true });
 		}
 	}
 });
@@ -1599,7 +1599,7 @@ Macro.add("stop", {
 
 		// Custom debug view setup.
 		if (config.debug) {
-			this.createDebugView();
+			this.debugView.modes({ hidden : true });
 		}
 	}
 });
