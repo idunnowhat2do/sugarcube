@@ -241,8 +241,7 @@ function MacroContext(context) {
 		parent  : null,
 		macro   : null,
 		name    : "",
-		rawArgs : "",
-		args    : [],
+		args    : null,
 		payload : null,
 		parser  : null,
 		source  : ""
@@ -282,15 +281,6 @@ function MacroContext(context) {
 		_debugViewEnabled : {
 			writable : true,
 			value    : config.debug
-		}
-	});
-	// Extend the args array with the raw and full argument strings.
-	Object.defineProperties(this.args, {
-		raw : {
-			value : context.rawArgs
-		},
-		full : {
-			value : Wikifier.parse(context.rawArgs)
 		}
 	});
 }

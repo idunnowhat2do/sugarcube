@@ -232,7 +232,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 		*/
 		parse : {
 			value : function (code) {
-				// Double quoted | Single quoted | Empty quotes | Operator delimiters | Barewords (includes sigil'd identifiers)
+				// Groups: 1=Double quoted | 2=Single quoted | 3=Empty quotes | 4=Operator delimiters | 5=Barewords
 				var	re      = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\\')|[^'])+)')|((?:\"\")|(?:''))|([=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}]+)|([^\"'=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}\\s]+))", "g"),
 					match,
 					varTest = new RegExp("^" + Wikifier.textPrimitives.variable),
@@ -266,7 +266,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					// no-op: Double quoted | Single quoted | Empty quotes | Operator delimiters
 
 					/*
-						Barewords (includes sigil'd identifiers).
+						Barewords.
 					*/
 					if (match[5]) {
 						var token = match[5];
@@ -1352,11 +1352,11 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 				match           : "<<",
 				lookaheadRegExp : /<<(\/?[A-Za-z][^>\s]*|[=-])(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|(?:\[(?:[<>]?[Ii][Mm][Gg])?\[[^\r\n]*?\]\]+)|[^>]|(?:>(?!>)))*)>>/gm,
 				argsPattern     : "(?:" + [
-					'("(?:\\\\.|[^"\\\\])+")',                          // 1=double quoted
-					"('(?:\\\\.|[^'\\\\])+')",                          // 2=single quoted
-					"(\"\"|'')",                                        // 3=empty quotes
-					"(\\[(?:[<>]?[Ii][Mm][Gg])?\\[[^\\r\\n]*?\\]\\]+)", // 4=double square-bracketed
-					"([^\"'`\\s]\\S*)"                                  // 5=barewords
+					'("(?:\\\\.|[^"\\\\])+")',                          // 1=Double quoted
+					"('(?:\\\\.|[^'\\\\])+')",                          // 2=Single quoted
+					"(\"\"|'')",                                        // 3=Empty quotes
+					"(\\[(?:[<>]?[Ii][Mm][Gg])?\\[[^\\r\\n]*?\\]\\]+)", // 4=Double square-bracketed
+					"([^\"'`\\s]\\S*)"                                  // 5=Barewords
 				].join("|") + ")",
 				working : { source : "", name : "", handler : "", arguments : "", index : 0 }, // the working parse object
 				context : null, // last execution context object (top-level macros, hierarchically, have a null context)
@@ -1378,7 +1378,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							if (macro) {
 								var payload = null;
 								if (macro.hasOwnProperty("tags")) {
-									payload = this.parseBody(w, macro.tags);
+									payload = this.parseBody(w, macro);
 									if (!payload) {
 										w.nextMatch = nextMatch; // we must reset `w.nextMatch` here, as `parseBody()` modifies it
 										return throwError(w.output, "cannot find a closing tag for macro <<" + name + ">>",
@@ -1386,7 +1386,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 									}
 								}
 								if (typeof macro[handler] === "function") {
-									var args = !macro.hasOwnProperty("skipArgs") || !macro.skipArgs ? this.parseArgs(rawArgs) : [];
+									var args = this.createArgs(rawArgs, macro.hasOwnProperty("skipArgs") && !!macro.skipArgs);
 
 									/*
 										New-style macros.
@@ -1399,7 +1399,6 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 											parent  : this.context,
 											macro   : macro,
 											name    : name,
-											rawArgs : rawArgs,
 											args    : args,
 											payload : payload,
 											parser  : w,
@@ -1475,18 +1474,19 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					}
 					return false;
 				},
-				parseBody : function (w, tags) {
+				parseBody : function (w, macro) {
 					var	openTag      = this.working.name,
 						closeTag     = "/" + openTag,
 						closeAlt     = "end" + openTag,
-						bodyTags     = Array.isArray(tags) ? tags : false,
+						bodyTags     = Array.isArray(macro.tags) ? macro.tags : false,
 						end          = -1,
 						opened       = 1,
 						curSource    = this.working.source,
 						curTag       = this.working.name,
 						curArgument  = this.working.arguments,
 						contentStart = w.nextMatch,
-						payload      = [];
+						payload      = [],
+						skipArgs     = macro.hasOwnProperty("skipArgs") && !!macro.skipArgs;
 
 					while ((w.matchStart = w.source.indexOf(this.match, w.nextMatch)) !== -1) {
 						if (!this.parseTag(w)) {
@@ -1518,6 +1518,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 											source    : curSource,
 											name      : curTag,
 											arguments : curArgument,
+											args      : this.createArgs(curArgument, skipArgs),
 											contents  : w.source.slice(contentStart, tagBegin)
 										});
 										curSource    = tagSource;
@@ -1534,6 +1535,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 								source    : curSource,
 								name      : curTag,
 								arguments : curArgument,
+								args      : this.createArgs(curArgument, skipArgs),
 								contents  : w.source.slice(contentStart, tagBegin)
 							});
 							end = tagEnd;
@@ -1547,18 +1549,33 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					}
 					return null;
 				},
-				parseArgs : function (str) {
-					// Groups: 1=double quoted | 2=single quoted | 3=empty quotes | 4=double square-bracketed | 5=barewords
+				createArgs : function (rawArgsString, skipArgs) {
+					var args = !skipArgs ? this.parseArgs(rawArgsString) : [];
+
+					// Extend the args array with the raw and full argument strings.
+					Object.defineProperties(args, {
+						raw : {
+							value : rawArgsString
+						},
+						full : {
+							value : Wikifier.parse(rawArgsString)
+						}
+					});
+
+					return args;
+				},
+				parseArgs : function (rawArgsString) {
+					// Groups: 1=Double quoted | 2=Single quoted | 3=Empty quotes | 4=Double square-bracketed | 5=Barewords
 					var	re      = new RegExp(this.argsPattern, "gm"),
 						match,
 						args    = [],
 						varTest = new RegExp("^" + Wikifier.textPrimitives.variable);
 
-					while ((match = re.exec(str)) !== null) {
+					while ((match = re.exec(rawArgsString)) !== null) {
 						var arg;
 
+						// Double quoted.
 						if (match[1]) {
-							// Double quoted.
 							arg = match[1];
 
 							// Evaluate the string to handle escaped characters.
@@ -1567,8 +1584,10 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							} catch (e) {
 								throw new Error("unable to parse macro argument '" + arg + "': " + e.message);
 							}
-						} else if (match[2]) {
-							// Single quoted.
+						}
+
+						// Single quoted.
+						else if (match[2]) {
 							arg = match[2];
 
 							// Evaluate the string to handle escaped characters.
@@ -1577,11 +1596,15 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							} catch (e) {
 								throw new Error('unable to parse macro argument "' + arg + '": ' + e.message);
 							}
-						} else if (match[3]) {
-							// Empty quotes.
+						}
+
+						// Empty quotes.
+						else if (match[3]) {
 							arg = "";
-						} else if (match[4]) {
-							// Double square-bracketed.
+						}
+
+						// Double square-bracketed.
+						else if (match[4]) {
 							arg = match[4];
 
 							var markup = Wikifier.helpers.parseSquareBracketedMarkup({
@@ -1638,8 +1661,10 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 									? (function (ex) { return function () { evalTwineScript(ex); }; })(markup.setter)
 									: null;
 							}
-						} else if (match[5]) {
-							// Barewords.
+						}
+
+						// Barewords.
+						else if (match[5]) {
 							arg = match[5];
 
 							if (varTest.test(arg)) {

@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global AudioWrapper, DebugView, Has, Macro, State, Story, Util, Wikifier, config, evalJavaScript, evalTwineScript,
-	       insertElement, insertText, postdisplay, prehistory, printableStringOrDefault, storage, strings, temp, turns
+	global AudioWrapper, DebugView, Has, Macro, State, Story, Util, Wikifier, config, evalJavaScript, insertElement,
+	       insertText, postdisplay, prehistory, printableStringOrDefault, storage, strings, temp, turns
 */
 
 /***********************************************************************************************************************
@@ -453,33 +453,33 @@ Macro.add("if", {
 				// Sanity checks.
 				switch (this.payload[i].name) {
 				case "else":
-					if (this.payload[i].arguments.length !== 0) {
-						if (/^\s*if\b/i.test(this.payload[i].arguments)) {
+					if (this.payload[i].args.raw.length !== 0) {
+						if (/^\s*if\b/i.test(this.payload[i].args.raw)) {
 							return this.error(
-								'whitespace is not allowed between the "else" and "if" in <<elseif>> clause'
+								  'whitespace is not allowed between the "else" and "if" in <<elseif>> clause'
 								+ (i > 0 ? " (#" + i + ")" : "")
 							);
 						}
 						return this.error(
-							"<<else>> does not accept a conditional expression"
+							  "<<else>> does not accept a conditional expression"
 							+ " (perhaps you meant to use <<elseif>>), invalid: "
-							+ this.payload[i].arguments
+							+ this.payload[i].args.raw
 						);
 					}
 					break;
 				default:
-					if (this.payload[i].arguments.length === 0) {
+					if (this.payload[i].args.full.length === 0) {
 						return this.error(
-							"no conditional expression specified for <<" + this.payload[i].name
+							  "no conditional expression specified for <<" + this.payload[i].name
 							+ ">> clause" + (i > 0 ? " (#" + i + ")" : "")
 						);
-					} else if (config.macros.ifAssignmentError && /[^!=&^|<>*/%+-]=[^=]/.test(this.payload[i].arguments)) {
+					} else if (config.macros.ifAssignmentError && /[^!=&^|<>*/%+-]=[^=]/.test(this.payload[i].args.full)) {
 						return this.error(
-							'assignment operator "=" found within <<'
+							  "assignment operator found within <<"
 							+ this.payload[i].name + ">> clause" + (i > 0 ? " (#" + i + ")" : "")
 							+ " (perhaps you meant to use an equality operator:"
 							+ ' ==, ===, eq, is), invalid: '
-							+ this.payload[i].arguments
+							+ this.payload[i].args.raw
 						);
 					}
 					break;
@@ -493,7 +493,7 @@ Macro.add("if", {
 				}
 
 				// Conditional test.
-				if (this.payload[i].name === "else" || !!evalTwineScript(this.payload[i].arguments)) {
+				if (this.payload[i].name === "else" || !!evalJavaScript(this.payload[i].args.full)) {
 					success = true;
 					new Wikifier(this.output, this.payload[i].contents);
 					break;
@@ -651,7 +651,6 @@ Macro.add("set", {
 		// Custom debug view setup.
 		if (config.debug) {
 			this.debugView.modes({ hidden : true });
-			//jQuery(this.output).text(this.args.raw);
 		}
 	}
 });
@@ -680,7 +679,6 @@ Macro.add("unset", {
 		// Custom debug view setup.
 		if (config.debug) {
 			this.debugView.modes({ hidden : true });
-			//jQuery(this.output).text(this.args.raw);
 		}
 	}
 });
@@ -717,7 +715,6 @@ Macro.add("remember", {
 		// Custom debug view setup.
 		if (config.debug) {
 			this.debugView.modes({ hidden : true });
-			//jQuery(this.output).text(this.args.raw);
 		}
 	},
 	init : function () {
@@ -763,7 +760,6 @@ Macro.add("forget", {
 		// Custom debug view setup.
 		if (config.debug) {
 			this.debugView.modes({ hidden : true });
-			//jQuery(this.output).text(this.args.raw);
 		}
 	}
 });
@@ -1376,9 +1372,9 @@ Macro.add("timed", {
 					items.push({
 						name   : this.payload[i].name,
 						source : this.payload[i].source,
-						delay  : this.payload[i].arguments.length === 0
+						delay  : this.payload[i].args.length === 0
 							? items[items.length - 1].delay
-							: Math.max(10, Util.fromCSSTime(String(this.payload[i].arguments).trim())),
+							: Math.max(10, Util.fromCSSTime(String(this.payload[i].args[0]).trim())),
 						content : this.payload[i].contents
 					});
 				}
