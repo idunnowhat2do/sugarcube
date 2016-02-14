@@ -359,6 +359,7 @@ Macro.add("display", {
 		passage = Story.get(passage);
 		if (this.args[1]) {
 			el = insertElement(el, this.args[1], null, passage.domId);
+			el.classList.add("macro-" + this.name);
 			el.setAttribute("data-passage", passage.title);
 		}
 		new Wikifier(el, passage.processText());
