@@ -8,7 +8,7 @@
  **********************************************************************************************************************/
 /*
 	global DebugView, Save, PRNGWrapper, Story, UI, Util, Wikifier, clone, config, postdisplay, predisplay, prehistory,
-	       removeChildren, runtime, session, technicalAlert
+	       removeChildren, session, technicalAlert, temp
 */
 
 var State = (function () { // eslint-disable-line no-unused-vars
@@ -28,9 +28,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		/*
 			Miscellaneous properties.
 		*/
-		/* eslint-disable no-unused-vars */
 		_lastPlay = null, // Last time `statePlay()` was called, in milliseconds
-		/* eslint-enable no-unused-vars */
 		_prng     = null; // [optional] Seedable PRNG object
 
 
@@ -58,7 +56,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 					);
 					debugView.modes({ hidden : true });
 					debugView.append(debugBuffer);
-					runtime.debug.storyInitCache = debugView.output;
+					temp.debug.storyInitCache = debugView.output;
 				}
 			} catch (e) {
 				technicalAlert("StoryInit", e.message);
@@ -754,9 +752,9 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		if (DEBUG) { console.log("[State/statePlay()]"); }
 
 		/*
-			Reset the runtime temp/scratch object.
+			Reset the temporary state object.
 		*/
-		runtime.temp = {};
+		temp.state = {};
 
 		/*
 			Debug view setup.
@@ -933,8 +931,8 @@ var State = (function () { // eslint-disable-line no-unused-vars
 			}
 
 			// Prepend the cached `StoryInit` debug view, if we're showing the first moment/turn.
-			if (historyLength() === 1 && runtime.debug.storyInitCache != null) { // lazy equality for null
-				jQuery(incoming).prepend(runtime.debug.storyInitCache);
+			if (historyLength() === 1 && temp.debug.storyInitCache != null) { // lazy equality for null
+				jQuery(incoming).prepend(temp.debug.storyInitCache);
 			}
 		}
 

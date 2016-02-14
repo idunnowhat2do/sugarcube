@@ -8,8 +8,7 @@
  **********************************************************************************************************************/
 /*
 	global AudioWrapper, DebugView, Has, Macro, State, Story, Util, Wikifier, config, evalJavaScript, evalTwineScript,
-	       insertElement, insertText, postdisplay, prehistory, printableStringOrDefault, runtime, storage, strings,
-	       turns
+	       insertElement, insertText, postdisplay, prehistory, printableStringOrDefault, storage, strings, temp, turns
 */
 
 /***********************************************************************************************************************
@@ -573,7 +572,7 @@ Macro.add("for", {
 		}
 
 		try {
-			runtime.temp.break = null;
+			temp.state.break = null;
 			if (init) {
 				try {
 					evalJavaScript(init);
@@ -590,11 +589,11 @@ Macro.add("for", {
 				if (first) {
 					first = false;
 				}
-				if (runtime.temp.break != null) { // lazy equality for null
-					if (runtime.temp.break === 1) {
-						runtime.temp.break = null;
-					} else if (runtime.temp.break === 2) {
-						runtime.temp.break = null;
+				if (temp.state.break != null) { // lazy equality for null
+					if (temp.state.break === 1) {
+						temp.state.break = null;
+					} else if (temp.state.break === 2) {
+						temp.state.break = null;
 						break;
 					}
 				}
@@ -609,7 +608,7 @@ Macro.add("for", {
 		} catch (e) {
 			return this.error("bad conditional expression: " + e.message);
 		} finally {
-			runtime.temp.break = null;
+			temp.state.break = null;
 		}
 	}
 });
@@ -617,7 +616,7 @@ Macro.add([ "break", "continue" ], {
 	skipArgs : true,
 	handler  : function () {
 		if (this.contextHas(function (c) { return c.name === "for"; })) {
-			runtime.temp.break = this.name === "continue" ? 1 : 2;
+			temp.state.break = this.name === "continue" ? 1 : 2;
 		} else {
 			return this.error("must only be used in conjunction with its parent macro <<for>>");
 		}
@@ -979,11 +978,11 @@ Macro.add("radiobutton", {
 		/*
 			Setup and increment the group counter.
 		*/
-		if (!runtime.temp.hasOwnProperty("radiobutton")) {
-			runtime.temp.radiobutton = {};
+		if (!temp.state.hasOwnProperty("radiobutton")) {
+			temp.state.radiobutton = {};
 		}
-		if (!runtime.temp.radiobutton.hasOwnProperty(varId)) {
-			runtime.temp.radiobutton[varId] = 0;
+		if (!temp.state.radiobutton.hasOwnProperty(varId)) {
+			temp.state.radiobutton[varId] = 0;
 		}
 
 		/*
@@ -991,7 +990,7 @@ Macro.add("radiobutton", {
 		*/
 		jQuery(el)
 			.attr({
-				"id"       : "radiobutton-" + varId + "-" + runtime.temp.radiobutton[varId]++,
+				"id"       : "radiobutton-" + varId + "-" + temp.state.radiobutton[varId]++,
 				"name"     : "radiobutton-" + varId,
 				"type"     : "radio",
 				"tabindex" : 0 // for accessiblity
@@ -1510,13 +1509,13 @@ Macro.add("repeat", {
 				unnecessary, if possible.
 			*/
 			try {
-				runtime.temp.break = null;
+				temp.state.break = null;
 
 				// Setup the `repeatTimerId` value, caching the existing value, if necessary.
-				if (runtime.temp.hasOwnProperty("repeatTimerId")) {
-					timerIdCache = runtime.temp.repeatTimerId;
+				if (temp.state.hasOwnProperty("repeatTimerId")) {
+					timerIdCache = temp.state.repeatTimerId;
 				}
-				runtime.temp.repeatTimerId = timerId;
+				temp.state.repeatTimerId = timerId;
 
 				// Wikify the content.
 				var frag = document.createDocumentFragment();
@@ -1525,12 +1524,12 @@ Macro.add("repeat", {
 			} finally {
 				// Teardown the `repeatTimerId` property, restoring the cached value, if necessary.
 				if (typeof timerIdCache !== "undefined") {
-					runtime.temp.repeatTimerId = timerIdCache;
+					temp.state.repeatTimerId = timerIdCache;
 				} else {
-					delete runtime.temp.repeatTimerId;
+					delete temp.state.repeatTimerId;
 				}
 
-				runtime.temp.break = null;
+				temp.state.break = null;
 			}
 		}, delay);
 		timers.add(timerId);
@@ -1550,15 +1549,15 @@ Macro.add("repeat", {
 Macro.add("stop", {
 	skipArgs : true,
 	handler  : function () {
-		if (!runtime.temp.hasOwnProperty("repeatTimerId")) {
+		if (!temp.state.hasOwnProperty("repeatTimerId")) {
 			return this.error("must only be used in conjunction with its parent macro <<repeat>>");
 		}
 
 		var	timers  = Macro.get("repeat").timers,
-			timerId = runtime.temp.repeatTimerId;
+			timerId = temp.state.repeatTimerId;
 		clearInterval(timerId);
 		timers.delete(timerId);
-		runtime.temp.break = 2;
+		temp.state.break = 2;
 
 		// Custom debug view setup.
 		if (config.debug) {

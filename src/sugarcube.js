@@ -42,20 +42,6 @@ var	version = Object.freeze({
 	});
 
 /*
-	Runtime object (internal use only).
-*/
-var	runtime = Object.defineProperties({}, {
-		debug : {
-			writable : true,
-			value    : {}
-		},
-		temp : {
-			writable : true,
-			value    : {}
-		}
-	});
-
-/*
 	Config object (author/developer use).
 */
 var	config = Object.seal({
@@ -134,6 +120,24 @@ var	config = Object.seal({
 			}
 			return "";
 		})()
+	});
+
+/*
+	Temporary data object (internal use only).
+*/
+var	temp = Object.defineProperties({}, {
+		debug : {
+			writable : true,
+			value    : {}
+		},
+		state : {
+			writable : true,
+			value    : {}
+		},
+		variables : {
+			writable : true,
+			value    : {}
+		}
 	});
 
 /*
@@ -264,11 +268,11 @@ jQuery(function () {
 		Wikifier  : Wikifier,
 		config    : config,
 		macros    : macros,
-		runtime   : runtime,
 		session   : session,
 		settings  : settings,
 		setup     : setup,
 		storage   : storage,
+		temp      : temp,
 		version   : version
 	};
 });

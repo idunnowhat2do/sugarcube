@@ -44,7 +44,7 @@
  **********************************************************************************************************************/
 /*
 	global DebugView, Macro, MacroContext, State, Story, Util, config, evalJavaScript, evalTwineScript, insertElement,
-	       insertText, macros, printableStringOrDefault, removeChildren, removeElement, runtime, throwError
+	       insertText, macros, printableStringOrDefault, removeChildren, removeElement, temp, throwError
 */
 
 /*
@@ -149,12 +149,12 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						// Call the formatter.
 						if (matchingFormatter !== -1) {
 							this.formatter.formatters[matchingFormatter].handler(this);
-							if (runtime.temp.break != null) { break; } // lazy equality for null
+							if (temp.state.break != null) { break; } // lazy equality for null
 						}
 					}
 				} while (terminatorMatch || formatterMatch);
 
-				if (runtime.temp.break == null) { // lazy equality for null
+				if (temp.state.break == null) { // lazy equality for null
 					// Output any text after the last match.
 					if (this.nextMatch < this.source.length) {
 						this.outputText(this.output, this.nextMatch, this.source.length);
@@ -193,7 +193,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 
 		/*
 			Meant to be called by macros, this returns the text given to the currently executing
-			macro after doing TwineScript-to-JavaScript transformations (e.g. to, is, $variable).
+			macro after doing TwineScript-to-JavaScript transformations.
 		*/
 		fullArgs : {
 			value : function () {
@@ -227,16 +227,20 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 		},
 
 		/*
-			Returns the given string with all Twine/Twee operators converted to their JavaScript counterparts.
+			Returns the given string after converting all TwineScript syntactical sugars to
+			their native JavaScript counterparts.
 		*/
 		parse : {
-			value : function (expression) {
-				// Double quoted | Single quoted | Empty quotes | Operator delimiters | Barewords & Sigil
-				var	re    = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\\')|[^'])+)')|((?:\"\")|(?:''))|([=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}]+)|([^\"'=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}\\s]+))", "g"),
+			value : function (code) {
+				// Double quoted | Single quoted | Empty quotes | Operator delimiters | Barewords (includes sigil'd identifiers)
+				var	re      = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\\')|[^'])+)')|((?:\"\")|(?:''))|([=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}]+)|([^\"'=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}\\s]+))", "g"),
 					match,
-					map   = {
-						// $variable mapping.
+					varTest = new RegExp("^" + Wikifier.textPrimitives.variable),
+					map     = {
+						// Story $variable sigil-prefix.
 						"$"     : "State.variables.",
+						// Temporary _variable sigil-prefix.
+						"_"     : "temp.variables.",
 						// Assignment operators.
 						"to"    : "=",
 						// Equality operators.
@@ -258,46 +262,57 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						"ndef"  : '"undefined" === typeof'
 					};
 
-				while ((match = re.exec(expression)) !== null) {
+				while ((match = re.exec(code)) !== null) {
 					// no-op: Double quoted | Single quoted | Empty quotes | Operator delimiters
 
-					// Barewords & Sigil.
+					/*
+						Barewords (includes sigil'd identifiers).
+					*/
 					if (match[5]) {
 						var token = match[5];
 
-						// Special cases.
-						if (token === "$") {
-							/*
-								If the token is `$`, then it's either a naked dollar-sign or a
-								function alias, so skip over it.
-							*/
+						/*
+							If the token is simply a dollar-sign or underscore, then it's either
+							just the raw character or, probably, a function alias, so skip it.
+						*/
+						if (token === "$" || token === "_") {
 							continue;
-						} else if (token[0] === "$") {
-							/*
-								If the token starts with a `$`, then it's a $variable, so just
-								replace the sigil (`$`).
-							*/
-							token = "$";
-						} else if (token === "is") {
-							/*
-								If the token is `is`, check to see if it's followed by `not`, if so,
-								convert them into the `isnot` operator.  This is a safety feature,
-								since `$a is not $b` probably sounds reasonable to most users.
-							*/
+						}
+
+						/*
+							If the token is a story $variable or temporary _variable, reset it
+							to just its sigil—for later mapping.
+						*/
+						else if (varTest.test(token)) {
+							token = token[0];
+						}
+
+						/*
+							If the token is `is`, check to see if it's followed by `not`, if so,
+							convert them into the `isnot` operator.
+
+							n.b. This is a safety feature, since `$a is not $b` probably sounds
+							     reasonable to most users.
+						*/
+						else if (token === "is") {
 							var	start = re.lastIndex,
-								part  = expression.slice(start);
+								part  = code.slice(start);
 							if (/^\s+not\b/.test(part)) {
-								expression = expression.splice(start, part.search(/\S/));
+								code = code.splice(start, part.search(/\S/));
 								token = "isnot";
 							}
 						}
 
 						/*
-							DO NOT simply use `map[token]` here, otherwise tokens which match
-							properties from the prototype chain will break the world.
+							If the finalized token has a mapping, replace it within the code
+							string with its counterpart.
+
+							n.b. We must use `map.hasOwnProperty(token)` here, rather than simply
+							     using something like `map[token]`, otherwise tokens which match
+							     properties from the prototype chain will cause shenanigans.
 						*/
 						if (map.hasOwnProperty(token)) {
-							expression = expression.splice(
+							code = code.splice(
 								match.index,  // starting index
 								token.length, // replace how many
 								map[token]    // replacement string
@@ -306,20 +321,21 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						}
 					}
 				}
-				return expression;
+				return code;
 			}
 		},
 
 		/*
-			Returns the value of the given story $variable.
+			Returns the value of the given story/temporary variable.
 		*/
 		getValue : {
 			value : function (storyVar) {
-				var	pNames = Wikifier.parseStoryVariable(storyVar),
+				var	varData = Wikifier.parseStoryVariable(storyVar),
 					retVal;
 
-				if (pNames.length !== 0) {
-					retVal = State.variables;
+				if (varData !== null) {
+					retVal = varData.store;
+					var pNames = varData.names;
 					for (var i = 0, iend = pNames.length; i < iend; ++i) {
 						if (typeof retVal[pNames[i]] !== "undefined") {
 							retVal = retVal[pNames[i]];
@@ -334,14 +350,15 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 		},
 
 		/*
-			Sets the value of the given story $variable.
+			Sets the value of the given story/temporary variable.
 		*/
 		setValue : {
 			value : function (storyVar, newValue) {
-				var pNames = Wikifier.parseStoryVariable(storyVar);
+				var varData = Wikifier.parseStoryVariable(storyVar);
 
-				if (pNames.length !== 0) {
-					var	baseObj = State.variables,
+				if (varData !== null) {
+					var	baseObj = varData.store,
+						pNames  = varData.names,
 						varName = pNames.pop();
 					for (var i = 0, iend = pNames.length; i < iend; ++i) {
 						if (typeof baseObj[pNames[i]] !== "undefined") {
@@ -361,13 +378,28 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 		},
 
 		/*
-			Returns the property name chain of the given story $variable, which may be of arbitrary complexity.
+			Returns the property name chain of the given story/temporary variable, which may be
+			of arbitrary complexity.
 		*/
 		parseStoryVariable : {
 			value : function (varText) {
-				var	re     = /^(?:\$(\w+)|\.(\w+)|\[(?:(?:\"((?:\\.|[^\"\\])+)\")|(?:\'((?:\\.|[^\'\\])+)\')|(\$\w.*)|(\d+))\])/,
+				var	re     = new RegExp(
+						  "^(?:"
+						+ Wikifier.textPrimitives.variableSigil
+						+ "("
+						+ Wikifier.textPrimitives.identifier
+						+ ")|\\.("
+						+ Wikifier.textPrimitives.identifier
+						+ ")|\\[(?:(?:\"((?:\\\\.|[^\"\\\\])+)\")|(?:'((?:\\\\.|[^'\\\\])+)')|("
+						+ Wikifier.textPrimitives.variableSigil
+						+ Wikifier.textPrimitives.identifierFirstChar
+						+ ".*)|(\\d+))\\])"
+					),
 					match,
-					pNames = [];
+					retVal = {
+						store : varText[0] === "$" ? State.variables : temp.variables,
+						names : []
+					};
 
 				while ((match = re.exec(varText)) !== null) {
 					// Remove full match from varText.
@@ -375,43 +407,33 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 
 					if (match[1]) {
 						// Base variable.
-						pNames.push(match[1]);
+						retVal.names.push(match[1]);
 					} else if (match[2]) {
 						// Dot property.
-						pNames.push(match[2]);
+						retVal.names.push(match[2]);
 					} else if (match[3]) {
 						// Square-bracketed property (double quoted).
-						pNames.push(match[3]);
+						retVal.names.push(match[3]);
 					} else if (match[4]) {
 						// Square-bracketed property (single quoted).
-						pNames.push(match[4]);
+						retVal.names.push(match[4]);
 					} else if (match[5]) {
-						// Square-bracketed property (embedded $variable).
-						pNames.push(Wikifier.getValue(match[5]));
+						// Square-bracketed property (embedded variable).
+						retVal.names.push(Wikifier.getValue(match[5]));
 					} else if (match[6]) {
 						// Square-bracketed property (numeric index).
-						pNames.push(Number(match[6]));
+						retVal.names.push(Number(match[6]));
 					}
 				}
-				return varText === "" ? pNames : [];
+				return varText === "" ? retVal : null;
 			}
 		},
 
 		/*
-			Wikify the given text and discard the output, throwing if there were errors.
+			Returns the output generated by wikifying the given text, throwing if there were errors.
 		*/
 		wikifyEval : {
 			value : function (text) {
-				/*
-				var frag = document.createDocumentFragment();
-				new Wikifier(frag, text);
-
-				var errors = frag.querySelector(".error");
-				if (errors !== null) {
-					throw new Error(errors.textContent.replace(/^(?:(?:Uncaught\s+)?Error:\s+)+/, ""));
-				}
-				*/
-
 				var output = document.createDocumentFragment();
 				new Wikifier(output, text);
 
@@ -495,31 +517,62 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 
 
 	/*******************************************************************************************************************
-	 * Text Primitives (Regular Expressions)
+	 * Text Primitives (Regular Expression Patterns)
 	 ******************************************************************************************************************/
 	Object.defineProperty(Wikifier, "textPrimitives", { value : {} });
 
-	// Tier-1 primitives.
-	Object.defineProperties(Wikifier.textPrimitives, {
-		anyLetter : {
-			value : _unicodeOk ? "[A-Za-z0-9_\\-\u00c0-\u017e]" : "[A-Za-z0-9_\\-\u00c0-\u00ff]"
-		},
-
-		url : {
-			value : "(?:file|https?|mailto|ftp|javascript|irc|news|data):[^\\s'\"]+(?:/|\\b)"
-		}
+	/*
+		Character patterns.
+	*/
+	Object.defineProperty(Wikifier.textPrimitives, "anyLetter", {
+		value : "[0-9A-Z_a-z\\-\\u00C0-\\u00D6\\u00D8-\\u00DE\\u00DF-\\u00F6\\u00F8-\\u00FF" + (
+			_unicodeOk ? "\\u0150\\u0170\\u0151\\u0171" /* Include surrogate pairs: "\\uD800-\\uDFFF" ? */ : ""
+		) + "]"
 	});
 
-	// Tier-2 primitives.
-	Object.defineProperties(Wikifier.textPrimitives, {
-		inlineCSS : {
-			value : [
-				"(?:(" + Wikifier.textPrimitives.anyLetter + "+)\\(([^\\)\\|\\n]+)\\):)", // [1,2]=style(value):
-				"(?:(" + Wikifier.textPrimitives.anyLetter + "+):([^;\\|\\n]+);)",        // [3,4]=style:value;
-				"(?:((?:\\." + Wikifier.textPrimitives.anyLetter + "+)+);)",              // [5]  =.className;
-				"(?:((?:#" + Wikifier.textPrimitives.anyLetter + "+)+);)"                 // [6]  =#id;
-			].join("|")
-		}
+	/*
+		Identifier patterns.
+
+		n.b. These are kludges.  Since JavaScript's RegExp syntax isn't fully Unicode-enabled,
+		     not supporting Unicode character classes, the correct regular expression to match
+		     a valid identifier (within the scope of our needs) would be on the order of 11 kB.
+		     That being the case, for the time being, we restrict valid TwineScript identifiers
+		     to US-ASCII.
+	*/
+	Object.defineProperty(Wikifier.textPrimitives, "identifierFirstChar", {
+		value : "[$A-Z_a-z]"
+	});
+	Object.defineProperty(Wikifier.textPrimitives, "identifier", {
+		value : Wikifier.textPrimitives.identifierFirstChar + "[$0-9A-Z_a-z]*"
+	});
+
+	/*
+		Variable patterns.
+	*/
+	Object.defineProperty(Wikifier.textPrimitives, "variableSigil", {
+		value : "[$_]"
+	});
+	Object.defineProperty(Wikifier.textPrimitives, "variable", {
+		value : Wikifier.textPrimitives.variableSigil + Wikifier.textPrimitives.identifier
+	});
+
+	/*
+		Inline CSS pattern.
+	*/
+	Object.defineProperty(Wikifier.textPrimitives, "inlineCSS", {
+		value : [
+			"(?:(" + Wikifier.textPrimitives.anyLetter + "+)\\(([^\\)\\|\\n]+)\\):)", // [1,2]=style(value):
+			"(?:(" + Wikifier.textPrimitives.anyLetter + "+):([^;\\|\\n]+);)",        // [3,4]=style:value;
+			"(?:((?:\\." + Wikifier.textPrimitives.anyLetter + "+)+);)",              // [5]  =.className;
+			"(?:((?:#" + Wikifier.textPrimitives.anyLetter + "+)+);)"                 // [6]  =#id;
+		].join("|")
+	});
+
+	/*
+		URL pattern.
+	*/
+	Object.defineProperty(Wikifier.textPrimitives, "url", {
+		value : "(?:file|https?|mailto|ftp|javascript|irc|news|data):[^\\s'\"]+(?:/|\\b)"
 	});
 
 
@@ -848,8 +901,13 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 			},
 
 			{
-				name    : "$variable",
-				match   : "\\$[A-Za-z_$][\\w$]*(?:(?:\\.[A-Za-z_$][\\w$]*)|(?:\\[\\d+\\])|(?:\\[\"(?:\\\\.|[^\"\\\\])+\"\\])|(?:\\['(?:\\\\.|[^'\\\\])+'\\])|(?:\\[\\$[A-Za-z_$][\\w$]*\\]))*",
+				name  : "nakedVariable",
+				match : Wikifier.textPrimitives.variable
+					+ "(?:(?:\\."
+					+ Wikifier.textPrimitives.identifier
+					+ ")|(?:\\[\\d+\\])|(?:\\[\"(?:\\\\.|[^\"\\\\])+\"\\])|(?:\\['(?:\\\\.|[^'\\\\])+'\\])|(?:\\["
+					+ Wikifier.textPrimitives.variable
+					+ "\\]))*",
 				handler : function (w) {
 					var	result = printableStringOrDefault(Wikifier.getValue(w.matchText), null);
 					if (result === null) {
@@ -857,7 +915,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					} else {
 						new Wikifier(
 							(config.debug
-								? new DebugView(w.output, "$variable", w.matchText, w.matchText) // Debug view setup.
+								? new DebugView(w.output, "variable", w.matchText, w.matchText) // Debug view setup.
 								: w
 							).output,
 							result
@@ -1479,9 +1537,10 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 				},
 				parseArgs : function (str) {
 					// Groups: 1=double quoted | 2=single quoted | 3=empty quotes | 4=double square-bracketed | 5=barewords
-					var	re    = new RegExp(this.argsPattern, "gm"),
+					var	re      = new RegExp(this.argsPattern, "gm"),
 						match,
-						args  = [];
+						args    = [],
+						varTest = new RegExp("^" + Wikifier.textPrimitives.variable);
 
 					while ((match = re.exec(str)) !== null) {
 						var arg;
@@ -1571,8 +1630,8 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							// Barewords.
 							arg = match[5];
 
-							if (/^\$\w+/.test(arg)) {
-								// $variable, so substitute its value.
+							if (varTest.test(arg)) {
+								// variable, so substitute its value.
 								arg = Wikifier.getValue(arg);
 							} else if (/^(?:settings|setup)[\.\[]/.test(arg)) {
 								// Settings or setup object, so try to evaluate it.
