@@ -664,17 +664,18 @@ Macro.add("unset", {
 	skipArgs : true,
 	handler  : function () {
 		if (this.args.full.length === 0) {
-			return this.error("no $variable list specified");
+			return this.error("no story/temporary variable list specified");
 		}
 
-		var	re    = /State\.variables\.(\w+)/g,
+		var	re    = new RegExp("(?:(State)|(temp))\\.variables\\.(" + Wikifier.textPrimitives.identifier + ")", "g"),
 			match;
 
 		while ((match = re.exec(this.args.full)) !== null) {
-			var name = match[1];
+			var	store = (match[1] ? State : temp).variables,
+				name  = match[3];
 
-			if (State.variables.hasOwnProperty(name)) {
-				delete State.variables[name];
+			if (store.hasOwnProperty(name)) {
+				delete store[name];
 			}
 		}
 
@@ -702,7 +703,7 @@ Macro.add("remember", {
 		}
 
 		var	remember = storage.get("remember") || {},
-			re       = /State\.variables\.(\w+)/g,
+			re       = new RegExp("State\\.variables\\.(" + Wikifier.textPrimitives.identifier + ")", "g"),
 			match;
 
 		while ((match = re.exec(this.args.full)) !== null) {
@@ -736,12 +737,12 @@ Macro.add("forget", {
 	skipArgs : true,
 	handler  : function () {
 		if (this.args.full.length === 0) {
-			return this.error("no $variable list specified");
+			return this.error("no story variable list specified");
 		}
 
-		var	re        = /State\.variables\.(\w+)/g,
+		var	remember  = storage.get("remember"),
+			re        = new RegExp("State\\.variables\\.(" + Wikifier.textPrimitives.identifier + ")", "g"),
 			match,
-			remember  = storage.get("remember"),
 			needStore = false;
 
 		while ((match = re.exec(this.args.full)) !== null) {
