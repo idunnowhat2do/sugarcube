@@ -929,8 +929,8 @@
 			*/
 			jQuery(el)
 				.attr({
-					"id"       : "checkbox-" + varId,
-					"name"     : "checkbox-" + varId,
+					"id"       : this.name + "-" + varId,
+					"name"     : this.name + "-" + varId,
 					"type"     : "checkbox",
 					"tabindex" : 0 // for accessiblity
 				})
@@ -992,8 +992,8 @@
 			*/
 			jQuery(el)
 				.attr({
-					"id"       : "radiobutton-" + varId + "-" + temp.state.radiobutton[varId]++,
-					"name"     : "radiobutton-" + varId,
+					"id"       : this.name + "-" + varId + "-" + temp.state.radiobutton[varId]++,
+					"name"     : this.name + "-" + varId,
 					"type"     : "radio",
 					"tabindex" : 0 // for accessiblity
 				})
@@ -1050,8 +1050,8 @@
 			*/
 			jQuery(el)
 				.attr({
-					"id"       : "textarea-" + varId,
-					"name"     : "textarea-" + varId,
+					"id"       : this.name + "-" + varId,
+					"name"     : this.name + "-" + varId,
 					"rows"     : 4,
 					//"cols"     : 68, // instead of setting "cols" we set the `min-width` in CSS
 					"tabindex" : 0 // for accessiblity
@@ -1135,8 +1135,8 @@
 			*/
 			jQuery(el)
 				.attr({
-					"id"       : "textbox-" + varId,
-					"name"     : "textbox-" + varId,
+					"id"       : this.name + "-" + varId,
+					"name"     : this.name + "-" + varId,
 					"type"     : "text",
 					"tabindex" : 0 // for accessiblity
 				})
