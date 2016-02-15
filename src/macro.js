@@ -230,147 +230,156 @@ var Macro = (function () { // eslint-disable-line no-unused-vars
 })();
 
 
-/***********************************************************************************************************************
- * MacroContext API
- **********************************************************************************************************************/
-/*
-	Setup the MacroContext constructor.
-*/
-function MacroContext(context) {
-	context = Object.assign({
-		parent  : null,
-		macro   : null,
-		name    : "",
-		args    : null,
-		payload : null,
-		parser  : null,
-		source  : ""
-	}, context);
-	if (context.macro === null || context.name === "" || context.parser === null) {
-		throw new TypeError("context object missing required properties");
+var MacroContext = (function () { // eslint-disable-line no-unused-vars
+	"use strict";
+
+	/*******************************************************************************************************************
+	 * Constructor
+	 ******************************************************************************************************************/
+	function MacroContext(context) {
+		context = Object.assign({
+			parent  : null,
+			macro   : null,
+			name    : "",
+			args    : null,
+			payload : null,
+			parser  : null,
+			source  : ""
+		}, context);
+		if (context.macro === null || context.name === "" || context.parser === null) {
+			throw new TypeError("context object missing required properties");
+		}
+		Object.defineProperties(this, {
+			parent : {
+				value : context.parent
+			},
+			self : {
+				value : context.macro
+			},
+			name : {
+				value : context.name
+			},
+			args : {
+				value : context.args
+			},
+			payload : {
+				value : context.payload
+			},
+			source : {
+				value : context.source
+			},
+			parser : {
+				value : context.parser
+			},
+			_output : {
+				value : context.parser.output
+			},
+			_debugView : {
+				writable : true,
+				value    : null
+			},
+			_debugViewEnabled : {
+				writable : true,
+				value    : config.debug
+			}
+		});
 	}
-	Object.defineProperties(this, {
-		parent : {
-			value : context.parent
+
+
+	/*******************************************************************************************************************
+	 * Prototype
+	 ******************************************************************************************************************/
+	Object.defineProperties(MacroContext.prototype, {
+		contextHas : {
+			value : function (filter) {
+				var context = this;
+				while ((context = context.parent) !== null) {
+					if (filter(context)) {
+						return true;
+					}
+				}
+				return false;
+			}
 		},
-		self : {
-			value : context.macro
+
+		contextSelect : {
+			value : function (filter) {
+				var	context = this;
+				while ((context = context.parent) !== null) {
+					if (filter(context)) {
+						return context;
+					}
+				}
+				return null;
+			}
 		},
-		name : {
-			value : context.name
+
+		contextSelectAll : {
+			value : function (filter) {
+				var	context = this,
+					result  = [];
+				while ((context = context.parent) !== null) {
+					if (filter(context)) {
+						result.push(context);
+					}
+				}
+				return result;
+			}
 		},
-		args : {
-			value : context.args
+
+		createDebugView : {
+			value : function (name, title) {
+				this._debugView = new DebugView(
+					this._output,
+					"macro",
+					name ? name : this.name,
+					title ? title : this.source
+				);
+				if (this.payload !== null && this.payload.length > 0) {
+					this._debugView.modes({ nonvoid : true });
+				}
+				this._debugViewEnabled = true;
+				return this._debugView;
+			}
 		},
-		payload : {
-			value : context.payload
+
+		removeDebugView : {
+			value : function () {
+				if (this._debugView !== null) {
+					this._debugView.remove();
+					this._debugView = null;
+				}
+				this._debugViewEnabled = false;
+			}
 		},
-		source : {
-			value : context.source
+
+		debugView : {
+			get : function () {
+				if (this._debugViewEnabled) {
+					return this._debugView !== null ? this._debugView : this.createDebugView();
+				}
+				return null;
+			}
 		},
-		parser : {
-			value : context.parser
+
+		output : {
+			get : function () {
+				return this._debugViewEnabled ? this.debugView.output : this._output;
+			}
 		},
-		_output : {
-			value : context.parser.output
-		},
-		_debugView : {
-			writable : true,
-			value    : null
-		},
-		_debugViewEnabled : {
-			writable : true,
-			value    : config.debug
+
+		error : {
+			value : function (message, title) {
+				return throwError(this._output, "<<" + this.name + ">>: " + message, title ? title : this.source);
+			}
 		}
 	});
-}
 
-/*
-	Setup the MacroContext prototype.
-*/
-Object.defineProperties(MacroContext.prototype, {
-	contextHas : {
-		value : function (filter) {
-			var context = this;
-			while ((context = context.parent) !== null) {
-				if (filter(context)) {
-					return true;
-				}
-			}
-			return false;
-		}
-	},
 
-	contextSelect : {
-		value : function (filter) {
-			var	context = this;
-			while ((context = context.parent) !== null) {
-				if (filter(context)) {
-					return context;
-				}
-			}
-			return null;
-		}
-	},
+	/*******************************************************************************************************************
+	 * Exports
+	 ******************************************************************************************************************/
+	return MacroContext; // export the constructor
 
-	contextSelectAll : {
-		value : function (filter) {
-			var	context = this,
-				result  = [];
-			while ((context = context.parent) !== null) {
-				if (filter(context)) {
-					result.push(context);
-				}
-			}
-			return result;
-		}
-	},
-
-	createDebugView : {
-		value : function (name, title) {
-			this._debugView = new DebugView(
-				this._output,
-				"macro",
-				name ? name : this.name,
-				title ? title : this.source
-			);
-			if (this.payload !== null && this.payload.length > 0) {
-				this._debugView.modes({ nonvoid : true });
-			}
-			this._debugViewEnabled = true;
-			return this._debugView;
-		}
-	},
-
-	removeDebugView : {
-		value : function () {
-			if (this._debugView !== null) {
-				this._debugView.remove();
-				this._debugView = null;
-			}
-			this._debugViewEnabled = false;
-		}
-	},
-
-	debugView : {
-		get : function () {
-			if (this._debugViewEnabled) {
-				return this._debugView !== null ? this._debugView : this.createDebugView();
-			}
-			return null;
-		}
-	},
-
-	output : {
-		get : function () {
-			return this._debugViewEnabled ? this.debugView.output : this._output;
-		}
-	},
-
-	error : {
-		value : function (message, title) {
-			return throwError(this._output, "<<" + this.name + ">>: " + message, title ? title : this.source);
-		}
-	}
-});
+})();
 
