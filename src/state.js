@@ -699,9 +699,16 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		if (DEBUG) { console.log("[State/prngInit()]"); }
 
 		if (!historyIsEmpty()) {
-			throw new Error("State.initPRNG must be called during initialization,"
-				+ " within either a script section (Twine 1: a script-tagged passage,"
-				+ " Twine 2: Story JavaScript) or the StoryInit special passage");
+			var scriptSection;
+
+			if (TWINE1) { // for Twine 1
+				scriptSection = "a script-tagged passage";
+			} else { // for Twine 2
+				scriptSection = "the Story JavaScript";
+			}
+
+			throw new Error("State.initPRNG must be called during initialization, within either "
+				+ scriptSection + " or the StoryInit special passage");
 		}
 
 		_prng = new PRNGWrapper(seed, useEntropy);
