@@ -752,9 +752,10 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		if (DEBUG) { console.log("[State/statePlay()]"); }
 
 		/*
-			Reset the temporary state object.
+			Reset the temporary state and variables objects.
 		*/
 		temp.state = {};
+		temp.variables = {};
 
 		/*
 			Debug view setup.
