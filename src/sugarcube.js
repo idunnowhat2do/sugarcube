@@ -42,7 +42,7 @@ var	version = Object.freeze({
 	});
 
 /*
-	Config object (author/developer use).
+	Config object.
 */
 var	config = Object.seal({
 		/*
@@ -123,32 +123,22 @@ var	config = Object.seal({
 	});
 
 /*
-	Temporary data object (internal use only).
-*/
-var	temp = Object.defineProperties({}, {
-		debug : {
-			writable : true,
-			value    : {}
-		},
-		state : {
-			writable : true,
-			value    : {}
-		},
-		variables : {
-			writable : true,
-			value    : {}
-		}
-	});
-
-/*
-	Constants (not actually constants).
+	Constants (not actually constants, because ES5).
 */
 /* eslint-disable no-unused-vars */
-var minDOMActionDelay = 40; // minimum delay for DOM actions (in milliseconds)
+var	minDOMActionDelay = 40; // minimum delay for DOM actions (in milliseconds)
 /* eslint-enable no-unused-vars */
 
 /*
-	Internal variables (mostly for use by story authors).
+	Temporary data variables.
+*/
+/* eslint-disable no-unused-vars */
+var	TempState     = {}, // temporary state object
+	TempVariables = {}; // temporary _variables object
+/* eslint-enable no-unused-vars */
+
+/*
+	Internal variables.
 */
 /* eslint-disable no-unused-vars */
 var	macros      = {},    // legacy macros object
@@ -261,26 +251,26 @@ jQuery(function () {
 		Finally, export identifiers for debugging purposes.
 	*/
 	window.SugarCube = {
-		Browser   : Browser,
-		DebugView : DebugView,
-		Has       : Has,
-		Macro     : Macro,
-		Passage   : Passage,
-		Save      : Save,
-		Setting   : Setting,
-		State     : State,
-		Story     : Story,
-		UI        : UI,
-		Util      : Util,
-		Wikifier  : Wikifier,
-		config    : config,
-		macros    : macros,
-		session   : session,
-		settings  : settings,
-		setup     : setup,
-		storage   : storage,
-		temp      : temp,
-		version   : version
+		Browser       : Browser,
+		DebugView     : DebugView,
+		Has           : Has,
+		Macro         : Macro,
+		Passage       : Passage,
+		Save          : Save,
+		Setting       : Setting,
+		State         : State,
+		Story         : Story,
+		TempVariables : TempVariables,
+		UI            : UI,
+		Util          : Util,
+		Wikifier      : Wikifier,
+		config        : config,
+		macros        : macros,
+		session       : session,
+		settings      : settings,
+		setup         : setup,
+		storage       : storage,
+		version       : version
 	};
 });
 

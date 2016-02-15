@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global DebugView, Save, PRNGWrapper, Story, UI, Util, Wikifier, clone, config, minDOMActionDelay, postdisplay,
-	       predisplay, prehistory, removeChildren, session, technicalAlert, temp
+	global DebugView, Save, PRNGWrapper, Story, TempState:true, TempVariables:true, UI, Util, Wikifier, clone, config,
+	       minDOMActionDelay, postdisplay, predisplay, prehistory, removeChildren, session, technicalAlert
 */
 
 var State = (function () { // eslint-disable-line no-unused-vars
@@ -29,7 +29,12 @@ var State = (function () { // eslint-disable-line no-unused-vars
 			Miscellaneous properties.
 		*/
 		_lastPlay = null, // Last time `statePlay()` was called, in milliseconds
-		_prng     = null; // [optional] Seedable PRNG object
+		_prng     = null, // [optional] Seedable PRNG object
+
+		/*
+			Temporary variables.
+		*/
+		_storyInitDebugView = null; // Cache of the debug view for the StoryInit special passage
 
 
 	/*******************************************************************************************************************
@@ -42,7 +47,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		if (DEBUG) { console.log("[State/stateInit()]"); }
 
 		/*
-			Execute the StoryInit passage.
+			Execute the StoryInit special passage.
 		*/
 		if (Story.has("StoryInit")) {
 			try {
@@ -56,7 +61,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 					);
 					debugView.modes({ hidden : true });
 					debugView.append(debugBuffer);
-					temp.debug.storyInitCache = debugView.output;
+					_storyInitDebugView = debugView.output;
 				}
 			} catch (e) {
 				technicalAlert("StoryInit", e.message);
@@ -761,8 +766,8 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		/*
 			Reset the temporary state and variables objects.
 		*/
-		temp.state = {};
-		temp.variables = {};
+		TempState = {};
+		window.SugarCube.TempVariables = TempVariables = {}; // update the `window.SugarCube` debugging reference
 
 		/*
 			Debug view setup.
@@ -939,8 +944,8 @@ var State = (function () { // eslint-disable-line no-unused-vars
 			}
 
 			// Prepend the cached `StoryInit` debug view, if we're showing the first moment/turn.
-			if (historyLength() === 1 && temp.debug.storyInitCache != null) { // lazy equality for null
-				jQuery(incoming).prepend(temp.debug.storyInitCache);
+			if (historyLength() === 1 && _storyInitDebugView != null) { // lazy equality for null
+				jQuery(incoming).prepend(_storyInitDebugView);
 			}
 		}
 

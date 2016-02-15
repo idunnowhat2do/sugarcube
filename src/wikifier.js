@@ -43,8 +43,9 @@
  *
  **********************************************************************************************************************/
 /*
-	global DebugView, Macro, MacroContext, State, Story, Util, config, evalJavaScript, evalTwineScript, insertElement,
-	       insertText, macros, printableStringOrDefault, removeChildren, removeElement, temp, throwError
+	global DebugView, Macro, MacroContext, State, Story, TempState, TempVariables, Util, config, evalJavaScript,
+	       evalTwineScript, insertElement, insertText, macros, printableStringOrDefault, removeChildren, removeElement,
+	       throwError
 */
 
 /*
@@ -149,12 +150,12 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						// Call the formatter.
 						if (matchingFormatter !== -1) {
 							this.formatter.formatters[matchingFormatter].handler(this);
-							if (temp.state.break != null) { break; } // lazy equality for null
+							if (TempState.break != null) { break; } // lazy equality for null
 						}
 					}
 				} while (terminatorMatch || formatterMatch);
 
-				if (temp.state.break == null) { // lazy equality for null
+				if (TempState.break == null) { // lazy equality for null
 					// Output any text after the last match.
 					if (this.nextMatch < this.source.length) {
 						this.outputText(this.output, this.nextMatch, this.source.length);
@@ -240,7 +241,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						// Story $variable sigil-prefix.
 						"$"     : "State.variables.",
 						// Temporary _variable sigil-prefix.
-						"_"     : "temp.variables.",
+						"_"     : "TempVariables.",
 						// Assignment operators.
 						"to"    : "=",
 						// Equality operators.
@@ -397,7 +398,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					),
 					match,
 					retVal = {
-						store : varText[0] === "$" ? State.variables : temp.variables,
+						store : varText[0] === "$" ? State.variables : TempVariables,
 						names : []
 					};
 
