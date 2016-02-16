@@ -92,21 +92,21 @@ function clone(orig) { // eslint-disable-line no-unused-vars
 /*
 	Evaluates the given JavaScript code and returns the result, throwing if there were errors.
 */
-function evalJavaScript(code, output, thisp) {
+function evalJavaScript(code, output) {
 	"use strict";
 	return (function (code, output) {
 		return eval(code);
-	}).call(thisp, String(code), output);
+	}).call(output ? { output : output } : null, String(code), output);
 }
 
 /*
 	Evaluates the given TwineScript code and returns the result, throwing if there were errors.
 */
-function evalTwineScript(code, output, thisp) {
+function evalTwineScript(code, output) {
 	"use strict";
 	return (function (code, output) {
 		return eval(code);
-	}).call(thisp, Wikifier.parse(String(code)), output);
+	}).call(output ? { output : output } : null, Wikifier.parse(String(code)), output);
 }
 /* eslint-enable no-eval, no-extra-parens, no-extra-strict, no-shadow, no-unused-vars */
 
@@ -460,7 +460,7 @@ function fade(el, options) { // eslint-disable-line no-unused-vars
 		current = 1;
 	}
 	setOpacity(proxy, current);
-	intervalId = window.setInterval(tick, 25);
+	intervalId = window.setInterval(tick, 25); // TODO: should this be `minDOMActionDelay`?
 	/* eslint-enable no-use-before-define */
 }
 
@@ -526,7 +526,7 @@ function scrollWindowTo(el, increment) { // eslint-disable-line no-unused-vars
 		distance   = Math.abs(start - end),
 		progress   = 0,
 		direction  = start > end ? -1 : 1,
-		intervalId = window.setInterval(tick, 25);
+		intervalId = window.setInterval(tick, 25); // TODO: should this be `minDOMActionDelay`?
 	/* eslint-enable no-use-before-define */
 }
 

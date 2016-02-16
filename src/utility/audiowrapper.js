@@ -208,7 +208,7 @@ Object.defineProperties(AudioWrapper.prototype, {
 							max = from;
 						}
 						duration = Math.clamp(duration, 1, self.duration || 5);
-						var	interval = 25, // in milliseconds
+						var	interval = 25, // in milliseconds; TODO: should this be `minDOMActionDelay`?
 							delta    = (to - from) / (duration / (interval / 1000));
 						self._faderId = setInterval(function () {
 							if (!self.isPlaying()) {

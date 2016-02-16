@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global Has, Save, Setting, State, Story, StyleWrapper, Util, Wikifier, config, insertText, removeChildren,
-	       safeActiveElement, setPageElement, session, settings, storage, strings, version
+	global Has, Save, Setting, State, Story, StyleWrapper, Util, Wikifier, config, insertText, minDOMActionDelay,
+	       removeChildren, safeActiveElement, setPageElement, session, settings, storage, strings, version
 */
 
 /*
@@ -201,7 +201,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			_bar.classList.add("stowed");
 			setTimeout(function () {
 				$uiBarStory.removeClass("no-transition");
-			}, 100);
+			}, Math.max(minDOMActionDelay, 100));
 		}
 
 		// Setup the #ui-bar-toggle and #ui-bar-history widgets.
@@ -296,7 +296,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				if (config.loadDelay > 0) {
 					setTimeout(function () {
 						document.documentElement.classList.remove("init-loading");
-					}, config.loadDelay);
+					}, Math.max(minDOMActionDelay, config.loadDelay));
 				} else {
 					document.documentElement.classList.remove("init-loading");
 				}

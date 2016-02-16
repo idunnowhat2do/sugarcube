@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global DebugView, Save, PRNGWrapper, Story, UI, Util, Wikifier, clone, config, postdisplay, predisplay, prehistory,
-	       removeChildren, runtime, session, technicalAlert
+	global DebugView, Save, PRNGWrapper, Story, TempState:true, TempVariables:true, UI, Util, Wikifier, clone, config,
+	       minDOMActionDelay, postdisplay, predisplay, prehistory, removeChildren, session, technicalAlert
 */
 
 var State = (function () { // eslint-disable-line no-unused-vars
@@ -28,10 +28,13 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		/*
 			Miscellaneous properties.
 		*/
-		/* eslint-disable no-unused-vars */
 		_lastPlay = null, // Last time `statePlay()` was called, in milliseconds
-		/* eslint-enable no-unused-vars */
-		_prng     = null; // [optional] Seedable PRNG object
+		_prng     = null, // [optional] Seedable PRNG object
+
+		/*
+			Temporary variables.
+		*/
+		_storyInitDebugView = null; // Cache of the debug view for the StoryInit special passage
 
 
 	/*******************************************************************************************************************
@@ -44,7 +47,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		if (DEBUG) { console.log("[State/stateInit()]"); }
 
 		/*
-			Execute the StoryInit passage.
+			Execute the StoryInit special passage.
 		*/
 		if (Story.has("StoryInit")) {
 			try {
@@ -58,7 +61,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 					);
 					debugView.modes({ hidden : true });
 					debugView.append(debugBuffer);
-					runtime.debug.storyInitCache = debugView.output;
+					_storyInitDebugView = debugView.output;
 				}
 			} catch (e) {
 				technicalAlert("StoryInit", e.message);
@@ -701,9 +704,16 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		if (DEBUG) { console.log("[State/prngInit()]"); }
 
 		if (!historyIsEmpty()) {
-			throw new Error("State.initPRNG must be called during initialization,"
-				+ " within either a script section (Twine 1: a script-tagged passage,"
-				+ " Twine 2: Story JavaScript) or the StoryInit special passage");
+			var scriptSection;
+
+			if (TWINE1) { // for Twine 1
+				scriptSection = "a script-tagged passage";
+			} else { // for Twine 2
+				scriptSection = "the Story JavaScript";
+			}
+
+			throw new Error("State.initPRNG must be called during initialization, within either "
+				+ scriptSection + " or the StoryInit special passage");
 		}
 
 		_prng = new PRNGWrapper(seed, useEntropy);
@@ -754,9 +764,10 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		if (DEBUG) { console.log("[State/statePlay()]"); }
 
 		/*
-			Reset the runtime temp/scratch object.
+			Reset the temporary state and variables objects.
 		*/
-		runtime.temp = {};
+		TempState = {};
+		window.SugarCube.TempVariables = TempVariables = {}; // update the `window.SugarCube` debugging reference
 
 		/*
 			Debug view setup.
@@ -851,7 +862,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 								if (outgoing.parentNode) {
 									outgoing.parentNode.removeChild(outgoing);
 								}
-							}, config.passages.transitionOut); // in milliseconds
+							}, Math.max(minDOMActionDelay, config.passages.transitionOut));
 						}
 					} else {
 						outgoing.parentNode.removeChild(outgoing);
@@ -865,7 +876,7 @@ var State = (function () { // eslint-disable-line no-unused-vars
 		passages.appendChild(incoming);
 		setTimeout(function () {
 			incoming.classList.remove("passage-in");
-		}, 1);
+		}, minDOMActionDelay);
 
 		/*
 			Set the document title.
@@ -907,30 +918,34 @@ var State = (function () { // eslint-disable-line no-unused-vars
 			var debugView;
 
 			// Prepend the `PassageReady` debug view.
-			debugView = new DebugView(
-				document.createDocumentFragment(),
-				"special",
-				"PassageReady",
-				"PassageReady"
-			);
-			debugView.modes({ hidden : true });
-			debugView.append(passageReadyOutput);
-			jQuery(incoming).prepend(debugView.output);
+			if (passageReadyOutput != null) { // lazy equality for null
+				debugView = new DebugView(
+					document.createDocumentFragment(),
+					"special",
+					"PassageReady",
+					"PassageReady"
+				);
+				debugView.modes({ hidden : true });
+				debugView.append(passageReadyOutput);
+				jQuery(incoming).prepend(debugView.output);
+			}
 
 			// Append the `PassageDone` debug view.
-			debugView = new DebugView(
-				document.createDocumentFragment(),
-				"special",
-				"PassageDone",
-				"PassageDone"
-			);
-			debugView.modes({ hidden : true });
-			debugView.append(passageDoneOutput);
-			jQuery(incoming).append(debugView.output);
+			if (passageDoneOutput != null) { // lazy equality for null
+				debugView = new DebugView(
+					document.createDocumentFragment(),
+					"special",
+					"PassageDone",
+					"PassageDone"
+				);
+				debugView.modes({ hidden : true });
+				debugView.append(passageDoneOutput);
+				jQuery(incoming).append(debugView.output);
+			}
 
 			// Prepend the cached `StoryInit` debug view, if we're showing the first moment/turn.
-			if (historyLength() === 1 && runtime.debug.storyInitCache != null) { // lazy equality for null
-				jQuery(incoming).prepend(runtime.debug.storyInitCache);
+			if (historyLength() === 1 && _storyInitDebugView != null) { // lazy equality for null
+				jQuery(incoming).prepend(_storyInitDebugView);
 			}
 		}
 

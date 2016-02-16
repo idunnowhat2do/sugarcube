@@ -43,8 +43,9 @@
  *
  **********************************************************************************************************************/
 /*
-	global DebugView, Macro, MacroContext, State, Story, Util, config, evalJavaScript, evalTwineScript, insertElement,
-	       insertText, macros, printableStringOrDefault, removeChildren, removeElement, runtime, throwError
+	global DebugView, Macro, MacroContext, State, Story, TempState, TempVariables, Util, config, evalJavaScript,
+	       evalTwineScript, insertElement, insertText, macros, printableStringOrDefault, removeChildren, removeElement,
+	       throwError
 */
 
 /*
@@ -149,12 +150,12 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						// Call the formatter.
 						if (matchingFormatter !== -1) {
 							this.formatter.formatters[matchingFormatter].handler(this);
-							if (runtime.temp.break != null) { break; } // lazy equality for null
+							if (TempState.break != null) { break; } // lazy equality for null
 						}
 					}
 				} while (terminatorMatch || formatterMatch);
 
-				if (runtime.temp.break == null) { // lazy equality for null
+				if (TempState.break == null) { // lazy equality for null
 					// Output any text after the last match.
 					if (this.nextMatch < this.source.length) {
 						this.outputText(this.output, this.nextMatch, this.source.length);
@@ -193,7 +194,7 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 
 		/*
 			Meant to be called by macros, this returns the text given to the currently executing
-			macro after doing TwineScript-to-JavaScript transformations (e.g. to, is, $variable).
+			macro after doing TwineScript-to-JavaScript transformations.
 		*/
 		fullArgs : {
 			value : function () {
@@ -227,16 +228,20 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 		},
 
 		/*
-			Returns the given string with all Twine/Twee operators converted to their JavaScript counterparts.
+			Returns the given string after converting all TwineScript syntactical sugars to
+			their native JavaScript counterparts.
 		*/
 		parse : {
-			value : function (expression) {
-				// Double quoted | Single quoted | Empty quotes | Operator delimiters | Barewords & Sigil
-				var	re    = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\\')|[^'])+)')|((?:\"\")|(?:''))|([=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}]+)|([^\"'=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}\\s]+))", "g"),
+			value : function (code) {
+				// Groups: 1=Double quoted | 2=Single quoted | 3=Empty quotes | 4=Operator delimiters | 5=Barewords
+				var	re      = new RegExp("(?:(?:\"((?:(?:\\\\\")|[^\"])+)\")|(?:'((?:(?:\\\\\')|[^'])+)')|((?:\"\")|(?:''))|([=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}]+)|([^\"'=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}\\s]+))", "g"),
 					match,
-					map   = {
-						// $variable mapping.
+					varTest = new RegExp("^" + Wikifier.textPrimitives.variable),
+					map     = {
+						// Story $variable sigil-prefix.
 						"$"     : "State.variables.",
+						// Temporary _variable sigil-prefix.
+						"_"     : "TempVariables.",
 						// Assignment operators.
 						"to"    : "=",
 						// Equality operators.
@@ -258,46 +263,57 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						"ndef"  : '"undefined" === typeof'
 					};
 
-				while ((match = re.exec(expression)) !== null) {
+				while ((match = re.exec(code)) !== null) {
 					// no-op: Double quoted | Single quoted | Empty quotes | Operator delimiters
 
-					// Barewords & Sigil.
+					/*
+						Barewords.
+					*/
 					if (match[5]) {
 						var token = match[5];
 
-						// Special cases.
-						if (token === "$") {
-							/*
-								If the token is `$`, then it's either a naked dollar-sign or a
-								function alias, so skip over it.
-							*/
+						/*
+							If the token is simply a dollar-sign or underscore, then it's either
+							just the raw character or, probably, a function alias, so skip it.
+						*/
+						if (token === "$" || token === "_") {
 							continue;
-						} else if (token[0] === "$") {
-							/*
-								If the token starts with a `$`, then it's a $variable, so just
-								replace the sigil (`$`).
-							*/
-							token = "$";
-						} else if (token === "is") {
-							/*
-								If the token is `is`, check to see if it's followed by `not`, if so,
-								convert them into the `isnot` operator.  This is a safety feature,
-								since `$a is not $b` probably sounds reasonable to most users.
-							*/
+						}
+
+						/*
+							If the token is a story $variable or temporary _variable, reset it
+							to just its sigil—for later mapping.
+						*/
+						else if (varTest.test(token)) {
+							token = token[0];
+						}
+
+						/*
+							If the token is `is`, check to see if it's followed by `not`, if so,
+							convert them into the `isnot` operator.
+
+							n.b. This is a safety feature, since `$a is not $b` probably sounds
+							     reasonable to most users.
+						*/
+						else if (token === "is") {
 							var	start = re.lastIndex,
-								part  = expression.slice(start);
+								part  = code.slice(start);
 							if (/^\s+not\b/.test(part)) {
-								expression = expression.splice(start, part.search(/\S/));
+								code = code.splice(start, part.search(/\S/));
 								token = "isnot";
 							}
 						}
 
 						/*
-							DO NOT simply use `map[token]` here, otherwise tokens which match
-							properties from the prototype chain will break the world.
+							If the finalized token has a mapping, replace it within the code
+							string with its counterpart.
+
+							n.b. We must use `map.hasOwnProperty(token)` here, rather than simply
+							     using something like `map[token]`, otherwise tokens which match
+							     properties from the prototype chain will cause shenanigans.
 						*/
 						if (map.hasOwnProperty(token)) {
-							expression = expression.splice(
+							code = code.splice(
 								match.index,  // starting index
 								token.length, // replace how many
 								map[token]    // replacement string
@@ -306,20 +322,21 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 						}
 					}
 				}
-				return expression;
+				return code;
 			}
 		},
 
 		/*
-			Returns the value of the given story $variable.
+			Returns the value of the given story/temporary variable.
 		*/
 		getValue : {
 			value : function (storyVar) {
-				var	pNames = Wikifier.parseStoryVariable(storyVar),
+				var	varData = Wikifier.parseStoryVariable(storyVar),
 					retVal;
 
-				if (pNames.length !== 0) {
-					retVal = State.variables;
+				if (varData !== null) {
+					retVal = varData.store;
+					var pNames = varData.names;
 					for (var i = 0, iend = pNames.length; i < iend; ++i) {
 						if (typeof retVal[pNames[i]] !== "undefined") {
 							retVal = retVal[pNames[i]];
@@ -334,14 +351,15 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 		},
 
 		/*
-			Sets the value of the given story $variable.
+			Sets the value of the given story/temporary variable.
 		*/
 		setValue : {
 			value : function (storyVar, newValue) {
-				var pNames = Wikifier.parseStoryVariable(storyVar);
+				var varData = Wikifier.parseStoryVariable(storyVar);
 
-				if (pNames.length !== 0) {
-					var	baseObj = State.variables,
+				if (varData !== null) {
+					var	baseObj = varData.store,
+						pNames  = varData.names,
 						varName = pNames.pop();
 					for (var i = 0, iend = pNames.length; i < iend; ++i) {
 						if (typeof baseObj[pNames[i]] !== "undefined") {
@@ -361,13 +379,28 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 		},
 
 		/*
-			Returns the property name chain of the given story $variable, which may be of arbitrary complexity.
+			Returns the property name chain of the given story/temporary variable, which may be
+			of arbitrary complexity.
 		*/
 		parseStoryVariable : {
 			value : function (varText) {
-				var	re     = /^(?:\$(\w+)|\.(\w+)|\[(?:(?:\"((?:\\.|[^\"\\])+)\")|(?:\'((?:\\.|[^\'\\])+)\')|(\$\w.*)|(\d+))\])/,
+				var	re     = new RegExp(
+						  "^(?:"
+						+ Wikifier.textPrimitives.variableSigil
+						+ "("
+						+ Wikifier.textPrimitives.identifier
+						+ ")|\\.("
+						+ Wikifier.textPrimitives.identifier
+						+ ")|\\[(?:(?:\"((?:\\\\.|[^\"\\\\])+)\")|(?:'((?:\\\\.|[^'\\\\])+)')|("
+						+ Wikifier.textPrimitives.variableSigil
+						+ Wikifier.textPrimitives.identifierFirstChar
+						+ ".*)|(\\d+))\\])"
+					),
 					match,
-					pNames = [];
+					retVal = {
+						store : varText[0] === "$" ? State.variables : TempVariables,
+						names : []
+					};
 
 				while ((match = re.exec(varText)) !== null) {
 					// Remove full match from varText.
@@ -375,43 +408,33 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 
 					if (match[1]) {
 						// Base variable.
-						pNames.push(match[1]);
+						retVal.names.push(match[1]);
 					} else if (match[2]) {
 						// Dot property.
-						pNames.push(match[2]);
+						retVal.names.push(match[2]);
 					} else if (match[3]) {
 						// Square-bracketed property (double quoted).
-						pNames.push(match[3]);
+						retVal.names.push(match[3]);
 					} else if (match[4]) {
 						// Square-bracketed property (single quoted).
-						pNames.push(match[4]);
+						retVal.names.push(match[4]);
 					} else if (match[5]) {
-						// Square-bracketed property (embedded $variable).
-						pNames.push(Wikifier.getValue(match[5]));
+						// Square-bracketed property (embedded variable).
+						retVal.names.push(Wikifier.getValue(match[5]));
 					} else if (match[6]) {
 						// Square-bracketed property (numeric index).
-						pNames.push(Number(match[6]));
+						retVal.names.push(Number(match[6]));
 					}
 				}
-				return varText === "" ? pNames : [];
+				return varText === "" ? retVal : null;
 			}
 		},
 
 		/*
-			Wikify the given text and discard the output, throwing if there were errors.
+			Returns the output generated by wikifying the given text, throwing if there were errors.
 		*/
 		wikifyEval : {
 			value : function (text) {
-				/*
-				var frag = document.createDocumentFragment();
-				new Wikifier(frag, text);
-
-				var errors = frag.querySelector(".error");
-				if (errors !== null) {
-					throw new Error(errors.textContent.replace(/^(?:(?:Uncaught\s+)?Error:\s+)+/, ""));
-				}
-				*/
-
 				var output = document.createDocumentFragment();
 				new Wikifier(output, text);
 
@@ -495,31 +518,62 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 
 
 	/*******************************************************************************************************************
-	 * Text Primitives (Regular Expressions)
+	 * Text Primitives (Regular Expression Patterns)
 	 ******************************************************************************************************************/
 	Object.defineProperty(Wikifier, "textPrimitives", { value : {} });
 
-	// Tier-1 primitives.
-	Object.defineProperties(Wikifier.textPrimitives, {
-		anyLetter : {
-			value : _unicodeOk ? "[A-Za-z0-9_\\-\u00c0-\u017e]" : "[A-Za-z0-9_\\-\u00c0-\u00ff]"
-		},
-
-		url : {
-			value : "(?:file|https?|mailto|ftp|javascript|irc|news|data):[^\\s'\"]+(?:/|\\b)"
-		}
+	/*
+		Character patterns.
+	*/
+	Object.defineProperty(Wikifier.textPrimitives, "anyLetter", {
+		value : "[0-9A-Z_a-z\\-\\u00C0-\\u00D6\\u00D8-\\u00DE\\u00DF-\\u00F6\\u00F8-\\u00FF" + (
+			_unicodeOk ? "\\u0150\\u0170\\u0151\\u0171" /* Include surrogate pairs: "\\uD800-\\uDFFF" ? */ : ""
+		) + "]"
 	});
 
-	// Tier-2 primitives.
-	Object.defineProperties(Wikifier.textPrimitives, {
-		inlineCSS : {
-			value : [
-					"(?:(" + Wikifier.textPrimitives.anyLetter + "+)\\(([^\\)\\|\\n]+)\\):)", // [1,2]=style(value):
-					"(?:(" + Wikifier.textPrimitives.anyLetter + "+):([^;\\|\\n]+);)",        // [3,4]=style:value;
-					"(?:((?:\\." + Wikifier.textPrimitives.anyLetter + "+)+);)",              // [5]  =.className;
-					"(?:((?:#" + Wikifier.textPrimitives.anyLetter + "+)+);)"                 // [6]  =#id;
-				].join("|")
-		}
+	/*
+		Identifier patterns.
+
+		n.b. These are kludges.  Since JavaScript's RegExp syntax isn't fully Unicode-enabled,
+		     not supporting Unicode character classes, the correct regular expression to match
+		     a valid identifier (within the scope of our needs) would be on the order of 11 kB.
+		     That being the case, for the time being, we restrict valid TwineScript identifiers
+		     to US-ASCII.
+	*/
+	Object.defineProperty(Wikifier.textPrimitives, "identifierFirstChar", {
+		value : "[$A-Z_a-z]"
+	});
+	Object.defineProperty(Wikifier.textPrimitives, "identifier", {
+		value : Wikifier.textPrimitives.identifierFirstChar + "[$0-9A-Z_a-z]*"
+	});
+
+	/*
+		Variable patterns.
+	*/
+	Object.defineProperty(Wikifier.textPrimitives, "variableSigil", {
+		value : "[$_]"
+	});
+	Object.defineProperty(Wikifier.textPrimitives, "variable", {
+		value : Wikifier.textPrimitives.variableSigil + Wikifier.textPrimitives.identifier
+	});
+
+	/*
+		Inline CSS pattern.
+	*/
+	Object.defineProperty(Wikifier.textPrimitives, "inlineCSS", {
+		value : [
+			"(?:(" + Wikifier.textPrimitives.anyLetter + "+)\\(([^\\)\\|\\n]+)\\):)", // [1,2]=style(value):
+			"(?:(" + Wikifier.textPrimitives.anyLetter + "+):([^;\\|\\n]+);)",        // [3,4]=style:value;
+			"(?:((?:\\." + Wikifier.textPrimitives.anyLetter + "+)+);)",              // [5]  =.className;
+			"(?:((?:#" + Wikifier.textPrimitives.anyLetter + "+)+);)"                 // [6]  =#id;
+		].join("|")
+	});
+
+	/*
+		URL pattern.
+	*/
+	Object.defineProperty(Wikifier.textPrimitives, "url", {
+		value : "(?:file|https?|mailto|ftp|javascript|irc|news|data):[^\\s'\"]+(?:/|\\b)"
 	});
 
 
@@ -840,6 +894,590 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 	Object.defineProperty(Wikifier, "formatters", {
 		value : [
 			{
+				name            : "macro",
+				match           : "<<",
+				lookaheadRegExp : /<<(\/?[A-Za-z][^>\s]*|[=-])(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|(?:\[(?:[<>]?[Ii][Mm][Gg])?\[[^\r\n]*?\]\]+)|[^>]|(?:>(?!>)))*)>>/gm,
+				argsPattern     : "(?:" + [
+					'("(?:\\\\.|[^"\\\\])+")',                          // 1=Double quoted
+					"('(?:\\\\.|[^'\\\\])+')",                          // 2=Single quoted
+					"(\"\"|'')",                                        // 3=Empty quotes
+					"(\\[(?:[<>]?[Ii][Mm][Gg])?\\[[^\\r\\n]*?\\]\\]+)", // 4=Double square-bracketed
+					"([^\"'`\\s]\\S*)"                                  // 5=Barewords
+				].join("|") + ")",
+				working : { source : "", name : "", handler : "", arguments : "", index : 0 }, // the working parse object
+				context : null, // last execution context object (top-level macros, hierarchically, have a null context)
+				handler : function (w) {
+					var matchStart = this.lookaheadRegExp.lastIndex = w.matchStart;
+					if (this.parseTag(w)) {
+						/*
+							If `parseBody()` is called below, it will modify the current working
+							values, so we must cache them now.
+						*/
+						var	nextMatch = w.nextMatch,
+							source    = this.working.source,
+							name      = this.working.name,
+							handler   = this.working.handler,
+							rawArgs   = this.working.arguments;
+
+						try {
+							var macro = Macro.get(name);
+							if (macro) {
+								var payload = null;
+								if (macro.hasOwnProperty("tags")) {
+									payload = this.parseBody(w, macro);
+									if (!payload) {
+										w.nextMatch = nextMatch; // we must reset `w.nextMatch` here, as `parseBody()` modifies it
+										return throwError(w.output, "cannot find a closing tag for macro <<" + name + ">>",
+											w.source.slice(matchStart, w.nextMatch) + "\u2026");
+									}
+								}
+								if (typeof macro[handler] === "function") {
+									var args = this.createArgs(rawArgs, macro.hasOwnProperty("skipArgs") && !!macro.skipArgs);
+
+									/*
+										New-style macros.
+									*/
+									if (macro.hasOwnProperty("_MACRO_API")) {
+										/*
+											Add the macro's execution context to the context chain.
+										*/
+										this.context = new MacroContext({
+											parent  : this.context,
+											macro   : macro,
+											name    : name,
+											args    : args,
+											payload : payload,
+											parser  : w,
+											source  : source
+										});
+
+										/*
+											Call the handler.
+
+											n.b. There's no catch clause here because this try/finally exists simply
+											     to ensure that the execution context is properly restored in the event
+											     that an uncaught exception is thrown during the handler call.
+										*/
+										try {
+											macro[handler].call(this.context);
+										} finally {
+											this.context = this.context.parent;
+										}
+									}
+
+									/*
+										Old-style macros.
+									*/
+									else {
+										var prevRawArgs = w._rawArgs;
+										w._rawArgs = rawArgs; // cache the raw arguments for use by `Wikifier.rawArgs()` & `Wikifier.fullArgs()`
+										macro[handler](w.output, name, args, w, payload);
+										w._rawArgs = prevRawArgs;
+									}
+								} else {
+									return throwError(w.output, "macro <<" + name + '>> handler function "' + handler + '" '
+										+ (macro.hasOwnProperty(handler) ? "is not a function" : "does not exist"), w.source.slice(matchStart, w.nextMatch));
+								}
+							} else if (Macro.tags.has(name)) {
+								var tags = Macro.tags.get(name);
+								return throwError(w.output, "child tag <<" + name + ">> was found outside of a call to its parent macro"
+									+ (tags.length === 1 ? '' : 's') + " <<" + tags.join(">>, <<") + ">>",
+									  w.source.slice(matchStart, w.nextMatch));
+							} else {
+								return throwError(w.output, "macro <<" + name + ">> does not exist", w.source.slice(matchStart, w.nextMatch));
+							}
+						} catch (e) {
+							return throwError(w.output, "cannot execute " + (macro && macro.isWidget ? "widget" : "macro") + " <<" + name + ">>: " + e.message,
+								w.source.slice(matchStart, w.nextMatch));
+						} finally {
+							this.working.source    = "";
+							this.working.name      = "";
+							this.working.handler   = "";
+							this.working.arguments = "";
+							this.working.index     = 0;
+						}
+					} else {
+						w.outputText(w.output, w.matchStart, w.nextMatch);
+					}
+				},
+				parseTag : function (w) {
+					var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
+					if (lookaheadMatch && lookaheadMatch.index === w.matchStart && lookaheadMatch[1]) {
+						w.nextMatch = this.lookaheadRegExp.lastIndex;
+						this.working.source = w.source.slice(lookaheadMatch.index, this.lookaheadRegExp.lastIndex);
+						var fnSigil = lookaheadMatch[1].indexOf("::");
+						if (fnSigil !== -1) {
+							this.working.name = lookaheadMatch[1].slice(0, fnSigil);
+							this.working.handler = lookaheadMatch[1].slice(fnSigil + 2);
+						} else {
+							this.working.name = lookaheadMatch[1];
+							this.working.handler = "handler";
+						}
+						this.working.arguments = lookaheadMatch[2];
+						this.working.index = lookaheadMatch.index;
+
+						return true;
+					}
+					return false;
+				},
+				parseBody : function (w, macro) {
+					var	openTag      = this.working.name,
+						closeTag     = "/" + openTag,
+						closeAlt     = "end" + openTag,
+						bodyTags     = Array.isArray(macro.tags) ? macro.tags : false,
+						end          = -1,
+						opened       = 1,
+						curSource    = this.working.source,
+						curTag       = this.working.name,
+						curArgument  = this.working.arguments,
+						contentStart = w.nextMatch,
+						payload      = [],
+						skipArgs     = macro.hasOwnProperty("skipArgs") && !!macro.skipArgs;
+
+					while ((w.matchStart = w.source.indexOf(this.match, w.nextMatch)) !== -1) {
+						if (!this.parseTag(w)) {
+							this.lookaheadRegExp.lastIndex = w.nextMatch = w.matchStart + this.match.length;
+							continue;
+						}
+
+						var	tagSource = this.working.source,
+							tagName   = this.working.name,
+							tagArgs   = this.working.arguments,
+							tagBegin  = this.working.index,
+							tagEnd    = w.nextMatch;
+
+						switch (tagName) {
+						case openTag:
+							++opened;
+							break;
+
+						case closeAlt:
+						case closeTag:
+							--opened;
+							break;
+
+						default:
+							if (opened === 1 && bodyTags) {
+								for (var i = 0, iend = bodyTags.length; i < iend; ++i) {
+									if (tagName === bodyTags[i]) {
+										payload.push({
+											source    : curSource,
+											name      : curTag,
+											arguments : curArgument,
+											args      : this.createArgs(curArgument, skipArgs),
+											contents  : w.source.slice(contentStart, tagBegin)
+										});
+										curSource    = tagSource;
+										curTag       = tagName;
+										curArgument  = tagArgs;
+										contentStart = tagEnd;
+									}
+								}
+							}
+							break;
+						}
+						if (opened === 0) {
+							payload.push({
+								source    : curSource,
+								name      : curTag,
+								arguments : curArgument,
+								args      : this.createArgs(curArgument, skipArgs),
+								contents  : w.source.slice(contentStart, tagBegin)
+							});
+							end = tagEnd;
+							break;
+						}
+					}
+
+					if (end !== -1) {
+						w.nextMatch = end;
+						return payload;
+					}
+					return null;
+				},
+				createArgs : function (rawArgsString, skipArgs) {
+					var args = !skipArgs ? this.parseArgs(rawArgsString) : [];
+
+					// Extend the args array with the raw and full argument strings.
+					Object.defineProperties(args, {
+						raw : {
+							value : rawArgsString
+						},
+						full : {
+							value : Wikifier.parse(rawArgsString)
+						}
+					});
+
+					return args;
+				},
+				parseArgs : function (rawArgsString) {
+					// Groups: 1=Double quoted | 2=Single quoted | 3=Empty quotes | 4=Double square-bracketed | 5=Barewords
+					var	re      = new RegExp(this.argsPattern, "gm"),
+						match,
+						args    = [],
+						varTest = new RegExp("^" + Wikifier.textPrimitives.variable);
+
+					while ((match = re.exec(rawArgsString)) !== null) {
+						var arg;
+
+						// Double quoted.
+						if (match[1]) {
+							arg = match[1];
+
+							// Evaluate the string to handle escaped characters.
+							try {
+								arg = evalJavaScript(arg);
+							} catch (e) {
+								throw new Error("unable to parse macro argument '" + arg + "': " + e.message);
+							}
+						}
+
+						// Single quoted.
+						else if (match[2]) {
+							arg = match[2];
+
+							// Evaluate the string to handle escaped characters.
+							try {
+								arg = evalJavaScript(arg);
+							} catch (e) {
+								throw new Error('unable to parse macro argument "' + arg + '": ' + e.message);
+							}
+						}
+
+						// Empty quotes.
+						else if (match[3]) {
+							arg = "";
+						}
+
+						// Double square-bracketed.
+						else if (match[4]) {
+							arg = match[4];
+
+							var markup = Wikifier.helpers.parseSquareBracketedMarkup({
+									source     : arg,
+									matchStart : 0
+								});
+							if (markup.hasOwnProperty("error")) {
+								throw new Error('unable to parse macro argument "' + arg + '": ' + markup.error);
+							}
+							if (markup.pos < arg.length) {
+								throw new Error('unable to parse macro argument "' + arg + '": unexpected character(s) "'
+									+ arg.slice(markup.pos) + '" (pos: ' + markup.pos + ')');
+							}
+
+							// Convert to a link or image object.
+							if (markup.isLink) {
+								// .isLink, [.text], [.forceInternal], .link, [.setter]
+								arg = { isLink : true };
+								arg.count    = markup.hasOwnProperty("text") ? 2 : 1;
+								arg.link     = Wikifier.helpers.evalPassageId(markup.link);
+								arg.text     = markup.hasOwnProperty("text") ? Wikifier.helpers.evalText(markup.text) : arg.link;
+								arg.external = !markup.forceInternal && Wikifier.isExternalLink(arg.link);
+								arg.setFn    = markup.hasOwnProperty("setter")
+									? (function (ex) { return function () { evalTwineScript(ex); }; })(markup.setter)
+									: null;
+							} else if (markup.isImage) {
+								// .isImage, [.align], [.title], .source, [.forceInternal], [.link], [.setter]
+								arg = (function (source) {
+									var imgObj = {
+											isImage : true,
+											source  : source
+										};
+									// Check for Twine 1.4 Base64 image passage transclusion.
+									if (source.slice(0, 5) !== "data:" && Story.has(source)) {
+										var passage = Story.get(source);
+										if (passage.tags.contains("Twine.image")) {
+											imgObj.source  = passage.text;
+											imgObj.passage = passage.title;
+										}
+									}
+									return imgObj;
+								})(markup.source);
+								if (markup.hasOwnProperty("align")) {
+									arg.align = markup.align;
+								}
+								if (markup.hasOwnProperty("title")) {
+									arg.title = Wikifier.helpers.evalText(markup.title);
+								}
+								if (markup.hasOwnProperty("link")) {
+									arg.link     = Wikifier.helpers.evalPassageId(markup.link);
+									arg.external = !markup.forceInternal && Wikifier.isExternalLink(arg.link);
+								}
+								arg.setFn = markup.hasOwnProperty("setter")
+									? (function (ex) { return function () { evalTwineScript(ex); }; })(markup.setter)
+									: null;
+							}
+						}
+
+						// Barewords.
+						else if (match[5]) {
+							arg = match[5];
+
+							if (varTest.test(arg)) {
+								// variable, so substitute its value.
+								arg = Wikifier.getValue(arg);
+							} else if (/^(?:settings|setup)[\.\[]/.test(arg)) {
+								// Settings or setup object, so try to evaluate it.
+								try {
+									arg = evalTwineScript(arg);
+								} catch (e) {
+									throw new Error('unable to parse macro argument "' + arg + '": ' + e.message);
+								}
+							} else if (/^(?:\{.*\}|\[.*\])$/.test(arg)) {
+								// Object or Array literal, so try to evaluate it.
+								//   n.b. Authors really shouldn't be passing object/array literals as arguments.  If they want to
+								//        pass a complex type, then store it in a variable and pass that instead.
+								try {
+									// The parens are to protect object literals from being confused with block statements.
+									arg = evalTwineScript("(" + arg + ")");
+								} catch (e) {
+									throw new Error('unable to parse macro argument "' + arg + '": ' + e.message);
+								}
+							} else if (arg === "null") {
+								// Null literal, so convert it into null.
+								arg = null;
+							} else if (arg === "undefined") {
+								// Undefined literal, so convert it into undefined.
+								arg = undefined;
+							} else if (arg === "true") {
+								// Boolean true literal, so convert it into boolean true.
+								arg = true;
+							} else if (arg === "false") {
+								// Boolean false literal, so convert it into boolean false.
+								arg = false;
+							} else if (!isNaN(parseFloat(arg)) && isFinite(arg)) {
+								// Numeric literal, so convert it into a number.
+								//   n.b. Octal literals are not handled correctly by Number() (e.g. Number("077") yields 77, not 63).
+								//        We could use eval("077") instead, which does correctly yield 63, however, it's probably far
+								//        more likely that the average Twine/Twee author would expect "077" to yield 77 rather than 63.
+								//        So, we cater to author expectation and use Number().
+								arg = Number(arg);
+							}
+						}
+
+						args.push(arg);
+					}
+
+					return args;
+				}
+			},
+
+			{
+				name    : "prettyLink",
+				match   : "\\[\\[[^[]",
+				handler : function (w) {
+					var markup = Wikifier.helpers.parseSquareBracketedMarkup(w);
+					if (markup.hasOwnProperty("error")) {
+						w.outputText(w.output, w.matchStart, w.nextMatch);
+						return;
+					}
+
+					w.nextMatch = markup.pos;
+
+					// text=(text), forceInternal=(~), link=link, setter=(setter)
+					var	link  = Wikifier.helpers.evalPassageId(markup.link),
+						text  = markup.hasOwnProperty("text") ? Wikifier.helpers.evalText(markup.text) : link,
+						setFn = markup.hasOwnProperty("setter")
+							? (function (ex) { return function () { evalTwineScript(ex); }; })(markup.setter)
+							: null;
+
+					// Debug view setup.
+					var	output = (config.debug
+							? new DebugView(w.output, "wiki-link", "[[link]]", w.source.slice(w.matchStart, w.nextMatch))
+							: w
+						).output;
+
+					if (markup.forceInternal || !Wikifier.isExternalLink(link)) {
+						Wikifier.createInternalLink(output, link, text, setFn);
+					} else {
+						Wikifier.createExternalLink(output, link, text);
+					}
+				}
+			},
+
+			{
+				name    : "urlLink",
+				match   : Wikifier.textPrimitives.url,
+				handler : function (w) {
+					w.outputText(Wikifier.createExternalLink(w.output, w.matchText), w.matchStart, w.nextMatch);
+				}
+			},
+
+			{
+				name    : "image",
+				match   : "\\[[<>]?[Ii][Mm][Gg]\\[",
+				handler : function (w) {
+					var markup = Wikifier.helpers.parseSquareBracketedMarkup(w);
+					if (markup.hasOwnProperty("error")) {
+						w.outputText(w.output, w.matchStart, w.nextMatch);
+						return;
+					}
+
+					w.nextMatch = markup.pos;
+
+					// Debug view setup.
+					var	debugView;
+					if (config.debug) {
+						debugView = new DebugView(
+							w.output,
+							"wiki-image",
+							markup.hasOwnProperty("link") ? "[img[][link]]" : "[img[]]",
+							w.source.slice(w.matchStart, w.nextMatch)
+						);
+						debugView.modes({ block : true });
+					}
+
+					// align=(left|right), title=(title), source=source, forceInternal=(~), link=(link), setter=(setter)
+					var	el     = (config.debug ? debugView : w).output,
+						setFn  = markup.hasOwnProperty("setter")
+							? (function (ex) { return function () { evalTwineScript(ex); }; })(markup.setter)
+							: null,
+						source;
+					if (markup.hasOwnProperty("link")) {
+						var link = Wikifier.helpers.evalPassageId(markup.link);
+						if (markup.forceInternal || !Wikifier.isExternalLink(link)) {
+							el = Wikifier.createInternalLink(el, link, null, setFn);
+						} else {
+							el = Wikifier.createExternalLink(el, link);
+						}
+						el.classList.add("link-image");
+					}
+					el = insertElement(el, "img");
+					source = Wikifier.helpers.evalPassageId(markup.source);
+					// Check for image passage transclusion.
+					if (source.slice(0, 5) !== "data:" && Story.has(source)) {
+						var passage = Story.get(source);
+						if (passage.tags.contains("Twine.image")) {
+							el.setAttribute("data-passage", passage.title);
+							source = passage.text;
+						}
+					}
+					el.src = source;
+					if (markup.hasOwnProperty("title")) {
+						el.title = Wikifier.helpers.evalText(markup.title);
+					}
+					if (markup.hasOwnProperty("align")) {
+						el.align = markup.align;
+					}
+				}
+			},
+
+			{
+				name    : "formatByChar",
+				match   : "''|//|__|\\^\\^|~~|==|\\{\\{\\{",
+				handler : function (w) {
+					switch (w.matchText) {
+					case "''":
+						w.subWikify(insertElement(w.output, "strong"), "''");
+						break;
+					case "//":
+						w.subWikify(insertElement(w.output, "em"), "//");
+						break;
+					case "__":
+						w.subWikify(insertElement(w.output, "u"), "__");
+						break;
+					case "^^":
+						w.subWikify(insertElement(w.output, "sup"), "\\^\\^");
+						break;
+					case "~~":
+						w.subWikify(insertElement(w.output, "sub"), "~~");
+						break;
+					case "==":
+						w.subWikify(insertElement(w.output, "s"), "==");
+						break;
+					case "{{{":
+						var lookaheadRegExp = /\{\{\{((?:.|\n)*?)\}\}\}/gm;
+						lookaheadRegExp.lastIndex = w.matchStart;
+						var lookaheadMatch = lookaheadRegExp.exec(w.source);
+						if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
+							insertElement(w.output, "code", null, null, lookaheadMatch[1]);
+							w.nextMatch = lookaheadRegExp.lastIndex;
+						}
+						break;
+					}
+				}
+			},
+
+			{
+				name      : "monospacedByLine",
+				match     : "^\\{\\{\\{\\n",
+				lookahead : "^\\{\\{\\{\\n((?:^[^\\n]*\\n)+?)(^\\}\\}\\}$\\n?)",
+				handler   : function (w) {
+					var lookaheadRegExp = new RegExp(this.lookahead, "gm");
+					lookaheadRegExp.lastIndex = w.matchStart;
+					var lookaheadMatch = lookaheadRegExp.exec(w.source);
+					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
+						insertElement(w.output, "pre", null, null, lookaheadMatch[1]);
+						w.nextMatch = lookaheadRegExp.lastIndex;
+					}
+				}
+			},
+
+			{
+				name        : "customStyle",
+				match       : "@@",
+				terminator  : "@@",
+				blockRegExp : /\s*\n/gm,
+				handler     : function (w) {
+					var	css = Wikifier.helpers.inlineCSS(w);
+					this.blockRegExp.lastIndex = w.nextMatch; // must follow the call to .inlineCSS()
+					var	blockMatch = this.blockRegExp.exec(w.source),
+						blockLevel = blockMatch && blockMatch.index === w.nextMatch,
+						el         = insertElement(w.output, blockLevel ? "div" : "span");
+					if (css.styles.length === 0 && css.classes.length === 0 && css.id === "") {
+						el.className = "marked";
+					} else {
+						for (var i = 0; i < css.styles.length; ++i) {
+							el.style[css.styles[i].style] = css.styles[i].value;
+						}
+						for (var i = 0; i < css.classes.length; ++i) { // eslint-disable-line no-redeclare
+							el.classList.add(css.classes[i]);
+						}
+						if (css.id !== "") {
+							el.id = css.id;
+						}
+					}
+					if (blockLevel) {
+						// Skip the leading and, if it exists, trailing newlines.
+						w.nextMatch += blockMatch[0].length;
+						w.subWikify(el, "\\n?" + this.terminator);
+					} else {
+						w.subWikify(el, this.terminator);
+					}
+				}
+			},
+
+			{
+				name            : "rawText",
+				match           : "\"{3}|<nowiki>",
+				lookaheadRegExp : /(?:\"{3}|<nowiki>)((?:.|\n)*?)(?:\"{3}|<\/nowiki>)/gm,
+				handler         : function (w) {
+					this.lookaheadRegExp.lastIndex = w.matchStart;
+					var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
+					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
+						insertElement(w.output, "span", null, null, lookaheadMatch[1]);
+						w.nextMatch = this.lookaheadRegExp.lastIndex;
+					}
+				}
+			},
+
+			{
+				name    : "rule",
+				match   : "^----+$\\n?|<hr ?/?>\\n?",
+				handler : function (w) {
+					insertElement(w.output, "hr");
+				}
+			},
+
+			{
+				name    : "emdash",
+				match   : "--",
+				handler : function (w) {
+					insertText(w.output, "\u2014");
+				}
+			},
+
+			{
 				name    : "doubleDollarSign",
 				match   : "\\${2}",
 				handler : function (w) {
@@ -848,8 +1486,13 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 			},
 
 			{
-				name    : "$variable",
-				match   : "\\$\\w+(?:(?:\\.[A-Za-z_$]\\w*)|(?:\\[\\d+\\])|(?:\\[\"(?:\\\\.|[^\"\\\\])+\"\\])|(?:\\['(?:\\\\.|[^'\\\\])+'\\])|(?:\\[\\$\\w+\\]))*",
+				name  : "nakedVariable",
+				match : Wikifier.textPrimitives.variable
+					+ "(?:(?:\\."
+					+ Wikifier.textPrimitives.identifier
+					+ ")|(?:\\[\\d+\\])|(?:\\[\"(?:\\\\.|[^\"\\\\])+\"\\])|(?:\\['(?:\\\\.|[^'\\\\])+'\\])|(?:\\["
+					+ Wikifier.textPrimitives.variable
+					+ "\\]))*",
 				handler : function (w) {
 					var	result = printableStringOrDefault(Wikifier.getValue(w.matchText), null);
 					if (result === null) {
@@ -857,13 +1500,87 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 					} else {
 						new Wikifier(
 							(config.debug
-								? new DebugView(w.output, "$variable", w.matchText, w.matchText) // Debug view setup.
+								? new DebugView(w.output, "variable", w.matchText, w.matchText) // Debug view setup.
 								: w
 							).output,
 							result
 						);
 					}
+				}
+			},
 
+			{
+				name       : "heading",
+				match      : "^!{1,6}",
+				terminator : "\\n",
+				handler    : function (w) {
+					var isHeading = (function (nodes) {
+							var hasGCS = typeof window.getComputedStyle === "function";
+							for (var i = nodes.length - 1; i >= 0; --i) {
+								var node = nodes[i];
+								switch (node.nodeType) {
+								case Node.ELEMENT_NODE:
+									var tagName = node.nodeName.toUpperCase();
+									if (tagName === "BR") {
+										return true;
+									}
+									var styles = hasGCS ? window.getComputedStyle(node, null) : node.currentStyle;
+									if (styles && styles.display) {
+										if (styles.display === "none") {
+											continue;
+										}
+										return styles.display === "block";
+									}
+									/*
+										WebKit/Blink-based browsers do not attach any computed style
+										information to elements until they're inserted into the DOM
+										(and probably visible), not even the default browser styles
+										and any user styles.  So, we make an assumption based on the
+										element.
+									*/
+									switch (tagName) {
+									case "ADDRESS":
+									case "ARTICLE":
+									case "ASIDE":
+									case "BLOCKQUOTE":
+									case "CENTER":
+									case "DIV":
+									case "DL":
+									case "FIGURE":
+									case "FOOTER":
+									case "FORM":
+									case "H1":
+									case "H2":
+									case "H3":
+									case "H4":
+									case "H5":
+									case "H6":
+									case "HEADER":
+									case "HR":
+									case "MAIN":
+									case "NAV":
+									case "OL":
+									case "P":
+									case "PRE":
+									case "SECTION":
+									case "TABLE":
+									case "UL":
+										return true;
+									}
+									return false;
+								case Node.COMMENT_NODE:
+									continue;
+								default:
+									return false;
+								}
+							}
+							return true;
+						})(w.output.childNodes);
+					if (isHeading) {
+						w.subWikify(insertElement(w.output, "h" + w.matchLength), this.terminator);
+					} else {
+						insertText(w.output, w.matchText);
+					}
 				}
 			},
 
@@ -997,81 +1714,6 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 			},
 
 			{
-				name       : "heading",
-				match      : "^!{1,6}",
-				terminator : "\\n",
-				handler    : function (w) {
-					var isHeading = (function (nodes) {
-							var hasGCS = typeof window.getComputedStyle === "function";
-							for (var i = nodes.length - 1; i >= 0; --i) {
-								var node = nodes[i];
-								switch (node.nodeType) {
-								case Node.ELEMENT_NODE:
-									var tagName = node.nodeName.toUpperCase();
-									if (tagName === "BR") {
-										return true;
-									}
-									var styles = hasGCS ? window.getComputedStyle(node, null) : node.currentStyle;
-									if (styles && styles.display) {
-										if (styles.display === "none") {
-											continue;
-										}
-										return styles.display === "block";
-									}
-									/*
-										WebKit/Blink-based browsers do not attach any computed style
-										information to elements until they're inserted into the DOM
-										(and probably visible), not even the default browser styles
-										and any user styles.  So, we make an assumption based on the
-										element.
-									*/
-									switch (tagName) {
-									case "ADDRESS":
-									case "ARTICLE":
-									case "ASIDE":
-									case "BLOCKQUOTE":
-									case "CENTER":
-									case "DIV":
-									case "DL":
-									case "FIGURE":
-									case "FOOTER":
-									case "FORM":
-									case "H1":
-									case "H2":
-									case "H3":
-									case "H4":
-									case "H5":
-									case "H6":
-									case "HEADER":
-									case "HR":
-									case "MAIN":
-									case "NAV":
-									case "OL":
-									case "P":
-									case "PRE":
-									case "SECTION":
-									case "TABLE":
-									case "UL":
-										return true;
-									}
-									return false;
-								case Node.COMMENT_NODE:
-									continue;
-								default:
-									return false;
-								}
-							}
-							return true;
-						})(w.output.childNodes);
-					if (isHeading) {
-						w.subWikify(insertElement(w.output, "h" + w.matchLength), this.terminator);
-					} else {
-						insertText(w.output, w.matchText);
-					}
-				}
-			},
-
-			{
 				name         : "list",
 				match        : "^(?:(?:\\*+)|(?:#+))",
 				lookahead    : "^(?:(\\*+)|(#+))",
@@ -1168,460 +1810,6 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 			},
 
 			{
-				name    : "rule",
-				match   : "^----+$\\n?|<hr ?/?>\\n?",
-				handler : function (w) {
-					insertElement(w.output, "hr");
-				}
-			},
-
-			{
-				name      : "monospacedByLine",
-				match     : "^\\{\\{\\{\\n",
-				lookahead : "^\\{\\{\\{\\n((?:^[^\\n]*\\n)+?)(^\\}\\}\\}$\\n?)",
-				handler   : function (w) {
-					var lookaheadRegExp = new RegExp(this.lookahead, "gm");
-					lookaheadRegExp.lastIndex = w.matchStart;
-					var lookaheadMatch = lookaheadRegExp.exec(w.source);
-					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
-						insertElement(w.output, "pre", null, null, lookaheadMatch[1]);
-						w.nextMatch = lookaheadRegExp.lastIndex;
-					}
-				}
-			},
-
-			{
-				name    : "prettyLink",
-				match   : "\\[\\[[^[]",
-				handler : function (w) {
-					var markup = Wikifier.helpers.parseSquareBracketedMarkup(w);
-					if (markup.hasOwnProperty("error")) {
-						w.outputText(w.output, w.matchStart, w.nextMatch);
-						return;
-					}
-
-					w.nextMatch = markup.pos;
-
-					// text=(text), forceInternal=(~), link=link, setter=(setter)
-					var	link  = Wikifier.helpers.evalPassageId(markup.link),
-						text  = markup.hasOwnProperty("text") ? Wikifier.helpers.evalText(markup.text) : link,
-						setFn = markup.hasOwnProperty("setter")
-							? (function (ex) { return function () { evalTwineScript(ex); }; })(markup.setter)
-							: null;
-
-					// Debug view setup.
-					var	output = (config.debug
-							? new DebugView(w.output, "wiki-link", "[[link]]", w.source.slice(w.matchStart, w.nextMatch))
-							: w
-						).output;
-
-					if (markup.forceInternal || !Wikifier.isExternalLink(link)) {
-						Wikifier.createInternalLink(output, link, text, setFn);
-					} else {
-						Wikifier.createExternalLink(output, link, text);
-					}
-				}
-			},
-
-			{
-				name    : "urlLink",
-				match   : Wikifier.textPrimitives.url,
-				handler : function (w) {
-					w.outputText(Wikifier.createExternalLink(w.output, w.matchText), w.matchStart, w.nextMatch);
-				}
-			},
-
-			{
-				name    : "image",
-				match   : "\\[[<>]?[Ii][Mm][Gg]\\[",
-				handler : function (w) {
-					var markup = Wikifier.helpers.parseSquareBracketedMarkup(w);
-					if (markup.hasOwnProperty("error")) {
-						w.outputText(w.output, w.matchStart, w.nextMatch);
-						return;
-					}
-
-					w.nextMatch = markup.pos;
-
-					// Debug view setup.
-					var	debugView;
-					if (config.debug) {
-						debugView = new DebugView(
-							w.output,
-							"wiki-image",
-							markup.hasOwnProperty("link") ? "[img[][link]]" : "[img[]]",
-							w.source.slice(w.matchStart, w.nextMatch)
-						);
-						debugView.modes({ block : true });
-					}
-
-					// align=(left|right), title=(title), source=source, forceInternal=(~), link=(link), setter=(setter)
-					var	el     = (config.debug ? debugView : w).output,
-						setFn  = markup.hasOwnProperty("setter")
-							? (function (ex) { return function () { evalTwineScript(ex); }; })(markup.setter)
-							: null,
-						source;
-					if (markup.hasOwnProperty("link")) {
-						var link = Wikifier.helpers.evalPassageId(markup.link);
-						if (markup.forceInternal || !Wikifier.isExternalLink(link)) {
-							el = Wikifier.createInternalLink(el, link, null, setFn);
-						} else {
-							el = Wikifier.createExternalLink(el, link);
-						}
-						el.classList.add("link-image");
-					}
-					el = insertElement(el, "img");
-					source = Wikifier.helpers.evalPassageId(markup.source);
-					// Check for image passage transclusion.
-					if (source.slice(0, 5) !== "data:" && Story.has(source)) {
-						var passage = Story.get(source);
-						if (passage.tags.contains("Twine.image")) {
-							el.setAttribute("data-passage", passage.title);
-							source = passage.text;
-						}
-					}
-					el.src = source;
-					if (markup.hasOwnProperty("title")) {
-						el.title = Wikifier.helpers.evalText(markup.title);
-					}
-					if (markup.hasOwnProperty("align")) {
-						el.align = markup.align;
-					}
-				}
-			},
-
-			{
-				name            : "macro",
-				match           : "<<",
-				lookaheadRegExp : /<<(\/?[A-Za-z][^>\s]*|[=-])(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|(?:\[(?:[<>]?[Ii][Mm][Gg])?\[[^\r\n]*?\]\]+)|[^>]|(?:>(?!>)))*)>>/gm,
-				argsPattern     : "(?:" + [
-					'("(?:\\\\.|[^"\\\\])+")',                          // 1=double quoted
-					"('(?:\\\\.|[^'\\\\])+')",                          // 2=single quoted
-					"(\"\"|'')",                                        // 3=empty quotes
-					"(\\[(?:[<>]?[Ii][Mm][Gg])?\\[[^\\r\\n]*?\\]\\]+)", // 4=double square-bracketed
-					"([^\"'`\\s]\\S*)"                                  // 5=barewords
-				].join("|") + ")",
-				working : { source : "", name : "", handler : "", arguments : "", index : 0 }, // the working parse object
-				context : null, // last execution context object (top-level macros, hierarchically, have a null context)
-				handler : function (w) {
-					var matchStart = this.lookaheadRegExp.lastIndex = w.matchStart;
-					if (this.parseTag(w)) {
-						// If parseBody() is called below, it will mutate the current working
-						// values, so we must cache them now.
-						var	nextMatch = w.nextMatch,
-							source    = this.working.source,
-							name      = this.working.name,
-							handler   = this.working.handler,
-							rawArgs   = this.working.arguments;
-						try {
-							var macro = Macro.get(name);
-							if (macro) {
-								var payload = null;
-								if (macro.hasOwnProperty("tags")) {
-									payload = this.parseBody(w, macro.tags);
-									if (!payload) {
-										w.nextMatch = nextMatch; // parseBody() changes this during processing, so we reset it here
-										return throwError(w.output, "cannot find a closing tag for macro <<" + name + ">>",
-											w.source.slice(matchStart, w.nextMatch) + "\u2026");
-									}
-								}
-								if (typeof macro[handler] === "function") {
-									var args = !macro.hasOwnProperty("skipArgs") || !macro.skipArgs ? this.parseArgs(rawArgs) : [];
-
-									// New-style macros.
-									if (macro.hasOwnProperty("_MACRO_API")) {
-										/*
-											Call the handler, modifying the execution context chain appropriately.
-
-											n.b. There's no catch clause because this try/finally is here simply to
-											     ensure that the execution context is properly restored in the event
-											     that an uncaught exception is thrown during the handler call.
-										*/
-										try {
-											this.context = new MacroContext({
-												parent  : this.context,
-												macro   : macro,
-												name    : name,
-												rawArgs : rawArgs,
-												args    : args,
-												payload : payload,
-												parser  : w,
-												source  : source // w.source.slice(matchStart, w.nextMatch)
-											});
-											macro[handler].call(this.context);
-										} finally {
-											this.context = this.context.parent;
-										}
-									}
-									// Old-style macros.
-									else {
-										var prevRawArgs = w._rawArgs;
-										w._rawArgs = rawArgs; // cache the raw arguments for use by Wikifier.rawArgs() & Wikifier.fullArgs()
-										macro[handler](w.output, name, args, w, payload);
-										w._rawArgs = prevRawArgs;
-									}
-								} else {
-									return throwError(w.output, "macro <<" + name + '>> handler function "' + handler + '" '
-										+ (macro.hasOwnProperty(handler) ? "is not a function" : "does not exist"), w.source.slice(matchStart, w.nextMatch));
-								}
-							} else if (Macro.tags.has(name)) {
-								var tags = Macro.tags.get(name);
-								return throwError(w.output, "child tag <<" + name + ">> was found outside of a call to its parent macro"
-									+ (tags.length === 1 ? '' : 's') + " <<" + tags.join(">>, <<") + ">>",
-									  w.source.slice(matchStart, w.nextMatch));
-							} else {
-								return throwError(w.output, "macro <<" + name + ">> does not exist", w.source.slice(matchStart, w.nextMatch));
-							}
-						} catch (e) {
-							return throwError(w.output, "cannot execute " + (macro && macro.isWidget ? "widget" : "macro") + " <<" + name + ">>: " + e.message,
-								w.source.slice(matchStart, w.nextMatch));
-						} finally {
-							this.working.source    = "";
-							this.working.name      = "";
-							this.working.handler   = "";
-							this.working.arguments = "";
-							this.working.index     = 0;
-						}
-					} else {
-						w.outputText(w.output, w.matchStart, w.nextMatch);
-					}
-				},
-				parseTag : function (w) {
-					var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
-					if (lookaheadMatch && lookaheadMatch.index === w.matchStart && lookaheadMatch[1]) {
-						w.nextMatch = this.lookaheadRegExp.lastIndex;
-						this.working.source = w.source.slice(lookaheadMatch.index, this.lookaheadRegExp.lastIndex);
-						var fnSigil = lookaheadMatch[1].indexOf("::");
-						if (fnSigil !== -1) {
-							this.working.name = lookaheadMatch[1].slice(0, fnSigil);
-							this.working.handler = lookaheadMatch[1].slice(fnSigil + 2);
-						} else {
-							this.working.name = lookaheadMatch[1];
-							this.working.handler = "handler";
-						}
-						this.working.arguments = lookaheadMatch[2];
-						this.working.index = lookaheadMatch.index;
-
-						return true;
-					}
-					return false;
-				},
-				parseBody : function (w, tags) {
-					var	openTag      = this.working.name,
-						closeTag     = "/" + openTag,
-						closeAlt     = "end" + openTag,
-						bodyTags     = Array.isArray(tags) ? tags : false,
-						end          = -1,
-						opened       = 1,
-						curSource    = this.working.source,
-						curTag       = this.working.name,
-						curArgument  = this.working.arguments,
-						contentStart = w.nextMatch,
-						payload      = [];
-
-					while ((w.matchStart = w.source.indexOf(this.match, w.nextMatch)) !== -1) {
-						if (!this.parseTag(w)) {
-							this.lookaheadRegExp.lastIndex = w.nextMatch = w.matchStart + this.match.length;
-							continue;
-						}
-
-						var	tagSource = this.working.source,
-							tagName   = this.working.name,
-							tagArgs   = this.working.arguments,
-							tagBegin  = this.working.index,
-							tagEnd    = w.nextMatch;
-
-						switch (tagName) {
-						case openTag:
-							++opened;
-							break;
-
-						case closeAlt:
-						case closeTag:
-							--opened;
-							break;
-
-						default:
-							if (opened === 1 && bodyTags) {
-								for (var i = 0, iend = bodyTags.length; i < iend; ++i) {
-									if (tagName === bodyTags[i]) {
-										payload.push({
-											source    : curSource,
-											name      : curTag,
-											arguments : curArgument,
-											contents  : w.source.slice(contentStart, tagBegin)
-										});
-										curSource    = tagSource;
-										curTag       = tagName;
-										curArgument  = tagArgs;
-										contentStart = tagEnd;
-									}
-								}
-							}
-							break;
-						}
-						if (opened === 0) {
-							payload.push({
-								source    : curSource,
-								name      : curTag,
-								arguments : curArgument,
-								contents  : w.source.slice(contentStart, tagBegin)
-							});
-							end = tagEnd;
-							break;
-						}
-					}
-
-					if (end !== -1) {
-						w.nextMatch = end;
-						return payload;
-					}
-					return null;
-				},
-				parseArgs : function (str) {
-					// Groups: 1=double quoted | 2=single quoted | 3=empty quotes | 4=double square-bracketed | 5=barewords
-					var	re    = new RegExp(this.argsPattern, "gm"),
-						match,
-						args  = [];
-
-					while ((match = re.exec(str)) !== null) {
-						var arg;
-
-						if (match[1]) {
-							// Double quoted.
-							arg = match[1];
-
-							// Evaluate the string to handle escaped characters.
-							try {
-								arg = evalJavaScript(arg);
-							} catch (e) {
-								throw new Error("unable to parse macro argument '" + arg + "': " + e.message);
-							}
-						} else if (match[2]) {
-							// Single quoted.
-							arg = match[2];
-
-							// Evaluate the string to handle escaped characters.
-							try {
-								arg = evalJavaScript(arg);
-							} catch (e) {
-								throw new Error('unable to parse macro argument "' + arg + '": ' + e.message);
-							}
-						} else if (match[3]) {
-							// Empty quotes.
-							arg = "";
-						} else if (match[4]) {
-							// Double square-bracketed.
-							arg = match[4];
-
-							var markup = Wikifier.helpers.parseSquareBracketedMarkup({
-									source     : arg,
-									matchStart : 0
-								});
-							if (markup.hasOwnProperty("error")) {
-								throw new Error('unable to parse macro argument "' + arg + '": ' + markup.error);
-							}
-							if (markup.pos < arg.length) {
-								throw new Error('unable to parse macro argument "' + arg + '": unexpected character(s) "'
-									+ arg.slice(markup.pos) + '" (pos: ' + markup.pos + ')');
-							}
-
-							// Convert to a link or image object.
-							if (markup.isLink) {
-								// .isLink, [.text], [.forceInternal], .link, [.setter]
-								arg = { isLink : true };
-								arg.count    = markup.hasOwnProperty("text") ? 2 : 1;
-								arg.link     = Wikifier.helpers.evalPassageId(markup.link);
-								arg.text     = markup.hasOwnProperty("text") ? Wikifier.helpers.evalText(markup.text) : arg.link;
-								arg.external = !markup.forceInternal && Wikifier.isExternalLink(arg.link);
-								arg.setFn    = markup.hasOwnProperty("setter")
-									? (function (ex) { return function () { evalTwineScript(ex); }; })(markup.setter)
-									: null;
-							} else if (markup.isImage) {
-								// .isImage, [.align], [.title], .source, [.forceInternal], [.link], [.setter]
-								arg = (function (source) {
-									var imgObj = {
-											isImage : true,
-											source  : source
-										};
-									// Check for Twine 1.4 Base64 image passage transclusion.
-									if (source.slice(0, 5) !== "data:" && Story.has(source)) {
-										var passage = Story.get(source);
-										if (passage.tags.contains("Twine.image")) {
-											imgObj.source  = passage.text;
-											imgObj.passage = passage.title;
-										}
-									}
-									return imgObj;
-								})(markup.source);
-								if (markup.hasOwnProperty("align")) {
-									arg.align = markup.align;
-								}
-								if (markup.hasOwnProperty("title")) {
-									arg.title = Wikifier.helpers.evalText(markup.title);
-								}
-								if (markup.hasOwnProperty("link")) {
-									arg.link     = Wikifier.helpers.evalPassageId(markup.link);
-									arg.external = !markup.forceInternal && Wikifier.isExternalLink(arg.link);
-								}
-								arg.setFn = markup.hasOwnProperty("setter")
-									? (function (ex) { return function () { evalTwineScript(ex); }; })(markup.setter)
-									: null;
-							}
-						} else if (match[5]) {
-							// Barewords.
-							arg = match[5];
-
-							if (/^\$\w+/.test(arg)) {
-								// $variable, so substitute its value.
-								arg = Wikifier.getValue(arg);
-							} else if (/^(?:settings|setup)[\.\[]/.test(arg)) {
-								// Settings or setup object, so try to evaluate it.
-								try {
-									arg = evalTwineScript(arg);
-								} catch (e) {
-									throw new Error('unable to parse macro argument "' + arg + '": ' + e.message);
-								}
-							} else if (/^(?:\{.*\}|\[.*\])$/.test(arg)) {
-								// Object or Array literal, so try to evaluate it.
-								//   n.b. Authors really shouldn't be passing object/array literals as arguments.  If they want to
-								//        pass a complex type, then store it in a variable and pass that instead.
-								try {
-									// The parens are to protect object literals from being confused with block statements.
-									arg = evalTwineScript("(" + arg + ")");
-								} catch (e) {
-									throw new Error('unable to parse macro argument "' + arg + '": ' + e.message);
-								}
-							} else if (arg === "null") {
-								// Null literal, so convert it into null.
-								arg = null;
-							} else if (arg === "undefined") {
-								// Undefined literal, so convert it into undefined.
-								arg = undefined;
-							} else if (arg === "true") {
-								// Boolean true literal, so convert it into boolean true.
-								arg = true;
-							} else if (arg === "false") {
-								// Boolean false literal, so convert it into boolean false.
-								arg = false;
-							} else if (!isNaN(parseFloat(arg)) && isFinite(arg)) {
-								// Numeric literal, so convert it into a number.
-								//   n.b. Octal literals are not handled correctly by Number() (e.g. Number("077") yields 77, not 63).
-								//        We could use eval("077") instead, which does correctly yield 63, however, it's probably far
-								//        more likely that the average Twine/Twee author would expect "077" to yield 77 rather than 63.
-								//        So, we cater to author expectation and use Number().
-								arg = Number(arg);
-							}
-						}
-
-						args.push(arg);
-					}
-
-					return args;
-				}
-			},
-
-			{
 				name            : "html",
 				match           : "<[Hh][Tt][Mm][Ll]>",
 				lookaheadRegExp : /<[Hh][Tt][Mm][Ll]>((?:.|\n)*?)<\/[Hh][Tt][Mm][Ll]>/gm,
@@ -1669,84 +1857,6 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 			},
 
 			{
-				name    : "formatByChar",
-				match   : "''|//|__|\\^\\^|~~|==|\\{\\{\\{",
-				handler : function (w) {
-					switch (w.matchText) {
-					case "''":
-						w.subWikify(insertElement(w.output, "strong"), "''");
-						break;
-					case "//":
-						w.subWikify(insertElement(w.output, "em"), "//");
-						break;
-					case "__":
-						w.subWikify(insertElement(w.output, "u"), "__");
-						break;
-					case "^^":
-						w.subWikify(insertElement(w.output, "sup"), "\\^\\^");
-						break;
-					case "~~":
-						w.subWikify(insertElement(w.output, "sub"), "~~");
-						break;
-					case "==":
-						w.subWikify(insertElement(w.output, "s"), "==");
-						break;
-					case "{{{":
-						var lookaheadRegExp = /\{\{\{((?:.|\n)*?)\}\}\}/gm;
-						lookaheadRegExp.lastIndex = w.matchStart;
-						var lookaheadMatch = lookaheadRegExp.exec(w.source);
-						if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
-							insertElement(w.output, "code", null, null, lookaheadMatch[1]);
-							w.nextMatch = lookaheadRegExp.lastIndex;
-						}
-						break;
-					}
-				}
-			},
-
-			{
-				name        : "customStyle",
-				match       : "@@",
-				terminator  : "@@",
-				blockRegExp : /\s*\n/gm,
-				handler     : function (w) {
-					var	css = Wikifier.helpers.inlineCSS(w);
-					this.blockRegExp.lastIndex = w.nextMatch; // must follow the call to .inlineCSS()
-					var	blockMatch = this.blockRegExp.exec(w.source),
-						blockLevel = blockMatch && blockMatch.index === w.nextMatch,
-						el         = insertElement(w.output, blockLevel ? "div" : "span");
-					if (css.styles.length === 0 && css.classes.length === 0 && css.id === "") {
-						el.className = "marked";
-					} else {
-						for (var i = 0; i < css.styles.length; ++i) {
-							el.style[css.styles[i].style] = css.styles[i].value;
-						}
-						for (var i = 0; i < css.classes.length; ++i) { // eslint-disable-line no-redeclare
-							el.classList.add(css.classes[i]);
-						}
-						if (css.id !== "") {
-							el.id = css.id;
-						}
-					}
-					if (blockLevel) {
-						// Skip the leading and, if it exists, trailing newlines.
-						w.nextMatch += blockMatch[0].length;
-						w.subWikify(el, "\\n?" + this.terminator);
-					} else {
-						w.subWikify(el, this.terminator);
-					}
-				}
-			},
-
-			{
-				name    : "emdash",
-				match   : "--",
-				handler : function (w) {
-					insertText(w.output, "\u2014");
-				}
-			},
-
-			{
 				name    : "lineContinuation",
 				match   : "\\\\[\\s\\u00a0\\u2028\\u2029]*?(?:\\n|$)", // Unicode space-character escapes required for IE < 11 (maybe < 10?)
 				handler : function (w) {
@@ -1760,20 +1870,6 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 				handler : function (w) {
 					if (w._nobr.length === 0 || !w._nobr[0]) {
 						insertElement(w.output, "br");
-					}
-				}
-			},
-
-			{
-				name            : "rawText",
-				match           : "\"{3}|<nowiki>",
-				lookaheadRegExp : /(?:\"{3}|<nowiki>)((?:.|\n)*?)(?:\"{3}|<\/nowiki>)/gm,
-				handler         : function (w) {
-					this.lookaheadRegExp.lastIndex = w.matchStart;
-					var lookaheadMatch = this.lookaheadRegExp.exec(w.source);
-					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
-						insertElement(w.output, "span", null, null, lookaheadMatch[1]);
-						w.nextMatch = this.lookaheadRegExp.lastIndex;
 					}
 				}
 			},
