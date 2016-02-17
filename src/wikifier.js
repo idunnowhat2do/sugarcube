@@ -1949,15 +1949,11 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 									w.subWikify(el, terminator, true); // ignore case during match
 
 									/*
-										Debug view setup.  If the current element has any debug view
-										children which have "block" mode set, then set its debug view
-										to the same.  Just makes things look a bit nicer.
-
-										We don't bother checking if the current debug view has "block"
-										mode set as only `<img>` elements could have that set at this
-										point and, as void elements, they cannot enter here.
+										Debug view modification.  If the current element has any debug
+										view descendants who have "block" mode set, then set its debug
+										view to the same.  It just makes things look a bit nicer.
 									*/
-									if (config.debug && jQuery(".debug.block", el).length > 0) {
+									if (debugView && jQuery(".debug.block", el).length > 0) {
 										debugView.modes({ block : true });
 									}
 								} finally {
