@@ -1,8 +1,6 @@
 # ignore _{name} directories and files
-src/_*
-
-# ignore _{name} files
-#src/**/_*.js
+src/**/_*
 
 # ignore the intro/outro files
-src/{in,ou}tro.js
+src/intro.js
+src/outro.js

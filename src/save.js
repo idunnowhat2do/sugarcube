@@ -96,7 +96,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 					if (delta[i].hasOwnProperty("rcount")) {
 						delta[i].pull = delta[i].rcount;
 						delete delta[i].rcount;
-					}				
+					}
 				});
 			}
 		};
@@ -429,7 +429,7 @@ var Save = (function () { // eslint-disable-line no-unused-vars
 					if (delta[i].hasOwnProperty("rcount")) {
 						delta[i].pull = delta[i].rcount;
 						delete delta[i].rcount;
-					}				
+					}
 				});
 			}
 			/* /legacy */

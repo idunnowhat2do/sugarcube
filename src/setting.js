@@ -50,11 +50,11 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 		// Execute `onInit` callbacks.
 		_definitions.forEach(function (definition) {
 			if (definition.hasOwnProperty("onInit")) {
-				var	thisp = {
-						name    : definition.name,
-						value   : settings[definition.name],
-						default : definition.default
-					};
+				var thisp = {
+					name    : definition.name,
+					value   : settings[definition.name],
+					default : definition.default
+				};
 				if (definition.hasOwnProperty("list")) {
 					thisp.list = definition.list;
 				}

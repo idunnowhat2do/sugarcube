@@ -14,126 +14,127 @@
 /*
 	Version object.
 */
-var	version = Object.freeze({
-		// Data properties.
-		title      : "SugarCube",
-		major      : "{{BUILD_VERSION_MAJOR}}",
-		minor      : "{{BUILD_VERSION_MINOR}}",
-		patch      : "{{BUILD_VERSION_PATCH}}",
-		prerelease : "{{BUILD_VERSION_PRERELEASE}}",
-		build      : "{{BUILD_VERSION_BUILD}}",
-		date       : new Date("{{BUILD_VERSION_DATE}}"),
-		/* legacy */
-		extensions : {},
-		/* /legacy */
+var version = Object.freeze({
+	// Data properties.
+	title      : "SugarCube",
+	major      : "{{BUILD_VERSION_MAJOR}}",
+	minor      : "{{BUILD_VERSION_MINOR}}",
+	patch      : "{{BUILD_VERSION_PATCH}}",
+	prerelease : "{{BUILD_VERSION_PRERELEASE}}",
+	build      : "{{BUILD_VERSION_BUILD}}",
+	date       : new Date("{{BUILD_VERSION_DATE}}"),
+	/* legacy */
+	extensions : {},
+	/* /legacy */
 
-		// Method properties.
-		toString : function () {
-			return this.major + "." + this.minor + "." + this.patch
-				+ (this.prerelease ? "-" + this.prerelease : "") + "+" + this.build;
-		},
-		short : function () {
-			return this.title + " (v" + this.major + "." + this.minor + "." + this.patch
-				+ (this.prerelease ? "-" + this.prerelease : "") + ")";
-		},
-		long : function () {
-			return this.title + " v" + this.toString() + " (" + this.date.toUTCString() + ")";
-		}
-	});
+	// Method properties.
+	toString : function () {
+		return this.major + "." + this.minor + "." + this.patch
+			+ (this.prerelease ? "-" + this.prerelease : "") + "+" + this.build;
+	},
+	short : function () {
+		return this.title + " (v" + this.major + "." + this.minor + "." + this.patch
+			+ (this.prerelease ? "-" + this.prerelease : "") + ")";
+	},
+	long : function () {
+		return this.title + " v" + this.toString() + " (" + this.date.toUTCString() + ")";
+	}
+});
 
 /*
 	Config object.
 */
-var	config = Object.seal({
-		/*
-			General properties.
-		*/
-		debug                 : false,
-		addVisitedLinkClass   : false,
-		cleanupWikifierOutput : false,
-		loadDelay             : 0,
+var config = Object.seal({
+	/*
+		General properties.
+	*/
+	debug                 : false,
+	addVisitedLinkClass   : false,
+	cleanupWikifierOutput : false,
+	loadDelay             : 0,
 
-		/*
-			State history properties.
-		*/
-		history : Object.seal({
-			controls  : true,
-			maxStates : 150
-		}),
+	/*
+		State history properties.
+	*/
+	history : Object.seal({
+		controls  : true,
+		maxStates : 150
+	}),
 
-		/*
-			Macros properties.
-		*/
-		macros : Object.seal({
-			ifAssignmentError : true,
-			maxLoopIterations : 1000
-		}),
+	/*
+		Macros properties.
+	*/
+	macros : Object.seal({
+		ifAssignmentError : true,
+		maxLoopIterations : 1000
+	}),
 
-		/*
-			Passages properties.
-		*/
-		passages : Object.seal({
-			descriptions  : undefined,
-			displayTitles : false,
-			start         : undefined, // set by `Story.load()`
-			transitionOut : undefined
-		}),
+	/*
+		Passages properties.
+	*/
+	passages : Object.seal({
+		descriptions  : undefined,
+		displayTitles : false,
+		start         : undefined, // set by `Story.load()`
+		transitionOut : undefined
+	}),
 
-		/*
-			Saves properties.
-		*/
-		saves : Object.seal({
-			autoload  : undefined,
-			autosave  : undefined,
-			id        : "untitled-story",
-			isAllowed : undefined,
-			onLoad    : undefined,
-			onSave    : undefined,
-			slots     : 8,
-			version   : undefined
-		}),
+	/*
+		Saves properties.
+	*/
+	saves : Object.seal({
+		autoload  : undefined,
+		autosave  : undefined,
+		id        : "untitled-story",
+		isAllowed : undefined,
+		onLoad    : undefined,
+		onSave    : undefined,
+		slots     : 8,
+		version   : undefined
+	}),
 
-		/*
-			UI properties.
-		*/
-		ui : Object.seal({
-			stowBarInitially    : false,
-			updateStoryElements : true
-		}),
+	/*
+		UI properties.
+	*/
+	ui : Object.seal({
+		stowBarInitially    : false,
+		updateStoryElements : true
+	}),
 
-		/*
-			Transition properties.
-		*/
-		transitionEndEventName : (function () {
-			var	teMap  = {
-					"transition"       : "transitionend",
-					"MSTransition"     : "msTransitionEnd",
-					"WebkitTransition" : "webkitTransitionEnd",
-					"MozTransition"    : "transitionend"
-				},
-				teKeys = Object.keys(teMap),
-				el     = document.createElement("div");
-			for (var i = 0; i < teKeys.length; ++i) {
-				if (el.style[teKeys[i]] !== undefined) {
-					return teMap[teKeys[i]];
-				}
+	/*
+		Transition properties.
+	*/
+	transitionEndEventName : (function () {
+		var	teMap  = {
+				"transition"       : "transitionend",
+				"MSTransition"     : "msTransitionEnd",
+				"WebkitTransition" : "webkitTransitionEnd",
+				"MozTransition"    : "transitionend"
+			},
+			teKeys = Object.keys(teMap),
+			el     = document.createElement("div");
+		for (var i = 0; i < teKeys.length; ++i) {
+			if (el.style[teKeys[i]] !== undefined) {
+				return teMap[teKeys[i]];
 			}
-			return "";
-		})()
-	});
+		}
+		return "";
+	})()
+});
 
 /*
 	Constants (not actually constants, because ES5).
 */
 /* eslint-disable no-unused-vars */
-var	minDOMActionDelay = 40; // minimum delay for DOM actions (in milliseconds)
+var minDOMActionDelay = 40; // minimum delay for DOM actions (in milliseconds)
 /* eslint-enable no-unused-vars */
 
 /*
 	Temporary data variables.
 */
 /* eslint-disable no-unused-vars */
-var	TempState     = {}, // temporary state object
+var
+	TempState     = {}, // temporary state object
 	TempVariables = {}; // temporary _variables object
 /* eslint-enable no-unused-vars */
 
@@ -141,7 +142,8 @@ var	TempState     = {}, // temporary state object
 	Internal variables.
 */
 /* eslint-disable no-unused-vars */
-var	macros      = {},    // legacy macros object
+var
+	macros      = {},    // legacy macros object
 	tale        = Story, // legacy story manager object (alias for `Story`)
 	state       = State, // legacy state manager object (alias for `State`)
 	storage     = {},    // persistant storage manager object
