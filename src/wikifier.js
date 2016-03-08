@@ -1363,6 +1363,21 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 			},
 
 			{
+				name      : "monospacedByLine",
+				match     : "^\\{\\{\\{\\n",
+				lookahead : "^\\{\\{\\{\\n((?:^[^\\n]*\\n)+?)(^\\}\\}\\}$\\n?)",
+				handler   : function (w) {
+					var lookaheadRegExp = new RegExp(this.lookahead, "gm");
+					lookaheadRegExp.lastIndex = w.matchStart;
+					var lookaheadMatch = lookaheadRegExp.exec(w.source);
+					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
+						insertElement(w.output, "pre", null, null, lookaheadMatch[1]);
+						w.nextMatch = lookaheadRegExp.lastIndex;
+					}
+				}
+			},
+
+			{
 				name    : "formatByChar",
 				match   : "''|//|__|\\^\\^|~~|==|\\{\\{\\{",
 				handler : function (w) {
@@ -1394,21 +1409,6 @@ var Wikifier = (function () { // eslint-disable-line no-unused-vars
 							w.nextMatch = lookaheadRegExp.lastIndex;
 						}
 						break;
-					}
-				}
-			},
-
-			{
-				name      : "monospacedByLine",
-				match     : "^\\{\\{\\{\\n",
-				lookahead : "^\\{\\{\\{\\n((?:^[^\\n]*\\n)+?)(^\\}\\}\\}$\\n?)",
-				handler   : function (w) {
-					var lookaheadRegExp = new RegExp(this.lookahead, "gm");
-					lookaheadRegExp.lastIndex = w.matchStart;
-					var lookaheadMatch = lookaheadRegExp.exec(w.source);
-					if (lookaheadMatch && lookaheadMatch.index === w.matchStart) {
-						insertElement(w.output, "pre", null, null, lookaheadMatch[1]);
-						w.nextMatch = lookaheadRegExp.lastIndex;
 					}
 				}
 			},
