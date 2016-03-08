@@ -472,14 +472,24 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 
 		jQuery(dialogSetup(strings.restart.title, "restart"))
 			.append('<p>' + strings.restart.prompt + '</p><ul class="buttons">'
-				+ '<li><button id="restart-ok" class="ui-close">' + (strings.restart.ok || strings.ok) + '</button></li>'
+				+ '<li><button id="restart-ok">' + (strings.restart.ok || strings.ok) + '</button></li>'
 				+ '<li><button id="restart-cancel" class="ui-close">' + (strings.restart.cancel || strings.cancel) + '</button></li>'
 				+ '</ul>');
 
-		// Add an additional click handler for the OK button.
-		jQuery("#ui-dialog-body #restart-ok").one("click", function () {
-			State.restart();
-		});
+		/*
+			Instead of adding '.ui-close' to '#restart-ok' (to receive the use of the default
+			delegated dialog close handler), we setup a special case close handler here.  We
+			do this to ensure that the invocation of `State.restart()` happens after the dialog
+			has fully closed.  If we did not, then a race condition could occur, causing display
+			shenanigans.
+		*/
+		jQuery('#ui-dialog-body #restart-ok')
+			.ariaClick({ one : true }, function () {
+				jQuery(document).one('tw:dialogclosed', function () {
+					State.restart();
+				});
+				dialogClose();
+			});
 
 		return true;
 	}
@@ -835,8 +845,6 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 
 		jQuery(dialogSetup(strings.share.title, "share list"))
 			.append(uiAssembleLinkList("StoryShare"));
-			//.find("a")
-			//	.addClass("ui-close");
 
 		return true;
 	}
@@ -846,7 +854,10 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 	 * Dialog Functions
 	 ******************************************************************************************************************/
 	function dialogIsOpen(classNames) {
-		return _dialog.classList.contains("open") && (!classNames ? true : _dialogBody.classList.contains(classNames));
+		return _dialog.classList.contains("open")
+			&& (!classNames ? true : classNames.splitOrEmpty(/\s+/).every(function (c) {
+				_dialog.classList.contains(c);
+			}));
 	}
 
 	function dialogBody() {
@@ -860,16 +871,15 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		if (classNames != null) { // lazy equality for null
 			jQuery(_dialogBody).addClass(classNames);
 		}
-		title = title == null ? "" : title + ""; // lazy equality for null
 		jQuery(_dialogTitle)
 			.empty()
-			.append(title === "" ? "\u00a0" : title);
+			.append((title != null ? String(title) : "") || "\u00a0");
 		return _dialogBody;
 	}
 
 	function dialogAddClickHandler(targets, options, startFn, doneFn, closeFn) {
 		return jQuery(targets).ariaClick(function (evt) {
-			evt.preventDefault(); // does not prevent bound events, only default actions (e.g. href links)
+			evt.preventDefault();
 
 			// Call the start function.
 			if (typeof startFn === "function") {
@@ -913,11 +923,8 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 				})(options.top));
 		}
 
-		// EXPERIMENTAL (really comment this at some point)
-		// Add `aria-hidden=true` to all direct non-dialog-children of <body>.
-				//.attr("aria-hidden", true)
-				//.prop("disabled", true)
-				//.attr("aria-disabled", true)
+		// Add `aria-hidden=true` to all direct non-dialog-children of <body> to
+		// hide the underlying page form screen readers while the dialog is open.
 		jQuery("body>:not(script,#store-area,#ui-bar,#ui-overlay,#ui-dialog)")
 			.attr("tabindex", -3)
 			.attr("aria-hidden", true);
@@ -925,7 +932,6 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			.find("[tabindex]:not([tabindex^=-])")
 				.attr("tabindex", -2)
 				.attr("aria-hidden", true);
-		// /EXPERIMENTAL
 
 		// Display the dialog.
 		var position = dialogCalcPosition(options.top);
@@ -947,6 +953,9 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 					jQuery(this).trigger("click");
 				}
 			});
+
+		// Trigger a global `tw:dialogopened` event.
+		jQuery.event.trigger("tw:dialogopened");
 	}
 
 	function dialogClose(evt) {
@@ -959,7 +968,6 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			.removeClass("open")
 			.css({ left : "", right : "", top : "", bottom : "" });
 
-		// EXPERIMENTAL
 		jQuery("#ui-bar,#story")
 			.find("[tabindex=-2]")
 				.removeAttr("aria-hidden")
@@ -967,7 +975,6 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		jQuery("body>[tabindex=-3]")
 			.removeAttr("aria-hidden")
 			.removeAttr("tabindex");
-		// /EXPERIMENTAL
 
 		jQuery(_dialogTitle)
 			.empty();
@@ -978,8 +985,9 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			.removeClass("open");
 		jQuery(document.documentElement)
 			.removeClass("ui-dialog-open");
+
+		// Attempt to restore focus to whichever element had it prior to opening the dialog.
 		if (_lastActive !== null) {
-			// Attempt to restore focus to whichever element had it prior to opening the dialog.
 			jQuery(_lastActive).focus();
 			_lastActive = null;
 		}
@@ -988,6 +996,9 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		if (evt && typeof evt.data === "function") {
 			evt.data(evt);
 		}
+
+		// Trigger a global `tw:dialogclosed` event.
+		jQuery.event.trigger("tw:dialogclosed");
 	}
 
 	function dialogResizeHandler(evt) {
