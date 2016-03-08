@@ -856,7 +856,7 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 	function dialogIsOpen(classNames) {
 		return _dialog.classList.contains("open")
 			&& (!classNames ? true : classNames.splitOrEmpty(/\s+/).every(function (c) {
-				_dialog.classList.contains(c);
+				return _dialog.classList.contains(c);
 			}));
 	}
 
