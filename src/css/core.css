@@ -28,8 +28,6 @@ body {
 #story {
 	z-index: 10;
 	margin: 2.5em;
-	-webkit-transition: margin-left 200ms ease-in;
-	-moz-transition: margin-left 200ms ease-in;
 	transition: margin-left 200ms ease-in;
 }
 @media screen and (max-width: 1136px) {
@@ -44,8 +42,6 @@ body {
 
 /* Special no transition styling. */
 .no-transition {
-	-webkit-transition: none !important;
-	-moz-transition: none !important;
 	transition: none !important;
 }
 
@@ -64,8 +60,6 @@ a {
 	cursor: pointer;
 	color: #68d;
 	text-decoration: none;
-	-webkit-transition-duration: 200ms;
-	-moz-transition-duration: 200ms;
 	transition-duration: 200ms;
 }
 a:hover {
@@ -91,14 +85,7 @@ button {
 	border: 1px solid #57c;
 	line-height: normal;
 	padding: 0.4em;
-	-webkit-transition-duration: 200ms;
-	-moz-transition-duration: 200ms;
 	transition-duration: 200ms;
-	-webkit-user-select: none;
-	-khtml-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
-	-o-user-select: none;
 	user-select: none;
 }
 button:hover {
@@ -198,8 +185,6 @@ audio, canvas, progress, video {
 .passage {
 	line-height: 1.75;
 	text-align: left;
-	-webkit-transition: opacity 400ms ease-in;
-	-moz-transition: opacity 400ms ease-in;
 	transition: opacity 400ms ease-in;
 }
 .passage-in {
@@ -224,8 +209,6 @@ audio, canvas, progress, video {
 /* Macro styling. */
 .macro-repeat-insert,
 .macro-timed-insert {
-	-webkit-transition: opacity 400ms ease-in;
-	-moz-transition: opacity 400ms ease-in;
 	transition: opacity 400ms ease-in;
 }
 .macro-repeat-in,

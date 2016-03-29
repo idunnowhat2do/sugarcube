@@ -1,6 +1,7 @@
+# ignore directories
+src/templates/*
+src/vendor/*
+
 # ignore _{name} directories and files
 src/**/_*
 
-# ignore the intro/outro files
-src/intro.js
-src/outro.js

@@ -20,13 +20,9 @@ html.ui-dialog-open body {
 */
 #ui-overlay.open {
 	visibility: visible;
-	-webkit-transition: opacity 200ms ease-in;
-	-moz-transition: opacity 200ms ease-in;
 	transition: opacity 200ms ease-in;
 }
 #ui-overlay:not(.open) {
-	-webkit-transition: visibility 200ms step-end, opacity 200ms ease-in;
-	-moz-transition: visibility 200ms step-end, opacity 200ms ease-in;
 	transition: visibility 200ms step-end, opacity 200ms ease-in;
 }
 #ui-overlay {
@@ -41,8 +37,6 @@ html.ui-dialog-open body {
 }
 #ui-dialog.open {
 	display: block;
-	-webkit-transition: opacity 200ms ease-in;
-	-moz-transition: opacity 200ms ease-in;
 	transition: opacity 200ms ease-in;
 }
 /*
@@ -129,8 +123,6 @@ html.ui-dialog-open body {
 	height: 92%;
 	background-color: transparent;
 	border: 1px solid transparent;
-	-webkit-transition-duration: 200ms;
-	-moz-transition-duration: 200ms;
 	transition-duration: 200ms;
 }
 #ui-dialog-close:hover {
@@ -275,11 +267,6 @@ html.ui-dialog-open body {
 #ui-dialog-close,
 #ui-dialog-body.list a,
 #ui-dialog-body.settings span[id|="setting-input"] {
-	-webkit-user-select: none;
-	-khtml-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
-	-o-user-select: none;
 	user-select: none;
 }
 
