@@ -75,86 +75,16 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		/* legacy */
-		// Convert old-style saves.
-		(() => {
-			function saveNeedsUpgrade(saveObj) {
-				return !saveObj.hasOwnProperty('state')
-					|| !saveObj.state.hasOwnProperty('delta')
-					|| !saveObj.state.hasOwnProperty('index')
-					||  saveObj.state.hasOwnProperty('rseed')
-					|| (saveObj.state.hasOwnProperty('expired') && typeof saveObj.state.expired === 'number') // eslint-disable-line no-extra-parens, max-len
-					||  saveObj.state.hasOwnProperty('unique')
-					||  saveObj.state.hasOwnProperty('last');
+		// Update saves with old/obsolete properties.
+		if (_savesObjUpdate(saves.autosave)) {
+			updated = true;
+		}
+
+		for (let i = 0; i < saves.slots.length; ++i) {
+			if (_savesObjUpdate(saves.slots[i])) {
+				updated = true;
 			}
-
-			function upgradeSave(saveObj) {
-				/* eslint-disable no-param-reassign */
-				if (saveObj.hasOwnProperty('data')) {
-					delete saveObj.mode;
-					saveObj.state = {
-						delta : State.deltaEncode(saveObj.data)
-					};
-					delete saveObj.data;
-				}
-				else if (!saveObj.state.hasOwnProperty('delta')) {
-					delete saveObj.state.mode;
-					saveObj.state.delta = State.deltaEncode(saveObj.state.history);
-					delete saveObj.state.history;
-				}
-				else if (!saveObj.state.hasOwnProperty('index')) {
-					delete saveObj.state.mode;
-				}
-
-				saveObj.state.index = saveObj.state.delta.length - 1;
-
-				if (saveObj.state.hasOwnProperty('rseed')) {
-					saveObj.state.seed = saveObj.state.rseed;
-					delete saveObj.state.rseed;
-
-					saveObj.state.delta.forEach((v, i, delta) => {
-						if (delta[i].hasOwnProperty('rcount')) {
-							delta[i].pull = delta[i].rcount;
-							delete delta[i].rcount;
-						}
-					});
-				}
-
-				if (saveObj.state.hasOwnProperty('expired') && typeof saveObj.state.expired === 'number') {
-					delete saveObj.state.expired;
-				}
-
-				if (saveObj.state.hasOwnProperty('unique') || saveObj.state.hasOwnProperty('last')) {
-					saveObj.state.expired = [];
-
-					if (saveObj.state.hasOwnProperty('unique')) {
-						saveObj.state.expired.push(saveObj.state.unique);
-						delete saveObj.state.unique;
-					}
-
-					if (saveObj.state.hasOwnProperty('last')) {
-						saveObj.state.expired.push(saveObj.state.last);
-						delete saveObj.state.last;
-					}
-				}
-				/* eslint-enable no-param-reassign */
-			}
-
-			if (saves.autosave !== null) {
-				if (saveNeedsUpgrade(saves.autosave)) {
-					upgradeSave(saves.autosave);
-					updated = true;
-				}
-			}
-
-			for (let i = 0; i < saves.slots.length; ++i) {
-				if (saves.slots[i] !== null) {
-					if (saveNeedsUpgrade(saves.slots[i])) {
-						upgradeSave(saves.slots[i]);
-						updated = true;
-					}
-				}
-			}
-		})();
+		}
 
 		// Remove save stores which are empty.
 		if (_savesObjIsEmpty(saves)) {
@@ -475,6 +405,83 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 		return storage.set('saves', saves);
 	}
 
+	function _savesObjUpdate(saveObj) {
+		if (saveObj === null) {
+			return false;
+		}
+
+		let updated = false;
+
+		/* eslint-disable no-param-reassign */
+		if (
+			   !saveObj.hasOwnProperty('state')
+			|| !saveObj.state.hasOwnProperty('delta')
+			|| !saveObj.state.hasOwnProperty('index')
+		) {
+			if (saveObj.hasOwnProperty('data')) {
+				delete saveObj.mode;
+				saveObj.state = {
+					delta : State.deltaEncode(saveObj.data)
+				};
+				delete saveObj.data;
+			}
+			else if (!saveObj.state.hasOwnProperty('delta')) {
+				delete saveObj.state.mode;
+				saveObj.state.delta = State.deltaEncode(saveObj.state.history);
+				delete saveObj.state.history;
+			}
+			else if (!saveObj.state.hasOwnProperty('index')) {
+				delete saveObj.state.mode;
+			}
+
+			saveObj.state.index = saveObj.state.delta.length - 1;
+			updated = true;
+		}
+
+		if (saveObj.state.hasOwnProperty('rseed')) {
+			saveObj.state.seed = saveObj.state.rseed;
+			delete saveObj.state.rseed;
+
+			saveObj.state.delta.forEach((_, i, delta) => {
+				if (delta[i].hasOwnProperty('rcount')) {
+					delta[i].pull = delta[i].rcount;
+					delete delta[i].rcount;
+				}
+			});
+
+			updated = true;
+		}
+
+		if (
+			   (saveObj.state.hasOwnProperty('expired') && typeof saveObj.state.expired === 'number') // eslint-disable-line no-extra-parens, max-len
+			||  saveObj.state.hasOwnProperty('unique')
+			||  saveObj.state.hasOwnProperty('last')
+		) {
+			if (saveObj.state.hasOwnProperty('expired') && typeof saveObj.state.expired === 'number') {
+				delete saveObj.state.expired;
+			}
+
+			if (saveObj.state.hasOwnProperty('unique') || saveObj.state.hasOwnProperty('last')) {
+				saveObj.state.expired = [];
+
+				if (saveObj.state.hasOwnProperty('unique')) {
+					saveObj.state.expired.push(saveObj.state.unique);
+					delete saveObj.state.unique;
+				}
+
+				if (saveObj.state.hasOwnProperty('last')) {
+					saveObj.state.expired.push(saveObj.state.last);
+					delete saveObj.state.last;
+				}
+			}
+
+			updated = true;
+		}
+		/* eslint-enable no-param-reassign */
+
+		return updated;
+	}
+
 	function _marshal() {
 		if (DEBUG) { console.log('[Save/_marshal()]'); }
 
@@ -503,28 +510,14 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		try {
 			/* eslint-disable no-param-reassign */
+			/* legacy */
+			// Update saves with old/obsolete properties.
+			_savesObjUpdate(saveObj);
+			/* /legacy */
+
 			if (!saveObj || !saveObj.hasOwnProperty('id') || !saveObj.hasOwnProperty('state')) {
 				throw new Error(strings.errors.saveMissingData);
 			}
-
-			/* legacy */
-			delete saveObj.state.mode;
-
-			if (!saveObj.state.hasOwnProperty('index')) {
-				saveObj.state.index = saveObj.state.delta.length - 1;
-			}
-
-			if (saveObj.state.hasOwnProperty('rseed')) {
-				saveObj.state.seed = saveObj.state.rseed;
-				delete saveObj.state.rseed;
-				saveObj.state.delta.forEach((v, i, delta) => {
-					if (delta[i].hasOwnProperty('rcount')) {
-						delta[i].pull = delta[i].rcount;
-						delete delta[i].rcount;
-					}
-				});
-			}
-			/* /legacy */
 
 			// Delta decode the state history.
 			saveObj.state.history = State.deltaDecode(saveObj.state.delta);
