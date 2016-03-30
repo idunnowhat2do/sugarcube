@@ -280,24 +280,11 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 			return turns;
 		}
 
-		// const
-		// 	needle = needles[0],
-		// 	played = State.passages,
-		// 	start  = played.length - 1;
-		//
-		// for (let i = start; i >= 0; --i) {
-		// 	if (played[i] === needle) {
-		// 		return start - i;
-		// 	}
-		// }
-		//
-		// return -1;
-
 		const
 			played = State.passages,
 			index  = played.lastIndexOf(needles[0]);
 
-		return index !== -1 ? played.length - 1 - index : -1;
+		return index === -1 ? -1 : played.length - 1 - index;
 	}
 
 	/**
@@ -316,7 +303,7 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 		const passages = State.passages;
 
 		/* legacy: behavior with an offset */
-		if (arguments.length !== 0) {
+		if (arguments.length > 0) {
 			const offset = Number(arguments[0]);
 
 			if (isNaN(offset) || !isFinite(offset) || offset < 1) {
@@ -486,7 +473,7 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 			else {
 				const tags = Story.get(title).tags;
 
-				if (tags.length !== 0) {
+				if (tags.length > 0) {
 					let found = 0;
 
 					for (let j = 0; j < nLength; ++j) {

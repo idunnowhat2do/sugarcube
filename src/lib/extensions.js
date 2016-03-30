@@ -47,48 +47,6 @@ function safeActiveElement() {
 	 * JavaScript Polyfills.
 	 ******************************************************************************************************************/
 	/*
-		[ES5] We just do a simple shim, without the second argument, since that's all we need here.
-	*/
-	// if (!Object.create || typeof Object.create !== 'function') {
-	// 	Object.defineProperty(Object, 'create', {
-	// 		configurable : true,
-	// 		writable     : true,
-	// 		value        : (function () {
-	// 			function Type() {}
-	//
-	// 			return function (proto) {
-	// 				if (arguments.length === 0) {
-	// 					throw new Error('polyfill Object.create implementation requires a parameter');
-	// 				}
-	//
-	// 				if (arguments.length !== 1) {
-	// 					throw new Error('polyfill Object.create implementation only accepts one parameter');
-	// 				}
-	//
-	// 				let obj;
-	//
-	// 				if (proto === null) {
-	// 					obj = { __proto__ : null };
-	// 				}
-	// 				else {
-	// 					if (typeof proto !== 'object' && typeof proto !== 'function') {
-	// 						throw new TypeError('polyfill Object.create proto parameter must be an object or null');
-	// 					}
-	//
-	// 					/* eslint-disable no-proto */
-	// 					Type.prototype = proto;
-	// 					obj            = new Type();
-	// 					obj.__proto__  = proto;
-	// 					/* eslint-enable no-proto */
-	// 				}
-	//
-	// 				return obj;
-	// 			};
-	// 		})()
-	// 	});
-	// }
-
-	/*
 		[ES7/Proposed] Returns whether the given element was found within the array.
 	*/
 	if (!Array.prototype.includes) {

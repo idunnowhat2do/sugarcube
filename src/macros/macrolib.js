@@ -491,6 +491,7 @@
 
 		handler() {
 			let i = 0;
+
 			try {
 				const
 					evalJavaScript = Scripting.evalJavaScript,
@@ -503,7 +504,7 @@
 					/* eslint-disable prefer-template */
 					switch (this.payload[i].name) {
 					case 'else':
-						if (this.payload[i].args.raw.length !== 0) {
+						if (this.payload[i].args.raw.length > 0) {
 							if (/^\s*if\b/i.test(this.payload[i].args.raw)) {
 								return this.error(
 									  'whitespace is not allowed between the "else" and "if" in <<elseif>> clause'
@@ -618,6 +619,7 @@
 			}
 			else if (condition.indexOf(';') !== -1) {
 				const parts = condition.match(/^([^;]*?)\s*;\s*([^;]*?)\s*;\s*([^;]*?)$/);
+
 				if (parts !== null) {
 					init      = parts[1];
 					condition = parts[2];
@@ -874,6 +876,7 @@
 
 		handler() {
 			const output = document.createDocumentFragment();
+
 			try {
 				Scripting.evalJavaScript(this.payload[0].contents, output);
 
@@ -1661,9 +1664,6 @@
 					There's no catch clause because this try/finally is here simply to ensure that
 					proper cleanup is done in the event that an exception is thrown during the
 					`Wikifier` call.
-
-					TODO: This is a kludge, which is very likely not entirely reliable.  Make this
-					unnecessary, if possible.
 				*/
 				try {
 					TempState.break = null;

@@ -323,7 +323,7 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 		}
 
-		return Object.keys(diff).length !== 0 ? diff : null;
+		return Object.keys(diff).length > 0 ? diff : null;
 	}
 
 	/**

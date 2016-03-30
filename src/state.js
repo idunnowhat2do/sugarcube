@@ -338,14 +338,14 @@ var State = (() => { // eslint-disable-line no-unused-vars, no-var
 		Returns the topmost (most recent) moment within the history.
 	**/
 	function historyTop() {
-		return _history.length !== 0 ? _history[_history.length - 1] : null;
+		return _history.length > 0 ? _history[_history.length - 1] : null;
 	}
 
 	/**
 		Returns the bottommost (least recent) moment within the history.
 	**/
 	function historyBottom() {
-		return _history.length !== 0 ? _history[0] : null;
+		return _history.length > 0 ? _history[0] : null;
 	}
 
 	/**
@@ -426,7 +426,7 @@ var State = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Truncate the history, if necessary, by discarding moments from the bottom.
 		*/
-		if (Config.history.maxStates !== 0) {
+		if (Config.history.maxStates > 0) {
 			while (historySize() > Config.history.maxStates) {
 				_expired.push(_history.shift().title);
 			}

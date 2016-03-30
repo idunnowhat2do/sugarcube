@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global safeActiveElement, strings */
+/* global Engine, safeActiveElement, strings */
 
 var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
@@ -137,13 +137,6 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 
 	/**
 		Adds a click hander to the target element(s) which opens the dialog modal.
-
-		@param {(HTMLElement|jQuery|string)} targets - The element(s), possibly jQuery-wrapped, or a jQuery selector.
-		@param {Object} [options] - Options for `Dialog.open()`.
-		@param {Function} [startFn] - Callback to invoke before calling `Dialog.open()`.
-		@param {Function} [doneFn] - Callback to invoke after calling `Dialog.open()`.
-		@param {Function} [closeFn] - Callback to invoke after the dialog is closed.
-		@returns {jQuery}
 	**/
 	function dialogAddClickHandler(targets, options, startFn, doneFn, closeFn) {
 		return jQuery(targets).ariaClick(evt => {
@@ -220,7 +213,8 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 			});
 
 		// Trigger a global `tw:dialogopened` event.
-		jQuery.event.trigger('tw:dialogopened');
+		// jQuery.event.trigger('tw:dialogopened');
+		setTimeout(() => jQuery.event.trigger('tw:dialogopened'), Engine.minDomActionDelay);
 	}
 
 	function dialogClose(evt) {
@@ -263,7 +257,8 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		// Trigger a global `tw:dialogclosed` event.
-		jQuery.event.trigger('tw:dialogclosed');
+		// jQuery.event.trigger('tw:dialogclosed');
+		setTimeout(() => jQuery.event.trigger('tw:dialogclosed'), Engine.minDomActionDelay);
 	}
 
 	function dialogResizeHandler(evt) {

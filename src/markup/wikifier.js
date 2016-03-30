@@ -2108,7 +2108,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 								if (isNobr) {
 									w._nobr.unshift(true);
 								}
-								else if (w._nobr.length !== 0) {
+								else if (w._nobr.length > 0) {
 									w._nobr.unshift(false);
 								}
 
@@ -2125,7 +2125,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 									}
 								}
 								finally {
-									if (w._nobr.length !== 0) {
+									if (w._nobr.length > 0) {
 										w._nobr.shift();
 									}
 								}

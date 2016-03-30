@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global Dialog, Engine, Has, Save, Setting, State, Story, StyleWrapper, Util, Wikifier, Config,
-	       setPageElement, settings, strings
+	global Dialog, Engine, Has, Save, Setting, State, Story, StyleWrapper, Util, Wikifier, Config, setPageElement,
+	       settings, strings
 */
 
 var UI = (() => { // eslint-disable-line no-unused-vars, no-var
@@ -554,8 +554,8 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 					$tdDele.append(
 						createButton('delete', null, strings.saves.labelDelete, 'auto', () => {
 							Save.autosave.delete();
-							uiBuildSaves();  // rebuild the saves dialog
-							Dialog.resize(); // manually call for a resize
+							uiBuildSaves();
+							Dialog.resize();
 						})
 					);
 				}
@@ -618,8 +618,8 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 					$tdDele.append(
 						createButton('delete', null, strings.saves.labelDelete, i, slot => {
 							Save.slots.delete(slot);
-							uiBuildSaves();  // rebuild the saves dialog
-							Dialog.resize(); // manually call for a resize
+							uiBuildSaves();
+							Dialog.resize();
 						})
 					);
 				}
@@ -715,8 +715,8 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 						hasSaves
 							? () => {
 								Save.clear();
-								uiBuildSaves();  // rebuild the saves dialog
-								Dialog.resize(); // manually call for a resize
+								uiBuildSaves();
+								Dialog.resize();
 							}
 							: null
 					)
