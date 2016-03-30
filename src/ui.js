@@ -680,7 +680,8 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 				.appendTo($dialogBody);
 
 			if (Has.fileAPI) {
-				$btnBar.append(createActionItem('export', 'ui-close', strings.saves.labelExport, Save.export));
+				$btnBar.append(createActionItem('export', 'ui-close', strings.saves.labelExport,
+					() => Save.export()));
 				$btnBar.append(createActionItem('import', null, strings.saves.labelImport,
 					() => $dialogBody.find('#saves-import-file').trigger('click')));
 

@@ -375,8 +375,38 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 			return;
 		}
 
+		function datestamp() {
+			const
+				now = new Date();
+			let
+				MM = now.getMonth() + 1,
+				DD = now.getDate(),
+				hh = now.getHours(),
+				mm = now.getMinutes(),
+				ss = now.getSeconds();
+
+			if (MM < 10) {
+				MM = `0${MM}`;
+			}
+			if (DD < 10) {
+				DD = `0${DD}`;
+			}
+			if (hh < 10) {
+				hh = `0${hh}`;
+			}
+			if (mm < 10) {
+				mm = `0${mm}`;
+			}
+			if (ss < 10) {
+				ss = `0${ss}`;
+			}
+
+			return `${now.getFullYear()}${MM}${DD}-${hh}${mm}${ss}`;
+		}
+
 		const
-			saveName = `${filename == null ? Story.domId : Util.slugify(filename)}.save`, // lazy equality for null
+			saveName = `${filename == null ? Story.domId : Util.slugify(filename)}` // lazy equality for null
+				+ `-${datestamp()}.save`,
 			saveObj  = LZString.compressToBase64(JSON.stringify(_marshal()));
 		saveAs(new Blob([saveObj], { type : 'text/plain;charset=UTF-8' }), saveName);
 	}
