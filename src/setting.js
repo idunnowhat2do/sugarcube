@@ -12,14 +12,10 @@ var Setting = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
 	const
-		/*
-			Core properties.
-		*/
+		// Setting definition array.
 		_definitions = [],
 
-		/*
-			Setup the Types enumeration (not really, but close enough).
-		*/
+		// Setting control types object (pseudo-enumeration).
 		Types = Object.freeze({
 			Toggle : 0,
 			List   : 1

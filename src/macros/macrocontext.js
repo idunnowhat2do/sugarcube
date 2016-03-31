@@ -12,7 +12,7 @@ var MacroContext = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
 	/*******************************************************************************************************************
-	 * Module Classes.
+	 * MacroContext Class.
 	 ******************************************************************************************************************/
 	class MacroContext {
 		constructor(contextData) {

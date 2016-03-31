@@ -57,23 +57,11 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		/*
-			Die if deprecated `Config` properties are seen.
-		*/
-		if (Config.history.hasOwnProperty('mode')) {
-			throw new Error('Config.history.mode has been deprecated and'
-				+ ' is no longer used by SugarCube, please remove it from your code');
-		}
-
-		if (Config.history.hasOwnProperty('tracking')) {
-			throw new Error('Config.history.tracking has been deprecated, use Config.history.maxStates instead');
-		}
-
-		/*
 			Finalize various `Config` properties here, before any passages are displayed.
 
 			n.b. We do this here to give authors every opportunity to modify these properties.
 		*/
-		Config.history.maxStates = Math.max(0, Number(Config.history.maxStates));
+		Config.history.maxStates = Math.max(0, Config.history.maxStates);
 
 		if (isNaN(Config.history.maxStates) || !isFinite(Config.history.maxStates)) {
 			// TODO: Maybe this should throw instead?

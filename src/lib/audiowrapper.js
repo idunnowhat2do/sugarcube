@@ -10,36 +10,6 @@
 var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
-	/*
-	class MediaWrapper {
-		constructor(media) {
-			Object.defineProperties(this, {
-				media : {
-					value : media
-				}
-			});
-
-			if (this.media.preload !== 'metadata' && this.media.preload !== 'auto') {
-				this.media.preload = 'metadata';
-			}
-		}
-	}
-
-	class AudioWrapper extends MediaWrapper {
-		constructor(media) {
-			super(media);
-
-			Object.defineProperties(this, {
-				_faderId : {
-					writable : true,
-					value    : null
-				}
-			});
-		}
-	}
-	*/
-
-
 	/*******************************************************************************************************************
 	 * AudioWrapper Class.
 	 ******************************************************************************************************************/

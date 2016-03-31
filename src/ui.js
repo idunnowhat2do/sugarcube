@@ -29,11 +29,6 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 		jQuery('#init-no-js,#init-lacking').remove();
 
 		/*
-			Add `tabindex=-1` to <body>.
-		*/
-		// jQuery(document.body).attr("tabindex", -1);
-
-		/*
 			Generate and cache the outline patching <style> element (`StyleWrapper`-wrapped).
 		*/
 		_outlinePatch = new StyleWrapper((
@@ -649,13 +644,6 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 					.appendTo($tbody);
 			}
 
-			// TODO: I believe that this should be impossible now.  Though, I should check on that.
-			// if (!$tbody[0].hasChildNodes()) {
-			// 	return jQuery(document.createElement('div'))
-			// 		.attr('id', 'saves-list')
-			// 		.html(`<em>${strings.saves.unavailable}</em>`);
-			// }
-
 			return jQuery(document.createElement('table'))
 				.attr('id', 'saves-list')
 				.append($tbody);
@@ -665,8 +653,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		const
 			$dialogBody = jQuery(Dialog.setup(strings.saves.title, 'saves')),
-			savesOk     = Save.ok(),
-			hasSaves    = Save.autosave.has() || !Save.slots.isEmpty();
+			savesOk     = Save.ok();
 
 		// Add saves list.
 		if (savesOk) {
@@ -712,7 +699,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 			if (savesOk) {
 				$btnBar.append(
 					createActionItem('clear', null, strings.saves.labelClear,
-						hasSaves
+						Save.autosave.has() || !Save.slots.isEmpty()
 							? () => {
 								Save.clear();
 								uiBuildSaves();

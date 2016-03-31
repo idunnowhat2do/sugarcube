@@ -6,10 +6,10 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-
 /*
 	TODO: Move all markup patterns into here.
 */
+
 var Patterns = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 

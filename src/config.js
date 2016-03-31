@@ -24,7 +24,13 @@ var Config = (() => { // eslint-disable-line no-unused-vars, no-var
 		*/
 		history : Object.seal({
 			controls  : true,
-			maxStates : 100
+			maxStates : 100,
+
+			// Die if deprecated `Config.history` properties are accessed.
+			get mode()  { _throwHistoryModeError(); },
+			set mode(_) { _throwHistoryModeError(); },
+			get tracking()  { _throwHistoryTrackingError(); },
+			set tracking(_) { _throwHistoryTrackingError(); }
 		}),
 
 		/*
@@ -90,6 +96,15 @@ var Config = (() => { // eslint-disable-line no-unused-vars, no-var
 			return '';
 		})()
 	});
+
+	function _throwHistoryModeError() {
+		throw new Error('Config.history.mode has been deprecated and'
+			+ ' is no longer used by SugarCube, please remove it from your code');
+	}
+
+	function _throwHistoryTrackingError() {
+		throw new Error('Config.history.tracking has been deprecated, use Config.history.maxStates instead');
+	}
 
 
 	/*******************************************************************************************************************

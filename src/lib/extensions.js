@@ -91,6 +91,70 @@ function safeActiveElement() {
 			}
 		});
 	}
+
+	/*
+		[ES7/Proposed] Returns a string with all whitespace removed from the start/left-side of the string.
+	*/
+	if (!String.prototype.trimLeft) {
+		Object.defineProperty(String.prototype, 'trimLeft', {
+			configurable : true,
+			writable     : true,
+
+			value() {
+				if (this == null) { // lazy equality for null
+					throw new TypeError('String.prototype.trimLeft called on null or undefined');
+				}
+
+				return this.replace(/^[\s\uFEFF\xA0]+/, ''); // include UTF BOM and NBSP
+			}
+		});
+	}
+	if (!String.prototype.trimStart) {
+		Object.defineProperty(String.prototype, 'trimStart', {
+			configurable : true,
+			writable     : true,
+
+			value() {
+				if (this == null) { // lazy equality for null
+					throw new TypeError('String.prototype.trimStart called on null or undefined');
+				}
+
+				return this.trimLeft();
+			}
+		});
+	}
+
+	/*
+		[ES7/Proposed] Returns a string with all whitespace removed from the end/right-side of the string.
+	*/
+	if (!String.prototype.trimRight) {
+		Object.defineProperty(String.prototype, 'trimRight', {
+			configurable : true,
+			writable     : true,
+
+			value() {
+				if (this == null) { // lazy equality for null
+					throw new TypeError('String.prototype.trimRight called on null or undefined');
+				}
+
+				return this.replace(/[\s\uFEFF\xA0]+$/, ''); // include UTF BOM and NBSP
+			}
+		});
+	}
+	if (!String.prototype.trimEnd) {
+		Object.defineProperty(String.prototype, 'trimEnd', {
+			configurable : true,
+			writable     : true,
+
+			value() {
+				if (this == null) { // lazy equality for null
+					throw new TypeError('String.prototype.trimEnd called on null or undefined');
+				}
+
+				return this.trimRight();
+			}
+		});
+	}
 })();
 
 
@@ -137,7 +201,7 @@ function safeActiveElement() {
 	 * JavaScript Extensions, General.
 	 ******************************************************************************************************************/
 	/*
-		Returns a random value from the given array, within the range of the lower and upper
+		Returns a random element from the given array, within the range of the lower and upper
 		bounds, if they are specified.
 	*/
 	Object.defineProperty(Array, 'random', {
@@ -282,77 +346,37 @@ function safeActiveElement() {
 	});
 
 	/*
-		Returns whether the given element was found within, and removed from, the array (from left-to-right).
+		Removes and returns all of the given elements from the array.
 	*/
 	Object.defineProperty(Array.prototype, 'delete', {
 		configurable : true,
 		writable     : true,
 
-		value(/* needle [, fromIndex ] */) {
+		value(/* needles */) {
 			if (this == null) { // lazy equality for null
 				throw new TypeError('Array.prototype.delete called on null or undefined');
 			}
 
-			const pos = Array.prototype.indexOf.apply(this, arguments);
-
-			if (pos === -1) {
-				return false;
-			}
-
-			Array.prototype.splice.call(this, pos, 1);
-			return true;
-		}
-	});
-
-	/*
-		Returns the number of times the given element was found within, and removed from, the array.
-	*/
-	Object.defineProperty(Array.prototype, 'deleteAll', {
-		configurable : true,
-		writable     : true,
-
-		value(/* needle [, fromIndex ] */) {
-			if (this == null) { // lazy equality for null
-				throw new TypeError('Array.prototype.deleteAll called on null or undefined');
+			if (arguments.length === 1 && Array.isArray(arguments[0])) {
+				return Array.prototype.delete.apply(this, arguments[0]);
 			}
 
 			const
 				indexOf = Array.prototype.indexOf,
+				push    = Array.prototype.push,
 				splice  = Array.prototype.splice,
-				needle  = arguments[0];
-			let
-				pos   = Number(arguments[1]) || 0,
-				count = 0;
+				result  = [];
 
-			while ((pos = indexOf.call(this, needle, pos)) !== -1) {
-				splice.call(this, pos, 1);
-				++count;
+			for (let i = 0, iend = arguments.length; i < iend; ++i) {
+				const needle = arguments[i];
+				let pos = 0;
+
+				while ((pos = indexOf.call(this, needle, pos)) !== -1) {
+					push.apply(result, splice.call(this, pos, 1));
+				}
 			}
 
-			return count;
-		}
-	});
-
-	/*
-		Returns whether the given element was found within, and removed from, the array (from right-to-left).
-	*/
-	Object.defineProperty(Array.prototype, 'deleteRight', {
-		configurable : true,
-		writable     : true,
-
-		value(/* needle [, fromIndex ] */) {
-			if (this == null) { // lazy equality for null
-				throw new TypeError('Array.prototype.deleteRight called on null or undefined');
-			}
-
-			const pos = Array.prototype.lastIndexOf.apply(this, arguments);
-
-			if (pos === -1) {
-				return false;
-			}
-
-			Array.prototype.splice.call(this, pos, 1);
-			return true;
+			return result;
 		}
 	});
 
@@ -373,7 +397,7 @@ function safeActiveElement() {
 	});
 
 	/*
-		Removes and returns a random value from the array, within the range of the lower and
+		Removes and returns a random element from the array, within the range of the lower and
 		upper bounds, if they are specified.
 	*/
 	Object.defineProperty(Array.prototype, 'pluck', {
@@ -431,7 +455,7 @@ function safeActiveElement() {
 	});
 
 	/*
-		Returns a random value from the array, within the range of the lower and upper bounds,
+		Returns a random element from the array, within the range of the lower and upper bounds,
 		if they are specified.
 	*/
 	Object.defineProperty(Array.prototype, 'random', {
@@ -820,64 +844,6 @@ function safeActiveElement() {
 
 			return String.prototype.split.apply(this, arguments);
 		}
-	});
-
-	/*
-		[FF-extension] Returns a string with all whitespace removed from the left side of the string.
-	*/
-	if (!String.prototype.trimLeft) {
-		Object.defineProperty(String.prototype, 'trimLeft', {
-			configurable : true,
-			writable     : true,
-
-			value() {
-				if (this == null) { // lazy equality for null
-					throw new TypeError('String.prototype.trimLeft called on null or undefined');
-				}
-
-				return this.replace(/^[\s\uFEFF\xA0]+/, ''); // include UTF BOM and NBSP
-			}
-		});
-	}
-
-	/*
-		[FF-extension] Returns a string with all whitespace removed from the right side of the string.
-	*/
-	if (!String.prototype.trimRight) {
-		Object.defineProperty(String.prototype, 'trimRight', {
-			configurable : true,
-			writable     : true,
-
-			value() {
-				if (this == null) { // lazy equality for null
-					throw new TypeError('String.prototype.trimRight called on null or undefined');
-				}
-
-				return this.replace(/[\s\uFEFF\xA0]+$/, ''); // include UTF BOM and NBSP
-			}
-		});
-	}
-
-	/*
-		[DEPRECATED] Returns a string with all whitespace removed from the left side of the base string.
-
-		n.b. Just a legacy alias for String.prototype.trimLeft now.
-	*/
-	Object.defineProperty(String.prototype, 'ltrim', {
-		configurable : true,
-		writable     : true,
-		value        : String.prototype.trimLeft
-	});
-
-	/*
-		[DEPRECATED] Returns a string with all whitespace removed from the right side of the base string.
-
-		n.b. Just a legacy alias for String.prototype.trimRight now.
-	*/
-	Object.defineProperty(String.prototype, 'rtrim', {
-		configurable : true,
-		writable     : true,
-		value        : String.prototype.trimRight
 	});
 
 	/*

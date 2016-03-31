@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global Alert, Browser, Config, Dialog, DebugView, Engine, Has, KeyValueStore, Macro, Passage,
-	       Save, Scripting, Setting, State, Story, UI, Util, Wikifier, strings
+	global Alert, Browser, Config, Dialog, DebugView, Engine, Has, KeyValueStore, Macro, Passage, Save, Scripting,
+	       Setting, State, Story, UI, Util, Wikifier, strings
 */
 /* eslint-disable no-var */
 
