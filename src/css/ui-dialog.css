@@ -40,9 +40,16 @@ html.ui-dialog-open body {
 	transition: opacity 200ms ease-in;
 }
 /*
-	We cannot animate `#ui-dialog:not(.open)` as the restoration of `overflow`
-	on `body` would cause the still animating dialog to jump around a little
-	if a scrollbar were to pop in.
+	We do not animate `#ui-dialog:not(.open)` for various reasons.  Chief among
+	them, however, is so that the dialog isn't in the middle of its animation
+	when other page updates happen.
+
+	e.g. The restoration of `overflow` on `body` would cause the still animating
+	     dialog to jump around a little if a scrollbar were to pop in.
+
+	     Any dialog action which performs a task which has its own animations
+	     (e.g. passage display) or causes the page to reload in addition to
+	     closing the dialog could cause display shenanigans.
 */
 #ui-dialog {
 	display: none;

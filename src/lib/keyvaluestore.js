@@ -410,7 +410,7 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 			const keys = this.keys();
 
 			for (let i = 0; i < keys.length; ++i) {
-				if (DEBUG) { console.log('    > deleting key:', keys[i]); }
+				if (DEBUG) { console.log('\tdeleting key:', keys[i]); }
 
 				this.delete(keys[i]);
 			}
@@ -423,7 +423,7 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 				return false;
 			}
 
-			if (DEBUG) { console.log(`[<KeyValueStore>.has("${key}")]`); }
+			if (DEBUG) { console.log(`[<KeyValueStore>.has(key: "${key}")]`); }
 
 			return this._driver.has(key);
 		}
@@ -433,7 +433,7 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 				return null;
 			}
 
-			if (DEBUG) { console.log(`[<KeyValueStore>.get("${key}")]`); }
+			if (DEBUG) { console.log(`[<KeyValueStore>.get(key: "${key}")]`); }
 
 			const value = this._driver.get(key);
 
@@ -449,7 +449,7 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 				return false;
 			}
 
-			if (DEBUG) { console.log(`[<KeyValueStore>.set("${key}")]`); }
+			if (DEBUG) { console.log(`[<KeyValueStore>.set(key: "${key}")]`); }
 
 			return this._driver.set(key, this._driver.serialize(value), quiet);
 		}
@@ -459,7 +459,7 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 				return false;
 			}
 
-			if (DEBUG) { console.log(`[<KeyValueStore>.delete("${key}")]`); }
+			if (DEBUG) { console.log(`[<KeyValueStore>.delete(key: "${key}")]`); }
 
 			return this._driver.delete(key, quiet);
 		}
@@ -469,7 +469,7 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 				return false;
 			}
 
-			if (DEBUG) { console.log(`[<KeyValueStore>.deleteMatching("${subKey}")]`); }
+			if (DEBUG) { console.log(`[<KeyValueStore>.deleteMatching(subKey: "${subKey}")]`); }
 
 			const
 				keys = this.keys(),
@@ -477,7 +477,7 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			for (let i = 0; i < keys.length; ++i) {
 				if (re.test(keys[i])) {
-					if (DEBUG) { console.log('    > deleting key:', keys[i]); }
+					if (DEBUG) { console.log('\tdeleting key:', keys[i]); }
 
 					this.delete(keys[i], quiet);
 				}

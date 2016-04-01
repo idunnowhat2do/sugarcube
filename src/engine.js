@@ -97,7 +97,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 			switch (typeof Config.saves.autoload) {
 			case 'boolean':
 				if (Config.saves.autoload && Save.autosave.ok() && Save.autosave.has()) {
-					if (DEBUG) { console.log(`    > display, attempting autoload: "${Save.autosave.get().title}"`); }
+					if (DEBUG) { console.log(`\tattempting autoload: "${Save.autosave.get().title}"`); }
 
 					loadStart = !Save.autosave.load();
 				}
@@ -111,7 +111,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 				break;
 			case 'function':
 				if (Save.autosave.ok() && Save.autosave.has() && !!Config.saves.autoload()) {
-					if (DEBUG) { console.log(`    > display, attempting autoload: "${Save.autosave.get().title}"`); }
+					if (DEBUG) { console.log(`\tattempting autoload: "${Save.autosave.get().title}"`); }
 
 					loadStart = !Save.autosave.load();
 				}
@@ -119,7 +119,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 
 			if (loadStart) {
-				if (DEBUG) { console.log(`    > display: "${Config.passages.start}"`); }
+				if (DEBUG) { console.log(`\tstarting passage: "${Config.passages.start}"`); }
 
 				enginePlay(Config.passages.start);
 			}
@@ -216,7 +216,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		adding a new moment to the history.
 	**/
 	function enginePlay(title, noHistory) {
-		if (DEBUG) { console.log('[Engine/enginePlay()]'); }
+		if (DEBUG) { console.log(`[Engine/enginePlay(title: "${title}", noHistory: ${noHistory})]`); }
 
 		/*
 			Reset the temporary state and variables objects.

@@ -67,7 +67,7 @@ var State = (() => { // eslint-disable-line no-unused-vars, no-var
 			*/
 			const stateObj = session.get('state');
 
-			if (DEBUG) { console.log('    > session state:', stateObj); }
+			if (DEBUG) { console.log('\tsession state:', stateObj); }
 
 			if (stateObj == null) { // lazy equality for null
 				return false;
@@ -397,7 +397,7 @@ var State = (() => { // eslint-disable-line no-unused-vars, no-var
 		Creates a new moment and pushes it onto the history, discarding future moments if necessary.
 	**/
 	function historyCreate(title) {
-		if (DEBUG) { console.log('[State/historyCreate()]'); }
+		if (DEBUG) { console.log(`[State/historyCreate(title: "${title}")]`); }
 
 		/*
 			TODO: It might be good to have some assertions about the passage title here.
@@ -407,9 +407,7 @@ var State = (() => { // eslint-disable-line no-unused-vars, no-var
 			If we're not at the top of the stack, discard the future moments.
 		*/
 		if (historyLength() < historySize()) {
-			if (DEBUG) {
-				console.log(`    > non-top push; discarding ${historySize() - historyLength()} future moments`);
-			}
+			if (DEBUG) { console.log(`\tnon-top push; discarding ${historySize() - historyLength()} future moments`); }
 
 			_history.splice(historyLength(), historySize() - historyLength());
 		}
@@ -522,7 +520,7 @@ var State = (() => { // eslint-disable-line no-unused-vars, no-var
 	 * PRNG Functions.
 	 ******************************************************************************************************************/
 	function prngInit(seed, useEntropy) {
-		if (DEBUG) { console.log('[State/prngInit()]'); }
+		if (DEBUG) { console.log(`[State/prngInit(seed: ${seed}, useEntropy: ${useEntropy})]`); }
 
 		if (!historyIsEmpty()) {
 			let scriptSection;

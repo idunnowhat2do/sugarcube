@@ -200,7 +200,7 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		render() {
-			if (DEBUG) { console.log(`[<Passage>.render()] title: \`${this.title}\``); }
+			if (DEBUG) { console.log(`[<Passage: "${this.title}">.render()]`); }
 
 			// Create and setup the new passage element.
 			const passage = document.createElement('div');

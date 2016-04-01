@@ -324,14 +324,14 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 	/*******************************************************************************************************************
 	 * UI Functions, Built-ins.
 	 ******************************************************************************************************************/
-	function uiOpenAlert(message, options, closeFn) {
+	function uiOpenAlert(message, /* options, closeFn */ ...args) {
 		jQuery(Dialog.setup('Alert', 'alert'))
 			.append(
 				  `<p>${message}</p><ul class="buttons">`
 				+ `<li><button id="alert-ok" class="ui-close">${strings.alert.ok || strings.ok}</button></li>`
 				+ '</ul>'
 			);
-		Dialog.open(options, closeFn);
+		Dialog.open(...args);
 	}
 
 	function uiOpenJumpto(/* options, closeFn */ ...args) {
@@ -339,9 +339,9 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 		Dialog.open(...args);
 	}
 
-	function uiOpenRestart(options) {
+	function uiOpenRestart(/* options, closeFn */ ...args) {
 		uiBuildRestart();
-		Dialog.open(options);
+		Dialog.open(...args);
 	}
 
 	function uiOpenSaves(/* options, closeFn */ ...args) {
@@ -376,11 +376,9 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 		jQuery(document).one('click.autoload', '.ui-close', evt => {
 			const isAutoloadOk = evt.target.id === 'autoload-ok';
 			jQuery(document).one('tw:dialogclosed', () => {
-				if (DEBUG) { console.log(`    > display/autoload: "${Save.autosave.get().title}"`); }
+				if (DEBUG) { console.log(`\tattempting autoload: "${Save.autosave.get().title}"`); }
 
 				if (!isAutoloadOk || !Save.autosave.load()) {
-					if (DEBUG) { console.log(`    > display: "${Config.passages.start}"`); }
-
 					Engine.play(Config.passages.start);
 				}
 			});
@@ -411,9 +409,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 					.append(
 						jQuery(document.createElement('a'))
 							.ariaClick({ one : true }, (function (idx) {
-								return function () {
-									Engine.goTo(idx);
-								};
+								return () => jQuery(document).one('tw:dialogclosed', () => Engine.goTo(idx));
 							})(i))
 							.addClass('ui-close')
 							.text(`${strings.jumpto.turn} ${expired + i + 1}: ${passage.description()}`)
@@ -529,7 +525,9 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 				if (saves.autosave) {
 					// Add the load button.
 					$tdLoad.append(
-						createButton('load', 'ui-close', strings.saves.labelLoad, 'auto', Save.autosave.load)
+						createButton('load', 'ui-close', strings.saves.labelLoad, 'auto', () => {
+							jQuery(document).one('tw:dialogclosed', () => Save.autosave.load());
+						})
 					);
 
 					// Add the description (title and datestamp).
@@ -593,7 +591,9 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 				if (saves.slots[i]) {
 					// Add the load button.
 					$tdLoad.append(
-						createButton('load', 'ui-close', strings.saves.labelLoad, i, Save.slots.load)
+						createButton('load', 'ui-close', strings.saves.labelLoad, i, slot => {
+							jQuery(document).one('tw:dialogclosed', () => Save.slots.load(slot));
+						})
 					);
 
 					// Add the description (title and datestamp).
@@ -690,7 +690,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 						'aria-hidden' : true
 					})
 					.on('change', evt => {
-						Save.import(evt);
+						jQuery(document).one('tw:dialogclosed', () => Save.import(evt));
 						Dialog.close();
 					})
 					.appendTo($dialogBody);

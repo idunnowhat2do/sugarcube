@@ -41,7 +41,7 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 	function storyLoad() {
 		// For Twine 1.
 		if (TWINE1) {
-			if (DEBUG) { console.log('[Story/storyLoad()][Twine 1]'); }
+			if (DEBUG) { console.log('[Story/storyLoad()]'); }
 
 			/*
 				Set the default starting passage.
@@ -50,7 +50,7 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 				// Handle the Twine 1.4+ Test Play From Here feature (pattern: "START_AT").
 				const testPlay = "START_AT"; // eslint-disable-line quotes
 				if (testPlay !== '') {
-					if (DEBUG) { console.log(`    > starting passage set to: "${testPlay}" (Test Play)`); }
+					if (DEBUG) { console.log(`\tTest play; starting passage: "${testPlay}"`); }
 
 					Config.debug = true;
 					return testPlay;
@@ -110,7 +110,7 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		// For Twine 2.
 		else {
-			if (DEBUG) { console.log('[Story/storyLoad()][Twine 2]'); }
+			if (DEBUG) { console.log('[Story/storyLoad()]'); }
 
 			const
 				$storydata = jQuery('#store-area>tw-storydata'),

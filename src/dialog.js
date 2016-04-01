@@ -178,7 +178,7 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 		if (_$dialogBody[0].querySelector('img') !== null) {
 			_$dialogBody
 				.imagesLoaded()
-				.always(() => dialogResizeHandler({ data : top }));
+				.always(() => dialogResizeHandler({ data : { top } }));
 		}
 
 		// Add `aria-hidden=true` to all direct non-dialog-children of <body> to
@@ -200,7 +200,7 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		// Add the UI resize handler.
 		jQuery(window)
-			.on('resize.ui-resize', null, top, jQuery.throttle(40, dialogResizeHandler));
+			.on('resize.ui-resize', null, { top }, jQuery.throttle(40, dialogResizeHandler));
 
 		// Setup the delegated UI close handler.
 		jQuery(document)
@@ -262,7 +262,7 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 	}
 
 	function dialogResizeHandler(evt) {
-		const top = evt && typeof evt.data !== 'undefined' ? evt.data : 50;
+		const top = evt && evt.data && typeof evt.data.top !== 'undefined' ? evt.data.top : 50;
 
 		if (_$dialog.css('display') === 'block') {
 			// Stow the dialog.
