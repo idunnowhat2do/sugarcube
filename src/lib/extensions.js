@@ -357,18 +357,25 @@ function safeActiveElement() {
 				throw new TypeError('Array.prototype.delete called on null or undefined');
 			}
 
-			if (arguments.length === 1 && Array.isArray(arguments[0])) {
-				return Array.prototype.delete.apply(this, arguments[0]);
+			if (arguments.length === 0) {
+				return [];
+			}
+
+			const length = this.length >>> 0;
+
+			if (length === 0) {
+				return [];
 			}
 
 			const
 				indexOf = Array.prototype.indexOf,
 				push    = Array.prototype.push,
 				splice  = Array.prototype.splice,
+				needles = Array.prototype.concat.apply([], arguments),
 				result  = [];
 
-			for (let i = 0, iend = arguments.length; i < iend; ++i) {
-				const needle = arguments[i];
+			for (let i = 0, iend = needles.length; i < iend; ++i) {
+				const needle = needles[i];
 				let pos = 0;
 
 				while ((pos = indexOf.call(this, needle, pos)) !== -1) {
@@ -392,7 +399,8 @@ function safeActiveElement() {
 				throw new TypeError('Array.prototype.flatten called on null or undefined');
 			}
 
-			return this.reduce((prev, cur) => prev.concat(Array.isArray(cur) ? cur.flatten() : cur), []);
+			return Array.prototype.reduce.call(this,
+				(prev, cur) => prev.concat(Array.isArray(cur) ? cur.flatten() : cur), []);
 		}
 	});
 
@@ -409,7 +417,9 @@ function safeActiveElement() {
 				throw new TypeError('Array.prototype.pluck called on null or undefined');
 			}
 
-			if (this.length === 0) {
+			const length = this.length >>> 0;
+
+			if (length === 0) {
 				return;
 			}
 
@@ -426,28 +436,28 @@ function safeActiveElement() {
 				lower = 0;
 			}
 			else if (lower < 0) {
-				lower = this.length + lower;
+				lower = length + lower;
 
 				if (lower < 0) {
 					lower = 0;
 				}
 			}
-			else if (lower >= this.length) {
-				lower = this.length - 1;
+			else if (lower >= length) {
+				lower = length - 1;
 			}
 
 			if (upper == null) { // lazy equality for null
-				upper = this.length - 1;
+				upper = length - 1;
 			}
 			else if (upper < 0) {
-				upper = this.length + upper;
+				upper = length + upper;
 
 				if (upper < 0) {
-					upper = this.length - 1;
+					upper = length - 1;
 				}
 			}
-			else if (upper >= this.length) {
-				upper = this.length - 1;
+			else if (upper >= length) {
+				upper = length - 1;
 			}
 
 			return Array.prototype.splice.call(this, _random(lower, upper), 1)[0];
@@ -467,7 +477,9 @@ function safeActiveElement() {
 				throw new TypeError('Array.prototype.random called on null or undefined');
 			}
 
-			if (this.length === 0) {
+			const length = this.length >>> 0;
+
+			if (length === 0) {
 				return;
 			}
 
@@ -484,28 +496,28 @@ function safeActiveElement() {
 				lower = 0;
 			}
 			else if (lower < 0) {
-				lower = this.length + lower;
+				lower = length + lower;
 
 				if (lower < 0) {
 					lower = 0;
 				}
 			}
-			else if (lower >= this.length) {
-				lower = this.length - 1;
+			else if (lower >= length) {
+				lower = length - 1;
 			}
 
 			if (upper == null) { // lazy equality for null
-				upper = this.length - 1;
+				upper = length - 1;
 			}
 			else if (upper < 0) {
-				upper = this.length + upper;
+				upper = length + upper;
 
 				if (upper < 0) {
-					upper = this.length - 1;
+					upper = length - 1;
 				}
 			}
-			else if (upper >= this.length) {
-				upper = this.length - 1;
+			else if (upper >= length) {
+				upper = length - 1;
 			}
 
 			return this[_random(lower, upper)];
@@ -524,11 +536,13 @@ function safeActiveElement() {
 				throw new TypeError('Array.prototype.shuffle called on null or undefined');
 			}
 
-			if (this.length === 0) {
+			const length = this.length >>> 0;
+
+			if (length === 0) {
 				return;
 			}
 
-			for (let i = this.length - 1; i > 0; --i) {
+			for (let i = length - 1; i > 0; --i) {
 				const
 					j    = Math.floor(_nativeMathRandom() * (i + 1)),
 					swap = this[i];
@@ -559,10 +573,8 @@ function safeActiveElement() {
 				bound = slice.call(arguments, 0);
 
 			return function () {
-				const
-					applied = [];
-				let
-					argc = 0;
+				const applied = [];
+				let argc = 0;
 
 				for (let i = 0; i < bound.length; ++i) {
 					applied.push(bound[i] === undefined ? arguments[argc++] : bound[i]);
