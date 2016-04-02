@@ -59,9 +59,9 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 					+     '<div id="ui-bar-tray">'
 					+         `<button id="ui-bar-toggle" tabindex="0" title="${toggleLabel}" aria-label="${toggleLabel}"></button>`
 					+         '<div id="ui-bar-history">'
-					+             `<button id="history-backward" tabindex="0" title="${backwardLabel}" aria-label="${backwardLabel}">\ue821</button>`
-					+             `<button id="history-jumpto" tabindex="0" title="${jumptoLabel}" aria-label="${jumptoLabel}">\ue839</button>`
-					+             `<button id="history-forward" tabindex="0" title="${forwardLabel}" aria-label="${forwardLabel}">\ue822</button>`
+					+             `<button id="history-backward" tabindex="0" title="${backwardLabel}" aria-label="${backwardLabel}">\uE821</button>`
+					+             `<button id="history-jumpto" tabindex="0" title="${jumptoLabel}" aria-label="${jumptoLabel}">\uE839</button>`
+					+             `<button id="history-forward" tabindex="0" title="${forwardLabel}" aria-label="${forwardLabel}">\uE822</button>`
 					+         '</div>'
 					+     '</div>'
 					+     '<div id="ui-bar-body">'
@@ -520,7 +520,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 						title        : strings.saves.labelAuto,
 						'aria-label' : strings.saves.labelAuto
 					})
-					.text('A') // '\u25c6' Black Diamond
+					.text('A') // '\u25C6' Black Diamond
 					.appendTo($tdSlot);
 
 				if (saves.autosave) {

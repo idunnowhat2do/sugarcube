@@ -1683,7 +1683,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				lookahead      : /^\|([^\n]*)\|([fhck]?)$/gm,
 				rowTerminator  : '\\|(?:[cfhk]?)$\\n?',
 				cellPattern    : '(?:\\|([^\\n\\|]*)\\|)|(\\|[cfhk]?$\\n?)',
-				cellTerminator : '(?:\\x20*)\\|',
+				cellTerminator : '(?:\\u0020*)\\|',
 				rowTypes       : { c : 'caption', f : 'tfoot', h : 'thead', '' : 'tbody' },
 
 				handler(w) {
@@ -2014,7 +2014,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			{
 				name  : 'lineContinuation',
-				match : '\\\\[\\s\\u00a0\\u2028\\u2029]*?(?:\\n|$)', // Unicode space-character escapes required for IE < 11 (maybe < 10?)
+				match : '\\\\[\\s\\u00A0\\u2028\\u2029]*?(?:\\n|$)', // Unicode space-character escapes required for IE < 11 (maybe < 10?)
 
 				handler(w) {
 					w.nextMatch = w.matchStart + w.matchLength;

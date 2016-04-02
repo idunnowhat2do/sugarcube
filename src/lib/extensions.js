@@ -105,7 +105,7 @@ function safeActiveElement() {
 					throw new TypeError('String.prototype.trimLeft called on null or undefined');
 				}
 
-				return this.replace(/^[\s\uFEFF\xA0]+/, ''); // include UTF BOM and NBSP
+				return this.replace(/^[\s\uFEFF\u00A0]+/, ''); // include UTF BOM and NBSP
 			}
 		});
 	}
@@ -137,7 +137,7 @@ function safeActiveElement() {
 					throw new TypeError('String.prototype.trimRight called on null or undefined');
 				}
 
-				return this.replace(/[\s\uFEFF\xA0]+$/, ''); // include UTF BOM and NBSP
+				return this.replace(/[\s\uFEFF\u00A0]+$/, ''); // include UTF BOM and NBSP
 			}
 		});
 	}

@@ -97,7 +97,7 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 				return false;
 			}
 
-			// We really should be checking keys here.
+			// Ideally, we really should be checking keys here.
 			return this._engine.getItem(this._prefix + key) != null; // lazy equality for null
 		}
 
@@ -342,13 +342,16 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 			case 'cookie':
 				driver = new _CookieDriver(persist, storageId);
 				break;
+
 			case 'webStorage':
 				driver = new _WebStorageDriver(persist, storageId);
+
 				if (!driver._ok) {
 					// Fallback to cookies.  Perhaps, this should be handled externally?
 					driver = new _CookieDriver(persist, storageId);
 				}
 				break;
+
 			default:
 				throw new Error('unknown driver type');
 			}
@@ -381,31 +384,31 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		get length() {
+			if (DEBUG) { console.log('[<KeyValueStore>.length]'); }
+
 			if (this._driver === null) {
 				return 0;
 			}
-
-			if (DEBUG) { console.log('[<KeyValueStore>.length]'); }
 
 			return this._driver.length;
 		}
 
 		keys() {
+			if (DEBUG) { console.log('[<KeyValueStore>.keys()]'); }
+
 			if (this._driver === null) {
 				return [];
 			}
-
-			if (DEBUG) { console.log('[<KeyValueStore>.keys()]'); }
 
 			return this._driver.keys();
 		}
 
 		clear() {
+			if (DEBUG) { console.log('[<KeyValueStore>.clear()]'); }
+
 			if (this._driver === null) {
 				return false;
 			}
-
-			if (DEBUG) { console.log('[<KeyValueStore>.clear()]'); }
 
 			const keys = this.keys();
 
@@ -419,21 +422,21 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		has(key) {
+			if (DEBUG) { console.log(`[<KeyValueStore>.has(key: "${key}")]`); }
+
 			if (this._driver === null || !key) {
 				return false;
 			}
-
-			if (DEBUG) { console.log(`[<KeyValueStore>.has(key: "${key}")]`); }
 
 			return this._driver.has(key);
 		}
 
 		get(key) {
+			if (DEBUG) { console.log(`[<KeyValueStore>.get(key: "${key}")]`); }
+
 			if (this._driver === null || !key) {
 				return null;
 			}
-
-			if (DEBUG) { console.log(`[<KeyValueStore>.get(key: "${key}")]`); }
 
 			const value = this._driver.get(key);
 
@@ -445,31 +448,31 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		set(key, value, quiet) {
+			if (DEBUG) { console.log(`[<KeyValueStore>.set(key: "${key}", value: \u2026, quiet: "${quiet}")]`); }
+
 			if (this._driver === null || !key) {
 				return false;
 			}
-
-			if (DEBUG) { console.log(`[<KeyValueStore>.set(key: "${key}")]`); }
 
 			return this._driver.set(key, this._driver.serialize(value), quiet);
 		}
 
 		delete(key, quiet) {
+			if (DEBUG) { console.log(`[<KeyValueStore>.delete(key: "${key}", quiet: "${quiet}")]`); }
+
 			if (this._driver === null || !key) {
 				return false;
 			}
-
-			if (DEBUG) { console.log(`[<KeyValueStore>.delete(key: "${key}")]`); }
 
 			return this._driver.delete(key, quiet);
 		}
 
 		deleteMatching(subKey, quiet) {
+			if (DEBUG) { console.log(`[<KeyValueStore>.deleteMatching(subKey: "${subKey}", quiet: "${quiet}")]`); }
+
 			if (this._driver === null || !subKey) {
 				return false;
 			}
-
-			if (DEBUG) { console.log(`[<KeyValueStore>.deleteMatching(subKey: "${subKey}")]`); }
 
 			const
 				keys = this.keys(),

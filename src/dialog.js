@@ -82,7 +82,7 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 				+ '<div id="ui-dialog" tabindex="0" role="dialog" aria-labelledby="ui-dialog-title">'
 				+     '<div id="ui-dialog-titlebar">'
 				+         '<h1 id="ui-dialog-title"></h1>'
-				+         `<button id="ui-dialog-close" class="ui-close" tabindex="0" aria-label="${strings.close}">\ue804</button>`
+				+         `<button id="ui-dialog-close" class="ui-close" tabindex="0" aria-label="${strings.close}">\uE804</button>`
 				+     '</div>'
 				+     '<div id="ui-dialog-body"></div>'
 				+ '</div>'
@@ -131,7 +131,7 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		_$dialogTitle
 			.empty()
-			.append((title != null ? String(title) : '') || '\u00a0'); // lazy equality for null
+			.append((title != null ? String(title) : '') || '\u00A0'); // lazy equality for null
 		return _$dialogBody.get(0);
 	}
 

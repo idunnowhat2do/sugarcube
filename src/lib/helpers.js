@@ -29,12 +29,14 @@ var { // eslint-disable-line no-var
 
 	function addStyle(rawCSS) {
 		let style = document.getElementById('style-story');
+
 		if (style === null) {
 			style      = document.createElement('style');
 			style.id   = 'style-story';
 			style.type = 'text/css';
 			document.head.appendChild(style);
 		}
+
 		style = new StyleWrapper(style);
 
 		let css = rawCSS;
@@ -56,6 +58,7 @@ var { // eslint-disable-line no-var
 				// Handle image passage transclusion.
 				if (source.slice(0, 5) !== 'data:' && Story.has(source)) {
 					const passage = Story.get(source);
+
 					if (passage.tags.includes('Twine.image')) {
 						source = passage.text;
 					}
@@ -74,7 +77,7 @@ var { // eslint-disable-line no-var
 	}
 
 	/*
-	 	Returns a deep copy of the passed object
+		Returns a deep copy of the passed object
 
 		n.b. 1. `clone()` does not clone functions, however, since function definitions are immutable,
 		        the only issues are with expando properties and scope.  The former really should not
@@ -115,6 +118,7 @@ var { // eslint-disable-line no-var
 			        `[object Set]`.
 		*/
 		let copy;
+
 		if (Array.isArray(orig)) { // considering #2, `orig instanceof Array` might be more appropriate
 			copy = [];
 		}
@@ -184,6 +188,7 @@ var { // eslint-disable-line no-var
 						continue;
 					}
 					break;
+
 				case 'ADDRESS':
 				case 'ARTICLE':
 				case 'ASIDE':
@@ -312,7 +317,8 @@ var { // eslint-disable-line no-var
 		Appends an error message to the passed DOM element.
 	*/
 	function throwError(place, message, title) {
-		jQuery('<span class="error"></span>')
+		jQuery(document.createElement('span'))
+			.addClass('error')
 			.attr('title', title)
 			.text(`${strings.errors.title}: ${message}`)
 			.appendTo(place);
