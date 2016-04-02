@@ -106,11 +106,11 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 			.on('mousedown.outline-handler keydown.outline-handler', evt => {
 				switch (evt.type) {
 				case 'mousedown':
-					uiPatchOutlines(true);
+					uiHideOutlines();
 					break;
 
 				case 'keydown':
-					uiPatchOutlines(false);
+					uiShowOutlines();
 					break;
 				}
 			});
@@ -127,8 +127,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 				const $uiBarStory = jQuery($uiBar).add('#story');
 				$uiBarStory.addClass('no-transition');
 				$uiBar.addClass('stowed');
-				setTimeout(() => $uiBarStory.removeClass('no-transition'),
-					Math.max(Engine.minDomActionDelay, 100));
+				setTimeout(() => $uiBarStory.removeClass('no-transition'), Engine.minDomActionDelay);
 			})();
 		}
 
@@ -216,6 +215,9 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 			jQuery('#menu-item-share').remove();
 		}
 
+		// Focus the document element initially.
+		jQuery(document.documentElement).focus();
+
 		/*
 			Handle the loading screen.
 
@@ -263,13 +265,12 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 	}
 
-	function uiPatchOutlines(patch) {
-		if (patch) {
-			_outlinePatch.set('*:focus{outline:none}');
-		}
-		else {
-			_outlinePatch.clear();
-		}
+	function uiHideOutlines() {
+		_outlinePatch.set('*:focus{outline:none}');
+	}
+
+	function uiShowOutlines() {
+		_outlinePatch.clear();
 	}
 
 	function uiAssembleLinkList(passage, listEl) {
@@ -873,7 +874,8 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 		init             : { value : uiInit },
 		start            : { value : uiStart },
 		setStoryElements : { value : uiSetStoryElements },
-		patchOutlines    : { value : uiPatchOutlines },
+		hideOutlines     : { value : uiHideOutlines },
+		showOutlines     : { value : uiShowOutlines },
 		assembleLinkList : { value : uiAssembleLinkList },
 
 		/*

@@ -408,7 +408,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 
 			// Prepend the cached `StoryInit` debug view, if we're showing the first moment/turn.
-			if (State.length === 1 && _storyInitDebugView != null) { // lazy equality for null
+			if (State.turns === 1 && _storyInitDebugView != null) { // lazy equality for null
 				$incoming.prepend(_storyInitDebugView);
 			}
 		}
@@ -416,11 +416,8 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		/*
 			Last second post-processing for accessibility and other things.
-
-			TODO: Perhaps this should be limited to the incoming passage and, if so,
-			      maybe before its contents are added to the DOM?
 		*/
-		UI.patchOutlines(true); // initially hide outlines
+		UI.hideOutlines(); // initially hide outlines
 		jQuery('#story')
 			// Add `link-external` to all `href` bearing `<a>` elements which don't have it.
 			.find('a[href]:not(.link-external)')
