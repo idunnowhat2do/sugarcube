@@ -388,6 +388,55 @@ function safeActiveElement() {
 	});
 
 	/*
+		Removes and returns all of the elements at the given indices from the array.
+	*/
+	Object.defineProperty(Array.prototype, 'deleteAt', {
+		configurable : true,
+		writable     : true,
+
+		value(/* indices */) {
+			if (this == null) { // lazy equality for null
+				throw new TypeError('Array.prototype.deleteAt called on null or undefined');
+			}
+
+			if (arguments.length === 0) {
+				return [];
+			}
+
+			const length = this.length >>> 0;
+
+			if (length === 0) {
+				return [];
+			}
+
+			const
+				splice     = Array.prototype.splice,
+				cpyIndices = [
+					...(new Set(
+						Array.prototype.concat.apply([], arguments)
+							// Map negative indices to their positive counterparts,
+							// so the Set can properly filter out duplicates.
+							.map(x => x < 0 ? Math.max(0, length + x) : x)
+					)).values()
+				],
+				delIndices = [...cpyIndices].sort((a, b) => b - a),
+				result     = [];
+
+			// Copy the elements (in original indices order).
+			for (let i = 0, iend = cpyIndices.length; i < iend; ++i) {
+				result[i] = this[cpyIndices[i]];
+			}
+
+			// Delete the elements (in descending numeric order).
+			for (let i = 0, iend = delIndices.length; i < iend; ++i) {
+				splice.call(this, delIndices[i], 1);
+			}
+
+			return result;
+		}
+	});
+
+	/*
 		Returns a new array consisting of the flattened source array (flat map reduce).
 	*/
 	Object.defineProperty(Array.prototype, 'flatten', {
