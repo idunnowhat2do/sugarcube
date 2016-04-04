@@ -103,14 +103,6 @@ html.debug-view .debug[data-name][data-type|="macro"]:before {
 html.debug-view .debug[data-name][data-type|="macro"].nonvoid:after {
 	content: "<</" attr(data-name) ">>";
 }
-/*
-html.debug-view .debug[data-name][data-type|="macro"]:empty:before {
-	content: "<<" attr(data-name) "\00a0/>>";
-}
-html.debug-view .debug[data-name][data-type|="macro"].nonvoid:empty:after {
-	content: none;
-}
-*/
 html.debug-view .debug[data-name][data-type|="html"]:before {
 	content: "<" attr(data-name) ">";
 }

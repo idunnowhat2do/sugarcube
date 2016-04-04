@@ -7,357 +7,307 @@
  *
  **********************************************************************************************************************/
 /*
-	global Has, Save, Setting, State, Story, StyleWrapper, Util, Wikifier, config, insertText, minDOMActionDelay,
-	       removeChildren, safeActiveElement, setPageElement, session, settings, storage, strings, version
+	global Dialog, Engine, Has, Save, Setting, State, Story, StyleWrapper, Util, Wikifier, Config, setPageElement,
+	       settings, strings
 */
 
-/*
-	TODO: The UI object could stand to receive some refactoring.  It particular, it should
-	      probably be split into multiple objects (at least one for the dialog and one for
-	      everything else).
-*/
-var UI = (function () { // eslint-disable-line no-unused-vars
-	"use strict";
+var UI = (() => { // eslint-disable-line no-unused-vars, no-var
+	'use strict';
 
-	var
-		_bar            = null,
-		_overlay        = null,
-		_dialog         = null,
-		_dialogTitle    = null,
-		_dialogClose    = null, // eslint-disable-line no-unused-vars
-		_dialogBody     = null,
-		_lastActive     = null,
-		_outlinePatch   = null,
-		_scrollbarWidth = 0;
+	let _outlinePatch = null;
 
 
 	/*******************************************************************************************************************
-	 * UI Functions, Core
+	 * UI Functions, Core.
 	 ******************************************************************************************************************/
 	function uiInit() {
-		if (DEBUG) { console.log("[UI/uiInit()]"); }
+		if (DEBUG) { console.log('[UI/uiInit()]'); }
 
 		/*
 			Remove #init-no-js & #init-lacking from #init-screen.
 		*/
-		jQuery("#init-no-js, #init-lacking").remove();
+		jQuery('#init-no-js,#init-lacking').remove();
 
 		/*
-			Add `tabindex=-1` to <body>.
+			Generate and cache the outline patching <style> element (`StyleWrapper`-wrapped).
 		*/
-		//jQuery(document.body).attr("tabindex", -1);
+		_outlinePatch = new StyleWrapper((
+			() => jQuery(document.createElement('style'))
+				.attr({
+					id   : 'style-outline-patch',
+					type : 'text/css'
+				})
+				.appendTo(document.head)
+				.get(0) // return the <style> element itself
+		)());
 
 		/*
-			Generate and cache the outline patching <style> element.
+			Generate the UI bar elements and insert them into the page before the store area.
 		*/
-		_outlinePatch      = document.createElement("style");
-		_outlinePatch.id   = "style-outline-patch";
-		_outlinePatch.type = "text/css";
-		document.head.appendChild(_outlinePatch);
+		(() => {
+			const
+				$uiTree       = jQuery(document.createDocumentFragment()),
+				toggleLabel   = strings.uiBar.toggle,
+				backwardLabel = strings.uiBar.backward.replace(/%identity%/g, strings.identity),
+				jumptoLabel   = strings.uiBar.jumpto.replace(/%identity%/g, strings.identity),
+				forwardLabel  = strings.uiBar.forward.replace(/%identity%/g, strings.identity);
 
-		/*
-			Calculate and cache the width of scrollbars.
-		*/
-		_scrollbarWidth = (function () {
-			var scrollbarWidth;
-			try {
-				var inner = document.createElement("p");
-				inner.style.width  = "100%";
-				inner.style.height = "200px";
-
-				var outer = document.createElement("div");
-				outer.style.position   = "absolute";
-				outer.style.left       = "0px";
-				outer.style.top        = "0px";
-				outer.style.width      = "100px";
-				outer.style.height     = "100px";
-				outer.style.visibility = "hidden";
-				outer.style.overflow   = "hidden";
-
-				outer.appendChild(inner);
-				document.body.appendChild(outer);
-
-				var w1 = inner.offsetWidth;
-				/*
-					The `overflow: scroll` style property does not work consistently with
-					scrollbars which are styled with `::-webkit-scrollbar`.
-				*/
-				outer.style.overflow = "auto";
-				var w2 = inner.offsetWidth;
-				if (w1 === w2) {
-					w2 = outer.clientWidth;
-				}
-
-				document.body.removeChild(outer);
-
-				scrollbarWidth = w1 - w2;
-			} catch (e) { /* no-op */ }
-			return scrollbarWidth || 17; // 17px is a reasonable failover
+			$uiTree
+				.append(
+					/* eslint-disable max-len */
+					  '<div id="ui-bar">'
+					+     '<div id="ui-bar-tray">'
+					+         `<button id="ui-bar-toggle" tabindex="0" title="${toggleLabel}" aria-label="${toggleLabel}"></button>`
+					+         '<div id="ui-bar-history">'
+					+             `<button id="history-backward" tabindex="0" title="${backwardLabel}" aria-label="${backwardLabel}">\uE821</button>`
+					+             `<button id="history-jumpto" tabindex="0" title="${jumptoLabel}" aria-label="${jumptoLabel}">\uE839</button>`
+					+             `<button id="history-forward" tabindex="0" title="${forwardLabel}" aria-label="${forwardLabel}">\uE822</button>`
+					+         '</div>'
+					+     '</div>'
+					+     '<div id="ui-bar-body">'
+					+         '<header id="title" role="banner">'
+					+             '<div id="story-banner"></div>'
+					+             '<h1 id="story-title"></h1>'
+					+             '<div id="story-subtitle"></div>'
+					+             '<div id="story-title-separator"></div>'
+					+             '<p id="story-author"></p>'
+					+         '</header>'
+					+         '<div id="story-caption"></div>'
+					+         '<nav id="menu" role="navigation">'
+					+             '<ul id="menu-story"></ul>'
+					+             '<ul id="menu-core">'
+					+                 `<li id="menu-item-saves"><a tabindex="0">${strings.saves.title}</a></li>`
+					+                 `<li id="menu-item-settings"><a tabindex="0">${strings.settings.title}</a></li>`
+					+                 `<li id="menu-item-restart"><a tabindex="0">${strings.restart.title}</a></li>`
+					+                 `<li id="menu-item-share"><a tabindex="0">${strings.share.title}</a></li>`
+					+             '</ul>'
+					+         '</nav>'
+					+     '</div>'
+					+ '</div>'
+					+ '<div id="story" role="main">'
+					+     '<div id="passages"></div>'
+					+ '</div>'
+					/* eslint-enable max-len */
+				)
+				.insertBefore('#store-area');
 		})();
 
 		/*
-			Generate the main UI elements.
-		*/
-		var	store  = document.getElementById("store-area"),
-			uiTree = document.createDocumentFragment(),
-			temp   = document.createElement("div");
-		/* eslint-disable max-len */
-		temp.innerHTML =
-			  '<div id="ui-bar">'
-			+     '<div id="ui-bar-tray">'
-			+         String.format('<button id="ui-bar-toggle" tabindex="0" title="{0}" aria-label="{0}"></button>', strings.uiBar.toggle)
-			+         '<div id="ui-bar-history">'
-			+             String.format('<button id="history-backward" tabindex="0" title="{0}" aria-label="{0}">\ue821</button>',
-							strings.uiBar.backward.replace(/%identity%/g, strings.identity))
-			+             String.format('<button id="history-jumpto" tabindex="0" title="{0}" aria-label="{0}">\ue839</button>',
-							strings.uiBar.jumpto.replace(/%identity%/g, strings.identity))
-			+             String.format('<button id="history-forward" tabindex="0" title="{0}" aria-label="{0}">\ue822</button>',
-							strings.uiBar.forward.replace(/%identity%/g, strings.identity))
-			+         '</div>'
-			+     '</div>'
-			+     '<div id="ui-bar-body">'
-			+         '<header id="title" role="banner">'
-			+             '<div id="story-banner"></div>'
-			+             '<h1 id="story-title"></h1>'
-			+             '<div id="story-subtitle"></div>'
-			+             '<div id="story-title-separator"></div>'
-			+             '<p id="story-author"></p>'
-			+         '</header>'
-			+         '<div id="story-caption"></div>'
-			+         '<nav id="menu" role="navigation">'
-			+             '<ul id="menu-story"></ul>'
-			+             '<ul id="menu-core">'
-			+                 '<li id="menu-item-saves"><a tabindex="0">' + strings.saves.title + '</a></li>'
-			+                 '<li id="menu-item-settings"><a tabindex="0">' + strings.settings.title + '</a></li>'
-			+                 '<li id="menu-item-restart"><a tabindex="0">' + strings.restart.title + '</a></li>'
-			+                 '<li id="menu-item-share"><a tabindex="0">' + strings.share.title + '</a></li>'
-			+             '</ul>'
-			+         '</nav>'
-			+     '</div>'
-			+ '</div>'
-			+ '<div id="ui-overlay" class="ui-close"></div>'
-			+ '<div id="ui-dialog" tabindex="0" role="dialog" aria-labelledby="ui-dialog-title">'
-			+     '<div id="ui-dialog-titlebar">'
-			+         '<h1 id="ui-dialog-title"></h1>'
-			+         '<button id="ui-dialog-close" class="ui-close" tabindex="0" aria-label="' + strings.close + '">\ue804</button>'
-			+     '</div>'
-			+     '<div id="ui-dialog-body"></div>'
-			+ '</div>'
-			+ '<div id="story" role="main">'
-			+     '<div id="passages"></div>'
-			+ '</div>';
-		/* eslint-enable max-len */
-		while (temp.hasChildNodes()) {
-			uiTree.appendChild(temp.firstChild);
-		}
-
-		/*
-			Cache the core UI elements, since they're going to be used often.
-		*/
-		_bar         = uiTree.querySelector("#ui-bar");
-		_overlay     = uiTree.querySelector("#ui-overlay");
-		_dialog      = uiTree.querySelector("#ui-dialog");
-		_dialogTitle = uiTree.querySelector("#ui-dialog-title");
-		_dialogClose = uiTree.querySelector("#ui-dialog-close");
-		_dialogBody  = uiTree.querySelector("#ui-dialog-body");
-
-		/*
-			Insert the main UI elements into the page before the store area.
-		*/
-		store.parentNode.insertBefore(uiTree, store);
-
-		/*
-			Setup the document-wide/global event handlers.
+			Setup the UI bar's global event handlers.
 		*/
 		jQuery(document)
 			// Setup a handler for the history-backward/-forward buttons.
-			.on("tw:historyupdate", (function ($backward, $forward) {
-				return function () {
-					$backward.prop("disabled", State.length < 2);
-					$forward.prop("disabled", State.length === State.size);
-				};
-			})(jQuery("#history-backward"), jQuery("#history-forward")))
+			.on('tw:historyupdate', (($backward, $forward) => () => {
+				$backward.prop('disabled', State.length < 2);
+				$forward.prop('disabled', State.length === State.size);
+			})(jQuery('#history-backward'), jQuery('#history-forward')))
 			// Setup accessible outline handling.
 			//   based on: http://www.paciellogroup.com/blog/2012/04/how-to-remove-css-outlines-in-an-accessible-manner/
-			.on("mousedown.outline-handler keydown.outline-handler", function (evt) {
+			.on('mousedown.outline-handler keydown.outline-handler', evt => {
 				switch (evt.type) {
-				case "mousedown":
-					uiPatchOutlines(true);
+				case 'mousedown':
+					uiHideOutlines();
 					break;
-				case "keydown":
-					uiPatchOutlines(false);
+
+				case 'keydown':
+					uiShowOutlines();
 					break;
 				}
 			});
 	}
 
 	function uiStart() {
-		if (DEBUG) { console.log("[UI/uiStart()]"); }
+		if (DEBUG) { console.log('[UI/uiStart()]'); }
+
+		const $uiBar = jQuery('#ui-bar');
 
 		// Setup the #ui-bar's initial state.
-		if (config.ui.stowBarInitially || jQuery(window).width() <= 800) {
-			var	$uiBarStory = jQuery("#ui-bar,#story");
-			$uiBarStory.addClass("no-transition");
-			_bar.classList.add("stowed");
-			setTimeout(function () {
-				$uiBarStory.removeClass("no-transition");
-			}, Math.max(minDOMActionDelay, 100));
+		if (Config.ui.stowBarInitially || jQuery(window).width() <= 800) {
+			(() => {
+				const $uiBarStory = jQuery($uiBar).add('#story');
+				$uiBarStory.addClass('no-transition');
+				$uiBar.addClass('stowed');
+				setTimeout(() => $uiBarStory.removeClass('no-transition'), Engine.minDomActionDelay);
+			})();
 		}
 
 		// Setup the #ui-bar-toggle and #ui-bar-history widgets.
-		jQuery("#ui-bar-toggle")
+		jQuery('#ui-bar-toggle')
 			.ariaClick({
 				label : strings.uiBar.toggle
-			}, function () {
-				jQuery(_bar).toggleClass("stowed");
-			});
-		if (config.history.controls) {
-			jQuery("#history-backward")
-				.prop("disabled", State.length < 2)
+			}, () => $uiBar.toggleClass('stowed'));
+
+		if (Config.history.controls) {
+			jQuery('#history-backward')
+				.prop('disabled', State.length < 2)
 				.ariaClick({
 					label : strings.uiBar.backward.replace(/%identity%/g, strings.identity)
-				}, function () {
-					State.backward();
-				});
-			if ((config.history.maxStates === 0 || config.history.maxStates > 10) && Story.lookup("tags", "bookmark").length > 0) {
-				jQuery("#history-jumpto")
+				}, () => Engine.backward());
+
+			if (Story.lookup('tags', 'bookmark').length > 0) {
+				jQuery('#history-jumpto')
 					.ariaClick({
 						label : strings.uiBar.jumpto.replace(/%identity%/g, strings.identity)
-					}, function () {
-						UI.jumpto();
-					});
-			} else {
-				jQuery("#history-jumpto").remove();
+					}, () => UI.jumpto());
 			}
-			jQuery("#history-forward")
-				.prop("disabled", State.length === State.size)
+			else {
+				jQuery('#history-jumpto').remove();
+			}
+
+			jQuery('#history-forward')
+				.prop('disabled', State.length === State.size)
 				.ariaClick({
 					label : strings.uiBar.forward.replace(/%identity%/g, strings.identity)
-				}, function () {
-					State.forward();
-				});
-		} else {
-			jQuery("#ui-bar-history").remove();
+				}, () => Engine.forward());
+		}
+		else {
+			jQuery('#ui-bar-history').remove();
 		}
 
 		// Setup the title.
 		if (TWINE1) { // for Twine 1
-			setPageElement("story-title", "StoryTitle", Story.title);
-		} else { // for Twine 2
-			jQuery("#story-title").text(Story.title);
+			setPageElement('story-title', 'StoryTitle', Story.title);
+		}
+		else { // for Twine 2
+			jQuery('#story-title').text(Story.title);
 		}
 
 		// Setup the dynamic page elements.
-		if (!Story.has("StoryCaption")) {
-			jQuery("#story-caption").remove();
+		if (!Story.has('StoryCaption')) {
+			jQuery('#story-caption').remove();
 		}
-		if (!Story.has("StoryMenu")) {
-			jQuery("#menu-story").remove();
+
+		if (!Story.has('StoryMenu')) {
+			jQuery('#menu-story').remove();
 		}
-		if (!config.ui.updateStoryElements) {
+
+		if (!Config.ui.updateStoryElements) {
 			/*
-				We only need to set the story elements here if `config.ui.updateStoryElements`
-				is falsy, since otherwise they will be set by `State.play()`.
+				We only need to set the story elements here if `Config.ui.updateStoryElements`
+				is falsy, since otherwise they will be set by `Engine.play()`.
 			*/
 			uiSetStoryElements();
 		}
 
 		// Setup the Saves menu item.
-		dialogAddClickHandler("#menu-item-saves a", null, uiBuildSaves)
+		Dialog.addClickHandler('#menu-item-saves a', null, uiBuildSaves)
 			.text(strings.saves.title);
 
 		// Setup the Settings menu item.
 		if (!Setting.isEmpty()) {
-			dialogAddClickHandler("#menu-item-settings a", null, uiBuildSettings)
+			Dialog.addClickHandler('#menu-item-settings a', null, uiBuildSettings)
 				.text(strings.settings.title);
-		} else {
-			jQuery("#menu-item-settings").remove();
+		}
+		else {
+			jQuery('#menu-item-settings').remove();
 		}
 
 		// Setup the Restart menu item.
-		dialogAddClickHandler("#menu-item-restart a", null, uiBuildRestart)
+		Dialog.addClickHandler('#menu-item-restart a', null, uiBuildRestart)
 			.text(strings.restart.title);
 
 		// Setup the Share menu item.
-		if (Story.has("StoryShare")) {
-			dialogAddClickHandler("#menu-item-share a", null, uiBuildShare)
+		if (Story.has('StoryShare')) {
+			Dialog.addClickHandler('#menu-item-share a', null, uiBuildShare)
 				.text(strings.share.title);
-		} else {
-			jQuery("#menu-item-share").remove();
+		}
+		else {
+			jQuery('#menu-item-share').remove();
 		}
 
-		// Handle the loading screen.
-		if (document.readyState === "complete") {
-			document.documentElement.classList.remove("init-loading");
-		}
-		document.addEventListener("readystatechange", function () {
-			// The value of `readyState` may be: "loading", "interactive", or "complete".
-			if (document.readyState === "complete") {
-				if (config.loadDelay > 0) {
-					setTimeout(function () {
-						document.documentElement.classList.remove("init-loading");
-					}, Math.max(minDOMActionDelay, config.loadDelay));
-				} else {
-					document.documentElement.classList.remove("init-loading");
+		// Focus the document element initially.
+		jQuery(document.documentElement).focus();
+
+		/*
+			Handle the loading screen.
+
+			The value of `document.readyState` may be: 'loading' -> 'interactive' -> 'complete'.
+			Though, to reach this point, it must already be in, at least, the 'interactive' state.
+		*/
+		jQuery(document).on('readystatechange', () => {
+			const $html = jQuery(document.documentElement);
+
+			if (document.readyState === 'complete') {
+				if ($html.hasClass('init-loading')) {
+					if (Config.loadDelay > 0) {
+						setTimeout(() => $html.removeClass('init-loading'),
+							Math.max(Engine.minDomActionDelay, Config.loadDelay));
+					}
+					else {
+						$html.removeClass('init-loading');
+					}
 				}
-			} else {
-				document.documentElement.classList.add("init-loading");
 			}
-		}, false);
+			else {
+				$html.addClass('init-loading');
+			}
+		});
 	}
 
 	function uiSetStoryElements() {
-		if (DEBUG) { console.log("[UI/uiSetStoryElements()]"); }
+		if (DEBUG) { console.log('[UI/uiSetStoryElements()]'); }
 
 		// Setup the (non-navigation) dynamic page elements.
-		setPageElement("story-banner", "StoryBanner");
-		setPageElement("story-subtitle", "StorySubtitle");
-		setPageElement("story-author", "StoryAuthor");
-		setPageElement("story-caption", "StoryCaption");
+		setPageElement('story-banner', 'StoryBanner');
+		setPageElement('story-subtitle', 'StorySubtitle');
+		setPageElement('story-author', 'StoryAuthor');
+		setPageElement('story-caption', 'StoryCaption');
 
 		// Setup the #menu-story items.
-		var menuStory = document.getElementById("menu-story");
+		const menuStory = document.getElementById('menu-story');
+
 		if (menuStory !== null) {
-			removeChildren(menuStory);
-			if (Story.has("StoryMenu")) {
-				uiAssembleLinkList("StoryMenu", menuStory);
+			jQuery(menuStory).empty();
+
+			if (Story.has('StoryMenu')) {
+				uiAssembleLinkList('StoryMenu', menuStory);
 			}
 		}
 	}
 
-	function uiPatchOutlines(patch) {
-		var	outlines = new StyleWrapper(_outlinePatch);
-		if (patch) {
-			outlines.set("*:focus{outline:none}");
-		} else {
-			outlines.clear();
-		}
+	function uiHideOutlines() {
+		_outlinePatch.set('*:focus{outline:none}');
 	}
 
-	function uiAssembleLinkList(passage, list) {
-		// Cache the value of `config.debug` and then disable it during this method's run.
-		var debugState = config.debug;
-		config.debug = false;
+	function uiShowOutlines() {
+		_outlinePatch.clear();
+	}
+
+	function uiAssembleLinkList(passage, listEl) {
+		let list = listEl;
+
+		// Cache the value of `Config.debug` and then disable it during this method's run.
+		const debugState = Config.debug;
+		Config.debug = false;
 
 		if (list == null) { // lazy equality for null
-			list = document.createElement("ul");
+			list = document.createElement('ul');
 		}
-		var temp = document.createDocumentFragment();
+
+		const temp = document.createDocumentFragment();
 		new Wikifier(temp, Story.get(passage).processText().trim());
+
 		if (temp.hasChildNodes()) {
-			var li = null;
+			let li = null;
+
 			while (temp.hasChildNodes()) {
-				var node = temp.firstChild;
-				if (node.nodeType !== Node.ELEMENT_NODE || node.nodeName.toUpperCase() !== "A") { // non-<a>-element nodes
+				const node = temp.firstChild;
+
+				// Non-<a>-element nodes.
+				if (node.nodeType !== Node.ELEMENT_NODE || node.nodeName.toUpperCase() !== 'A') {
 					temp.removeChild(node);
+
 					if (li !== null) {
 						// Forget the current list item.
 						li = null;
 					}
-				} else { // <a>-element nodes
+				}
+
+				// <a>-element nodes.
+				else {
 					if (li === null) {
 						// Create a new list item.
-						li = document.createElement("li");
+						li = document.createElement('li');
 						list.appendChild(li);
 					}
 					li.appendChild(node);
@@ -365,448 +315,504 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 			}
 		}
 
-		// Restore `config.debug` to its original value.
-		config.debug = debugState;
+		// Restore `Config.debug` to its original value.
+		Config.debug = debugState;
 
 		return list;
 	}
 
 
 	/*******************************************************************************************************************
-	 * UI Functions, Built-ins
+	 * UI Functions, Built-ins.
 	 ******************************************************************************************************************/
-	function uiOpenAlert(message, options, closeFn) {
-		jQuery(dialogSetup("Alert", "alert"))
-			.append('<p>' + message + '</p><ul class="buttons">'
-				+ '<li><button id="alert-ok" class="ui-close">' + (strings.alert.ok || strings.ok) + '</button></li>'
-				+ '</ul>');
-		dialogOpen(options, closeFn);
+	function uiOpenAlert(message, /* options, closeFn */ ...args) {
+		jQuery(Dialog.setup('Alert', 'alert'))
+			.append(
+				  `<p>${message}</p><ul class="buttons">`
+				+ `<li><button id="alert-ok" class="ui-close">${strings.alert.ok || strings.ok}</button></li>`
+				+ '</ul>'
+			);
+		Dialog.open(...args);
 	}
 
-	function uiOpenJumpto(/* options, closeFn */) {
+	function uiOpenJumpto(/* options, closeFn */ ...args) {
 		uiBuildJumpto();
-		dialogOpen.apply(null, arguments);
+		Dialog.open(...args);
 	}
 
-	function uiOpenRestart(options) {
+	function uiOpenRestart(/* options, closeFn */ ...args) {
 		uiBuildRestart();
-		dialogOpen(options);
+		Dialog.open(...args);
 	}
 
-	function uiOpenSaves(/* options, closeFn */) {
+	function uiOpenSaves(/* options, closeFn */ ...args) {
 		uiBuildSaves();
-		dialogOpen.apply(null, arguments);
+		Dialog.open(...args);
 	}
 
-	function uiOpenSettings(/* options, closeFn */) {
+	function uiOpenSettings(/* options, closeFn */ ...args) {
 		uiBuildSettings();
-		dialogOpen.apply(null, arguments);
+		Dialog.open(...args);
 	}
 
-	function uiOpenShare(/* options, closeFn */) {
+	function uiOpenShare(/* options, closeFn */ ...args) {
 		uiBuildShare();
-		dialogOpen.apply(null, arguments);
+		Dialog.open(...args);
 	}
 
 	function uiBuildAutoload() {
-		if (DEBUG) { console.log("[UI/uiBuildAutoload()]"); }
+		if (DEBUG) { console.log('[UI/uiBuildAutoload()]'); }
 
-		jQuery(dialogSetup(strings.autoload.title, "autoload"))
-			.append('<p>' + strings.autoload.prompt + '</p><ul class="buttons">'
-				+ '<li><button id="autoload-ok" class="ui-close">' + (strings.autoload.ok || strings.ok) + '</button></li>'
-				+ '<li><button id="autoload-cancel" class="ui-close">' + (strings.autoload.cancel || strings.cancel) + '</button></li>'
-				+ '</ul>');
+		jQuery(Dialog.setup(strings.autoload.title, 'autoload'))
+			.append(
+				/* eslint-disable max-len */
+				  `<p>${strings.autoload.prompt}</p><ul class="buttons">`
+				+ `<li><button id="autoload-ok" class="ui-close">${strings.autoload.ok || strings.ok}</button></li>`
+				+ `<li><button id="autoload-cancel" class="ui-close">${strings.autoload.cancel || strings.cancel}</button></li>`
+				+ '</ul>'
+				/* eslint-enable max-len */
+			);
 
-		// Add an additional click handler for the #autoload-* buttons.
-		jQuery(document.body).one("click.autoload", ".ui-close", function (evt) {
-			if (DEBUG) { console.log('    > display/autoload: "' + Save.autosave.get().title + '"'); }
-			if (evt.target.id !== "autoload-ok" || !Save.autosave.load()) {
-				if (DEBUG) { console.log('    > display: "' + config.passages.start + '"'); }
-				State.play(config.passages.start);
-			}
+		// Add an additional delegated click handler for the `.ui-close` elements to handle autoloading.
+		jQuery(document).one('click.autoload', '.ui-close', evt => {
+			const isAutoloadOk = evt.target.id === 'autoload-ok';
+			jQuery(document).one('tw:dialogclosed', () => {
+				if (DEBUG) { console.log(`\tattempting autoload: "${Save.autosave.get().title}"`); }
+
+				if (!isAutoloadOk || !Save.autosave.load()) {
+					Engine.play(Config.passages.start);
+				}
+			});
 		});
 
 		return true;
 	}
 
 	function uiBuildJumpto() {
-		if (DEBUG) { console.log("[UI/uiBuildJumpto()]"); }
+		if (DEBUG) { console.log('[UI/uiBuildJumpto()]'); }
 
-		var list = document.createElement("ul");
+		const list = document.createElement('ul');
 
-		jQuery(dialogSetup(strings.jumpto.title, "jumpto list"))
+		jQuery(Dialog.setup(strings.jumpto.title, 'jumpto list'))
 			.append(list);
 
-		for (var i = State.size - 1; i >= 0; --i) {
+		const expired = State.expired.length;
+
+		for (let i = State.size - 1; i >= 0; --i) {
 			if (i === State.activeIndex) {
 				continue;
 			}
 
-			var passage = Story.get(State.history[i].title);
+			const passage = Story.get(State.history[i].title);
 
-			if (passage && passage.tags.contains("bookmark")) {
-				var	item = document.createElement("li"),
-					link = document.createElement("a");
-
-				jQuery(link)
-					.ariaClick({ one : true }, (function (idx) {
-						return function () {
-							State.goTo(idx);
-						};
-					})(i))
-					.addClass("ui-close")
-					.text(strings.jumpto.turn + " " + (State.expired + i + 1) + ": " + passage.description());
-
-				item.appendChild(link);
-				list.appendChild(item);
+			if (passage && passage.tags.includes('bookmark')) {
+				jQuery(document.createElement('li'))
+					.append(
+						jQuery(document.createElement('a'))
+							.ariaClick({ one : true }, (function (idx) {
+								return () => jQuery(document).one('tw:dialogclosed', () => Engine.goTo(idx));
+							})(i))
+							.addClass('ui-close')
+							.text(`${strings.jumpto.turn} ${expired + i + 1}: ${passage.description()}`)
+					)
+					.appendTo(list);
 			}
-
 		}
+
 		if (!list.hasChildNodes()) {
-			jQuery(list).append("<li><a><i>" + strings.jumpto.unavailable + "</i></a></li>");
+			jQuery(list).append(`<li><a><em>${strings.jumpto.unavailable}</em></a></li>`);
 		}
 	}
 
 	function uiBuildRestart() {
-		if (DEBUG) { console.log("[UI/uiBuildRestart()]"); }
+		if (DEBUG) { console.log('[UI/uiBuildRestart()]'); }
 
-		jQuery(dialogSetup(strings.restart.title, "restart"))
-			.append('<p>' + strings.restart.prompt + '</p><ul class="buttons">'
-				+ '<li><button id="restart-ok">' + (strings.restart.ok || strings.ok) + '</button></li>'
-				+ '<li><button id="restart-cancel" class="ui-close">' + (strings.restart.cancel || strings.cancel) + '</button></li>'
-				+ '</ul>');
-
-		/*
-			Instead of adding '.ui-close' to '#restart-ok' (to receive the use of the default
-			delegated dialog close handler), we setup a special case close handler here.  We
-			do this to ensure that the invocation of `State.restart()` happens after the dialog
-			has fully closed.  If we did not, then a race condition could occur, causing display
-			shenanigans.
-		*/
-		jQuery('#ui-dialog-body #restart-ok')
-			.ariaClick({ one : true }, function () {
-				jQuery(document).one('tw:dialogclosed', function () {
-					State.restart();
+		jQuery(Dialog.setup(strings.restart.title, 'restart'))
+			.append(
+				/* eslint-disable max-len */
+				  `<p>${strings.restart.prompt}</p><ul class="buttons">`
+				+ `<li><button id="restart-ok">${strings.restart.ok || strings.ok}</button></li>`
+				+ `<li><button id="restart-cancel" class="ui-close">${strings.restart.cancel || strings.cancel}</button></li>`
+				+ '</ul>'
+				/* eslint-enable max-len */
+			)
+			.find('#restart-ok')
+				/*
+					Instead of adding '.ui-close' to '#restart-ok' (to receive the use of the default
+					delegated dialog close handler), we setup a special case close handler here.  We
+					do this to ensure that the invocation of `Engine.restart()` happens after the dialog
+					has fully closed.  If we did not, then a race condition could occur, causing display
+					shenanigans.
+				*/
+				.ariaClick({ one : true }, () => {
+					jQuery(document).one('tw:dialogclosed', () => Engine.restart());
+					Dialog.close();
 				});
-				dialogClose();
-			});
 
 		return true;
 	}
 
 	function uiBuildSaves() {
 		function createActionItem(bId, bClass, bText, bAction) {
-			var	li   = document.createElement("li"),
-				$btn = jQuery(document.createElement("button"));
-
-			$btn
-				.attr("id", "saves-" + bId)
+			const $btn = jQuery(document.createElement('button'))
+				.attr('id', `saves-${bId}`)
 				.html(bText);
+
 			if (bClass) {
 				$btn.addClass(bClass);
 			}
+
 			if (bAction) {
 				$btn.ariaClick(bAction);
-			} else {
-				$btn.prop("disabled", true);
 			}
-			$btn.appendTo(li);
-			return li;
+			else {
+				$btn.prop('disabled', true);
+			}
+
+			return jQuery(document.createElement('li'))
+				.append($btn);
 		}
+
 		function createSaveList() {
 			function createButton(bId, bClass, bText, bSlot, bAction) {
-				var $btn = jQuery(document.createElement("button"));
-
-				$btn
-					.attr("id", "saves-" + bId + "-" + bSlot)
+				const $btn = jQuery(document.createElement('button'))
+					.attr('id', `saves-${bId}-${bSlot}`)
 					.addClass(bId)
 					.html(bText);
+
 				if (bClass) {
 					$btn.addClass(bClass);
 				}
+
 				if (bAction) {
-					if (bSlot === "auto") {
-						$btn
-							.ariaClick({
-								label : bText + " " + strings.saves.labelAuto
-							}, function () { bAction(); });
-					} else {
-						$btn
-							.ariaClick({
-								label : bText + " " + strings.saves.labelSlot + " " + (bSlot + 1)
-							}, function () { bAction(bSlot); });
+					if (bSlot === 'auto') {
+						$btn.ariaClick({
+							label : `${bText} ${strings.saves.labelAuto}`
+						}, () => bAction());
 					}
-				} else {
-					$btn.prop("disabled", true);
+					else {
+						$btn.ariaClick({
+							label : `${bText} ${strings.saves.labelSlot} ${bSlot + 1}`
+						}, () => bAction(bSlot));
+					}
 				}
-				return $btn[0];
+				else {
+					$btn.prop('disabled', true);
+				}
+
+				return $btn;
 			}
 
-			var	saves = Save.get(),
-				tbody = document.createElement("tbody");
-
-			var	tr, tdSlot, tdLoad, tdLoadBtn, tdDesc, tdDescTxt, tdDele, tdDeleBtn;
+			const
+				saves  = Save.get(),
+				$tbody = jQuery(document.createElement('tbody'));
 
 			if (Save.autosave.ok()) {
-				tr     = document.createElement("tr");
-				tdSlot = document.createElement("td");
-				tdLoad = document.createElement("td");
-				tdDesc = document.createElement("td");
-				tdDele = document.createElement("td");
+				const
+					$tdSlot = jQuery(document.createElement('td')),
+					$tdLoad = jQuery(document.createElement('td')),
+					$tdDesc = jQuery(document.createElement('td')),
+					$tdDele = jQuery(document.createElement('td'));
 
-				//tdDescTxt = document.createElement("span");
-				//tdDescTxt.innerHTML = "\u25c6"; // Black Diamond
-				tdDescTxt = document.createElement("b");
-				tdDescTxt.innerHTML = "A";
-				tdDescTxt.title = strings.saves.labelAuto;
-				tdSlot.appendChild(tdDescTxt);
+				// Add the slot ID.
+				jQuery(document.createElement('b'))
+					.attr({
+						title        : strings.saves.labelAuto,
+						'aria-label' : strings.saves.labelAuto
+					})
+					.text('A') // '\u25C6' Black Diamond
+					.appendTo($tdSlot);
 
 				if (saves.autosave) {
-					tdLoadBtn = createButton("load", "ui-close", strings.saves.labelLoad, "auto", Save.autosave.load);
-					tdLoad.appendChild(tdLoadBtn);
+					// Add the load button.
+					$tdLoad.append(
+						createButton('load', 'ui-close', strings.saves.labelLoad, 'auto', () => {
+							jQuery(document).one('tw:dialogclosed', () => Save.autosave.load());
+						})
+					);
 
-					tdDescTxt = document.createElement("div");
-					tdDescTxt.appendChild(document.createTextNode(saves.autosave.title));
-					tdDesc.appendChild(tdDescTxt);
-					tdDescTxt = document.createElement("div");
-					tdDescTxt.classList.add("datestamp");
-					if (saves.autosave.date) {
-						tdDescTxt.innerHTML = strings.saves.savedOn
-							+ " " + new Date(saves.autosave.date).toLocaleString();
-					} else {
-						tdDescTxt.innerHTML = strings.saves.savedOn
-							+ " <em>" + strings.saves.unknownDate + "</em>";
-					}
-					tdDesc.appendChild(tdDescTxt);
+					// Add the description (title and datestamp).
+					jQuery(document.createElement('div'))
+						.text(saves.autosave.title)
+						.appendTo($tdDesc);
+					jQuery(document.createElement('div'))
+						.addClass('datestamp')
+						.html(
+							saves.autosave.date
+								? `${strings.saves.savedOn} ${new Date(saves.autosave.date).toLocaleString()}`
+								: `${strings.saves.savedOn} <em>${strings.saves.unknownDate}</em>`
+						)
+						.appendTo($tdDesc);
 
-					tdDeleBtn = createButton("delete", null, strings.saves.labelDelete, "auto", function () {
-						Save.autosave.delete();
-						uiBuildSaves(); // rebuild the saves dialog
-					});
-					tdDele.appendChild(tdDeleBtn);
-				} else {
-					tdLoadBtn = createButton("load", null, strings.saves.labelLoad, "auto");
-					tdLoad.appendChild(tdLoadBtn);
+					// Add the delete button.
+					$tdDele.append(
+						createButton('delete', null, strings.saves.labelDelete, 'auto', () => {
+							Save.autosave.delete();
+							uiBuildSaves();
+							Dialog.resize();
+						})
+					);
+				}
+				else {
+					// Add the load button.
+					$tdLoad.append(
+						createButton('load', null, strings.saves.labelLoad, 'auto')
+					);
 
-					tdDescTxt = document.createElement("i");
-					tdDescTxt.innerHTML = strings.saves.emptySlot;
-					tdDesc.appendChild(tdDescTxt);
-					tdDesc.classList.add("empty");
+					// Add the description.
+					jQuery(document.createElement('em'))
+						.text(strings.saves.emptySlot)
+						.appendTo($tdDesc);
+					$tdDesc.addClass('empty');
 
-					tdDeleBtn = createButton("delete", null, strings.saves.labelDelete, "auto");
-					tdDele.appendChild(tdDeleBtn);
+					// Add the delete button.
+					$tdDele.append(
+						createButton('delete', null, strings.saves.labelDelete, 'auto')
+					);
 				}
 
-				tr.appendChild(tdSlot);
-				tr.appendChild(tdLoad);
-				tr.appendChild(tdDesc);
-				tr.appendChild(tdDele);
-				tbody.appendChild(tr);
+				jQuery(document.createElement('tr'))
+					.append($tdSlot)
+					.append($tdLoad)
+					.append($tdDesc)
+					.append($tdDele)
+					.appendTo($tbody);
 			}
-			for (var i = 0; i < saves.slots.length; ++i) {
-				tr     = document.createElement("tr");
-				tdSlot = document.createElement("td");
-				tdLoad = document.createElement("td");
-				tdDesc = document.createElement("td");
-				tdDele = document.createElement("td");
 
-				tdSlot.appendChild(document.createTextNode(i + 1));
+			for (let i = 0, iend = saves.slots.length; i < iend; ++i) {
+				const
+					$tdSlot = jQuery(document.createElement('td')),
+					$tdLoad = jQuery(document.createElement('td')),
+					$tdDesc = jQuery(document.createElement('td')),
+					$tdDele = jQuery(document.createElement('td'));
+
+				// Add the slot ID.
+				$tdSlot.append(document.createTextNode(i + 1));
 
 				if (saves.slots[i]) {
-					tdLoadBtn = createButton("load", "ui-close", strings.saves.labelLoad, i, Save.slots.load);
-					tdLoad.appendChild(tdLoadBtn);
+					// Add the load button.
+					$tdLoad.append(
+						createButton('load', 'ui-close', strings.saves.labelLoad, i, slot => {
+							jQuery(document).one('tw:dialogclosed', () => Save.slots.load(slot));
+						})
+					);
 
-					tdDescTxt = document.createElement("div");
-					tdDescTxt.appendChild(document.createTextNode(saves.slots[i].title));
-					tdDesc.appendChild(tdDescTxt);
-					tdDescTxt = document.createElement("div");
-					tdDescTxt.classList.add("datestamp");
-					if (saves.slots[i].date) {
-						tdDescTxt.innerHTML = strings.saves.savedOn
-							+ " " + new Date(saves.slots[i].date).toLocaleString();
-					} else {
-						tdDescTxt.innerHTML = strings.saves.savedOn
-							+ " <em>" + strings.saves.unknownDate + "</em>";
-					}
-					tdDesc.appendChild(tdDescTxt);
+					// Add the description (title and datestamp).
+					jQuery(document.createElement('div'))
+						.text(saves.slots[i].title)
+						.appendTo($tdDesc);
+					jQuery(document.createElement('div'))
+						.addClass('datestamp')
+						.html(
+							saves.slots[i].date
+								? `${strings.saves.savedOn} ${new Date(saves.slots[i].date).toLocaleString()}`
+								: `${strings.saves.savedOn} <em>${strings.saves.unknownDate}</em>`
+						)
+						.appendTo($tdDesc);
 
-					tdDeleBtn = createButton("delete", null, strings.saves.labelDelete, i, function (slot) {
-						Save.slots.delete(slot);
-						uiBuildSaves();        // rebuild the saves dialog
-						dialogResizeHandler(); // manually call the resize handler
-					});
-					tdDele.appendChild(tdDeleBtn);
-				} else {
-					tdLoadBtn = createButton("save", "ui-close", strings.saves.labelSave, i, Save.slots.save);
-					tdLoad.appendChild(tdLoadBtn);
+					// Add the delete button.
+					$tdDele.append(
+						createButton('delete', null, strings.saves.labelDelete, i, slot => {
+							Save.slots.delete(slot);
+							uiBuildSaves();
+							Dialog.resize();
+						})
+					);
+				}
+				else {
+					// Add the load button.
+					$tdLoad.append(
+						createButton('save', 'ui-close', strings.saves.labelSave, i, Save.slots.save)
+					);
 
-					tdDescTxt = document.createElement("i");
-					tdDescTxt.innerHTML = strings.saves.emptySlot;
-					tdDesc.appendChild(tdDescTxt);
-					tdDesc.classList.add("empty");
+					// Add the description.
+					jQuery(document.createElement('em'))
+						.text(strings.saves.emptySlot)
+						.appendTo($tdDesc);
+					$tdDesc.addClass('empty');
 
-					tdDeleBtn = createButton("delete", null, strings.saves.labelDelete, i);
-					tdDele.appendChild(tdDeleBtn);
+					// Add the delete button.
+					$tdDele.append(
+						createButton('delete', null, strings.saves.labelDelete, i)
+					);
 				}
 
-				tr.appendChild(tdSlot);
-				tr.appendChild(tdLoad);
-				tr.appendChild(tdDesc);
-				tr.appendChild(tdDele);
-				tbody.appendChild(tr);
+				jQuery(document.createElement('tr'))
+					.append($tdSlot)
+					.append($tdLoad)
+					.append($tdDesc)
+					.append($tdDele)
+					.appendTo($tbody);
 			}
-			var table = document.createElement("table");
-			table.id = "saves-list";
-			table.appendChild(tbody);
-			return table;
+
+			return jQuery(document.createElement('table'))
+				.attr('id', 'saves-list')
+				.append($tbody);
 		}
 
-		if (DEBUG) { console.log("[UI/uiBuildSaves()]"); }
+		if (DEBUG) { console.log('[UI/uiBuildSaves()]'); }
 
-		var	savesOk  = Save.ok(),
-			hasSaves = Save.autosave.has() || !Save.slots.isEmpty(),
-			list,
-			btnBar;
+		const
+			$dialogBody = jQuery(Dialog.setup(strings.saves.title, 'saves')),
+			savesOk     = Save.ok();
 
-		dialogSetup(strings.saves.title, "saves");
-
+		// Add saves list.
 		if (savesOk) {
-			// Add saves list.
-			list = createSaveList();
-			if (!list) {
-				list = document.createElement("div");
-				list.id = "saves-list";
-				list.innerHTML = "<i>" + strings.saves.unavailable + "</i>";
-			}
-			_dialogBody.appendChild(list);
+			$dialogBody.append(createSaveList());
 		}
 
 		// Add button bar items (export, import, and clear).
 		if (savesOk || Has.fileAPI) {
-			btnBar = document.createElement("ul");
-			btnBar.classList.add("buttons");
+			const $btnBar = jQuery(document.createElement('ul'))
+				.addClass('buttons')
+				.appendTo($dialogBody);
+
 			if (Has.fileAPI) {
-				btnBar.appendChild(createActionItem("export", "ui-close", strings.saves.labelExport, Save.export));
-				btnBar.appendChild(createActionItem("import", null, strings.saves.labelImport, function () {
-					jQuery("#saves-import-file", _dialogBody).trigger("click");
-				}));
-			}
-			if (savesOk) {
-				btnBar.appendChild(createActionItem("clear", null, strings.saves.labelClear, hasSaves ? function () {
-					Save.clear();
-					uiBuildSaves();        // rebuild the saves dialog
-					dialogResizeHandler(); // manually call the resize handler
-				} : null));
-			}
-			_dialogBody.appendChild(btnBar);
-			if (Has.fileAPI) {
+				$btnBar.append(createActionItem('export', 'ui-close', strings.saves.labelExport,
+					() => Save.export()));
+				$btnBar.append(createActionItem('import', null, strings.saves.labelImport,
+					() => $dialogBody.find('#saves-import-file').trigger('click')));
+
 				// Add the hidden `input[type=file]` element which will be triggered by the `#saves-import` button.
-				_dialogBody.appendChild((function () {
-					var	input = document.createElement("input");
-					jQuery(input)
-						.css({
-							"display"    : "block",
-							"visibility" : "hidden",
-							"position"   : "fixed",
-							"left"       : "-9999px",
-							"top"        : "-9999px",
-							"width"      : "1px",
-							"height"     : "1px"
-						})
-						.attr("type", "file")
-						.attr("id", "saves-import-file")
-						.attr("tabindex", -1)
-						.attr("aria-hidden", true)
-						.on("change", function (evt) {
-							Save.import(evt);
-							dialogClose();
-						});
-					return input;
-				})());
+				jQuery(document.createElement('input'))
+					.css({
+						display    : 'block',
+						visibility : 'hidden',
+						position   : 'fixed',
+						left       : '-9999px',
+						top        : '-9999px',
+						width      : '1px',
+						height     : '1px'
+					})
+					.attr({
+						type          : 'file',
+						id            : 'saves-import-file',
+						tabindex      : -1,
+						'aria-hidden' : true
+					})
+					.on('change', evt => {
+						jQuery(document).one('tw:dialogclosed', () => Save.import(evt));
+						Dialog.close();
+					})
+					.appendTo($dialogBody);
 			}
+
+			if (savesOk) {
+				$btnBar.append(
+					createActionItem('clear', null, strings.saves.labelClear,
+						Save.autosave.has() || !Save.slots.isEmpty()
+							? () => {
+								Save.clear();
+								uiBuildSaves();
+								Dialog.resize();
+							}
+							: null
+					)
+				);
+			}
+
 			return true;
-		} else {
+		}
+		else {
 			uiOpenAlert(strings.saves.incapable.replace(/%identity%/g, strings.identity));
 			return false;
 		}
 	}
 
 	function uiBuildSettings() {
-		if (DEBUG) { console.log("[UI/uiBuildSettings()]"); }
+		if (DEBUG) { console.log('[UI/uiBuildSettings()]'); }
 
-		dialogSetup(strings.settings.title, "settings");
+		const $dialogBody = jQuery(Dialog.setup(strings.settings.title, 'settings'));
 
-		Setting.forEach(function (control) {
-			var	name      = control.name,
-				id        = Util.slugify(name),
-				elSetting = document.createElement("div"),
-				elLabel   = document.createElement("label"),
-				elWrapper = document.createElement("div"),
-				elControl;
+		Setting.forEach(control => {
+			const
+				name       = control.name,
+				id         = Util.slugify(name),
+				$elSetting = jQuery(document.createElement('div')),
+				$elLabel   = jQuery(document.createElement('label')),
+				$elWrapper = jQuery(document.createElement('div'));
+			let
+				$elControl;
 
-			elSetting.appendChild(elLabel);
-			elSetting.appendChild(elWrapper);
-			elSetting.id = "setting-body-" + id;
-			elLabel.id   = "setting-label-" + id;
+			$elSetting
+				.attr('id', `setting-body-${id}`)
+				.append($elLabel)
+				.append($elWrapper)
+				.appendTo($dialogBody);
 
 			// Setup the label.
-			new Wikifier(elLabel, control.label);
+			$elLabel
+				.attr({
+					id  : `setting-label-${id}`,
+					for : `setting-control-${id}` // must be in sync with $elControl's ID (see below)
+				})
+				.wiki(control.label);
 
 			// Setup the control.
 			if (settings[name] == null) { // lazy equality for null
 				settings[name] = control.default;
 			}
+
 			switch (control.type) {
 			case Setting.Types.Toggle:
-				elControl = document.createElement("button");
+				$elControl = jQuery(document.createElement('button'));
+
 				if (settings[name]) {
-					jQuery(elControl)
-						.addClass("enabled")
+					$elControl
+						.addClass('enabled')
 						.text(strings.settings.on);
-				} else {
-					jQuery(elControl)
+				}
+				else {
+					$elControl
 						.text(strings.settings.off);
 				}
-				jQuery(elControl).ariaClick(function () {
+
+				$elControl.ariaClick(function () {
 					if (settings[name]) {
 						jQuery(this)
-							.removeClass("enabled")
+							.removeClass('enabled')
 							.text(strings.settings.off);
 						settings[name] = false;
-					} else {
+					}
+					else {
 						jQuery(this)
-							.addClass("enabled")
+							.addClass('enabled')
 							.text(strings.settings.on);
 						settings[name] = true;
 					}
+
 					Setting.save();
-					if (control.hasOwnProperty("onChange")) {
+
+					if (control.hasOwnProperty('onChange')) {
 						control.onChange.call({
-							name    : name,
+							name,
 							value   : settings[name],
 							default : control.default
 						});
 					}
 				});
 				break;
+
 			case Setting.Types.List:
-				elControl = document.createElement("select");
-				for (var i = 0; i < control.list.length; ++i) {
-					var elItem = document.createElement("option");
-					jQuery(elItem)
+				$elControl = jQuery(document.createElement('select'));
+
+				for (let i = 0, iend = control.list.length; i < iend; ++i) {
+					jQuery(document.createElement('option'))
 						.val(i)
-						.text(control.list[i]);
-					elControl.appendChild(elItem);
+						.text(control.list[i])
+						.appendTo($elControl);
 				}
-				jQuery(elControl)
+
+				$elControl
 					.val(control.list.indexOf(settings[name]))
-					.attr("tabindex", 0)
-					.on("change", function () {
-						settings[name] = control.list[+this.value];
+					.attr('tabindex', 0)
+					.on('change', function () {
+						settings[name] = control.list[Number(this.value)];
 						Setting.save();
-						if (control.hasOwnProperty("onChange")) {
+
+						if (control.hasOwnProperty('onChange')) {
 							control.onChange.call({
-								name    : name,
+								name,
 								value   : settings[name],
 								default : control.default,
 								list    : control.list
@@ -815,255 +821,51 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 					});
 				break;
 			}
-			elControl.id = "setting-control-" + id;
-			elWrapper.appendChild(elControl);
 
-			// Associate the label with the control.
-			elLabel.setAttribute("for", elControl.id);
-
-			_dialogBody.appendChild(elSetting);
+			$elControl
+				.attr('id', `setting-control-${id}`)
+				.appendTo($elWrapper);
 		});
 
 		// Add the button bar.
-		jQuery(_dialogBody)
-			.append('<ul class="buttons">'
-				+ '<li><button id="settings-ok" class="ui-close">' + (strings.settings.ok || strings.ok) + '</button></li>'
-				+ '<li><button id="settings-reset" class="ui-close">' + strings.settings.reset + '</button></li>'
-				+ '</ul>');
-
-		// Add an additional click handler for the Reset button.
-		jQuery("#ui-dialog-body #settings-reset").one("click", function () {
-			Setting.reset();
-			window.location.reload();
-		});
+		$dialogBody
+			.append(
+				  '<ul class="buttons">'
+				+ `<li><button id="settings-ok" class="ui-close">${strings.settings.ok || strings.ok}</button></li>`
+				+ `<li><button id="settings-reset">${strings.settings.reset}</button></li>`
+				+ '</ul>'
+			)
+			.find('#settings-reset')
+				/*
+					Instead of adding '.ui-close' to '#settings-reset' (to receive the use of the default
+					delegated dialog close handler), we setup a special case close handler here.  We
+					do this to ensure that the invocation of `window.location.reload()` happens after the
+					dialog has fully closed.  If we did not, then a race condition could occur, causing
+					display shenanigans.
+				*/
+				.ariaClick({ one : true }, () => {
+					jQuery(document).one('tw:dialogclosed', () => {
+						Setting.reset();
+						window.location.reload();
+					});
+					Dialog.close();
+				});
 
 		return true;
 	}
 
 	function uiBuildShare() {
-		if (DEBUG) { console.log("[UI/uiBuildShare()]"); }
+		if (DEBUG) { console.log('[UI/uiBuildShare()]'); }
 
-		jQuery(dialogSetup(strings.share.title, "share list"))
-			.append(uiAssembleLinkList("StoryShare"));
+		jQuery(Dialog.setup(strings.share.title, 'share list'))
+			.append(uiAssembleLinkList('StoryShare'));
 
 		return true;
 	}
 
 
 	/*******************************************************************************************************************
-	 * Dialog Functions
-	 ******************************************************************************************************************/
-	function dialogIsOpen(classNames) {
-		return _dialog.classList.contains("open")
-			&& (!classNames ? true : classNames.splitOrEmpty(/\s+/).every(function (c) {
-				return _dialog.classList.contains(c);
-			}));
-	}
-
-	function dialogBody() {
-		return _dialogBody;
-	}
-
-	function dialogSetup(title, classNames) {
-		jQuery(_dialogBody)
-			.empty()
-			.removeClass();
-		if (classNames != null) { // lazy equality for null
-			jQuery(_dialogBody).addClass(classNames);
-		}
-		jQuery(_dialogTitle)
-			.empty()
-			.append((title != null ? String(title) : "") || "\u00a0");
-		return _dialogBody;
-	}
-
-	function dialogAddClickHandler(targets, options, startFn, doneFn, closeFn) {
-		return jQuery(targets).ariaClick(function (evt) {
-			evt.preventDefault();
-
-			// Call the start function.
-			if (typeof startFn === "function") {
-				startFn(evt);
-			}
-
-			// Open the dialog.
-			dialogOpen(options, closeFn);
-
-			// Call the done function.
-			if (typeof doneFn === "function") {
-				doneFn(evt);
-			}
-		});
-	}
-
-	function dialogOpen(options, closeFn) {
-		options = jQuery.extend({ top : 50 }, options);
-
-		// Record the last active/focused non-dialog element.
-		if (!dialogIsOpen()) {
-			_lastActive = safeActiveElement();
-		}
-
-		// Add the UI isOpen class.
-		jQuery(document.documentElement)
-			.addClass("ui-dialog-open");
-
-		// Display the overlay.
-		jQuery(_overlay)
-			.addClass("open");
-
-		// Add the imagesLoaded handler to the dialog body, if necessary.
-		if (_dialogBody.querySelector("img") !== null) {
-			jQuery(_dialogBody)
-				.imagesLoaded()
-				.always((function (top) {
-					return function () {
-						dialogResizeHandler({ data : top });
-					};
-				})(options.top));
-		}
-
-		// Add `aria-hidden=true` to all direct non-dialog-children of <body> to
-		// hide the underlying page form screen readers while the dialog is open.
-		jQuery("body>:not(script,#store-area,#ui-bar,#ui-overlay,#ui-dialog)")
-			.attr("tabindex", -3)
-			.attr("aria-hidden", true);
-		jQuery("#ui-bar,#story")
-			.find("[tabindex]:not([tabindex^=-])")
-				.attr("tabindex", -2)
-				.attr("aria-hidden", true);
-
-		// Display the dialog.
-		var position = dialogCalcPosition(options.top);
-		jQuery(_dialog)
-			.css(position)
-			.addClass("open")
-			.focus();
-
-		// Add the UI resize handler.
-		jQuery(window)
-			.on("resize.ui-resize", null, options.top, jQuery.throttle(40, dialogResizeHandler));
-
-		// Setup the delegated UI close handler.
-		jQuery(document.body)
-			.on("click.ui-close", ".ui-close", closeFn, dialogClose) // yes, namespace and class have the same name
-			.on("keypress.ui-close", ".ui-close", function (evt) {
-				// 13 is Enter/Return, 32 is Space.
-				if (evt.which === 13 || evt.which === 32) {
-					jQuery(this).trigger("click");
-				}
-			});
-
-		// Trigger a global `tw:dialogopened` event.
-		jQuery.event.trigger("tw:dialogopened");
-	}
-
-	function dialogClose(evt) {
-		// Largely reverse the actions taken in `dialogOpen()`.
-		jQuery(document.body)
-			.off(".ui-close"); // namespace, not to be confused with the class by the same name
-		jQuery(window)
-			.off("resize.ui-resize");
-		jQuery(_dialog)
-			.removeClass("open")
-			.css({ left : "", right : "", top : "", bottom : "" });
-
-		jQuery("#ui-bar,#story")
-			.find("[tabindex=-2]")
-				.removeAttr("aria-hidden")
-				.attr("tabindex", 0);
-		jQuery("body>[tabindex=-3]")
-			.removeAttr("aria-hidden")
-			.removeAttr("tabindex");
-
-		jQuery(_dialogTitle)
-			.empty();
-		jQuery(_dialogBody)
-			.empty()
-			.removeClass();
-		jQuery(_overlay)
-			.removeClass("open");
-		jQuery(document.documentElement)
-			.removeClass("ui-dialog-open");
-
-		// Attempt to restore focus to whichever element had it prior to opening the dialog.
-		if (_lastActive !== null) {
-			jQuery(_lastActive).focus();
-			_lastActive = null;
-		}
-
-		// Call the given "on close" callback function, if any.
-		if (evt && typeof evt.data === "function") {
-			evt.data(evt);
-		}
-
-		// Trigger a global `tw:dialogclosed` event.
-		jQuery.event.trigger("tw:dialogclosed");
-	}
-
-	function dialogResizeHandler(evt) {
-		var	$dialog = jQuery(_dialog),
-			topPos  = evt && typeof evt.data !== "undefined" ? evt.data : 50;
-
-		if ($dialog.css("display") === "block") {
-			// Stow the dialog.
-			$dialog.css({ display : "none" });
-
-			// Restore the dialog with its new positional properties.
-			var position = dialogCalcPosition(topPos);
-			$dialog.css(jQuery.extend({ display : "" }, position));
-		}
-	}
-
-	function dialogCalcPosition(topPos) {
-		if (topPos == null) { // lazy equality for null
-			topPos = 50;
-		}
-
-		var	$parent   = jQuery(window),
-			$dialog   = jQuery(_dialog),
-			dialogPos = { left : "", right : "", top : "", bottom : "" };
-
-		// Unset the dialog's positional properties before checking its dimensions.
-		$dialog.css(dialogPos);
-
-		var	horzSpace = $parent.width() - $dialog.outerWidth(true) - 1,   // -1 to address a Firefox issue
-			vertSpace = $parent.height() - $dialog.outerHeight(true) - 1; // -1 to address a Firefox issue
-
-		if (horzSpace <= 32 + _scrollbarWidth) {
-			vertSpace -= _scrollbarWidth;
-		}
-		if (vertSpace <= 32 + _scrollbarWidth) {
-			horzSpace -= _scrollbarWidth;
-		}
-
-		if (horzSpace <= 32) {
-			dialogPos.left = dialogPos.right = 16;
-		} else {
-			dialogPos.left = dialogPos.right = ~~(horzSpace / 2);
-		}
-		if (vertSpace <= 32) {
-			dialogPos.top = dialogPos.bottom = 16;
-		} else {
-			if (vertSpace / 2 > topPos) {
-				dialogPos.top = topPos;
-			} else {
-				dialogPos.top = dialogPos.bottom = ~~(vertSpace / 2);
-			}
-		}
-
-		Object.keys(dialogPos).forEach(function (p) {
-			if (dialogPos[p] !== "") {
-				dialogPos[p] += "px";
-			}
-		});
-
-		return dialogPos;
-	}
-
-
-	/*******************************************************************************************************************
-	 * Exports
+	 * Module Exports.
 	 ******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
 		/*
@@ -1072,7 +874,8 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		init             : { value : uiInit },
 		start            : { value : uiStart },
 		setStoryElements : { value : uiSetStoryElements },
-		patchOutlines    : { value : uiPatchOutlines },
+		hideOutlines     : { value : uiHideOutlines },
+		showOutlines     : { value : uiShowOutlines },
 		assembleLinkList : { value : uiAssembleLinkList },
 
 		/*
@@ -1092,19 +895,16 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		buildShare    : { value : uiBuildShare },
 
 		/*
-			Dialog Functions.
+			Legacy Aliases.
 		*/
-		isOpen          : { value : dialogIsOpen },
-		body            : { value : dialogBody },
-		setup           : { value : dialogSetup },
-		addClickHandler : { value : dialogAddClickHandler },
-		open            : { value : dialogOpen },
-		close           : { value : dialogClose },
-
-		/*
-			Legacy aliases for deprecated method names.
-		*/
-		/* legacy */
+		isOpen                   : { value : (...args) => Dialog.isOpen(...args) },
+		body                     : { value : () => Dialog.body() },
+		setup                    : { value : (...args) => Dialog.setup(...args) },
+		addClickHandler          : { value : (...args) => Dialog.addClickHandler(...args) },
+		open                     : { value : (...args) => Dialog.open(...args) },
+		close                    : { value : (...args) => Dialog.close(...args) },
+		resize                   : { value : () => Dialog.resize() },
+		// Deprecated method names.
 		buildDialogAutoload      : { value : uiBuildAutoload },
 		buildDialogJumpto        : { value : uiBuildJumpto },
 		buildDialogRestart       : { value : uiBuildRestart },
@@ -1112,8 +912,5 @@ var UI = (function () { // eslint-disable-line no-unused-vars
 		buildDialogSettings      : { value : uiBuildSettings },
 		buildDialogShare         : { value : uiBuildShare },
 		buildLinkListFromPassage : { value : uiAssembleLinkList }
-		/* /legacy */
 	}));
-
 })();
-
