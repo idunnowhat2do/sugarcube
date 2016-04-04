@@ -6,7 +6,7 @@ Downloads and documentation can be found at [SugarCube's website](http://www.mot
 ## Requirements ##
 SugarCube's sole requirement is a modern web browser, and by *modern* I mean one released within the last several years (you do not need the absolute latest and greatest shiny).
 
-**Caveat for Internet Explorer:** SugarCube only supports versions of IE &#x2265; 9.  Users of Windows XP (who are limited to IE8) will not be able to play/view stories built with SugarCube with their version of IE.  They would either have to use a different browser (e.g. Chrome or Firefox) or upgrade to a less obsolescent version of Windows (Microsoft ended public support for Windows XP in April, 2014).
+**Caveat for Internet Explorer:** SugarCube only supports versions of IE ≥ 9.  Users of Windows XP (who are limited to IE8) will not be able to play/view stories built with SugarCube with their version of IE.  They would either have to use a different browser (e.g. Chrome or Firefox) or upgrade to a less obsolescent version of Windows (Microsoft ended public support for Windows XP in April, 2014).
 
 ## Getting the source ##
 You can get the SugarCube source in one of two ways, by downloading a specific tagged release or 
