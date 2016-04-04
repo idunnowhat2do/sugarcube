@@ -320,7 +320,7 @@ var { // eslint-disable-line no-var
 		jQuery(document.createElement('span'))
 			.addClass('error')
 			.attr('title', title)
-			.text(`${strings.errors.title}: ${message}`)
+			.text(`${strings.errors.title}: ${message || 'unknown error'}`)
 			.appendTo(place);
 		return false;
 	}
