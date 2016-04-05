@@ -143,14 +143,15 @@ jQuery(document).on('readystatechange.SugarCube', () => {
 jQuery(() => {
 	'use strict';
 
-	if (DEBUG) { console.log('[SugarCube/main()]'); }
-
-	/*
-		WARNING!
-
-		The ordering of the code in this function is important, so be careful when mucking around with it.
-	*/
 	try {
+		if (DEBUG) { console.log('[SugarCube/main()] Document loaded; beginning startup.'); }
+
+		/*
+			WARNING!
+
+			The ordering of the code in this function is important, so be careful when mucking around with it.
+		*/
+
 		// Normalize the document.
 		if (document.normalize) {
 			document.normalize();
@@ -193,34 +194,37 @@ jQuery(() => {
 
 		// Start the user interface.
 		UI.start();
+
+		// Finally, export identifiers for debugging purposes.
+		window.SugarCube = {
+			Browser,
+			Config,
+			Dialog,
+			DebugView,
+			Has,
+			Macro,
+			Passage,
+			Save,
+			Scripting,
+			Setting,
+			State,
+			Story,
+			TempVariables,
+			UI,
+			Util,
+			Wikifier,
+			macros,
+			session,
+			settings,
+			setup,
+			storage,
+			version
+		};
+
+		if (DEBUG) { console.log('[SugarCube/main()] Startup complete; story ready.'); }
 	}
 	catch (e) {
-		return Alert.fatal(null, e.message);
+		jQuery(document).off('readystatechange.SugarCube');
+		return Alert.fatal(null, e.message, e);
 	}
-
-	// Finally, export identifiers for debugging purposes.
-	window.SugarCube = {
-		Browser,
-		Config,
-		Dialog,
-		DebugView,
-		Has,
-		Macro,
-		Passage,
-		Save,
-		Scripting,
-		Setting,
-		State,
-		Story,
-		TempVariables,
-		UI,
-		Util,
-		Wikifier,
-		macros,
-		session,
-		settings,
-		setup,
-		storage,
-		version
-	};
 });

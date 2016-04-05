@@ -32,7 +32,7 @@ var Alert = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 
 			if (mesg != null) { // lazy equality for null
-				errMesg += `: ${mesg.replace(/^(?:(?:Uncaught\s+)?Error:\s+)+/, '')}.`;
+				errMesg += `: ${mesg.replace(/^(?:(?:uncaught\s+(?:exception:\s+)?)?error:\s+)+/i, '')}.`;
 			}
 			else {
 				errMesg += ': unknown error.';
@@ -58,24 +58,27 @@ var Alert = (() => { // eslint-disable-line no-unused-vars, no-var
 	/*******************************************************************************************************************
 	 * Error Event.
 	 ******************************************************************************************************************/
-	if (!DEBUG) {
-		/*
-			Setup a single use global error handler.
-		*/
-		(origOnError => {
-			window.onerror = function (mesg, url, lineNum, colNum, error) {
+	/*
+		Setup a global error handler for uncaught exceptions.
+	*/
+	(origOnError => {
+		window.onerror = function (mesg, url, lineNum, colNum, error) {
+			// Uncaught exceptions during play may be recoverable/ignorable.
+			if (document.readyState === 'complete') {
 				alertError(null, mesg, error);
+			}
 
-				if (origOnError) {
-					window.onerror = origOnError;
+			// Uncaught exceptions during startup should be fatal.
+			else {
+				alertFatal(null, mesg, error);
+				window.onerror = origOnError;
 
-					if (typeof window.onerror === 'function') {
-						window.onerror.apply(this, arguments);
-					}
+				if (typeof window.onerror === 'function') {
+					window.onerror.apply(this, arguments);
 				}
-			};
-		})(window.onerror);
-	}
+			}
+		};
+	})(window.onerror);
 
 
 	/*******************************************************************************************************************
