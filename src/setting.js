@@ -8,18 +8,14 @@
  **********************************************************************************************************************/
 /* global settings:true, storage */
 
-var Setting = (function () { // eslint-disable-line no-unused-vars
-	"use strict";
+var Setting = (() => { // eslint-disable-line no-unused-vars, no-var
+	'use strict';
 
-	var
-		/*
-			Core properties.
-		*/
+	const
+		// Setting definition array.
 		_definitions = [],
 
-		/*
-			Setup the Types enumeration (not really, but close enough).
-		*/
+		// Setting control types object (pseudo-enumeration).
 		Types = Object.freeze({
 			Toggle : 0,
 			List   : 1
@@ -27,20 +23,22 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 
 
 	/*******************************************************************************************************************
-	 * Settings Functions
+	 * Settings Functions.
 	 ******************************************************************************************************************/
 	function settingsInit() {
-		if (DEBUG) { console.log("[Setting/settingsInit()]"); }
+		if (DEBUG) { console.log('[Setting/settingsInit()]'); }
 
 		/* legacy */
 		// Attempt to migrate an existing `options` store to `settings`.
-		if (storage.has("options")) {
-			var old = storage.get("options");
+		if (storage.has('options')) {
+			const old = storage.get('options');
+
 			if (old !== null) {
 				window.SugarCube.settings = settings = Object.assign(settingsCreate(), old);
 			}
+
 			settingsSave();
-			storage.delete("options");
+			storage.delete('options');
 		}
 		/* /legacy */
 
@@ -48,28 +46,29 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 		settingsLoad();
 
 		// Execute `onInit` callbacks.
-		_definitions.forEach(function (definition) {
-			if (definition.hasOwnProperty("onInit")) {
-				var thisp = {
+		_definitions.forEach(definition => {
+			if (definition.hasOwnProperty('onInit')) {
+				const thisArg = {
 					name    : definition.name,
 					value   : settings[definition.name],
 					default : definition.default
 				};
-				if (definition.hasOwnProperty("list")) {
-					thisp.list = definition.list;
+
+				if (definition.hasOwnProperty('list')) {
+					thisArg.list = definition.list;
 				}
-				definition.onInit.call(thisp);
+
+				definition.onInit.call(thisArg);
 			}
 		});
 	}
 
 	function _settingsAllAtDefault() {
-		if (Object.keys(settings).length > 0) {
-			return !_definitions.some(function (definition) {
-				return settings[definition.name] !== definition.default;
-			});
+		if (Object.keys(settings).length === 0) {
+			return true;
 		}
-		return true;
+
+		return _definitions.every(definition => settings[definition.name] === definition.default);
 	}
 
 	function settingsCreate() {
@@ -78,20 +77,20 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 
 	function settingsSave() {
 		if (Object.keys(settings).length === 0 || _settingsAllAtDefault()) {
-			storage.delete("settings");
+			storage.delete('settings');
 			return true;
 		}
-		return storage.set("settings", settings);
+
+		return storage.set('settings', settings);
 	}
 
 	function settingsLoad() {
-		var loadedSettings = settingsCreate(),
-			fromStorage    = storage.get("settings");
+		const
+			loadedSettings = settingsCreate(),
+			fromStorage    = storage.get('settings');
 
 		// Load the defaults.
-		_definitions.forEach(function (definition) {
-			settings[definition.name] = definition.default;
-		});
+		_definitions.forEach(definition => loadedSettings[definition.name] = definition.default);
 
 		// Load from storage.
 		if (fromStorage !== null) {
@@ -107,42 +106,47 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 	function settingsReset(name) {
 		if (arguments.length === 0) {
 			settingsClear();
-			_definitions.forEach(function (definition) {
-				settings[definition.name] = definition.default;
-			});
-		} else {
+			_definitions.forEach(definition => settings[definition.name] = definition.default);
+		}
+		else {
 			if (name == null || !definitionsHas(name)) { // lazy equality for null
-				throw new Error('nonexistent setting "' + name + '"');
+				throw new Error(`nonexistent setting "${name}"`);
 			}
+
 			settings[name] = definitionsGet(name).default;
 		}
+
 		return settingsSave();
 	}
 
 
 	/*******************************************************************************************************************
-	 * Definitions Functions
+	 * Definitions Functions.
 	 ******************************************************************************************************************/
-	function definitionsForEach(callback, thisp) {
-		_definitions.forEach(callback, thisp);
+	function definitionsForEach(callback, thisArg) {
+		_definitions.forEach(callback, thisArg);
 	}
 
 	function definitionsAdd(type, name, def) {
 		if (arguments.length < 3) {
-			var errors = [];
-			if (arguments.length < 1) { errors.push("type"); }
-			if (arguments.length < 2) { errors.push("name"); }
-			if (arguments.length < 3) { errors.push("definition"); }
-			throw new Error("missing parameters, no " + errors.join(" or ") + " specified");
+			const errors = [];
+			if (arguments.length < 1) { errors.push('type'); }
+			if (arguments.length < 2) { errors.push('name'); }
+			if (arguments.length < 3) { errors.push('definition'); }
+			throw new Error(`missing parameters, no ${errors.join(' or ')} specified`);
 		}
-		if (typeof def !== "object") {
-			throw new TypeError("definition parameter must be an object");
+
+		if (typeof def !== 'object') {
+			throw new TypeError('definition parameter must be an object');
 		}
+
 		if (definitionsHas(name)) {
-			throw new Error('cannot clobber existing setting "' + name + '"');
+			throw new Error(`cannot clobber existing setting "${name}"`);
 		}
+
 		/*
-			definition objects = {
+			Definition objects.
+			{
 				type     : (both:Setting.Types),
 				name     : (both:string),
 				label    : (both:string),
@@ -152,52 +156,65 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 				onChange : (both:function)
 			}
 		*/
-		var definition = {
-			type  : type,
-			name  : name,
-			label : def.label == null ? "" : String(def.label).trim() // lazy equality for null
+		const definition = {
+			type,
+			name,
+			label : def.label == null ? '' : String(def.label).trim() // lazy equality for null
 		};
+
 		switch (type) {
 		case Types.Toggle:
 			definition.default = !!def.default;
 			break;
+
 		case Types.List:
-			if (!def.hasOwnProperty("list")) {
-				throw new Error("no list specified");
-			} else if (!Array.isArray(def.list)) {
-				throw new TypeError("list must be an array");
-			} else if (def.list.length === 0) {
-				throw new Error("list must not be empty");
+			if (!def.hasOwnProperty('list')) {
+				throw new Error('no list specified');
 			}
+			else if (!Array.isArray(def.list)) {
+				throw new TypeError('list must be an array');
+			}
+			else if (def.list.length === 0) {
+				throw new Error('list must not be empty');
+			}
+
 			definition.list = Object.freeze(def.list);
+
 			if (def.default == null) { // lazy equality for null
 				definition.default = def.list[0];
-			} else {
-				var defaultIndex = def.list.indexOf(def.default);
+			}
+			else {
+				const defaultIndex = def.list.indexOf(def.default);
+
 				if (defaultIndex === -1) {
-					throw new Error("list does not contain default");
+					throw new Error('list does not contain default');
 				}
+
 				definition.default = def.list[defaultIndex];
 			}
 			break;
+
 		default:
-			throw new Error("unknown Setting type: " + type);
+			throw new Error(`unknown Setting type: ${type}`);
 		}
-		if (typeof def.onInit === "function") {
+
+		if (typeof def.onInit === 'function') {
 			definition.onInit = Object.freeze(def.onInit);
 		}
-		if (typeof def.onChange === "function") {
+
+		if (typeof def.onChange === 'function') {
 			definition.onChange = Object.freeze(def.onChange);
 		}
+
 		_definitions.push(Object.freeze(definition));
 	}
 
-	function definitionsAddToggle(/* name, def */) {
-		definitionsAdd.apply(null, [Types.Toggle].concat(Array.from(arguments)));
+	function definitionsAddToggle(...args) {
+		definitionsAdd(Types.Toggle, ...args);
 	}
 
-	function definitionsAddList(/* name, def */) {
-		definitionsAdd.apply(null, [Types.List].concat(Array.from(arguments)));
+	function definitionsAddList(...args) {
+		definitionsAdd(Types.List, ...args);
 	}
 
 	function definitionsIsEmpty() {
@@ -205,22 +222,19 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 	}
 
 	function definitionsHas(name) {
-		return _definitions.some(function (definition) {
-			return definition.name === name;
-		});
+		return _definitions.some(definition => definition.name === name);
 	}
 
 	function definitionsGet(name) {
-		return _definitions.find(function (definition) {
-			return definition.name === name;
-		});
+		return _definitions.find(definition => definition.name === name);
 	}
 
 	function definitionsDelete(name) {
 		if (definitionsHas(name)) {
 			delete settings[name];
 		}
-		for (var i = 0; i < _definitions.length; ++i) {
+
+		for (let i = 0; i < _definitions.length; ++i) {
 			if (_definitions[i].name === name) {
 				_definitions.splice(i, 1);
 				definitionsDelete(name);
@@ -231,7 +245,7 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 
 
 	/*******************************************************************************************************************
-	 * Exports
+	 * Module Exports.
 	 ******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
 		/*
@@ -261,6 +275,4 @@ var Setting = (function () { // eslint-disable-line no-unused-vars
 		get       : { value : definitionsGet },
 		delete    : { value : definitionsDelete }
 	}));
-
 })();
-

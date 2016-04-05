@@ -6,7 +6,7 @@ Downloads and documentation can be found at [SugarCube's website](http://www.mot
 ## Requirements ##
 SugarCube's sole requirement is a modern web browser, and by *modern* I mean one released within the last several years (you do not need the absolute latest and greatest shiny).
 
-**Caveat for Internet Explorer:** SugarCube only supports  IE9+.  So, users of Windows XP (who are limited to IE8) will not be able to play/view stories built with SugarCube with their version of IE.  They would either have to use a different browser or upgrade to a less obsolescent version of Windows (Microsoft ended public support for Windows XP in April, 2014).
+**Caveat for Internet Explorer:** SugarCube only supports versions of IE ≥ 9.  Users of Windows XP (who are limited to IE8) will not be able to play/view stories built with SugarCube with their version of IE.  They would either have to use a different browser (e.g. Chrome or Firefox) or upgrade to a less obsolescent version of Windows (Microsoft ended public support for Windows XP in April, 2014).
 
 ## Getting the source ##
 You can get the SugarCube source in one of two ways, by downloading a specific tagged release or 
@@ -30,9 +30,11 @@ SugarCube uses Node.js as the core of its build system, so the first thing you n
 
 - [Node.js website: `http://nodejs.org/`](http://nodejs.org/ "http://nodejs.org/")
 
-After downloading and installing Node.js, change to the root of the `sugarcube` project directory.  You'll now need to download and install dependencies required by the build script, `build.js`, which you do by running the following command:
+After downloading and installing a recent version of Node.js (`>= v5.x`), change to the root of the `sugarcube` project directory.  You'll now need to download and install dependencies required by the build script, `build.js`, which you do by running the following command:
 
 >     npm install
+
+**n.b.** SugarCube's dependencies changed rather significantly with v2.5.0, so if you completed this step before that version and are attempting to build the `default` or `v2-release` branches, then you'll probably need to delete the local `node_modules` directory and rerun `npm install`.
 
 Dependencies will be installed to the root of the `sugarcube` project directory, nothing will be installed elsewhere on your computer.  Assuming that completes with no errors, run the following command to build the story format:
 
@@ -40,7 +42,7 @@ Dependencies will be installed to the root of the `sugarcube` project directory,
 
 **n.b.** If you're running this from a UNIX-style shell, simply running `build.js` should also work as it's shebanged.
 
-If there were no errors, the story format, in Twine 1 and Twine 2 flavors, will be output to the `dist` directory.  Congratulations!
+If there were no errors, the story format, in both Twine 1 and Twine 2 flavors, will be output to the `dist` directory.  Congratulations!
 
 ----
 

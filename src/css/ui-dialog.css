@@ -20,13 +20,9 @@ html.ui-dialog-open body {
 */
 #ui-overlay.open {
 	visibility: visible;
-	-webkit-transition: opacity 200ms ease-in;
-	-moz-transition: opacity 200ms ease-in;
 	transition: opacity 200ms ease-in;
 }
 #ui-overlay:not(.open) {
-	-webkit-transition: visibility 200ms step-end, opacity 200ms ease-in;
-	-moz-transition: visibility 200ms step-end, opacity 200ms ease-in;
 	transition: visibility 200ms step-end, opacity 200ms ease-in;
 }
 #ui-overlay {
@@ -41,14 +37,19 @@ html.ui-dialog-open body {
 }
 #ui-dialog.open {
 	display: block;
-	-webkit-transition: opacity 200ms ease-in;
-	-moz-transition: opacity 200ms ease-in;
 	transition: opacity 200ms ease-in;
 }
 /*
-	We cannot animate `#ui-dialog:not(.open)` as the restoration of `overflow`
-	on `body` would cause the still animating dialog to jump around a little
-	if a scrollbar were to pop in.
+	We do not animate `#ui-dialog:not(.open)` for various reasons.  Chief among
+	them, however, is so that the dialog isn't in the middle of its animation
+	when other page updates happen.
+
+	e.g. The restoration of `overflow` on `body` would cause the still animating
+	     dialog to jump around a little if a scrollbar were to pop in.
+
+	     Any dialog action which performs a task which has its own animations
+	     (e.g. passage display) or causes the page to reload in addition to
+	     closing the dialog could cause display shenanigans.
 */
 #ui-dialog {
 	display: none;
@@ -129,8 +130,6 @@ html.ui-dialog-open body {
 	height: 92%;
 	background-color: transparent;
 	border: 1px solid transparent;
-	-webkit-transition-duration: 200ms;
-	-moz-transition-duration: 200ms;
 	transition-duration: 200ms;
 }
 #ui-dialog-close:hover {
@@ -275,11 +274,6 @@ html.ui-dialog-open body {
 #ui-dialog-close,
 #ui-dialog-body.list a,
 #ui-dialog-body.settings span[id|="setting-input"] {
-	-webkit-user-select: none;
-	-khtml-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
-	-o-user-select: none;
 	user-select: none;
 }
 
