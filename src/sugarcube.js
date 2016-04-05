@@ -108,9 +108,38 @@ var
 */
 window.SugarCube = {};
 
-/**
-	The main function, which is the entry point for the story.
-**/
+/*
+	Handle the loading screen.
+
+	The value of `document.readyState` may be: 'loading' -> 'interactive' -> 'complete'.
+	Though, to reach this point, it must already be in, at least, the 'interactive' state.
+*/
+jQuery(document).on('readystatechange.SugarCube', () => {
+	'use strict';
+
+	if (DEBUG) { console.log(`[SugarCube/readystatechange()] document.readyState: "${document.readyState}"`); }
+
+	const $html = jQuery(document.documentElement);
+
+	if (document.readyState === 'complete') {
+		if ($html.hasClass('init-loading')) {
+			if (Config.loadDelay > 0) {
+				setTimeout(() => $html.removeClass('init-loading'),
+					Math.max(Engine.minDomActionDelay, Config.loadDelay));
+			}
+			else {
+				$html.removeClass('init-loading');
+			}
+		}
+	}
+	else {
+		$html.addClass('init-loading');
+	}
+});
+
+/*
+	Main function, entry point for the story.
+*/
 jQuery(() => {
 	'use strict';
 

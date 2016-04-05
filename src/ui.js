@@ -217,31 +217,6 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		// Focus the document element initially.
 		jQuery(document.documentElement).focus();
-
-		/*
-			Handle the loading screen.
-
-			The value of `document.readyState` may be: 'loading' -> 'interactive' -> 'complete'.
-			Though, to reach this point, it must already be in, at least, the 'interactive' state.
-		*/
-		jQuery(document).on('readystatechange', () => {
-			const $html = jQuery(document.documentElement);
-
-			if (document.readyState === 'complete') {
-				if ($html.hasClass('init-loading')) {
-					if (Config.loadDelay > 0) {
-						setTimeout(() => $html.removeClass('init-loading'),
-							Math.max(Engine.minDomActionDelay, Config.loadDelay));
-					}
-					else {
-						$html.removeClass('init-loading');
-					}
-				}
-			}
-			else {
-				$html.addClass('init-loading');
-			}
-		});
 	}
 
 	function uiSetStoryElements() {
