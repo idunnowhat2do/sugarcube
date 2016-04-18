@@ -142,16 +142,13 @@ var { // eslint-disable-line no-var
 		}
 
 		/*
-			Duplicate the original object's own enumerable properties (n.b. this will include
-			expando properties on non-generic objects).
+			Duplicate the original object's own enumerable properties, which will include expando
+			properties on non-generic objects.
+
+			n.b. This does not preserve ES5 property attributes.  Neither does the delta coding
+				 or serialization code, however, so it's not really an issue at the moment.
 		*/
-		Object.keys(orig).forEach(name => {
-			/*
-				This does not preserve ES5 property attributes.  Neither does the delta coding
-				or serialization code, however, so it's not really an issue for SugarCube.
-			*/
-			copy[name] = clone(orig[name]);
-		});
+		Object.keys(orig).forEach(name => copy[name] = clone(orig[name]));
 
 		return copy;
 	}
