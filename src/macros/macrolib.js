@@ -1904,7 +1904,7 @@
 				}
 			},
 
-			extRe : /\.([^\.\/\\]+?)$/,
+			extRe : /\.([^\.\/\\]+)$/,
 			types : Object.freeze({
 				/*
 					Define the supported audio types via MIME-type (incl. the codecs property).
