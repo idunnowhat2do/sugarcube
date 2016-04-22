@@ -1589,11 +1589,11 @@ function defineStandardMacros() {
 					*/
 					audio   = document.createElement("audio"),
 					id      = this.args[0],
-					extRe   = /^.+?(?:\.([^\.\/\\]+?))$/;
+					extRe   = /\.([^\.\/\\]+)$/;
 
 				for (var i = 1; i < this.args.length; i++) {
 					var	url   = this.args[i],
-						match = extRe.exec(url);
+						match = extRe.exec(Util.parseUrl(url).pathname);
 
 					if (match === null) {
 						continue;
