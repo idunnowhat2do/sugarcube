@@ -642,6 +642,90 @@ var Util = Object.defineProperties({}, {
 			}
 			return msec + "ms";
 		}
+	},
+
+	/**
+	 * Returns an object containing the component properties parsed from the passed URL.
+	 */
+	parseUrl : {
+		value : function (url) {
+			var
+				el       = document.createElement('a'),
+				queryObj = Object.create(null);
+
+			// Let the `<a>` element parse the URL.
+			el.href = url;
+
+			// Populate the `queryObj` object with the query string attributes.
+			el.search.replace(/^\?/, '').split(/(?:&(?:amp;)?|;)/).forEach(function (query) {
+				var kvPair = query.split('=');
+				queryObj[kvPair[0]] = kvPair[1];
+			});
+
+			/*
+				Caveats by browser:
+					Edge and Internet Explorer (≥8) do not support authentication information
+					within a URL at all and will throw a security exception on *any* property
+					access if its included.
+
+					Internet Explorer does not include the leading forward slash on `pathname`
+					when required.
+
+					Opera (Presto) strips the authentication information from `href` and does
+					not supply `username` or `password`.
+
+					Safari (circa. 5.1.x) does not supply `username` or `password` and peforms
+					URI decoding on `pathname`.
+			*/
+
+			// Patch for IE not including the leading slash on `pathname` when required.
+			var pathname = el.host && el.pathname[0] !== '/' ? '/' + el.pathname : el.pathname;
+
+			return {
+				// The full URL that was originally parsed.
+				href : el.href,
+
+				// The request protocol, lowercased.
+				protocol : el.protocol,
+
+				// // The full authentication information.
+				// auth : el.username || el.password
+				// 	? el.username + ':' + el.password`
+				// 	: typeof el.username === 'string' ? '' : undefined,
+				//
+				// // The username portion of the auth info.
+				// username : el.username,
+				//
+				// // The password portion of the auth info.
+				// password : el.password,
+
+				// The full host information, including port number, lowercased.
+				host : el.host,
+
+				// The hostname portion of the host info, lowercased.
+				hostname : el.hostname,
+
+				// The port number portion of the host info.
+				port : el.port,
+
+				// The full path information, including query info.
+				path : pathname + el.search,
+
+				// The pathname portion of the path info.
+				pathname : pathname,
+
+				// The query string portion of the path info, including the leading question mark.
+				query  : el.search,
+				search : el.search,
+
+				// The attributes portion of the query string, parsed into an object.
+				queries  : queryObj,
+				searches : queryObj,
+
+				// The fragment string, including the leading hash/pound sign.
+				hash : el.hash
+			};
+		}
 	}
 
 });
@@ -1039,4 +1123,3 @@ Object.defineProperties(AudioWrapper.prototype, {
 		}
 	}
 });
-
