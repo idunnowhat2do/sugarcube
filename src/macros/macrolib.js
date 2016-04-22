@@ -2108,7 +2108,7 @@
 				for (let i = 1; i < this.args.length; ++i) {
 					const
 						url   = this.args[i],
-						match = extRe.exec(url);
+						match = extRe.exec(Util.parseUrl(url).pathname);
 
 					if (match === null) {
 						continue;
@@ -2144,7 +2144,7 @@
 				}
 			},
 
-			extRe : /^.+?(?:\.([^\.\/\\]+?))$/,
+			extRe : /\.([^\.\/\\]+?)$/,
 			types : Object.freeze({
 				/*
 					Define the supported audio types via MIME-type (incl. the codecs property).
