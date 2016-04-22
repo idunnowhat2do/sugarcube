@@ -1836,11 +1836,95 @@
 	 * Audio Macros.
 	 ******************************************************************************************************************/
 	if (!Has.audio) {
-		Macro.add(['audio', 'stopallaudio', 'cacheaudio', 'playlist', 'setplaylist'], {
+		Macro.add(['cacheaudio', 'audio', 'stopallaudio', 'playlist', 'setplaylist'], {
 			handler() { /* empty */ }
 		});
 	}
 	else {
+		/*
+			<<cacheaudio>>
+		*/
+		Macro.add('cacheaudio', {
+			handler() {
+				if (this.args.length < 2) {
+					const errors = [];
+					if (this.args.length < 1) { errors.push('track ID'); }
+					if (this.args.length < 2) { errors.push('sources'); }
+					return this.error(`no ${errors.join(' or ')} specified`);
+				}
+
+				const
+					types   = this.self.types,
+					canPlay = this.self.canPlay,
+					/*
+						Use `document.createElement('audio')` in favor of `new Audio()` as the
+						latter is treated differently (often unfavorably) in certain cases,
+						chiefly in mobile browsers.
+					*/
+					audio   = document.createElement('audio'),
+					id      = this.args[0],
+					extRe   = this.self.extRe;
+
+				for (let i = 1; i < this.args.length; ++i) {
+					const
+						url   = this.args[i],
+						match = extRe.exec(Util.parseUrl(url).pathname);
+
+					if (match === null) {
+						continue;
+					}
+
+					const
+						ext  = match[1].toLowerCase(),
+						type = types.hasOwnProperty(ext) ? types[ext] : `audio/${ext}`;
+
+					// Determine and cache the `canPlay` status for the audio type.
+					if (!canPlay.hasOwnProperty(type)) {
+						// Some early implementations return 'no' instead of the empty string.
+						canPlay[type] = audio.canPlayType(type).replace(/^no$/i, '') !== '';
+					}
+
+					if (canPlay[type]) {
+						const source = document.createElement('source');
+						source.src  = url;
+						source.type = type;
+						audio.appendChild(source);
+					}
+				}
+
+				// If it contains any <source> elements, wrap the <audio> element and add it to the tracks.
+				if (audio.hasChildNodes()) {
+					audio.preload = 'auto';
+					this.self.tracks[id] = new AudioWrapper(audio);
+				}
+
+				// Custom debug view setup.
+				if (Config.debug) {
+					this.createDebugView();
+				}
+			},
+
+			extRe : /\.([^\.\/\\]+?)$/,
+			types : Object.freeze({
+				/*
+					Define the supported audio types via MIME-type (incl. the codecs property).
+
+					Caveats by browser:
+						Opera (Presto) will return a false-negative if the codecs value is quoted.
+
+						Opera (Blink) will return a false-negative for WAVE audio if the preferred
+						MIME-type of 'audio/wave' is specified, requiring the use of 'audio/wav'
+						instead.
+				*/
+				mp3  : 'audio/mpeg; codecs=mp3',
+				ogg  : 'audio/ogg; codecs=vorbis',
+				webm : 'audio/webm; codecs=vorbis',
+				wav  : 'audio/wav; codecs=1'
+			}),
+			canPlay : {},
+			tracks  : {}
+		});
+
 		/*
 			<<audio>>
 		*/
@@ -2079,87 +2163,6 @@
 					this.createDebugView();
 				}
 			}
-		});
-
-		/*
-			<<cacheaudio>>
-		*/
-		Macro.add('cacheaudio', {
-			handler() {
-				if (this.args.length < 2) {
-					const errors = [];
-					if (this.args.length < 1) { errors.push('track ID'); }
-					if (this.args.length < 2) { errors.push('sources'); }
-					return this.error(`no ${errors.join(' or ')} specified`);
-				}
-
-				const
-					types   = this.self.types,
-					canPlay = this.self.canPlay,
-					/*
-						Use `document.createElement("audio")` in favor of `new Audio()` as the
-						latter is treated differently (i.e. unfavorably) in certain cases, chiefly
-						in mobile browsers.
-					*/
-					audio   = document.createElement('audio'),
-					id      = this.args[0],
-					extRe   = this.self.extRe;
-
-				for (let i = 1; i < this.args.length; ++i) {
-					const
-						url   = this.args[i],
-						match = extRe.exec(Util.parseUrl(url).pathname);
-
-					if (match === null) {
-						continue;
-					}
-
-					const
-						ext  = match[1].toLowerCase(),
-						type = types.hasOwnProperty(ext) ? types[ext] : `audio/${ext}`;
-
-					// Determine and cache the `canPlay` status for the audio type.
-					if (!canPlay.hasOwnProperty(type)) {
-						// Some early implementations return 'no' instead of the empty string.
-						canPlay[type] = audio.canPlayType(type).replace(/^no$/i, '') !== '';
-					}
-
-					if (canPlay[type]) {
-						const source = document.createElement('source');
-						source.src  = url;
-						source.type = type;
-						audio.appendChild(source);
-					}
-				}
-
-				// If it contains any <source> elements, wrap the <audio> element and add it to the tracks.
-				if (audio.hasChildNodes()) {
-					audio.preload = 'auto';
-					this.self.tracks[id] = new AudioWrapper(audio);
-				}
-
-				// Custom debug view setup.
-				if (Config.debug) {
-					this.createDebugView();
-				}
-			},
-
-			extRe : /\.([^\.\/\\]+?)$/,
-			types : Object.freeze({
-				/*
-					Define the supported audio types via MIME-type (incl. the codecs property).
-
-					n.b. Opera (Presto) will return a false-negative if the codecs value is quoted.
-					     Opera (Blink) will return a false-negative for WAVE audio if the preferred
-					     MIME-type of "audio/wave" is specified, instead "audio/wav" must be used.
-				*/
-				mp3  : 'audio/mpeg; codecs=mp3',
-				ogg  : 'audio/ogg; codecs=vorbis',
-				webm : 'audio/webm; codecs=vorbis',
-				wav  : 'audio/wav; codecs=1'
-			}),
-			canPlay : {},
-			tracks  : {}
 		});
 
 		/*
