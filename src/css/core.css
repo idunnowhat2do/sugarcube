@@ -10,7 +10,7 @@
 /*
 	Default structural styles.
 */
-body {
+html {
 	/*
 		We define the base font size and line height here as they affect the layout
 		of the base page elements (i.e. `#ui-bar`, `#ui-dialog`, and `#story`).
@@ -49,7 +49,7 @@ body {
 /*
 	Default appearance styles.
 */
-body {
+html {
 	color: #eee;
 	background-color: #111;
 }
