@@ -88,6 +88,12 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 							.sort()
 							.filter((tag, i, aref) => i === 0 || aref[i - 1] !== tag)
 						: [])
+				},
+
+				// Passage excerpt.  Used by the `description()` method.
+				_excerpt : {
+					writable : true,
+					value    : null
 				}
 			});
 
@@ -174,8 +180,9 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 				}
 			}
 
-			if (this._excerpt == null) { // lazy equality for null
-				return Passage.getExcerptFromText(this.text);
+			// Initialize the excerpt cache from the raw passage text, if necessary.
+			if (this._excerpt === null) {
+				this._excerpt = Passage.getExcerptFromText(this.text);
 			}
 
 			return this._excerpt;
@@ -247,14 +254,7 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 				}
 			});
 
-			// Create/update the excerpt cache to reflect the rendered text.
-			if (!this.hasOwnProperty('_excerpt')) {
-				Object.defineProperty(this, '_excerpt', {
-					configurable : true,
-					writable     : true,
-					value        : ''
-				});
-			}
+			// Update the excerpt cache to reflect the rendered text.
 			this._excerpt = Passage.getExcerptFromNode(passage);
 
 			return passage;
