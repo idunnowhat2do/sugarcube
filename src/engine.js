@@ -413,7 +413,6 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 		}
 
-
 		/*
 			Last second post-processing for accessibility and other things.
 		*/
