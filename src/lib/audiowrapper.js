@@ -51,6 +51,9 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 		set time(time) {
 			/*
+				This workaround is no longer strictly necessary in most browsers (as of 2016),
+				however, it will still be required for some time to service legacy browsers.
+
 				If we try to modify the audio clip's `.currentTime` property before its metadata
 				has been loaded, it will throw an `InvalidStateError` (since it doesn't know its
 				duration, allowing `.currentTime` to be set would be undefined behavior), so we
@@ -62,9 +65,7 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 			else {
 				jQuery(this.audio)
 					.off('loadedmetadata.AudioWrapper:time')
-					.one('loadedmetadata.AudioWrapper:time', function () { // `this` set by jQuery during call
-						this.currentTime = time;
-					});
+					.one('loadedmetadata.AudioWrapper:time', () => this.audio.currentTime = time);
 			}
 		}
 
