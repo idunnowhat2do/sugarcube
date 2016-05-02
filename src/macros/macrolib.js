@@ -1957,7 +1957,7 @@
 					id     = this.args[0];
 
 				if (!tracks.hasOwnProperty(id)) {
-					return this.error(`no track by ID: ${id}`);
+					return this.error(`track "${id}" does not exist`);
 				}
 
 				const
@@ -2363,7 +2363,9 @@
 				}
 
 				if (this.current === null || this.current.isEnded()) {
-					this.next();
+					if (!this.next()) {
+						return;
+					}
 				}
 
 				this.current.play();
@@ -2387,7 +2389,9 @@
 				}
 
 				if (this.current === null || this.current.isEnded()) {
-					this.next();
+					if (!this.next()) {
+						return;
+					}
 				}
 				else {
 					this.current.volume = this.volume;
@@ -2411,7 +2415,19 @@
 
 			next() {
 				this.current = this.list.shift();
+
+				if (this.current == null) { // lazy equality for null
+					this.current = null;
+					return false;
+				}
+
+				if (this.current.noSource()) {
+					return this.next();
+				}
+
 				this.current.volume = this.volume;
+
+				return true;
 			},
 
 			setVolume(vol) {
@@ -2433,7 +2449,9 @@
 					_this.buildList();
 				}
 
-				_this.next();
+				if (!_this.next()) {
+					return;
+				}
 
 				if (_this.muted) {
 					_this.mute();
@@ -2482,7 +2500,7 @@
 					const id = this.args[i];
 
 					if (!tracks.hasOwnProperty(id)) {
-						return this.error(`no track by ID: ${id}`);
+						return this.error(`track "${id}" does not exist`);
 					}
 
 					const track = tracks[id].clone();
@@ -2490,9 +2508,7 @@
 					track.unloop();
 					track.unmute();
 					track.volume = 1;
-					jQuery(track.audio)
-						.off('ended')
-						.on('ended.macros:playlist', playlist.onEnd);
+					jQuery(track.audio).on('ended.macro-playlist', playlist.onEnd);
 					list.push(track);
 				}
 
