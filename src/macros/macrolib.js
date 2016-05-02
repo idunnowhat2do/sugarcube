@@ -1892,11 +1892,16 @@
 					}
 				}
 
-				// If it contains any <source> elements, wrap the <audio> element and add it to the tracks.
-				if (audio.hasChildNodes()) {
-					audio.preload = 'auto';
-					this.self.tracks[id] = new AudioWrapper(audio);
+				// If in Test Mode and no <source> elements were generated, return an error.
+				if (Config.debug && !audio.hasChildNodes()) {
+					return this.error('no supported audio tracks found');
 				}
+
+				// Wrap the <audio> element and add it to the tracks.  We do this even if no <source>
+				// elements were generated to suppress errors for players.  The above Test Mode error
+				// should suffice for authors.
+				audio.preload = 'auto';
+				this.self.tracks[id] = new AudioWrapper(audio);
 
 				// Custom debug view setup.
 				if (Config.debug) {
@@ -1907,19 +1912,29 @@
 			extRe : /\.([^\.\/\\]+)$/,
 			types : Object.freeze({
 				/*
-					Define the supported audio types via MIME-type (incl. the codecs property).
+					Define a file extension to MIME-type mapping for some common audio types.
+					Do not include the codecs property in most cases, however, as we have no way
+					of knowing what codec the given files were actually encoded with—the browser
+					will figure it out.  In some cases, however, the relationship between extension
+					and codec is strong, so we may include the codec in those cases.
 
 					Caveats by browser:
-						Opera (Presto) will return a false-negative if the codecs value is quoted.
+						Opera (Presto) will return a false-negative if the codecs value is quoted
+						with single quotes, requiring the use of either double quotes or no quotes.
 
-						Opera (Blink) will return a false-negative for WAVE audio if the preferred
-						MIME-type of 'audio/wave' is specified, requiring the use of 'audio/wav'
-						instead.
+						Blink-based browsers (e.g. Chrome, Opera ≥15) will return a false-negative
+						for WAVE audio if the preferred MIME-type of 'audio/wave' is specified,
+						requiring the use of 'audio/wav' instead.
 				*/
-				mp3  : 'audio/mpeg; codecs=mp3',
-				ogg  : 'audio/ogg; codecs=vorbis',
-				webm : 'audio/webm; codecs=vorbis',
-				wav  : 'audio/wav; codecs=1'
+				aac  : 'audio/aac',                //
+				mp3  : 'audio/mpeg; codecs="mp3"', // .mp3 files should be MPEG-Layer-3 encoded audio
+				mp4  : 'audio/mp4',                // codec varies, but commonly "mp4a.40.2"
+				m4a  : 'audio/mp4',                // (ditto)
+				ogg  : 'audio/ogg',                // codec varies, but commonly "vorbis" and, recently, "opus"
+				oga  : 'audio/ogg',                // (ditto)
+				opus : 'audio/ogg; codecs="opus"', // .opus files should be Opus encoded audio in an Ogg container
+				wav  : 'audio/wav',                // codec varies, but commonly "1" (1 is the FourCC for PCM/LPCM)
+				webm : 'audio/webm'                // codec varies, but commonly "vorbis" and, recently, "opus"
 			}),
 			canPlay : {},
 			tracks  : {}
@@ -1942,7 +1957,7 @@
 					id     = this.args[0];
 
 				if (!tracks.hasOwnProperty(id)) {
-					return this.error(`no track by ID: ${id}`);
+					return this.error(`track "${id}" does not exist`);
 				}
 
 				const
@@ -2348,7 +2363,9 @@
 				}
 
 				if (this.current === null || this.current.isEnded()) {
-					this.next();
+					if (!this.next()) {
+						return;
+					}
 				}
 
 				this.current.play();
@@ -2372,7 +2389,9 @@
 				}
 
 				if (this.current === null || this.current.isEnded()) {
-					this.next();
+					if (!this.next()) {
+						return;
+					}
 				}
 				else {
 					this.current.volume = this.volume;
@@ -2396,7 +2415,19 @@
 
 			next() {
 				this.current = this.list.shift();
+
+				if (this.current == null) { // lazy equality for null
+					this.current = null;
+					return false;
+				}
+
+				if (this.current.noSource()) {
+					return this.next();
+				}
+
 				this.current.volume = this.volume;
+
+				return true;
 			},
 
 			setVolume(vol) {
@@ -2418,7 +2449,9 @@
 					_this.buildList();
 				}
 
-				_this.next();
+				if (!_this.next()) {
+					return;
+				}
 
 				if (_this.muted) {
 					_this.mute();
@@ -2467,7 +2500,7 @@
 					const id = this.args[i];
 
 					if (!tracks.hasOwnProperty(id)) {
-						return this.error(`no track by ID: ${id}`);
+						return this.error(`track "${id}" does not exist`);
 					}
 
 					const track = tracks[id].clone();
@@ -2475,9 +2508,7 @@
 					track.unloop();
 					track.unmute();
 					track.volume = 1;
-					jQuery(track.audio)
-						.off('ended')
-						.on('ended.macros:playlist', playlist.onEnd);
+					jQuery(track.audio).on('ended.macro-playlist', playlist.onEnd);
 					list.push(track);
 				}
 

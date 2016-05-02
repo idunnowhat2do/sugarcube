@@ -678,20 +678,14 @@ function safeActiveElement() {
 			}
 
 			let
-				min = parseInt(arguments[0], 10),
-				max = parseInt(arguments[1], 10);
+				min = Number(arguments[0]),
+				max = Number(arguments[1]);
 
 			if (min > max) {
 				[min, max] = [max, min];
 			}
 
-			let n = Number(this);
-
-			if (n < min) { n = min; }
-
-			if (n > max) { n = max; }
-
-			return n;
+			return Math.min(Math.max(this, min), max);
 		}
 	});
 

@@ -49,12 +49,12 @@ html {
 /*
 	Default appearance styles.
 */
+*:focus {
+	outline: thin dotted;
+}
 html {
 	color: #eee;
 	background-color: #111;
-}
-*:focus {
-	outline: thin dotted;
 }
 a {
 	cursor: pointer;
