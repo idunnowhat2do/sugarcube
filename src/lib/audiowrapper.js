@@ -92,7 +92,7 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		noSource() {
-			return this.audio.networkState === HTMLMediaElement.NETWORK_NO_SOURCE;
+			return !this.audio.hasChildNodes() || this.audio.networkState === HTMLMediaElement.NETWORK_NO_SOURCE;
 		}
 
 		isPlaying() {
@@ -289,6 +289,7 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		clone() {
+			// Do not use `jQuery.clone()` here, as we do not want event handlers carried over.
 			// return new AudioWrapper(this.audio.cloneNode(true));
 			return new this.constructor(this.audio.cloneNode(true));
 		}
