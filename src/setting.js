@@ -63,50 +63,51 @@ var Setting = (() => { // eslint-disable-line no-unused-vars, no-var
 		});
 	}
 
-	function _settingsAllAtDefault() {
-		if (Object.keys(settings).length === 0) {
-			return true;
-		}
-
-		return _definitions.every(definition => settings[definition.name] === definition.default);
-	}
-
 	function settingsCreate() {
 		return Object.create(null);
 	}
 
 	function settingsSave() {
-		if (Object.keys(settings).length === 0 || _settingsAllAtDefault()) {
+		const savedSettings = settingsCreate();
+
+		if (Object.keys(settings).length > 0) {
+			_definitions.forEach(definition => {
+				if (settings[definition.name] !== definition.default) {
+					savedSettings[definition.name] = settings[definition.name];
+				}
+			});
+		}
+
+		if (Object.keys(savedSettings).length === 0) {
 			storage.delete('settings');
 			return true;
 		}
 
-		return storage.set('settings', settings);
+		return storage.set('settings', savedSettings);
 	}
 
 	function settingsLoad() {
 		const
-			loadedSettings = settingsCreate(),
-			fromStorage    = storage.get('settings');
+			defaultSettings = settingsCreate(),
+			loadedSettings  = storage.get('settings') || settingsCreate();
 
 		// Load the defaults.
-		_definitions.forEach(definition => loadedSettings[definition.name] = definition.default);
+		_definitions.forEach(definition => defaultSettings[definition.name] = definition.default);
 
-		// Load from storage.
-		if (fromStorage !== null) {
-			window.SugarCube.settings = settings = Object.assign(loadedSettings, fromStorage);
-		}
+		// Assign to the `settings` object while overwriting the defaults with the loaded settings.
+		window.SugarCube.settings = settings = Object.assign(defaultSettings, loadedSettings);
 	}
 
 	function settingsClear() {
 		window.SugarCube.settings = settings = settingsCreate();
-		return settingsSave();
+		storage.delete('settings');
+		return true;
 	}
 
 	function settingsReset(name) {
 		if (arguments.length === 0) {
 			settingsClear();
-			_definitions.forEach(definition => settings[definition.name] = definition.default);
+			settingsLoad();
 		}
 		else {
 			if (name == null || !definitionsHas(name)) { // lazy equality for null
