@@ -33,22 +33,29 @@ var Has = (() => { // eslint-disable-line no-unused-vars, no-var
 
 	// Module Exports.
 	return Object.freeze({
-		/*
-			The extended Web Storage testing is required by implementation bugs in various
-			browsers.
-
-			Notably: Firefox bug #748620 [https://bugzilla.mozilla.org/show_bug.cgi?id=748620]
-			         and the iOS browser core throwing on setItem() calls when in private mode
-		*/
-		localStorage   : 'localStorage' in window && webStorageIsOK(window.localStorage),
-		sessionStorage : 'sessionStorage' in window && webStorageIsOK(window.sessionStorage),
+		audio : typeof document.createElement('audio').canPlayType === 'function',
 
 		/*
-			It's probably safe to assume the existence of Blob by the existence of File.
+			It's probably safe to assume the existence of `Blob` by the existence of `File`.
 		*/
 		fileAPI : 'File' in window && 'FileList' in window && 'FileReader' in window
 			&& !Browser.isMobile.any() && (!Browser.isOpera || Browser.operaVersion >= 15),
 
-		audio : typeof document.createElement('audio').canPlayType === 'function'
+		geolocation : 'geolocation' in navigator
+			&& typeof navigator.geolocation.getCurrentPosition === 'function'
+			&& typeof navigator.geolocation.watchPosition === 'function',
+
+		/*
+			The extended Web Storage testing (`webStorageIsOK()`) is required by implementation
+			bugs in various browsers.
+
+			Caveats by browser:
+				Firefox bug #748620 [https://bugzilla.mozilla.org/show_bug.cgi?id=748620].
+
+				The iOS browser core will throw an exception on `setItem()` calls when in
+				private browsing mode.
+		*/
+		localStorage   : 'localStorage' in window && webStorageIsOK(window.localStorage),
+		sessionStorage : 'sessionStorage' in window && webStorageIsOK(window.sessionStorage)
 	});
 })();
