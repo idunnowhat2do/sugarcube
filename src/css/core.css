@@ -52,7 +52,7 @@ html {
 *:focus {
 	outline: thin dotted;
 }
-html {
+body {
 	color: #eee;
 	background-color: #111;
 }
