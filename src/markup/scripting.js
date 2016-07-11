@@ -258,6 +258,30 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 	}
 
 	/**
+		Returns whether a passage with the given title exists within the story
+		history.  If multiple passage titles are given, returns the logical-AND
+		aggregate of the set.
+	**/
+	function hasVisited(/* variadic */) {
+		if (arguments.length === 0) {
+			throw new Error('hasVisited called with insufficient parameters');
+		}
+		if (State.isEmpty()) {
+			return false;
+		}
+
+		const needles = Array.prototype.concat.apply([], arguments);
+
+		for (let i = 0, iend = needles.length; i < iend; ++i) {
+			if (!State.hasPlayed(needles[i])) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
 		Returns the number of turns that have passed since the last instance of the given passage
 		occurred within the story history or `-1` if it does not exist.  If multiple passages are
 		given, returns the lowest count (which can be `-1`).
