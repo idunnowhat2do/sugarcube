@@ -853,7 +853,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 					'(\\[(?:[<>]?[Ii][Mm][Gg])?\\[[^\\r\\n]*?\\]\\]+)', // 4=Double square-bracketed
 					'([^"\'`\\s]\\S*)'                                  // 5=Barewords
 				].join('|'),
-				working : { source : '', name : '', handler : '', arguments : '', index : 0 }, // the working parse object
+				working : { source : '', name : '', arguments : '', index : 0 }, // the working parse object
 				context : null, // last execution context object (top-level macros, hierarchically, have a null context)
 
 				handler(w) {
@@ -868,7 +868,6 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 							nextMatch = w.nextMatch,
 							source    = this.working.source,
 							name      = this.working.name,
-							handler   = this.working.handler,
 							rawArgs   = this.working.arguments;
 						let
 							macro;
@@ -889,7 +888,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 									}
 								}
 
-								if (typeof macro[handler] === 'function') {
+								if (typeof macro.handler === 'function') {
 									const args = this.createArgs(rawArgs, macro.hasOwnProperty('skipArgs') && !!macro.skipArgs);
 
 									/*
@@ -917,7 +916,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 											     that an uncaught exception is thrown during the handler call.
 										*/
 										try {
-											macro[handler].call(this.context);
+											macro.handler.call(this.context);
 										}
 										finally {
 											this.context = this.context.parent;
@@ -930,13 +929,14 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 									else {
 										const prevRawArgs = w._rawArgs;
 										w._rawArgs = rawArgs; // cache the raw arguments for use by `Wikifier.rawArgs()` & `Wikifier.fullArgs()`
-										macro[handler](w.output, name, args, w, payload);
+										macro.handler(w.output, name, args, w, payload);
 										w._rawArgs = prevRawArgs;
 									}
 								}
 								else {
-									return throwError(w.output, `macro <<${name}>> handler function "${handler}" `
-										+ `${macro.hasOwnProperty(handler) ? 'is not a function' : 'does not exist'}`, w.source.slice(matchStart, w.nextMatch));
+									return throwError(w.output, `macro <<${name}>> handler function `
+										+ `${macro.hasOwnProperty('handler') ? 'is not a function' : 'does not exist'}`,
+										  w.source.slice(matchStart, w.nextMatch));
 								}
 							}
 							else if (Macro.tags.has(name)) {
@@ -956,7 +956,6 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 						finally {
 							this.working.source    = '';
 							this.working.name      = '';
-							this.working.handler   = '';
 							this.working.arguments = '';
 							this.working.index     = 0;
 						}
@@ -971,20 +970,11 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 					if (match && match.index === w.matchStart && match[1]) {
 						w.nextMatch = this.lookahead.lastIndex;
-						this.working.source = w.source.slice(match.index, this.lookahead.lastIndex);
-						const fnSigil = match[1].indexOf('::');
 
-						if (fnSigil !== -1) {
-							this.working.name = match[1].slice(0, fnSigil);
-							this.working.handler = match[1].slice(fnSigil + 2);
-						}
-						else {
-							this.working.name = match[1];
-							this.working.handler = 'handler';
-						}
-
+						this.working.source    = w.source.slice(match.index, this.lookahead.lastIndex);
+						this.working.name      = match[1];
 						this.working.arguments = match[2];
-						this.working.index = match.index;
+						this.working.index     = match.index;
 
 						return true;
 					}
