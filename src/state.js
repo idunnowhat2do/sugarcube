@@ -195,6 +195,24 @@ var State = (() => { // eslint-disable-line no-unused-vars, no-var
 		return _expired.concat(_history.slice(0, historyLength()).map(m => m.title));
 	}
 
+	/**
+		Returns whether a passage with the given title has been played (expired + in-play history moments).
+	**/
+	function stateHasPlayed(title) {
+		if (title == null || title === '') { // lazy equality for null
+			return false;
+		}
+
+		if (_expired.includes(title)) {
+			return true;
+		}
+		else if (_history.slice(0, historyLength()).some(m => m.title === title)) {
+			return true;
+		}
+
+		return false;
+	}
+
 
 	/*******************************************************************************************************************
 	 * Moment Functions.
@@ -561,6 +579,7 @@ var State = (() => { // eslint-disable-line no-unused-vars, no-var
 		expired          : { get : stateExpired },
 		turns            : { get : stateTurns },
 		passages         : { get : stateTitles },
+		hasPlayed        : { value : stateHasPlayed },
 
 		/*
 			Moment Functions.

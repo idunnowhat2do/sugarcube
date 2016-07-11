@@ -381,7 +381,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				if (Story.has(passage)) {
 					$link.addClass('link-internal');
 
-					if (Config.addVisitedLinkClass && State.has(passage)) {
+					if (Config.addVisitedLinkClass && State.hasPlayed(passage)) {
 						$link.addClass('link-visited');
 					}
 				}
@@ -2179,7 +2179,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 							if (Story.has(passage)) {
 								el.classList.add('link-internal');
 
-								if (Config.addVisitedLinkClass && State.has(passage)) {
+								if (Config.addVisitedLinkClass && State.hasPlayed(passage)) {
 									el.classList.add('link-visited');
 								}
 							}

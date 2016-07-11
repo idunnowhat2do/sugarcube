@@ -928,12 +928,14 @@
 				$el        = jQuery(document.createElement(this.name === 'click' ? 'a' : 'button')),
 				widgetArgs = (() => {
 					let wargs;
+
 					if (
 						   State.variables.hasOwnProperty('args')
 						&& this.contextHas(c => c.self.isWidget)
 					) {
 						wargs = State.variables.args;
 					}
+
 					return wargs;
 				})();
 			let
@@ -978,9 +980,11 @@
 
 			if (passage != null) { // lazy equality for null
 				$el.attr('data-passage', passage);
+
 				if (Story.has(passage)) {
 					$el.addClass('link-internal');
-					if (Config.addVisitedLinkClass && State.has(passage)) {
+
+					if (Config.addVisitedLinkClass && State.hasPlayed(passage)) {
 						$el.addClass('link-visited');
 					}
 				}
