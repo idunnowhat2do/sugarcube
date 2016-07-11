@@ -847,11 +847,14 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				match       : '<<',
 				lookahead   : /<<(\/?[A-Za-z][^>\s]*|[=-])(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|(?:\[(?:[<>]?[Ii][Mm][Gg])?\[[^\r\n]*?\]\]+)|[^>]|(?:>(?!>)))*)>>/gm,
 				argsPattern : [
-					'(""|\'\')',                                        // 1=Empty quotes
-					'("(?:\\\\.|[^"\\\\])+")',                          // 2=Double quoted, non-empty
-					"('(?:\\\\.|[^'\\\\])+')",                          // 3=Single quoted, non-empty
-					'(\\[(?:[<>]?[Ii][Mm][Gg])?\\[[^\\r\\n]*?\\]\\]+)', // 4=Double square-bracketed
-					'([^"\'`\\s]\\S*)'                                  // 5=Barewords
+					'(``)',                                             // 1=Empty backticks
+					'`((?:\\\\.|[^`\\\\])+)`',                          // 2=Backticked, non-empty
+					'(""|\'\')',                                        // 3=Empty quotes
+					'("(?:\\\\.|[^"\\\\])+")',                          // 4=Double quoted, non-empty
+					"('(?:\\\\.|[^'\\\\])+')",                          // 5=Single quoted, non-empty
+					'(\\[(?:[<>]?[Ii][Mm][Gg])?\\[[^\\r\\n]*?\\]\\]+)', // 6=Double square-bracketed
+					'([^`"\'\\s]+)',                                    // 7=Barewords
+					'(`|"|\')'                                          // 8=Unterminated backticks and quotes
 				].join('|'),
 				working : { source : '', name : '', arguments : '', index : 0 }, // the working parse object
 				context : null, // last execution context object (top-level macros, hierarchically, have a null context)
@@ -1084,11 +1087,14 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				parseArgs(rawArgsString) {
 					/*
 						`this.argsPattern` capture groups:
-							1=Empty quotes,
-							2=Double quoted,
-							3=Single quoted,
-							4=Double square-bracketed,
-							5=Barewords
+							1=Empty backticks
+							2=Backticked, non-empty
+							3=Empty quotes
+							4=Double quoted, non-empty
+							5=Single quoted, non-empty
+							6=Double square-bracketed
+							7=Barewords
+							8=Unterminated backticks and quotes
 					*/
 					const
 						argsRe  = new RegExp(this.argsPattern, 'gm'),
@@ -1100,14 +1106,32 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 					while ((match = argsRe.exec(rawArgsString)) !== null) {
 						let arg;
 
-						// Empty quotes.
+						// Empty backticks.
 						if (match[1]) {
+							arg = undefined;
+						}
+
+						// Backticked, non-empty.
+						else if (match[2]) {
+							arg = match[2]; // the pattern excludes the backticks, so this is just the expression
+
+							// Evaluate the expression.
+							try {
+								arg = Scripting.evalTwineScript(arg);
+							}
+							catch (e) {
+								throw new Error(`unable to parse macro argument "${arg}": ${e.message}`);
+							}
+						}
+
+						// Empty quotes.
+						else if (match[3]) {
 							arg = '';
 						}
 
-						// Double quoted.
-						else if (match[2]) {
-							arg = match[2];
+						// Double quoted, non-empty.
+						else if (match[4]) {
+							arg = match[4];
 
 							// Evaluate the string to handle escaped characters.
 							try {
@@ -1118,9 +1142,9 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 							}
 						}
 
-						// Single quoted.
-						else if (match[3]) {
-							arg = match[3];
+						// Single quoted, non-empty.
+						else if (match[5]) {
+							arg = match[5];
 
 							// Evaluate the string to handle escaped characters.
 							try {
@@ -1132,8 +1156,8 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 						}
 
 						// Double square-bracketed.
-						else if (match[4]) {
-							arg = match[4];
+						else if (match[6]) {
+							arg = match[6];
 
 							const markup = Wikifier.helpers.parseSquareBracketedMarkup({
 								source     : arg,
@@ -1202,8 +1226,8 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 						}
 
 						// Barewords.
-						else if (match[5]) {
-							arg = match[5];
+						else if (match[7]) {
+							arg = match[7];
 
 							// variable, so substitute its value.
 							if (varTest.test(arg)) {
@@ -1258,6 +1282,27 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 							else if (!isNaN(parseFloat(arg)) && isFinite(arg)) {
 								arg = Number(arg);
 							}
+						}
+
+						// Unterminated backticks and quotes.
+						else if (match[8]) {
+							let what;
+
+							switch (match[8]) {
+							case '`':
+								what = 'backtick expression';
+								break;
+
+							case '"':
+								what = 'double quoted string';
+								break;
+
+							case "'":
+								what = 'single quoted string';
+								break;
+							}
+
+							throw new Error(`unterminated ${what} in macro argument string`);
 						}
 
 						args.push(arg);
