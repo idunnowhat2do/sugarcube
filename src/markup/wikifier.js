@@ -889,7 +889,9 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 								}
 
 								if (typeof macro.handler === 'function') {
-									const args = this.createArgs(rawArgs, macro.hasOwnProperty('skipArgs') && !!macro.skipArgs);
+									const args = !payload
+										? this.createArgs(rawArgs, macro.hasOwnProperty('skipArgs') && !!macro.skipArgs)
+										: payload[0].args;
 
 									/*
 										New-style macros.
@@ -1064,7 +1066,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				},
 
 				createArgs(rawArgsString, skipArgs) {
-					const args = !skipArgs ? this.parseArgs(rawArgsString) : [];
+					const args = skipArgs ? [] : this.parseArgs(rawArgsString);
 
 					// Extend the args array with the raw and full argument strings.
 					Object.defineProperties(args, {
