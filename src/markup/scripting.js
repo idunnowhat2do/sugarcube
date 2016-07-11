@@ -287,28 +287,26 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 		given, returns the lowest count (which can be `-1`).
 	**/
 	function lastVisited(/* variadic */) {
-		if (arguments.length === 0 || State.isEmpty()) {
+		if (arguments.length === 0) {
+			throw new Error('lastVisited called with insufficient parameters');
+		}
+		if (State.isEmpty()) {
 			return -1;
 		}
 
-		const needles = Array.prototype.concat.apply([], arguments);
-		let turns;
-
-		if (needles.length > 1) {
+		const
+			needles = Array.prototype.concat.apply([], arguments),
+			played  = State.passages,
+			uBound  = played.length - 1;
+		let
 			turns = State.turns;
 
-			for (let i = 0, iend = needles.length; i < iend; ++i) {
-				turns = Math.min(turns, lastVisited(needles[i]));
-			}
-
-			return turns;
+		for (let i = 0, iend = needles.length; i < iend && turns > -1; ++i) {
+			const lastIndex = played.lastIndexOf(needles[i]);
+			turns = Math.min(turns, lastIndex === -1 ? -1 : uBound - lastIndex);
 		}
 
-		const
-			played = State.passages,
-			index  = played.lastIndexOf(needles[0]);
-
-		return index === -1 ? -1 : played.length - 1 - index;
+		return turns;
 	}
 
 	/**
@@ -455,26 +453,27 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 			return 0;
 		}
 
-		const needles = Array.prototype.concat.apply([], arguments.length === 0 ? [State.passage] : arguments);
+		const
+			needles = Array.prototype.concat.apply([], arguments.length === 0 ? [State.passage] : arguments),
+			played  = State.passages;
+		let
+			count = State.turns;
 
-		if (needles.length > 1) {
-			let count = State.turns;
-
-			for (let i = 0, iend = needles.length; i < iend; ++i) {
-				count = Math.min(count, visited(needles[i]));
-			}
-
-			return count;
+		for (let i = 0, iend = needles.length; i < iend && count > 0; ++i) {
+			count = Math.min(count, played.count(needles[i]));
 		}
 
-		return State.passages.count(needles[0]);
+		return count;
 	}
 
 	/**
 		Returns the number of passages within the story history which are tagged with all of the given tags.
 	**/
 	function visitedTags(/* variadic */) {
-		if (arguments.length === 0 || State.isEmpty()) {
+		if (arguments.length === 0) {
+			throw new Error('visitedTags called with insufficient parameters');
+		}
+		if (State.isEmpty()) {
 			return 0;
 		}
 
