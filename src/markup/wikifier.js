@@ -117,7 +117,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		subWikify(output, terminator, terminatorIgnoreCase) {
-			// Temporarily replace the output buffer.
+			// Cache and temporarily replace the current output buffer.
 			const oldOutput = this.output;
 			this.output = output;
 
