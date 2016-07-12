@@ -2051,7 +2051,13 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			{
 				name  : 'lineContinuation',
-				match : '\\\\[\\s\\u00A0\\u2028\\u2029]*?(?:\\n|$)', // Unicode space-character escapes required for IE < 11 (maybe < 10?)
+				match : [
+					'(?:^|\\n)',
+					Patterns.space,
+					'*?\\\\|\\\\',
+					Patterns.space,
+					'*?(?:\\n|$)'
+				].join(''),
 
 				handler(w) {
 					w.nextMatch = w.matchStart + w.matchLength;
