@@ -61,300 +61,197 @@
 
 
 	/*******************************************************************************************************************
-	 * Links Macros.
+	 * Variables Macros.
 	 ******************************************************************************************************************/
 	/*
-		<<actions>>
+		<<set>>
 	*/
-	Macro.add('actions', {
-		handler() {
-			const $list = jQuery(document.createElement('ul'))
-				.addClass(this.name)
-				.appendTo(this.output);
+	Macro.add('set', {
+		skipArgs : true,
 
-			if (!State.variables['#actions']) {
-				State.variables['#actions'] = {};
+		handler() {
+			if (this.args.full.length === 0) {
+				return this.error('no expression specified');
 			}
 
-			for (let i = 0; i < this.args.length; ++i) {
-				let
-					passage,
-					text,
-					$image,
-					setFn;
+			try {
+				Scripting.evalJavaScript(this.args.full);
+			}
+			catch (e) {
+				return this.error(`bad evaluation: ${e.message}`);
+			}
 
-				if (typeof this.args[i] === 'object') {
-					if (this.args[i].isImage) {
-						// Argument was in wiki image syntax.
-						$image = jQuery(document.createElement('img'))
-							.attr('src', this.args[i].source);
-
-						if (this.args[i].hasOwnProperty('passage')) {
-							$image.attr('data-passage', this.args[i].passage);
-						}
-
-						if (this.args[i].hasOwnProperty('title')) {
-							$image.attr('title', this.args[i].title);
-						}
-
-						if (this.args[i].hasOwnProperty('align')) {
-							$image.attr('align', this.args[i].align);
-						}
-
-						passage = this.args[i].link;
-						setFn   = this.args[i].setFn;
-					}
-					else {
-						// Argument was in wiki link syntax.
-						text    = this.args[i].text;
-						passage = this.args[i].link;
-						setFn   = this.args[i].setFn;
-					}
-				}
-				else {
-					// Argument was simply the passage name.
-					text = passage = this.args[i];
-				}
-
-				if (
-					   State.variables['#actions'].hasOwnProperty(passage)
-					&& State.variables['#actions'][passage]
-				) {
-					continue;
-				}
-
-				jQuery(Wikifier.createInternalLink(
-					jQuery(document.createElement('li')).appendTo($list),
-					passage,
-					null,
-					((p, fn) => () => {
-						State.variables['#actions'][p] = true;
-						if (typeof fn === 'function') {
-							fn();
-						}
-					})(passage, setFn)
-				))
-					.addClass(`macro-${this.name}`)
-					.append($image || document.createTextNode(text));
+			// Custom debug view setup.
+			if (Config.debug) {
+				this.debugView.modes({ hidden : true });
 			}
 		}
 	});
 
 	/*
-		<<back>> & <<return>>
+		<<unset>>
 	*/
-	Macro.add(['back', 'return'], {
+	Macro.add('unset', {
+		skipArgs : true,
+
 		handler() {
-			/* legacy */
-			if (this.args.length > 1) {
-				return this.error('too many arguments specified, check the documentation for details');
+			if (this.args.full.length === 0) {
+				return this.error('no story/temporary variable list specified');
 			}
-			/* /legacy */
 
-			let
-				momentIndex = -1,
-				passage,
-				text,
-				$image;
+			const re = new RegExp(
+				`(?:(State\\.variables)|(TempVariables))\\.(${Wikifier.textPrimitives.identifier})`,
+				'g'
+			);
+			let match;
 
-			if (this.args.length === 1) {
-				if (typeof this.args[0] === 'object') {
-					if (this.args[0].isImage) {
-						// Argument was in wiki image syntax.
-						$image = jQuery(document.createElement('img'))
-							.attr('src', this.args[0].source);
+			while ((match = re.exec(this.args.full)) !== null) {
+				const
+					store = match[1] ? State.variables : TempVariables,
+					name  = match[3];
 
-						if (this.args[0].hasOwnProperty('passage')) {
-							$image.attr('data-passage', this.args[0].passage);
-						}
-
-						if (this.args[0].hasOwnProperty('title')) {
-							$image.attr('title', this.args[0].title);
-						}
-
-						if (this.args[0].hasOwnProperty('align')) {
-							$image.attr('align', this.args[0].align);
-						}
-
-						if (this.args[0].hasOwnProperty('link')) {
-							passage = this.args[0].link;
-						}
-					}
-					else {
-						// Argument was in wiki link syntax.
-						if (this.args[0].count === 1) {
-							// Simple link syntax: `[[...]]`.
-							passage = this.args[0].link;
-						}
-						else {
-							// Pretty link syntax: `[[...|...]]`.
-							text    = this.args[0].text;
-							passage = this.args[0].link;
-						}
-					}
-				}
-				else if (this.args.length === 1) {
-					// Argument was simply the link text.
-					text = this.args[0];
+				if (store.hasOwnProperty(name)) {
+					delete store[name];
 				}
 			}
 
-			if (passage == null) { // lazy equality for null
-				/*
-					Find the index and title of the most recent moment whose title does not match
-					that of the active (present) moment's.
-				*/
-				for (let i = State.length - 2; i >= 0; --i) {
-					if (State.history[i].title !== State.passage) {
-						momentIndex = i;
-						passage = State.history[i].title;
-						break;
-					}
-				}
-
-				// If we failed to find a passage and we're `<<return>>`, fallback to `State.expired`.
-				if (passage == null && this.name === 'return') { // lazy equality for null
-					for (let i = State.expired.length - 1; i >= 0; --i) {
-						if (State.expired[i] !== State.passage) {
-							passage = State.expired[i];
-							break;
-						}
-					}
-				}
+			// Custom debug view setup.
+			if (Config.debug) {
+				this.debugView.modes({ hidden : true });
 			}
-			else {
-				if (!Story.has(passage)) {
-					return this.error(`passage "${passage}" does not exist`);
-				}
-
-				if (this.name === 'back') {
-					/*
-						Find the index of the most recent moment whose title matches that of the
-						specified passage.
-					*/
-					for (let i = State.length - 2; i >= 0; --i) {
-						if (State.history[i].title === passage) {
-							momentIndex = i;
-							break;
-						}
-					}
-
-					if (momentIndex === -1) {
-						return this.error(`cannot find passage "${passage}" in the current story history`);
-					}
-				}
-			}
-
-			if (passage == null) { // lazy equality for null
-				return this.error('cannot find passage');
-			}
-
-			// if (this.name === "back" && momentIndex === -1) {
-			// 	// no-op; we're already at the first passage in the current story history
-			// 	return;
-			// }
-
-			let $el;
-
-			if (this.name !== 'back' || momentIndex !== -1) {
-				$el = jQuery(document.createElement('a'))
-					.addClass('link-internal')
-					.ariaClick({ one : true }, this.name === 'return'
-						? () => Engine.play(passage)
-						: () => Engine.goTo(momentIndex));
-			}
-			else {
-				$el = jQuery(document.createElement('span'))
-					.addClass('link-disabled');
-			}
-
-			$el
-				.addClass(`macro-${this.name}`)
-				.append($image || document.createTextNode(text || strings.macros[this.name].text))
-				.appendTo(this.output);
 		}
 	});
 
 	/*
-		<<choice>>
+		<<remember>>
 	*/
-	Macro.add('choice', {
+	Macro.add('remember', {
+		skipArgs : true,
+
 		handler() {
-			if (this.args.length === 0) {
-				return this.error('no passage specified');
+			if (this.args.full.length === 0) {
+				return this.error('no expression specified');
+			}
+
+			try {
+				Scripting.evalJavaScript(this.args.full);
+			}
+			catch (e) {
+				return this.error(`bad evaluation: ${e.message}`);
 			}
 
 			const
-				choiceId = State.passage;
+				remember = storage.get('remember') || {},
+				re       = new RegExp(`State\\.variables\\.(${Wikifier.textPrimitives.identifier})`, 'g');
 			let
-				passage,
-				text,
-				$image,
-				setFn;
+				match;
 
-			if (this.args.length === 1) {
-				if (typeof this.args[0] === 'object') {
-					if (this.args[0].isImage) {
-						// Argument was in wiki image syntax.
-						$image = jQuery(document.createElement('img'))
-							.attr('src', this.args[0].source);
+			while ((match = re.exec(this.args.full)) !== null) {
+				const name = match[1];
+				remember[name] = State.variables[name];
+			}
 
-						if (this.args[0].hasOwnProperty('passage')) {
-							$image.attr('data-passage', this.args[0].passage);
-						}
+			if (!storage.set('remember', remember)) {
+				return this.error(`unknown error, cannot remember: ${this.args.raw}`);
+			}
 
-						if (this.args[0].hasOwnProperty('title')) {
-							$image.attr('title', this.args[0].title);
-						}
+			// Custom debug view setup.
+			if (Config.debug) {
+				this.debugView.modes({ hidden : true });
+			}
+		},
 
-						if (this.args[0].hasOwnProperty('align')) {
-							$image.attr('align', this.args[0].align);
-						}
+		init() {
+			const remember = storage.get('remember');
 
-						passage = this.args[0].link;
-						setFn   = this.args[0].setFn;
-					}
-					else {
-						// Argument was in wiki link syntax.
-						text    = this.args[0].text;
-						passage = this.args[0].link;
-						setFn   = this.args[0].setFn;
-					}
+			if (remember) {
+				Object.keys(remember).forEach(name => State.variables[name] = remember[name]);
+			}
+		}
+	});
+
+	/*
+		<<forget>>
+	*/
+	Macro.add('forget', {
+		skipArgs : true,
+
+		handler() {
+			if (this.args.full.length === 0) {
+				return this.error('no story variable list specified');
+			}
+
+			const
+				remember = storage.get('remember'),
+				re       = new RegExp(`State\\.variables\\.(${Wikifier.textPrimitives.identifier})`, 'g');
+			let
+				match,
+				needStore = false;
+
+			while ((match = re.exec(this.args.full)) !== null) {
+				const name = match[1];
+
+				if (State.variables.hasOwnProperty(name)) {
+					delete State.variables[name];
 				}
-				else {
-					// Argument was simply the passage name.
-					text = passage = this.args[0];
+
+				if (remember && remember.hasOwnProperty(name)) {
+					needStore = true;
+					delete remember[name];
 				}
 			}
-			else {
-				// Yes, the arguments are backwards.
-				passage  = this.args[0];
-				text = this.args[1];
+
+			if (needStore && !storage.set('remember', remember)) {
+				return this.error('unknown error, cannot update remember store');
 			}
 
-			if (!State.variables.hasOwnProperty('#choice')) {
-				State.variables['#choice'] = {};
+			// Custom debug view setup.
+			if (Config.debug) {
+				this.debugView.modes({ hidden : true });
 			}
-			else if (
-				   State.variables['#choice'].hasOwnProperty(choiceId)
-				&& State.variables['#choice'][choiceId]
-			) {
-				jQuery(document.createElement('span'))
-					.addClass(`link-disabled macro-${this.name}`)
-					.attr('tabindex', -1)
-					.append($image || document.createTextNode(text))
-					.appendTo(this.output);
-				return;
-			}
+		}
+	});
 
-			jQuery(Wikifier.createInternalLink(this.output, passage, null, () => {
-				State.variables['#choice'][choiceId] = true;
-				if (typeof setFn === 'function') {
-					setFn();
+
+	/*******************************************************************************************************************
+	 * Scripting Macros.
+	 ******************************************************************************************************************/
+	/*
+		<<run>>
+	*/
+	Macro.add('run', 'set'); // add <<run>> as an alias of <<set>>
+
+	/*
+		<<script>>
+	*/
+	Macro.add('script', {
+		skipArgs : true,
+		tags     : null,
+
+		handler() {
+			const output = document.createDocumentFragment();
+
+			try {
+				Scripting.evalJavaScript(this.payload[0].contents, output);
+
+				// Custom debug view setup.
+				if (Config.debug) {
+					this.createDebugView(
+						this.name,
+						`${this.source + this.payload[0].contents}<</${this.name}>>`
+					);
 				}
-			}))
-				.addClass(`macro-${this.name}`)
-				.append($image || document.createTextNode(text));
+			}
+			catch (e) {
+				return this.error(
+					`bad evaluation: ${e.message}`,
+					`${this.source + this.payload[0].contents}<</${this.name}>>`
+				);
+			}
+
+			if (output.hasChildNodes()) {
+				this.output.appendChild(output);
+			}
 		}
 	});
 
@@ -701,202 +598,6 @@
 			// Custom debug view setup.
 			if (Config.debug) {
 				this.debugView.modes({ hidden : true });
-			}
-		}
-	});
-
-
-	/*******************************************************************************************************************
-	 * Variables Macros.
-	 ******************************************************************************************************************/
-	/*
-		<<set>>
-	*/
-	Macro.add('set', {
-		skipArgs : true,
-
-		handler() {
-			if (this.args.full.length === 0) {
-				return this.error('no expression specified');
-			}
-
-			try {
-				Scripting.evalJavaScript(this.args.full);
-			}
-			catch (e) {
-				return this.error(`bad evaluation: ${e.message}`);
-			}
-
-			// Custom debug view setup.
-			if (Config.debug) {
-				this.debugView.modes({ hidden : true });
-			}
-		}
-	});
-
-	/*
-		<<unset>>
-	*/
-	Macro.add('unset', {
-		skipArgs : true,
-
-		handler() {
-			if (this.args.full.length === 0) {
-				return this.error('no story/temporary variable list specified');
-			}
-
-			const re = new RegExp(
-				`(?:(State\\.variables)|(TempVariables))\\.(${Wikifier.textPrimitives.identifier})`,
-				'g'
-			);
-			let match;
-
-			while ((match = re.exec(this.args.full)) !== null) {
-				const
-					store = match[1] ? State.variables : TempVariables,
-					name  = match[3];
-
-				if (store.hasOwnProperty(name)) {
-					delete store[name];
-				}
-			}
-
-			// Custom debug view setup.
-			if (Config.debug) {
-				this.debugView.modes({ hidden : true });
-			}
-		}
-	});
-
-	/*
-		<<remember>>
-	*/
-	Macro.add('remember', {
-		skipArgs : true,
-
-		handler() {
-			if (this.args.full.length === 0) {
-				return this.error('no expression specified');
-			}
-
-			try {
-				Scripting.evalJavaScript(this.args.full);
-			}
-			catch (e) {
-				return this.error(`bad evaluation: ${e.message}`);
-			}
-
-			const
-				remember = storage.get('remember') || {},
-				re       = new RegExp(`State\\.variables\\.(${Wikifier.textPrimitives.identifier})`, 'g');
-			let
-				match;
-
-			while ((match = re.exec(this.args.full)) !== null) {
-				const name = match[1];
-				remember[name] = State.variables[name];
-			}
-
-			if (!storage.set('remember', remember)) {
-				return this.error(`unknown error, cannot remember: ${this.args.raw}`);
-			}
-
-			// Custom debug view setup.
-			if (Config.debug) {
-				this.debugView.modes({ hidden : true });
-			}
-		},
-
-		init() {
-			const remember = storage.get('remember');
-
-			if (remember) {
-				Object.keys(remember).forEach(name => State.variables[name] = remember[name]);
-			}
-		}
-	});
-
-	/*
-		<<forget>>
-	*/
-	Macro.add('forget', {
-		skipArgs : true,
-
-		handler() {
-			if (this.args.full.length === 0) {
-				return this.error('no story variable list specified');
-			}
-
-			const
-				remember = storage.get('remember'),
-				re       = new RegExp(`State\\.variables\\.(${Wikifier.textPrimitives.identifier})`, 'g');
-			let
-				match,
-				needStore = false;
-
-			while ((match = re.exec(this.args.full)) !== null) {
-				const name = match[1];
-
-				if (State.variables.hasOwnProperty(name)) {
-					delete State.variables[name];
-				}
-
-				if (remember && remember.hasOwnProperty(name)) {
-					needStore = true;
-					delete remember[name];
-				}
-			}
-
-			if (needStore && !storage.set('remember', remember)) {
-				return this.error('unknown error, cannot update remember store');
-			}
-
-			// Custom debug view setup.
-			if (Config.debug) {
-				this.debugView.modes({ hidden : true });
-			}
-		}
-	});
-
-
-	/*******************************************************************************************************************
-	 * Scripting Macros.
-	 ******************************************************************************************************************/
-	/*
-		<<run>>
-	*/
-	Macro.add('run', 'set'); // add <<run>> as an alias of <<set>>
-
-	/*
-		<<script>>
-	*/
-	Macro.add('script', {
-		skipArgs : true,
-		tags     : null,
-
-		handler() {
-			const output = document.createDocumentFragment();
-
-			try {
-				Scripting.evalJavaScript(this.payload[0].contents, output);
-
-				// Custom debug view setup.
-				if (Config.debug) {
-					this.createDebugView(
-						this.name,
-						`${this.source + this.payload[0].contents}<</${this.name}>>`
-					);
-				}
-			}
-			catch (e) {
-				return this.error(
-					`bad evaluation: ${e.message}`,
-					`${this.source + this.payload[0].contents}<</${this.name}>>`
-				);
-			}
-
-			if (output.hasChildNodes()) {
-				this.output.appendChild(output);
 			}
 		}
 	});
@@ -1295,7 +996,306 @@
 
 
 	/*******************************************************************************************************************
-	 * DOM (Classes) Macros.
+	 * Links Macros.
+	 ******************************************************************************************************************/
+	/*
+		<<actions>>
+	*/
+	Macro.add('actions', {
+		handler() {
+			const $list = jQuery(document.createElement('ul'))
+				.addClass(this.name)
+				.appendTo(this.output);
+
+			if (!State.variables['#actions']) {
+				State.variables['#actions'] = {};
+			}
+
+			for (let i = 0; i < this.args.length; ++i) {
+				let
+					passage,
+					text,
+					$image,
+					setFn;
+
+				if (typeof this.args[i] === 'object') {
+					if (this.args[i].isImage) {
+						// Argument was in wiki image syntax.
+						$image = jQuery(document.createElement('img'))
+							.attr('src', this.args[i].source);
+
+						if (this.args[i].hasOwnProperty('passage')) {
+							$image.attr('data-passage', this.args[i].passage);
+						}
+
+						if (this.args[i].hasOwnProperty('title')) {
+							$image.attr('title', this.args[i].title);
+						}
+
+						if (this.args[i].hasOwnProperty('align')) {
+							$image.attr('align', this.args[i].align);
+						}
+
+						passage = this.args[i].link;
+						setFn   = this.args[i].setFn;
+					}
+					else {
+						// Argument was in wiki link syntax.
+						text    = this.args[i].text;
+						passage = this.args[i].link;
+						setFn   = this.args[i].setFn;
+					}
+				}
+				else {
+					// Argument was simply the passage name.
+					text = passage = this.args[i];
+				}
+
+				if (
+					   State.variables['#actions'].hasOwnProperty(passage)
+					&& State.variables['#actions'][passage]
+				) {
+					continue;
+				}
+
+				jQuery(Wikifier.createInternalLink(
+					jQuery(document.createElement('li')).appendTo($list),
+					passage,
+					null,
+					((p, fn) => () => {
+						State.variables['#actions'][p] = true;
+						if (typeof fn === 'function') {
+							fn();
+						}
+					})(passage, setFn)
+				))
+					.addClass(`macro-${this.name}`)
+					.append($image || document.createTextNode(text));
+			}
+		}
+	});
+
+	/*
+		<<back>> & <<return>>
+	*/
+	Macro.add(['back', 'return'], {
+		handler() {
+			/* legacy */
+			if (this.args.length > 1) {
+				return this.error('too many arguments specified, check the documentation for details');
+			}
+			/* /legacy */
+
+			let
+				momentIndex = -1,
+				passage,
+				text,
+				$image;
+
+			if (this.args.length === 1) {
+				if (typeof this.args[0] === 'object') {
+					if (this.args[0].isImage) {
+						// Argument was in wiki image syntax.
+						$image = jQuery(document.createElement('img'))
+							.attr('src', this.args[0].source);
+
+						if (this.args[0].hasOwnProperty('passage')) {
+							$image.attr('data-passage', this.args[0].passage);
+						}
+
+						if (this.args[0].hasOwnProperty('title')) {
+							$image.attr('title', this.args[0].title);
+						}
+
+						if (this.args[0].hasOwnProperty('align')) {
+							$image.attr('align', this.args[0].align);
+						}
+
+						if (this.args[0].hasOwnProperty('link')) {
+							passage = this.args[0].link;
+						}
+					}
+					else {
+						// Argument was in wiki link syntax.
+						if (this.args[0].count === 1) {
+							// Simple link syntax: `[[...]]`.
+							passage = this.args[0].link;
+						}
+						else {
+							// Pretty link syntax: `[[...|...]]`.
+							text    = this.args[0].text;
+							passage = this.args[0].link;
+						}
+					}
+				}
+				else if (this.args.length === 1) {
+					// Argument was simply the link text.
+					text = this.args[0];
+				}
+			}
+
+			if (passage == null) { // lazy equality for null
+				/*
+					Find the index and title of the most recent moment whose title does not match
+					that of the active (present) moment's.
+				*/
+				for (let i = State.length - 2; i >= 0; --i) {
+					if (State.history[i].title !== State.passage) {
+						momentIndex = i;
+						passage = State.history[i].title;
+						break;
+					}
+				}
+
+				// If we failed to find a passage and we're `<<return>>`, fallback to `State.expired`.
+				if (passage == null && this.name === 'return') { // lazy equality for null
+					for (let i = State.expired.length - 1; i >= 0; --i) {
+						if (State.expired[i] !== State.passage) {
+							passage = State.expired[i];
+							break;
+						}
+					}
+				}
+			}
+			else {
+				if (!Story.has(passage)) {
+					return this.error(`passage "${passage}" does not exist`);
+				}
+
+				if (this.name === 'back') {
+					/*
+						Find the index of the most recent moment whose title matches that of the
+						specified passage.
+					*/
+					for (let i = State.length - 2; i >= 0; --i) {
+						if (State.history[i].title === passage) {
+							momentIndex = i;
+							break;
+						}
+					}
+
+					if (momentIndex === -1) {
+						return this.error(`cannot find passage "${passage}" in the current story history`);
+					}
+				}
+			}
+
+			if (passage == null) { // lazy equality for null
+				return this.error('cannot find passage');
+			}
+
+			// if (this.name === "back" && momentIndex === -1) {
+			// 	// no-op; we're already at the first passage in the current story history
+			// 	return;
+			// }
+
+			let $el;
+
+			if (this.name !== 'back' || momentIndex !== -1) {
+				$el = jQuery(document.createElement('a'))
+					.addClass('link-internal')
+					.ariaClick({ one : true }, this.name === 'return'
+						? () => Engine.play(passage)
+						: () => Engine.goTo(momentIndex));
+			}
+			else {
+				$el = jQuery(document.createElement('span'))
+					.addClass('link-disabled');
+			}
+
+			$el
+				.addClass(`macro-${this.name}`)
+				.append($image || document.createTextNode(text || strings.macros[this.name].text))
+				.appendTo(this.output);
+		}
+	});
+
+	/*
+		<<choice>>
+	*/
+	Macro.add('choice', {
+		handler() {
+			if (this.args.length === 0) {
+				return this.error('no passage specified');
+			}
+
+			const
+				choiceId = State.passage;
+			let
+				passage,
+				text,
+				$image,
+				setFn;
+
+			if (this.args.length === 1) {
+				if (typeof this.args[0] === 'object') {
+					if (this.args[0].isImage) {
+						// Argument was in wiki image syntax.
+						$image = jQuery(document.createElement('img'))
+							.attr('src', this.args[0].source);
+
+						if (this.args[0].hasOwnProperty('passage')) {
+							$image.attr('data-passage', this.args[0].passage);
+						}
+
+						if (this.args[0].hasOwnProperty('title')) {
+							$image.attr('title', this.args[0].title);
+						}
+
+						if (this.args[0].hasOwnProperty('align')) {
+							$image.attr('align', this.args[0].align);
+						}
+
+						passage = this.args[0].link;
+						setFn   = this.args[0].setFn;
+					}
+					else {
+						// Argument was in wiki link syntax.
+						text    = this.args[0].text;
+						passage = this.args[0].link;
+						setFn   = this.args[0].setFn;
+					}
+				}
+				else {
+					// Argument was simply the passage name.
+					text = passage = this.args[0];
+				}
+			}
+			else {
+				// Yes, the arguments are backwards.
+				passage  = this.args[0];
+				text = this.args[1];
+			}
+
+			if (!State.variables.hasOwnProperty('#choice')) {
+				State.variables['#choice'] = {};
+			}
+			else if (
+				   State.variables['#choice'].hasOwnProperty(choiceId)
+				&& State.variables['#choice'][choiceId]
+			) {
+				jQuery(document.createElement('span'))
+					.addClass(`link-disabled macro-${this.name}`)
+					.attr('tabindex', -1)
+					.append($image || document.createTextNode(text))
+					.appendTo(this.output);
+				return;
+			}
+
+			jQuery(Wikifier.createInternalLink(this.output, passage, null, () => {
+				State.variables['#choice'][choiceId] = true;
+				if (typeof setFn === 'function') {
+					setFn();
+				}
+			}))
+				.addClass(`macro-${this.name}`)
+				.append($image || document.createTextNode(text));
+		}
+	});
+
+
+	/*******************************************************************************************************************
+	 * DOM Macros.
 	 ******************************************************************************************************************/
 	/*
 		<<addclass>> & <<toggleclass>>
@@ -1351,10 +1351,6 @@
 		}
 	});
 
-
-	/*******************************************************************************************************************
-	 * DOM (Content) Macros.
-	 ******************************************************************************************************************/
 	/*
 		<<copy>>
 	*/
@@ -1429,409 +1425,6 @@
 			}
 
 			$targets.remove();
-		}
-	});
-
-
-	/*******************************************************************************************************************
-	 * Miscellaneous Macros.
-	 ******************************************************************************************************************/
-	/*
-		<<goto>>
-	*/
-	Macro.add('goto', {
-		handler() {
-			if (this.args.length === 0) {
-				return this.error('no passage specified');
-			}
-
-			let passage;
-
-			if (typeof this.args[0] === 'object') {
-				// Argument was in wiki link syntax.
-				passage = this.args[0].link;
-			}
-			else {
-				// Argument was simply the passage name.
-				passage = this.args[0];
-			}
-
-			if (!Story.has(passage)) {
-				return this.error(`passage "${passage}" does not exist`);
-			}
-
-			/*
-				Call `Engine.play()`.
-
-				n.b. This does not terminate the current Wikifier call chain, though, ideally, it
-				     probably should.  Doing so would not be trivial, however, and then there's the
-				     question of whether that behavior would be unwanted by users, who are used to
-				     the current behavior from similar macros and constructs.
-			*/
-			setTimeout(() => Engine.play(passage), Engine.minDomActionDelay);
-		}
-	});
-
-	/*
-		<<timed>> & <<next>>
-	*/
-	Macro.add('timed', {
-		tags   : ['next'],
-		timers : new Set(),
-
-		handler() {
-			if (this.args.length === 0) {
-				return this.error('no time value specified in <<timed>>');
-			}
-
-			const items = [];
-
-			try {
-				items.push({
-					name    : this.name,
-					source  : this.source,
-					delay   : Math.max(Engine.minDomActionDelay, Util.fromCssTime(this.args[0])),
-					content : this.payload[0].contents
-				});
-			}
-			catch (e) {
-				return this.error(`${e.message} in <<timed>>`);
-			}
-
-			if (this.payload.length > 1) {
-				let i;
-
-				try {
-					let len;
-
-					for (i = 1, len = this.payload.length; i < len; ++i) {
-						items.push({
-							name   : this.payload[i].name,
-							source : this.payload[i].source,
-							delay  : this.payload[i].args.length === 0
-								? items[items.length - 1].delay
-								: Math.max(Engine.minDomActionDelay, Util.fromCssTime(this.payload[i].args[0])),
-							content : this.payload[i].contents
-						});
-					}
-				}
-				catch (e) {
-					return this.error(`${e.message} in <<next>> (#${i})`);
-				}
-			}
-
-			// Custom debug view setup.
-			if (Config.debug) {
-				this.debugView.modes({ block : true });
-			}
-
-			// Register the timer and, possibly, a cleanup task.
-			this.self.registerTimeout(
-				jQuery(document.createElement('span'))
-					.addClass(`macro-${this.name}`)
-					.appendTo(this.output),
-				items,
-				this.args.length > 1 && /^(?:transition|t8n)$/.test(this.args[1])
-			);
-		},
-
-		registerTimeout($output, items, transition) {
-			const
-				turnId   = State.turns,
-				timers   = this.timers;
-			let
-				timerId  = null,
-				nextItem = items.shift();
-
-			const worker = function () {
-				/*
-					1. Bookkeeping.
-				*/
-				timers.delete(timerId);
-
-				if (turnId !== State.turns) {
-					return;
-				}
-
-				/*
-					2. Set the current item and setup the next worker, if any.
-				*/
-				const curItem = nextItem;
-
-				if ((nextItem = items.shift()) != null) { // lazy equality for null
-					timerId = setTimeout(worker, nextItem.delay);
-					timers.add(timerId);
-				}
-
-				/*
-					3. Wikify the content last to reduce temporal drift.
-				*/
-				const frag = document.createDocumentFragment();
-				new Wikifier(frag, curItem.content);
-
-				/*
-					4. Output.
-				*/
-				// Custom debug view setup for `<<next>>`.
-				if (Config.debug && curItem.name === 'next') {
-					$output = jQuery((new DebugView( // eslint-disable-line no-param-reassign
-						$output[0],
-						'macro',
-						curItem.name,
-						curItem.source
-					)).output);
-				}
-
-				if (transition) {
-					$output = jQuery(document.createElement('span')) // eslint-disable-line no-param-reassign
-						.addClass('macro-timed-insert macro-timed-in')
-						.appendTo($output);
-				}
-
-				$output.append(frag);
-
-				if (transition) {
-					setTimeout(() => $output.removeClass('macro-timed-in'), Engine.minDomActionDelay);
-				}
-			};
-
-			// Setup the timeout.
-			timerId = setTimeout(worker, nextItem.delay);
-			timers.add(timerId);
-
-			// Setup a single-use `prehistory` task to remove pending timers.
-			if (!prehistory.hasOwnProperty('#timed-timers-cleanup')) {
-				prehistory['#timed-timers-cleanup'] = task => {
-					timers.forEach(timerId => clearTimeout(timerId)); // eslint-disable-line no-shadow
-					timers.clear();
-					delete prehistory[task]; // single-use task
-				};
-			}
-		}
-	});
-
-	/*
-		<<repeat>> & <<stop>>
-	*/
-	Macro.add('repeat', {
-		tags   : null,
-		timers : new Set(),
-
-		handler() {
-			if (this.args.length === 0) {
-				return this.error('no time value specified');
-			}
-
-			let	delay;
-
-			try {
-				delay = Math.max(Engine.minDomActionDelay, Util.fromCssTime(this.args[0]));
-			}
-			catch (e) {
-				return this.error(e.message);
-			}
-
-			// Custom debug view setup.
-			if (Config.debug) {
-				this.debugView.modes({ block : true });
-			}
-
-			// Register the timer and, possibly, a cleanup task.
-			this.self.registerInterval(
-				jQuery(document.createElement('span'))
-					.addClass(`macro-${this.name}`)
-					.appendTo(this.output),
-				this.payload[0].contents,
-				delay,
-				this.args.length > 1 && /^(?:transition|t8n)$/.test(this.args[1])
-			);
-		},
-
-		registerInterval($output, content, delay, transition) {
-			const
-				turnId  = State.turns,
-				timers  = this.timers;
-			let
-				timerId = null;
-
-			// Setup the interval.
-			timerId = setInterval(() => {
-				// Terminate the timer if the turn IDs do not match.
-				if (turnId !== State.turns) {
-					clearInterval(timerId);
-					timers.delete(timerId);
-					return;
-				}
-
-				let timerIdCache;
-				/*
-					There's no catch clause because this try/finally is here simply to ensure that
-					proper cleanup is done in the event that an exception is thrown during the
-					`Wikifier` call.
-				*/
-				try {
-					TempState.break = null;
-
-					// Setup the `repeatTimerId` value, caching the existing value, if necessary.
-					if (TempState.hasOwnProperty('repeatTimerId')) {
-						timerIdCache = TempState.repeatTimerId;
-					}
-					TempState.repeatTimerId = timerId;
-
-					// Wikify the content.
-					const frag = document.createDocumentFragment();
-					new Wikifier(frag, content);
-
-					if (transition) {
-						$output = jQuery(document.createElement('span')) // eslint-disable-line no-param-reassign
-							.addClass('macro-repeat-insert macro-repeat-in')
-							.appendTo($output);
-					}
-
-					$output.append(frag);
-
-					if (transition) {
-						setTimeout(() => $output.removeClass('macro-repeat-in'), Engine.minDomActionDelay);
-					}
-				}
-				finally {
-					// Teardown the `repeatTimerId` property, restoring the cached value, if necessary.
-					if (typeof timerIdCache !== 'undefined') {
-						TempState.repeatTimerId = timerIdCache;
-					}
-					else {
-						delete TempState.repeatTimerId;
-					}
-
-					TempState.break = null;
-				}
-			}, delay);
-			timers.add(timerId);
-
-			// Setup a single-use `prehistory` task to remove pending timers.
-			if (!prehistory.hasOwnProperty('#repeat-timers-cleanup')) {
-				prehistory['#repeat-timers-cleanup'] = task => {
-					timers.forEach(timerId => clearInterval(timerId));
-					timers.clear();
-					delete prehistory[task]; // single-use task
-				};
-			}
-		}
-	});
-	Macro.add('stop', {
-		skipArgs : true,
-
-		handler() {
-			if (!TempState.hasOwnProperty('repeatTimerId')) {
-				return this.error('must only be used in conjunction with its parent macro <<repeat>>');
-			}
-
-			const
-				timers  = Macro.get('repeat').timers,
-				timerId = TempState.repeatTimerId;
-			clearInterval(timerId);
-			timers.delete(timerId);
-			TempState.break = 2;
-
-			// Custom debug view setup.
-			if (Config.debug) {
-				this.debugView.modes({ hidden : true });
-			}
-		}
-	});
-
-	/*
-		<<widget>>
-	*/
-	Macro.add('widget', {
-		tags : null,
-
-		handler() {
-			if (this.args.length === 0) {
-				return this.error('no widget name specified');
-			}
-
-			const widgetName = this.args[0];
-
-			if (Macro.has(widgetName)) {
-				if (!Macro.get(widgetName).isWidget) {
-					return this.error(`cannot clobber existing macro "${widgetName}"`);
-				}
-
-				// Delete the existing widget.
-				Macro.delete(widgetName);
-			}
-
-			try {
-				Macro.add(widgetName, {
-					isWidget : true,
-					handler  : (function (contents) {
-						return function () {
-							let argsCache;
-
-							try {
-								// Setup the `$args` variable, caching the existing value if necessary.
-								if (State.variables.hasOwnProperty('args')) {
-									argsCache = State.variables.args;
-								}
-
-								State.variables.args = [];
-
-								for (let i = 0, len = this.args.length; i < len; ++i) {
-									State.variables.args[i] = this.args[i];
-								}
-
-								State.variables.args.raw = this.args.raw;
-								State.variables.args.full = this.args.full;
-
-								// Setup the error trapping variables.
-								const
-									resFrag = document.createDocumentFragment(),
-									errList = [];
-
-								// Wikify the widget contents.
-								new Wikifier(resFrag, contents);
-
-								// Carry over the output, unless there were errors.
-								Array.from(resFrag.querySelectorAll('.error')).forEach(errEl => {
-									errList.push(errEl.textContent);
-								});
-
-								if (errList.length === 0) {
-									this.output.appendChild(resFrag);
-								}
-								else {
-									return this.error(`error${errList.length > 1 ? 's' : ''} within`
-										+ ` widget contents (${errList.join('; ')})`);
-								}
-							}
-							catch (e) {
-								return this.error(`cannot execute widget: ${e.message}`);
-							}
-							finally {
-								// Teardown the `$args` variable, restoring the cached value if necessary.
-								if (typeof argsCache !== 'undefined') {
-									State.variables.args = argsCache;
-								}
-								else {
-									delete State.variables.args;
-								}
-							}
-						};
-					})(this.payload[0].contents)
-				});
-
-				// Custom debug view setup.
-				if (Config.debug) {
-					this.createDebugView(
-						this.name,
-						`${this.source + this.payload[0].contents}<</${this.name}>>`
-					);
-				}
-			}
-			catch (e) {
-				return this.error(`cannot create widget macro "${widgetName}": ${e.message}`);
-			}
 		}
 	});
 
@@ -2535,4 +2128,407 @@
 			}
 		});
 	}
+
+
+	/*******************************************************************************************************************
+	 * Miscellaneous Macros.
+	 ******************************************************************************************************************/
+	/*
+		<<goto>>
+	*/
+	Macro.add('goto', {
+		handler() {
+			if (this.args.length === 0) {
+				return this.error('no passage specified');
+			}
+
+			let passage;
+
+			if (typeof this.args[0] === 'object') {
+				// Argument was in wiki link syntax.
+				passage = this.args[0].link;
+			}
+			else {
+				// Argument was simply the passage name.
+				passage = this.args[0];
+			}
+
+			if (!Story.has(passage)) {
+				return this.error(`passage "${passage}" does not exist`);
+			}
+
+			/*
+				Call `Engine.play()`.
+
+				n.b. This does not terminate the current Wikifier call chain, though, ideally, it
+				     probably should.  Doing so would not be trivial, however, and then there's the
+				     question of whether that behavior would be unwanted by users, who are used to
+				     the current behavior from similar macros and constructs.
+			*/
+			setTimeout(() => Engine.play(passage), Engine.minDomActionDelay);
+		}
+	});
+
+	/*
+		<<timed>> & <<next>>
+	*/
+	Macro.add('timed', {
+		tags   : ['next'],
+		timers : new Set(),
+
+		handler() {
+			if (this.args.length === 0) {
+				return this.error('no time value specified in <<timed>>');
+			}
+
+			const items = [];
+
+			try {
+				items.push({
+					name    : this.name,
+					source  : this.source,
+					delay   : Math.max(Engine.minDomActionDelay, Util.fromCssTime(this.args[0])),
+					content : this.payload[0].contents
+				});
+			}
+			catch (e) {
+				return this.error(`${e.message} in <<timed>>`);
+			}
+
+			if (this.payload.length > 1) {
+				let i;
+
+				try {
+					let len;
+
+					for (i = 1, len = this.payload.length; i < len; ++i) {
+						items.push({
+							name   : this.payload[i].name,
+							source : this.payload[i].source,
+							delay  : this.payload[i].args.length === 0
+								? items[items.length - 1].delay
+								: Math.max(Engine.minDomActionDelay, Util.fromCssTime(this.payload[i].args[0])),
+							content : this.payload[i].contents
+						});
+					}
+				}
+				catch (e) {
+					return this.error(`${e.message} in <<next>> (#${i})`);
+				}
+			}
+
+			// Custom debug view setup.
+			if (Config.debug) {
+				this.debugView.modes({ block : true });
+			}
+
+			// Register the timer and, possibly, a cleanup task.
+			this.self.registerTimeout(
+				jQuery(document.createElement('span'))
+					.addClass(`macro-${this.name}`)
+					.appendTo(this.output),
+				items,
+				this.args.length > 1 && /^(?:transition|t8n)$/.test(this.args[1])
+			);
+		},
+
+		registerTimeout($output, items, transition) {
+			const
+				turnId   = State.turns,
+				timers   = this.timers;
+			let
+				timerId  = null,
+				nextItem = items.shift();
+
+			const worker = function () {
+				/*
+					1. Bookkeeping.
+				*/
+				timers.delete(timerId);
+
+				if (turnId !== State.turns) {
+					return;
+				}
+
+				/*
+					2. Set the current item and setup the next worker, if any.
+				*/
+				const curItem = nextItem;
+
+				if ((nextItem = items.shift()) != null) { // lazy equality for null
+					timerId = setTimeout(worker, nextItem.delay);
+					timers.add(timerId);
+				}
+
+				/*
+					3. Wikify the content last to reduce temporal drift.
+				*/
+				const frag = document.createDocumentFragment();
+				new Wikifier(frag, curItem.content);
+
+				/*
+					4. Output.
+				*/
+				// Custom debug view setup for `<<next>>`.
+				if (Config.debug && curItem.name === 'next') {
+					$output = jQuery((new DebugView( // eslint-disable-line no-param-reassign
+						$output[0],
+						'macro',
+						curItem.name,
+						curItem.source
+					)).output);
+				}
+
+				if (transition) {
+					$output = jQuery(document.createElement('span')) // eslint-disable-line no-param-reassign
+						.addClass('macro-timed-insert macro-timed-in')
+						.appendTo($output);
+				}
+
+				$output.append(frag);
+
+				if (transition) {
+					setTimeout(() => $output.removeClass('macro-timed-in'), Engine.minDomActionDelay);
+				}
+			};
+
+			// Setup the timeout.
+			timerId = setTimeout(worker, nextItem.delay);
+			timers.add(timerId);
+
+			// Setup a single-use `prehistory` task to remove pending timers.
+			if (!prehistory.hasOwnProperty('#timed-timers-cleanup')) {
+				prehistory['#timed-timers-cleanup'] = task => {
+					timers.forEach(timerId => clearTimeout(timerId)); // eslint-disable-line no-shadow
+					timers.clear();
+					delete prehistory[task]; // single-use task
+				};
+			}
+		}
+	});
+
+	/*
+		<<repeat>> & <<stop>>
+	*/
+	Macro.add('repeat', {
+		tags   : null,
+		timers : new Set(),
+
+		handler() {
+			if (this.args.length === 0) {
+				return this.error('no time value specified');
+			}
+
+			let	delay;
+
+			try {
+				delay = Math.max(Engine.minDomActionDelay, Util.fromCssTime(this.args[0]));
+			}
+			catch (e) {
+				return this.error(e.message);
+			}
+
+			// Custom debug view setup.
+			if (Config.debug) {
+				this.debugView.modes({ block : true });
+			}
+
+			// Register the timer and, possibly, a cleanup task.
+			this.self.registerInterval(
+				jQuery(document.createElement('span'))
+					.addClass(`macro-${this.name}`)
+					.appendTo(this.output),
+				this.payload[0].contents,
+				delay,
+				this.args.length > 1 && /^(?:transition|t8n)$/.test(this.args[1])
+			);
+		},
+
+		registerInterval($output, content, delay, transition) {
+			const
+				turnId  = State.turns,
+				timers  = this.timers;
+			let
+				timerId = null;
+
+			// Setup the interval.
+			timerId = setInterval(() => {
+				// Terminate the timer if the turn IDs do not match.
+				if (turnId !== State.turns) {
+					clearInterval(timerId);
+					timers.delete(timerId);
+					return;
+				}
+
+				let timerIdCache;
+				/*
+					There's no catch clause because this try/finally is here simply to ensure that
+					proper cleanup is done in the event that an exception is thrown during the
+					`Wikifier` call.
+				*/
+				try {
+					TempState.break = null;
+
+					// Setup the `repeatTimerId` value, caching the existing value, if necessary.
+					if (TempState.hasOwnProperty('repeatTimerId')) {
+						timerIdCache = TempState.repeatTimerId;
+					}
+					TempState.repeatTimerId = timerId;
+
+					// Wikify the content.
+					const frag = document.createDocumentFragment();
+					new Wikifier(frag, content);
+
+					if (transition) {
+						$output = jQuery(document.createElement('span')) // eslint-disable-line no-param-reassign
+							.addClass('macro-repeat-insert macro-repeat-in')
+							.appendTo($output);
+					}
+
+					$output.append(frag);
+
+					if (transition) {
+						setTimeout(() => $output.removeClass('macro-repeat-in'), Engine.minDomActionDelay);
+					}
+				}
+				finally {
+					// Teardown the `repeatTimerId` property, restoring the cached value, if necessary.
+					if (typeof timerIdCache !== 'undefined') {
+						TempState.repeatTimerId = timerIdCache;
+					}
+					else {
+						delete TempState.repeatTimerId;
+					}
+
+					TempState.break = null;
+				}
+			}, delay);
+			timers.add(timerId);
+
+			// Setup a single-use `prehistory` task to remove pending timers.
+			if (!prehistory.hasOwnProperty('#repeat-timers-cleanup')) {
+				prehistory['#repeat-timers-cleanup'] = task => {
+					timers.forEach(timerId => clearInterval(timerId));
+					timers.clear();
+					delete prehistory[task]; // single-use task
+				};
+			}
+		}
+	});
+	Macro.add('stop', {
+		skipArgs : true,
+
+		handler() {
+			if (!TempState.hasOwnProperty('repeatTimerId')) {
+				return this.error('must only be used in conjunction with its parent macro <<repeat>>');
+			}
+
+			const
+				timers  = Macro.get('repeat').timers,
+				timerId = TempState.repeatTimerId;
+			clearInterval(timerId);
+			timers.delete(timerId);
+			TempState.break = 2;
+
+			// Custom debug view setup.
+			if (Config.debug) {
+				this.debugView.modes({ hidden : true });
+			}
+		}
+	});
+
+	/*
+		<<widget>>
+	*/
+	Macro.add('widget', {
+		tags : null,
+
+		handler() {
+			if (this.args.length === 0) {
+				return this.error('no widget name specified');
+			}
+
+			const widgetName = this.args[0];
+
+			if (Macro.has(widgetName)) {
+				if (!Macro.get(widgetName).isWidget) {
+					return this.error(`cannot clobber existing macro "${widgetName}"`);
+				}
+
+				// Delete the existing widget.
+				Macro.delete(widgetName);
+			}
+
+			try {
+				Macro.add(widgetName, {
+					isWidget : true,
+					handler  : (function (contents) {
+						return function () {
+							let argsCache;
+
+							try {
+								// Setup the `$args` variable, caching the existing value if necessary.
+								if (State.variables.hasOwnProperty('args')) {
+									argsCache = State.variables.args;
+								}
+
+								State.variables.args = [];
+
+								for (let i = 0, len = this.args.length; i < len; ++i) {
+									State.variables.args[i] = this.args[i];
+								}
+
+								State.variables.args.raw = this.args.raw;
+								State.variables.args.full = this.args.full;
+
+								// Setup the error trapping variables.
+								const
+									resFrag = document.createDocumentFragment(),
+									errList = [];
+
+								// Wikify the widget contents.
+								new Wikifier(resFrag, contents);
+
+								// Carry over the output, unless there were errors.
+								Array.from(resFrag.querySelectorAll('.error')).forEach(errEl => {
+									errList.push(errEl.textContent);
+								});
+
+								if (errList.length === 0) {
+									this.output.appendChild(resFrag);
+								}
+								else {
+									return this.error(`error${errList.length > 1 ? 's' : ''} within`
+										+ ` widget contents (${errList.join('; ')})`);
+								}
+							}
+							catch (e) {
+								return this.error(`cannot execute widget: ${e.message}`);
+							}
+							finally {
+								// Teardown the `$args` variable, restoring the cached value if necessary.
+								if (typeof argsCache !== 'undefined') {
+									State.variables.args = argsCache;
+								}
+								else {
+									delete State.variables.args;
+								}
+							}
+						};
+					})(this.payload[0].contents)
+				});
+
+				// Custom debug view setup.
+				if (Config.debug) {
+					this.createDebugView(
+						this.name,
+						`${this.source + this.payload[0].contents}<</${this.name}>>`
+					);
+				}
+			}
+			catch (e) {
+				return this.error(`cannot create widget macro "${widgetName}": ${e.message}`);
+			}
+		}
+	});
 })();
