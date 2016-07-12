@@ -22,6 +22,9 @@ var Patterns = (() => { // eslint-disable-line no-unused-vars, no-var
 	 * Patterns.
 	 ******************************************************************************************************************/
 	const
+		// whitespace patterns.
+		space = '[\\s\\u00A0\\u2028\\u2029]', // Unicode space-character escapes required for IE < 11 (maybe < 10?)
+
 		// Character patterns.
 		anyLetter       = '[0-9A-Z_a-z\\-\\u00C0-\\u00D6\\u00D8-\\u00DE\\u00DF-\\u00F6\\u00F8-\\u00FF'
 			+ `${_unicodeOk ? '\\u0150\\u0170\\u0151\\u0171' /* Include surrogate pairs? '\\uD800-\\uDFFF' */ : ''}]`,
@@ -61,6 +64,7 @@ var Patterns = (() => { // eslint-disable-line no-unused-vars, no-var
 	 * Module Exports.
 	 ******************************************************************************************************************/
 	return Object.freeze({
+		space,
 		anyLetter,
 		anyLetterStrict,
 		identifierFirstChar,
