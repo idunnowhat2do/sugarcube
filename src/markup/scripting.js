@@ -270,10 +270,12 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 			return false;
 		}
 
-		const needles = Array.prototype.concat.apply([], arguments);
+		const
+			needles = Array.prototype.concat.apply([], arguments),
+			played  = State.passages;
 
 		for (let i = 0, iend = needles.length; i < iend; ++i) {
-			if (!State.hasPlayed(needles[i])) {
+			if (!played.includes(needles[i])) {
 				return false;
 			}
 		}
