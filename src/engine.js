@@ -19,6 +19,9 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		minDomActionDelay = 40;
 
 	let
+		// Current state of the engine (values: 'idle', 'playing', 'rendering').
+		_state = 'idle',
+
 		// Last time `enginePlay()` was called (in milliseconds).
 		_lastPlay = null,
 
@@ -156,6 +159,13 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 	}
 
 	/**
+		Returns the current state of the engine.
+	**/
+	function engineState() {
+		return _state;
+	}
+
+	/**
 		Returns the last time `enginePlay()` was called (in milliseconds).
 	**/
 	function engineLastPlay() {
@@ -217,6 +227,11 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 	**/
 	function enginePlay(title, noHistory) {
 		if (DEBUG) { console.log(`[Engine/enginePlay(title: "${title}", noHistory: ${noHistory})]`); }
+
+		/*
+			Update the engine state.
+		*/
+		_state = 'playing';
 
 		/*
 			Reset the temporary state and variables objects.
@@ -281,15 +296,17 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		/*
-			Render the incoming passage and update the last display time.
+			Update the engine state.
 		*/
-		const $incoming = jQuery(passage.render());
-		_lastPlay = Date.now();
+		_state = 'rendering';
 
 		/*
-			Add the rendered passage to the page.
+			Render the incoming passage and add it to the page.
 		*/
-		const passages = document.getElementById('passages');
+		const
+			$incoming = jQuery(passage.render()),
+			passages  = document.getElementById('passages');
+
 		if (passages.hasChildNodes()) {
 			if (
 				/* eslint-disable no-extra-parens */
@@ -350,6 +367,11 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 			Scroll the window to the top.
 		*/
 		window.scroll(0, 0);
+
+		/*
+			Update the engine state.
+		*/
+		_state = 'playing';
 
 		/*
 			Execute the `PassageDone` passage and `postdisplay` tasks, then update the non-passage
@@ -414,6 +436,11 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		/*
+			Update the last display time.
+		*/
+		_lastPlay = Date.now();
+
+		/*
 			Last second post-processing for accessibility and other things.
 		*/
 		UI.hideOutlines(); // initially hide outlines
@@ -450,6 +477,11 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 			break;
 		}
+
+		/*
+			Reset the engine state.
+		*/
+		_state = 'idle';
 
 		// TODO: Let this return the jQuery wrapped element, rather than just the element.
 		return $incoming[0];
@@ -501,6 +533,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		*/
 		start    : { value : engineStart },
 		restart  : { value : engineRestart },
+		state    : { get : engineState },
 		lastPlay : { get : engineLastPlay },
 		goTo     : { value : engineGoTo },
 		go       : { value : engineGo },
