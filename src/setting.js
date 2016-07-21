@@ -17,8 +17,9 @@ var Setting = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		// Setting control types object (pseudo-enumeration).
 		Types = Object.freeze({
-			Toggle : 0,
-			List   : 1
+			Header : 0,
+			Toggle : 1,
+			List   : 2
 		});
 
 
@@ -46,19 +47,19 @@ var Setting = (() => { // eslint-disable-line no-unused-vars, no-var
 		settingsLoad();
 
 		// Execute `onInit` callbacks.
-		_definitions.forEach(definition => {
-			if (definition.hasOwnProperty('onInit')) {
+		_definitions.forEach(d => {
+			if (d.hasOwnProperty('onInit')) {
 				const thisArg = {
-					name    : definition.name,
-					value   : settings[definition.name],
-					default : definition.default
+					name    : d.name,
+					value   : settings[d.name],
+					default : d.default
 				};
 
-				if (definition.hasOwnProperty('list')) {
-					thisArg.list = definition.list;
+				if (d.hasOwnProperty('list')) {
+					thisArg.list = d.list;
 				}
 
-				definition.onInit.call(thisArg);
+				d.onInit.call(thisArg);
 			}
 		});
 	}
@@ -71,11 +72,14 @@ var Setting = (() => { // eslint-disable-line no-unused-vars, no-var
 		const savedSettings = settingsCreate();
 
 		if (Object.keys(settings).length > 0) {
-			_definitions.forEach(definition => {
-				if (settings[definition.name] !== definition.default) {
-					savedSettings[definition.name] = settings[definition.name];
-				}
-			});
+			// _definitions.forEach(definition => {
+			// 	if (definition.type !== Types.Header && settings[definition.name] !== definition.default) {
+			// 		savedSettings[definition.name] = settings[definition.name];
+			// 	}
+			// });
+			_definitions
+				.filter(d => d.type !== Types.Header && settings[d.name] !== d.default)
+				.forEach(d => savedSettings[d.name] = settings[d.name]);
 		}
 
 		if (Object.keys(savedSettings).length === 0) {
@@ -92,7 +96,14 @@ var Setting = (() => { // eslint-disable-line no-unused-vars, no-var
 			loadedSettings  = storage.get('settings') || settingsCreate();
 
 		// Load the defaults.
-		_definitions.forEach(definition => defaultSettings[definition.name] = definition.default);
+		// _definitions.forEach(definition => {
+		// 	if (definition.type !== Types.Header) {
+		// 		defaultSettings[definition.name] = definition.default;
+		// 	}
+		// });
+		_definitions
+			.filter(d => d.type !== Types.Header)
+			.forEach(d => defaultSettings[d.name] = d.default);
 
 		// Assign to the `settings` object while overwriting the defaults with the loaded settings.
 		window.SugarCube.settings = settings = Object.assign(defaultSettings, loadedSettings);
@@ -114,7 +125,11 @@ var Setting = (() => { // eslint-disable-line no-unused-vars, no-var
 				throw new Error(`nonexistent setting "${name}"`);
 			}
 
-			settings[name] = definitionsGet(name).default;
+			const d = definitionsGet(name);
+
+			if (d.type !== Types.Header) {
+				settings[name] = d.default;
+			}
 		}
 
 		return settingsSave();
@@ -164,6 +179,9 @@ var Setting = (() => { // eslint-disable-line no-unused-vars, no-var
 		};
 
 		switch (type) {
+		case Types.Header:
+			break;
+
 		case Types.Toggle:
 			definition.default = !!def.default;
 			break;
@@ -208,6 +226,10 @@ var Setting = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		_definitions.push(Object.freeze(definition));
+	}
+
+	function definitionsAddHeader(name, label) {
+		definitionsAdd(Types.Header, name, { label });
 	}
 
 	function definitionsAddToggle(...args) {
@@ -269,6 +291,7 @@ var Setting = (() => { // eslint-disable-line no-unused-vars, no-var
 		*/
 		forEach   : { value : definitionsForEach },
 		add       : { value : definitionsAdd },
+		addHeader : { value : definitionsAddHeader },
 		addToggle : { value : definitionsAddToggle },
 		addList   : { value : definitionsAddList },
 		isEmpty   : { value : definitionsIsEmpty },

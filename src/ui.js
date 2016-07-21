@@ -700,6 +700,29 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 		const $dialogBody = jQuery(Dialog.setup(strings.settings.title, 'settings'));
 
 		Setting.forEach(control => {
+			if (control.type === Setting.Types.Header) {
+				const
+					name       = control.name,
+					id         = Util.slugify(name),
+					$elHeader  = jQuery(document.createElement('div')),
+					$elHeading = jQuery(document.createElement('h2')),
+					$elLabel   = jQuery(document.createElement('p'));
+
+				$elHeader
+					.attr('id', `header-body-${id}`)
+					.append($elHeading)
+					.append($elLabel)
+					.appendTo($dialogBody);
+				$elHeading
+					.attr('id', `header-heading-${id}`)
+					.wiki(name);
+				$elLabel
+					.attr('id', `header-label-${id}`)
+					.wiki(control.label);
+
+				return;
+			}
+
 			const
 				name       = control.name,
 				id         = Util.slugify(name),
