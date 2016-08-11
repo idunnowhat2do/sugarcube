@@ -893,7 +893,11 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 								if (typeof macro.handler === 'function') {
 									const args = !payload
-										? this.createArgs(rawArgs, macro.hasOwnProperty('skipArgs') && !!macro.skipArgs)
+										? this.createArgs(
+											rawArgs,
+											   macro.hasOwnProperty('skipArgs') && !!macro.skipArgs
+											|| macro.hasOwnProperty('skipArg0') && !!macro.skipArg0
+										)
 										: payload[0].args;
 
 									/*
@@ -994,7 +998,8 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 						closeAlt     = `end${openTag}`,
 						bodyTags     = Array.isArray(macro.tags) ? macro.tags : false,
 						payload      = [],
-						skipArgs     = macro.hasOwnProperty('skipArgs') && !!macro.skipArgs;
+						skipArgs     = macro.hasOwnProperty('skipArgs') && macro.skipArgs,
+						skipArg0     = macro.hasOwnProperty('skipArg0') && macro.skipArg0;
 					let
 						end          = -1,
 						opened       = 1,
@@ -1034,8 +1039,11 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 											source    : curSource,
 											name      : curTag,
 											arguments : curArgument,
-											args      : this.createArgs(curArgument, skipArgs),
-											contents  : w.source.slice(contentStart, tagBegin)
+											args      : this.createArgs(
+												curArgument,
+												skipArgs || payload.length === 0 && skipArg0
+											),
+											contents : w.source.slice(contentStart, tagBegin)
 										});
 										curSource    = tagSource;
 										curTag       = tagName;
@@ -1052,8 +1060,11 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 								source    : curSource,
 								name      : curTag,
 								arguments : curArgument,
-								args      : this.createArgs(curArgument, skipArgs),
-								contents  : w.source.slice(contentStart, tagBegin)
+								args      : this.createArgs(
+									curArgument,
+									skipArgs || payload.length === 0 && skipArg0
+								),
+								contents : w.source.slice(contentStart, tagBegin)
 							});
 							end = tagEnd;
 							break;
