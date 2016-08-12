@@ -109,7 +109,7 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 			return this._engine.getItem(this._prefix + key);
 		}
 
-		set(key, value, quiet) {
+		set(key, value) {
 			if (this._engine === null || !key) {
 				return false;
 			}
@@ -119,6 +119,9 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 			catch (e) {
 				/*
+					Massage the quota exceeded error—the most likely error—into something
+					a bit nicer for the player.
+
 					Ideally, we could simply do:
 						e.code === 22
 					Or, preferably, something like:
@@ -128,15 +131,13 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 					matching the damn name.  I hate the parties responsible for this snafu
 					so much.
 				*/
-				if (!quiet) {
-					const error = /quota_?(?:exceeded|reached)/i.test(e.name)
-						? `${this.name} quota exceeded`
-						: 'unknown error';
-					Alert.error(null, `unable to set key "${key}"; ${error}`, e);
+				if (/quota_?(?:exceeded|reached)/i.test(e.name)) {
+					e.message = `${this.name} quota exceeded`;
 				}
 
-				return false;
+				throw e;
 			}
+
 			return true;
 		}
 
@@ -146,6 +147,7 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 
 			this._engine.removeItem(this._prefix + key);
+
 			return true;
 		}
 
@@ -226,7 +228,7 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 			return null;
 		}
 
-		set(key, value, quiet) {
+		set(key, value) {
 			if (!key) {
 				return false;
 			}
@@ -236,25 +238,18 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 				this._setCookie(key, value, this.persist ? 'Tue, 19 Jan 2038 03:14:07 GMT' : undefined);
 			}
 			catch (e) {
-				if (!quiet) {
-					Alert.error(null, `unable to set key "${key}"; cookie error: ${e.message}`, e);
-				}
-
-				return false;
+				e.message = `cookie error: ${e.message}`;
+				throw e;
 			}
 
 			if (!this.has(key)) {
-				if (!quiet) {
-					Alert.error(null, `unable to set key "${key}"; unknown cookie error`);
-				}
-
-				return false;
+				throw new Error('unknown cookie error');
 			}
 
 			return true;
 		}
 
-		delete(key, quiet) {
+		delete(key) {
 			if (!key) {
 				return false;
 			}
@@ -263,22 +258,15 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 				this._setCookie(key, undefined, 'Thu, 01 Jan 1970 00:00:00 GMT');
 			}
 			catch (e) {
-				if (!quiet) {
-					Alert.error(null, `unable to delete key "${key}"; cookie error: ${e.message}`, e);
-				}
-
-				return false;
+				e.message = `cookie error: ${e.message}`;
+				throw e;
 			}
 
 			// It seems like we cannot simply use `.has()` here for validation because of IE shenanigans?
 			// if (this.has(key)) {
 			const test = this.get(key);
 			if (test !== null && test !== '') {
-				if (!quiet) {
-					Alert.error(null, `unable to delete key "${key}"; unknown cookie error`);
-				}
-
-				return false;
+				throw new Error('unknown cookie error');
 			}
 
 			return true;
@@ -421,30 +409,48 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 			return true;
 		}
 
-		has(key) {
-			if (DEBUG) { console.log(`[<KeyValueStore>.has(key: "${key}")]`); }
+		has(key, quiet) {
+			if (DEBUG) { console.log(`[<KeyValueStore>.has(key: "${key}", quiet: "${quiet}")]`); }
 
 			if (this._driver === null || !key) {
 				return false;
 			}
 
-			return this._driver.has(key);
+			try {
+				return this._driver.has(key);
+			}
+			catch (e) {
+				if (!quiet) {
+					Alert.error(null, `unable to check key "${key}"; ${e.message}`, e);
+				}
+
+				return false;
+			}
 		}
 
-		get(key) {
-			if (DEBUG) { console.log(`[<KeyValueStore>.get(key: "${key}")]`); }
+		get(key, quiet) {
+			if (DEBUG) { console.log(`[<KeyValueStore>.get(key: "${key}", quiet: "${quiet}")]`); }
 
 			if (this._driver === null || !key) {
 				return null;
 			}
 
-			const value = this._driver.get(key);
+			try {
+				const value = this._driver.get(key);
 
-			if (value == null) { // lazy equality for null
+				if (value == null) { // lazy equality for null
+					return null;
+				}
+
+				return this._driver.deserialize(value);
+			}
+			catch (e) {
+				if (!quiet) {
+					Alert.error(null, `unable to get key "${key}"; ${e.message}`, e);
+				}
+
 				return null;
 			}
-
-			return this._driver.deserialize(value);
 		}
 
 		set(key, value, quiet) {
@@ -454,7 +460,16 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 				return false;
 			}
 
-			return this._driver.set(key, this._driver.serialize(value), quiet);
+			try {
+				return this._driver.set(key, this._driver.serialize(value), quiet);
+			}
+			catch (e) {
+				if (!quiet) {
+					Alert.error(null, `unable to set key "${key}"; ${e.message}`, e);
+				}
+
+				return false;
+			}
 		}
 
 		delete(key, quiet) {
@@ -464,7 +479,16 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 				return false;
 			}
 
-			return this._driver.delete(key, quiet);
+			try {
+				return this._driver.delete(key, quiet);
+			}
+			catch (e) {
+				if (!quiet) {
+					Alert.error(null, `unable to delete key "${key}"; ${e.message}`, e);
+				}
+
+				return false;
+			}
 		}
 
 		deleteMatching(subKey, quiet) {
