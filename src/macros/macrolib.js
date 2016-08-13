@@ -530,11 +530,13 @@
 				success = false;
 
 			// Initial debug view setup for `<<switch>>`.
-			debugView
-				.modes({
-					nonvoid : false,
-					hidden  : true
-				});
+			if (Config.debug) {
+				debugView
+					.modes({
+						nonvoid : false,
+						hidden  : true
+					});
+			}
 
 			for (/* empty */; i < len; ++i) {
 				// Sanity checks.
