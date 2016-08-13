@@ -201,6 +201,7 @@ jQuery(() => {
 			Config,
 			Dialog,
 			DebugView,
+			Engine,
 			Has,
 			Macro,
 			Passage,
