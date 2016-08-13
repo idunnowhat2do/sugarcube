@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global Config, AudioWrapper, DebugView, Engine, Has, Macro, Scripting, State, Story, TempState, TempVariables,
-	       Util, Wikifier, postdisplay, prehistory, toStringOrDefault, storage, strings
+	global AudioWrapper, Config, DebugView, Engine, Has, Macro, Scripting, State, Story, TempState, TempVariables,
+	       Util, Wikifier, postdisplay, prehistory, storage, strings, toStringOrDefault
 */
 
 (() => {
