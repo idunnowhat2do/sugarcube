@@ -77,7 +77,7 @@ var { // eslint-disable-line no-var
 	}
 
 	/*
-		Returns a deep copy of the passed object
+		Returns a deep copy of the passed object.
 
 		n.b. 1. `clone()` does not clone functions, however, since function definitions are immutable,
 		        the only issues are with expando properties and scope.  The former really should not
