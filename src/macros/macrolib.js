@@ -1887,6 +1887,33 @@
 		});
 
 		/*
+			<<fadeoutplayingaudio>>
+		*/
+		Macro.add('fadeoutplayingaudio', {
+			handler() {
+				const
+					tracks   = Macro.get('cacheaudio').tracks,
+					fadeOver = this.args.length === 0 ? 5 : Number(this.args[0]);
+
+				if (isNaN(fadeOver) || !isFinite(fadeOver) || fadeOver <= 0) {
+					return this.error(`seconds value (${this.args[0]}) is not a finite number greater than zero`);
+				}
+
+				Object.keys(tracks)
+					.filter(id => tracks[id].isPlaying())
+					.forEach(id => {
+						const track = tracks[id];
+						track.fadeWithDuration(fadeOver, 0);
+					});
+
+				// Custom debug view setup.
+				if (Config.debug) {
+					this.createDebugView();
+				}
+			}
+		});
+
+		/*
 			<<stopallaudio>>
 		*/
 		Macro.add('stopallaudio', {
