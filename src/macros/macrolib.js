@@ -1509,16 +1509,15 @@
 				return this.error(`no elements matched the selector "${this.args[0]}"`);
 			}
 
-			if (this.name === 'replace') {
-				$targets.empty();
-			}
-
 			if (this.payload[0].contents !== '') {
 				const frag = document.createDocumentFragment();
 				new Wikifier(frag, this.payload[0].contents);
 
 				switch (this.name) {
 				case 'replace':
+					$targets.empty();
+					/* falls through */
+
 				case 'append':
 					$targets.append(frag);
 					break;
@@ -1527,6 +1526,9 @@
 					$targets.prepend(frag);
 					break;
 				}
+			}
+			else if (this.name === 'replace') {
+				$targets.empty();
 			}
 		}
 	});
