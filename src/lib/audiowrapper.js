@@ -156,14 +156,14 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 			this.audio.loop = false;
 		}
 
-		fadeWithDuration(fadeDuration, fromVol, toVol) {
+		fadeWithDuration(fadeDuration, toVol, fromVol) {
 			if (this._faderId !== null) {
 				clearInterval(this._faderId);
 				this._faderId = null;
 			}
 
 			const
-				from = Math.clamp(fromVol, 0, 1),
+				from = Math.clamp(fromVol == null ? this.volume : fromVol, 0, 1), // lazy equality for null
 				to   = Math.clamp(toVol, 0, 1);
 
 			if (from === to) {
@@ -222,16 +222,16 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 			this.play();
 		}
 
-		fade(fromVol, toVol) {
-			this.fadeWithDuration(5, fromVol, toVol);
+		fade(toVol, fromVol) {
+			this.fadeWithDuration(5, toVol, fromVol);
 		}
 
 		fadeIn() {
-			this.fade(this.volume, 1);
+			this.fade(1);
 		}
 
 		fadeOut() {
-			this.fade(this.volume, 0);
+			this.fade(0);
 		}
 
 		onPlay(callback) {

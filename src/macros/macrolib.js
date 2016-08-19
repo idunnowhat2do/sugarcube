@@ -1871,7 +1871,7 @@
 							}
 						}
 
-						audio.fadeWithDuration(fadeOver, audio.volume, fadeTo);
+						audio.fadeWithDuration(fadeOver, fadeTo);
 						break;
 					}
 
@@ -2120,7 +2120,7 @@
 					this.current.volume = this.volume;
 				}
 
-				this.current.fadeWithDuration(over, this.current.volume, to);
+				this.current.fadeWithDuration(over, to);
 				this.volume = to; // kludgey, but necessary
 			},
 
