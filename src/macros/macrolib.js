@@ -1890,6 +1890,8 @@
 			<<stopallaudio>>
 		*/
 		Macro.add('stopallaudio', {
+			skipArgs : true,
+
 			handler() {
 				const tracks = Macro.get('cacheaudio').tracks;
 				Object.keys(tracks).forEach(id => tracks[id].stop());
