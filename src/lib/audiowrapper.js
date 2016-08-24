@@ -56,13 +56,13 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 
 				If we try to modify the audio clip's `.currentTime` property before its metadata
 				has been loaded, it will throw an `InvalidStateError` (since it doesn't know its
-				duration, allowing `.currentTime` to be set would be undefined behavior), so we
-				must check its readiness first.
+				duration, allowing `.currentTime` to be set would be undefined behavior), so in
+				case an exception is thrown we provide a fallback using the `loadedmetadata` event.
 			*/
-			if (this.hasMetadata()) {
+			try {
 				this.audio.currentTime = time;
 			}
-			else {
+			catch (e) {
 				jQuery(this.audio)
 					.off('loadedmetadata.AudioWrapper:time')
 					.one('loadedmetadata.AudioWrapper:time', () => this.audio.currentTime = time);
@@ -87,16 +87,25 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 			return this.audio.readyState >= HTMLMediaElement.HAVE_METADATA;
 		}
 
-		hasData() {
+		hasSomeData() {
 			return this.audio.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
 		}
 
+		hasData() {
+			return this.audio.readyState === HTMLMediaElement.HAVE_ENOUGH_DATA;
+		}
+
 		noSource() {
-			return !this.audio.hasChildNodes() || this.audio.networkState === HTMLMediaElement.NETWORK_NO_SOURCE;
+			return !(this.audio.src || this.audio.hasChildNodes())
+				|| this.audio.networkState === HTMLMediaElement.NETWORK_NO_SOURCE;
+		}
+
+		isLoading() {
+			return this.audio.networkState === HTMLMediaElement.NETWORK_LOADING;
 		}
 
 		isPlaying() {
-			return !(this.audio.ended || this.audio.paused || !this.hasData());
+			return !(this.audio.ended || this.audio.paused || !this.hasSomeData());
 		}
 
 		isEnded() {
@@ -124,7 +133,7 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		play() {
-			if (!this.hasData()) {
+			if (!this.hasData() && !this.isLoading()) {
 				this.load();
 			}
 
