@@ -1648,14 +1648,15 @@
 						requiring the use of 'audio/wav' instead.
 				*/
 				aac  : 'audio/aac',                //
-				mp3  : 'audio/mpeg; codecs="mp3"', // .mp3 files should be MPEG-Layer-3 encoded audio
-				mp4  : 'audio/mp4',                // codec varies, but commonly "mp4a.40.2"
+				mp3  : 'audio/mpeg; codecs="mp3"', // .mp3 files should be MPEG Layer-III audio in an MPEG Audio container
+				mp4  : 'audio/mp4',                // codecs vary, but commonly "mp4a.40.2"
 				m4a  : 'audio/mp4',                // (ditto)
-				ogg  : 'audio/ogg',                // codec varies, but commonly "vorbis" and, recently, "opus"
+				ogg  : 'audio/ogg',                // codecs vary, but commonly "vorbis" and, recently, "opus"
 				oga  : 'audio/ogg',                // (ditto)
-				opus : 'audio/ogg; codecs="opus"', // .opus files should be Opus encoded audio in an Ogg container
-				wav  : 'audio/wav',                // codec varies, but commonly "1" (1 is the FourCC for PCM/LPCM)
-				webm : 'audio/webm'                // codec varies, but commonly "vorbis" and, recently, "opus"
+				opus : 'audio/ogg; codecs="opus"', // .opus files should be Opus audio in an Ogg container
+				wav  : 'audio/wav',                // codecs vary, but commonly "1" (1 is the FourCC for PCM/LPCM)
+				weba : 'audio/webm',               // codecs vary, but commonly "vorbis" and, recently, "opus"
+				webm : 'audio/webm'                // codecs vary, but commonly "vorbis" and, recently, "opus"
 			}),
 			canPlay : {},
 			tracks  : {}
@@ -1845,7 +1846,7 @@
 					}
 
 					if (passage != null) { // lazy equality for null
-						audio.oneEnd(() => Engine.play(passage)); // execute the callback once only
+						audio.one('end', () => Engine.play(passage)); // execute the callback once only
 					}
 
 					switch (action) {
