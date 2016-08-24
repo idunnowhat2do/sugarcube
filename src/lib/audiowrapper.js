@@ -10,6 +10,20 @@
 var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
+	const
+		// Events supported by the `on()`, `one()`, and `off()` methods.
+		_events = new Map([
+			['end',    'ended'],
+			['fade',   'aw:fade'],
+			['pause',  'pause'],
+			['play',   'playing'],
+			['rate',   'ratechange'],
+			['seek',   'seeked'],
+			['stop',   'aw:stop'],
+			['volume', 'volumechange']
+		]);
+
+
 	/*******************************************************************************************************************
 	 * AudioWrapper Class.
 	 ******************************************************************************************************************/
@@ -26,6 +40,7 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 				}
 			});
 
+			// Ensure that, at least, the metadata is loaded.
 			if (this.audio.preload !== 'metadata' && this.audio.preload !== 'auto') {
 				this.audio.preload = 'metadata';
 			}
@@ -39,10 +54,20 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 		*/
 
 		get duration() {
+			// n.b. May return a double, NaN, or Infinity.
 			return this.audio.duration;
 		}
 
+		get rate() {
+			return this.audio.playbackRate;
+		}
+		set rate(playRate) {
+			// Clamp the playback rate to sane values.  Some browsers also do this to varying degrees.
+			this.audio.playbackRate = Math.clamp(playRate, 0.2, 5); // clamp to 5× slower & faster
+		}
+
 		get remaining() {
+			// n.b. May return a double, NaN, or Infinity.
 			return this.audio.duration - this.audio.currentTime;
 		}
 
@@ -73,14 +98,7 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 			return this.audio.volume;
 		}
 		set volume(vol) {
-			this.audio.volume = Math.clamp(vol, 0, 1);
-		}
-
-		get controls() {
-			return this.audio.controls;
-		}
-		set controls(state) {
-			this.audio.controls = !!state;
+			this.audio.volume = Math.clamp(vol, 0, 1); // clamp to 0 (silent) & 1 (full loudness)
 		}
 
 		hasMetadata() {
@@ -147,6 +165,7 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 		stop() {
 			this.audio.pause();
 			this.time = 0;
+			jQuery(this.audio).triggerHandler('aw:stop');
 		}
 
 		mute() {
@@ -224,6 +243,7 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 						if (this.volume === to) {
 							clearInterval(this._faderId);
 							this._faderId = null;
+							jQuery(this.audio).triggerHandler('aw:fade');
 						}
 					}, interval);
 				});
@@ -243,58 +263,37 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 			this.fade(0);
 		}
 
-		onPlay(callback) {
-			if (typeof callback === 'function') {
-				return jQuery(this.audio).on('playing.AudioWrapper:onPlay', callback);
+		on(eventName, listener) {
+			if (!_events.has(eventName)) {
+				throw new Error(`unknown event "${eventName}"; valid: ${[..._events.keys()].join(', ')}`);
 			}
-			else {
-				return jQuery(this.audio).off('playing.AudioWrapper:onPlay');
+			else if (typeof listener !== 'function') {
+				throw new Error('listener parameter must be a function');
 			}
+
+			return jQuery(this.audio).on(`${_events.get(eventName)}.AudioWrapperEvents`, listener);
 		}
 
-		onePlay(callback) {
-			if (typeof callback === 'function') {
-				return jQuery(this.audio).one('playing.AudioWrapper:onePlay', callback);
+		one(eventName, listener) {
+			if (!_events.has(eventName)) {
+				throw new Error(`unknown event "${eventName}"; valid: ${[..._events.keys()].join(', ')}`);
 			}
-			else {
-				return jQuery(this.audio).off('playing.AudioWrapper:onePlay');
+			else if (typeof listener !== 'function') {
+				throw new Error('listener parameter must be a function');
 			}
+
+			return jQuery(this.audio).one(`${_events.get(eventName)}.AudioWrapperEvents`, listener);
 		}
 
-		onPause(callback) {
-			if (typeof callback === 'function') {
-				return jQuery(this.audio).on('pause.AudioWrapper:onPause', callback);
+		off(eventName, listener) {
+			if (eventName && !_events.has(eventName)) {
+				throw new Error(`unknown event "${eventName}"; valid: ${[..._events.keys()].join(', ')}`);
 			}
-			else {
-				return jQuery(this.audio).off('pause.AudioWrapper:onPause');
+			else if (listener && typeof listener !== 'function') {
+				throw new Error('listener parameter must be a function');
 			}
-		}
 
-		onePause(callback) {
-			if (typeof callback === 'function') {
-				return jQuery(this.audio).one('pause.AudioWrapper:onePause', callback);
-			}
-			else {
-				return jQuery(this.audio).off('pause.AudioWrapper:onePause');
-			}
-		}
-
-		onEnd(callback) {
-			if (typeof callback === 'function') {
-				return jQuery(this.audio).on('ended.AudioWrapper:onEnd', callback);
-			}
-			else {
-				return jQuery(this.audio).off('ended.AudioWrapper:onEnd');
-			}
-		}
-
-		oneEnd(callback) {
-			if (typeof callback === 'function') {
-				return jQuery(this.audio).one('ended.AudioWrapper:oneEnd', callback);
-			}
-			else {
-				return jQuery(this.audio).off('ended.AudioWrapper:oneEnd');
-			}
+			return jQuery(this.audio).off(`${eventName ? _events.get(eventName) : ''}.AudioWrapperEvents`, listener);
 		}
 
 		clone() {
