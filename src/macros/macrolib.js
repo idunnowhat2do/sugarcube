@@ -1556,12 +1556,7 @@
 	/*******************************************************************************************************************
 	 * Audio Macros.
 	 ******************************************************************************************************************/
-	if (!Has.audio) {
-		Macro.add(['cacheaudio', 'audio', 'stopallaudio', 'playlist', 'setplaylist'], {
-			handler() { /* empty */ }
-		});
-	}
-	else {
+	if (Has.audio) {
 		/*
 			<<cacheaudio>>
 		*/
@@ -1618,9 +1613,11 @@
 					return this.error('no supported audio tracks found');
 				}
 
-				// Wrap the <audio> element and add it to the tracks.  We do this even if no <source>
-				// elements were generated to suppress errors for players.  The above Test Mode error
-				// should suffice for authors.
+				/*
+					Wrap the <audio> element and add it to the tracks.  We do this even if no <source>
+					elements were generated to suppress errors for players.  The above Test Mode error
+					should suffice for authors.
+				*/
 				audio.preload = 'auto';
 				this.self.tracks[id] = new AudioWrapper(audio);
 
@@ -1633,11 +1630,11 @@
 			extRe : /\.([^\.\/\\]+)$/,
 			types : Object.freeze({
 				/*
-					Define a file extension to MIME-type mapping for some common audio types.
-					Do not include the codecs property in most cases, however, as we have no way
-					of knowing what codec the given files were actually encoded with—the browser
-					will figure it out.  In some cases, however, the relationship between extension
-					and codec is strong, so we may include the codec in those cases.
+					Define a file extension to MIME-type mapping for common audio types.  Do not
+					include the codecs property in most cases, however, as we have no way of knowing
+					what codec the given files were actually encoded with—the browser will figure
+					it out.  In some cases, however, the relationship between extension and codec
+					is strong, so we may include the codec in those cases.
 
 					Caveats by browser:
 						Opera (Presto) will return a false-negative if the codecs value is quoted
@@ -1647,16 +1644,30 @@
 						for WAVE audio if the preferred MIME-type of 'audio/wave' is specified,
 						requiring the use of 'audio/wav' instead.
 				*/
-				aac  : 'audio/aac',                //
-				mp3  : 'audio/mpeg; codecs="mp3"', // .mp3 files should be MPEG Layer-III audio in an MPEG Audio container
-				mp4  : 'audio/mp4',                // codecs vary, but commonly "mp4a.40.2"
-				m4a  : 'audio/mp4',                // (ditto)
-				ogg  : 'audio/ogg',                // codecs vary, but commonly "vorbis" and, recently, "opus"
-				oga  : 'audio/ogg',                // (ditto)
-				opus : 'audio/ogg; codecs="opus"', // .opus files should be Opus audio in an Ogg container
-				wav  : 'audio/wav',                // codecs vary, but commonly "1" (1 is the FourCC for PCM/LPCM)
-				weba : 'audio/webm',               // codecs vary, but commonly "vorbis" and, recently, "opus"
-				webm : 'audio/webm'                // codecs vary, but commonly "vorbis" and, recently, "opus"
+
+				// AAC — Specific AAC profiles vary, but commonly "AAC-LC".
+				aac : 'audio/aac',
+
+				// MP3 — MPEG-1/-2 Layer-III audio in an MPEG Audio container.
+				mp3 : 'audio/mpeg; codecs="mp3"',
+
+				// MP4 — Codecs vary, but commonly "AAC-LC" (a.k.a. "mp4a.40.2").
+				m4a : 'audio/mp4',
+				mp4 : 'audio/mp4',
+
+				// OGG — Codecs vary, but commonly "vorbis" and, recently, "opus".
+				oga : 'audio/ogg',
+				ogg : 'audio/ogg',
+
+				// OPUS — Opus audio in an Ogg container.
+				opus : 'audio/ogg; codecs="opus"',
+
+				// WAVE — Codecs vary, but commonly "1" (1 is the FourCC for PCM/LPCM).
+				wav : 'audio/wav',
+
+				// WEBM — Codecs vary, but commonly "vorbis" and, recently, "opus".
+				weba : 'audio/webm',
+				webm : 'audio/webm'
 			}),
 			canPlay : {},
 			tracks  : {}
@@ -2280,6 +2291,23 @@
 					this.createDebugView();
 				}
 			}
+		});
+	}
+	else {
+		/* The HTML5 <audio> API appears to be missing or disabled, setup no-op macros. */
+		Macro.add(['cacheaudio', 'audio', 'fadeoutplayingaudio', 'stopallaudio', 'playlist', 'setplaylist'], {
+			skipArgs : true,
+
+			handler() { /* empty */ }
+		});
+
+		/*
+			Add a `tracks` object to the no-op `<<cacheaudio>>` to prevent scripts which attempt to
+			access the audio track cache, without checking the status of `Has.audio`, from throwing
+			exceptions.
+		*/
+		Object.defineProperty(Macro.get('cacheaudio'), 'tracks', {
+			value : { /* empty */ }
 		});
 	}
 
