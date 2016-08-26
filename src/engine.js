@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global Alert, Config, DebugView, Save, State, Story, TempVariables:true, UI, Wikifier, postdisplay, predisplay,
-	       prehistory
+	global Alert, Config, DebugView, LoadScreen, Save, State, Story, TempVariables:true, UI, Wikifier, postdisplay,
+	       predisplay, prehistory
 */
 
 var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
@@ -136,10 +136,10 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		if (DEBUG) { console.log('[Engine/engineRestart()]'); }
 
 		/*
-			Trigger the loading screen to hide any unsightly rendering shenanigans during
-			the page reload.
+			Show the loading screen to hide any unsightly rendering shenanigans during the
+			page reload.
 		*/
-		jQuery(document.documentElement).addClass('init-loading');
+		LoadScreen.show();
 
 		/*
 			Scroll the window to the top.
