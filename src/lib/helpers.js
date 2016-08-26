@@ -13,9 +13,9 @@ var { // eslint-disable-line no-var
 	addStyle,
 	clone,
 	convertBreaks,
-	toStringOrDefault,
 	setPageElement,
-	throwError
+	throwError,
+	toStringOrDefault
 	/* eslint-enable no-unused-vars */
 } = (() => {
 	'use strict';
@@ -233,50 +233,6 @@ var { // eslint-disable-line no-var
 	}
 
 	/*
-		Returns the simple string representation of the passed value or, if there is none,
-		the passed default value.
-	*/
-	function toStringOrDefault(val, defVal) {
-		switch (typeof val) {
-		case 'number':
-			if (isNaN(val)) {
-				return defVal;
-			}
-			break;
-
-		case 'object':
-			if (val === null) {
-				return defVal;
-			}
-			else if (Array.isArray(val) || val instanceof Set) {
-				return [...val].map(v => toStringOrDefault(v, defVal)).join(', ');
-			}
-			else if (val instanceof Map) {
-				/* eslint-disable prefer-template */
-				const tSOD = toStringOrDefault;
-				return '(\u202F'
-					+ [...val].map(kv => tSOD(kv[0], defVal) + ' \u21D2 ' + tSOD(kv[1], defVal)).join('; ')
-					+ '\u202F)';
-				/* eslint-enable prefer-template */
-			}
-			else if (val instanceof Date) {
-				return val.toLocaleString();
-			}
-			else if (typeof val.toString === 'function') {
-				return val.toString();
-			}
-
-			return Object.prototype.toString.call(val);
-
-		case 'function':
-		case 'undefined':
-			return defVal;
-		}
-
-		return String(val);
-	}
-
-	/*
 		Wikifies a passage into a DOM element corresponding to the passed ID and returns the element.
 	*/
 	function setPageElement(idOrElement, titles, defaultText) {
@@ -322,6 +278,50 @@ var { // eslint-disable-line no-var
 		return false;
 	}
 
+	/*
+		Returns the simple string representation of the passed value or, if there is none,
+		the passed default value.
+	*/
+	function toStringOrDefault(val, defVal) {
+		switch (typeof val) {
+		case 'number':
+			if (isNaN(val)) {
+				return defVal;
+			}
+			break;
+
+		case 'object':
+			if (val === null) {
+				return defVal;
+			}
+			else if (Array.isArray(val) || val instanceof Set) {
+				return [...val].map(v => toStringOrDefault(v, defVal)).join(', ');
+			}
+			else if (val instanceof Map) {
+				/* eslint-disable prefer-template */
+				const tSOD = toStringOrDefault;
+				return '(\u202F'
+					+ [...val].map(kv => tSOD(kv[0], defVal) + ' \u21D2 ' + tSOD(kv[1], defVal)).join('; ')
+					+ '\u202F)';
+				/* eslint-enable prefer-template */
+			}
+			else if (val instanceof Date) {
+				return val.toLocaleString();
+			}
+			else if (typeof val.toString === 'function') {
+				return val.toString();
+			}
+
+			return Object.prototype.toString.call(val);
+
+		case 'function':
+		case 'undefined':
+			return defVal;
+		}
+
+		return String(val);
+	}
+
 
 	/*******************************************************************************************************************
 	 * Module Exports.
@@ -330,8 +330,8 @@ var { // eslint-disable-line no-var
 		addStyle          : { value : addStyle },
 		clone             : { value : clone },
 		convertBreaks     : { value : convertBreaks },
-		toStringOrDefault : { value : toStringOrDefault },
 		setPageElement    : { value : setPageElement },
-		throwError        : { value : throwError }
+		throwError        : { value : throwError },
+		toStringOrDefault : { value : toStringOrDefault }
 	}));
 })();
