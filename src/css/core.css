@@ -133,6 +133,7 @@ textarea {
 }
 audio, canvas, progress, video {
 	max-width: 100%;
+	vertical-align: middle;
 }
 
 .error {
