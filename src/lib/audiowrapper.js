@@ -12,16 +12,17 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 
 	const
 		// Events supported by the `on()`, `one()`, and `off()` methods.
-		_events = new Map([
-			['end',    'ended'],
-			['fade',   'aw:fade'],
-			['pause',  'pause'],
-			['play',   'playing'],
-			['rate',   'ratechange'],
-			['seek',   'seeked'],
-			['stop',   'aw:stop'],
-			['volume', 'volumechange']
-		]);
+		_events = Object.freeze({
+			canplay : 'canplaythrough',
+			end     : 'ended',
+			fade    : 'aw:fade',
+			pause   : 'pause',
+			play    : 'playing',
+			rate    : 'ratechange',
+			seek    : 'seeked',
+			stop    : 'aw:stop',
+			volume  : 'volumechange'
+		});
 
 
 	/*******************************************************************************************************************
@@ -62,7 +63,19 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 			return this.audio.playbackRate;
 		}
 		set rate(playRate) {
-			// Clamp the playback rate to sane values.  Some browsers also do this to varying degrees.
+			/*
+				Clamp the playback rate to sane values—some browsers also do this to varying degrees.
+
+				n.b. The specification allows negative values for backwards playback, however, most
+				     browsers (as of Aug 2016) either completely ignore negative values or clamp them
+				     to some positive value.  In some (notably, IE/Edge), setting a negative playback
+				     rate breaks the associated controls, if they're being displayed.
+			*/
+			/*
+			this.audio.playbackRate = playRate < 0
+				? Math.clamp(playRate, -0.2, -5) // clamp to 5× slower & faster, backward
+				: Math.clamp(playRate, 0.2, 5);  // clamp to 5× slower & faster, forward
+			*/
 			this.audio.playbackRate = Math.clamp(playRate, 0.2, 5); // clamp to 5× slower & faster
 		}
 
@@ -263,37 +276,86 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 			this.fade(0);
 		}
 
-		on(eventName, listener) {
-			if (!_events.has(eventName)) {
-				throw new Error(`unknown event "${eventName}"; valid: ${[..._events.keys()].join(', ')}`);
-			}
-			else if (typeof listener !== 'function') {
+		on(eventNames, listener) {
+			if (typeof listener !== 'function') {
 				throw new Error('listener parameter must be a function');
 			}
 
-			return jQuery(this.audio).on(`${_events.get(eventName)}.AudioWrapperEvents`, listener);
+			const events = eventNames.trim().splitOrEmpty(/\s+/)
+				.map(nameAndNS => {
+					const name = nameAndNS.split('.', 1)[0];
+
+					if (!_events.hasOwnProperty(name)) {
+						throw new Error(`unknown event "${name}"; valid: ${Object.keys(_events).join(', ')}`);
+					}
+
+					return `${nameAndNS.replace(name, _events[name])}.AudioWrapperEvent`;
+				})
+				.join(' ');
+
+			if (events === '') {
+				throw new Error(`invalid eventNames parameter "${eventNames}"`);
+			}
+
+			return jQuery(this.audio).on(events, listener);
 		}
 
-		one(eventName, listener) {
-			if (!_events.has(eventName)) {
-				throw new Error(`unknown event "${eventName}"; valid: ${[..._events.keys()].join(', ')}`);
-			}
-			else if (typeof listener !== 'function') {
+		one(eventNames, listener) {
+			if (typeof listener !== 'function') {
 				throw new Error('listener parameter must be a function');
 			}
 
-			return jQuery(this.audio).one(`${_events.get(eventName)}.AudioWrapperEvents`, listener);
+			const events = eventNames.trim().splitOrEmpty(/\s+/)
+				.map(nameAndNS => {
+					const name = nameAndNS.split('.', 1)[0];
+
+					if (!_events.hasOwnProperty(name)) {
+						throw new Error(`unknown event "${name}"; valid: ${Object.keys(_events).join(', ')}`);
+					}
+
+					return `${nameAndNS.replace(name, _events[name])}.AudioWrapperEvent`;
+				})
+				.join(' ');
+
+			if (events === '') {
+				throw new Error(`invalid eventNames parameter "${eventNames}"`);
+			}
+
+			return jQuery(this.audio).one(events, listener);
 		}
 
-		off(eventName, listener) {
-			if (eventName && !_events.has(eventName)) {
-				throw new Error(`unknown event "${eventName}"; valid: ${[..._events.keys()].join(', ')}`);
-			}
-			else if (listener && typeof listener !== 'function') {
+		off(eventNames, listener) {
+			if (listener && typeof listener !== 'function') {
 				throw new Error('listener parameter must be a function');
 			}
 
-			return jQuery(this.audio).off(`${eventName ? _events.get(eventName) : ''}.AudioWrapperEvents`, listener);
+			if (!eventNames) {
+				return jQuery(this.audio).off('.AudioWrapperEvent', listener);
+			}
+			else {
+				const events = eventNames.trim().splitOrEmpty(/\s+/)
+					.map(nameAndNS => {
+						const name = nameAndNS.split('.', 1)[0];
+
+						if (name) {
+							if (!_events.hasOwnProperty(name)) {
+								throw new Error(`unknown event "${name}"; valid: ${Object.keys(_events).join(', ')}`);
+							}
+
+							return `${nameAndNS.replace(name, _events[name])}.AudioWrapperEvent`;
+						}
+						else {
+							return `${nameAndNS}.AudioWrapperEvent`;
+						}
+					})
+					.join(' ');
+
+				if (events === '') {
+					throw new Error(`invalid eventNames parameter "${eventNames}"`);
+				}
+
+				return jQuery(this.audio).off(events, listener);
+			}
 		}
 
 		clone() {
