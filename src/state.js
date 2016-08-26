@@ -353,6 +353,14 @@ var State = (() => { // eslint-disable-line no-unused-vars, no-var
 	}
 
 	/**
+		Returns the current (pre-play version of the active) moment within the history.
+	**/
+	function historyCurrent() {
+		return _history.length > 0 ? _history[_activeIndex] : null;
+	}
+
+
+	/**
 		Returns the topmost (most recent) moment within the history.
 	**/
 	function historyTop() {
@@ -596,6 +604,7 @@ var State = (() => { // eslint-disable-line no-unused-vars, no-var
 		length      : { get : historyLength },
 		size        : { get : historySize },
 		isEmpty     : { value : historyIsEmpty },
+		current     : { get : historyCurrent },
 		top         : { get : historyTop },
 		bottom      : { get : historyBottom },
 		index       : { value : historyIndex },
