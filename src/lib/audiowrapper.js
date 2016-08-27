@@ -6,6 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
+/* global Has, Util, clone */
 
 var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
@@ -28,11 +29,114 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 	/*******************************************************************************************************************
 	 * AudioWrapper Class.
 	 ******************************************************************************************************************/
+	/*
+		n.b. The various data constants (e.g. for comparison to `readyState` or `networkState`)
+			 are not defined by all browsers on the descendant elements `HTMLAudioElement` and
+			 `HTMLVideoElement` (notably, IE/Edge do not).  Therefore, the base media element,
+			 `HTMLMediaElement`, must be used to reference the constants.
+	*/
 	class AudioWrapper {
-		constructor(audio) {
+		constructor(obj) {
+			if (Array.isArray(obj)) {
+				this._create(obj);
+			}
+			else if (obj instanceof AudioWrapper) {
+				this._copy(obj);
+			}
+			else {
+				throw new Error('sources parameter must be an array of either URLs or source objects');
+			}
+		}
+
+		_create(sourceList) {
+			if (!Array.isArray(sourceList) || sourceList.length === 0) {
+				throw new Error('sources parameter must be an array of either URLs or source objects');
+			}
+
+			const
+				extRe   = /\.([^\.\/\\]+)$/,
+				getType = AudioWrapper.getType,
+				sources = [],
+				/*
+					HTMLAudioElement: DOM factory method vs. constructor
+
+					Usage of the DOM factory method, `document.createElement('audio')`, should
+					be preferred over the constructor, `new Audio()`, as objects created by
+					the latter are, erroneously, treated differently, often unfavorably, by
+					certain browser engines—e.g. within some versions of the iOS browser core.
+
+					Buggy browser implementations aside, the only difference between the two
+					methods, per the specification, is that objects created by the constructor
+					should have their `preload` property automatically set to 'auto'.
+				*/
+				audio = document.createElement('audio');
+
+			// Process the given array of sources.
+			sourceList.forEach(src => {
+				let srcObj = null;
+
+				switch (typeof src) {
+				case 'string':
+					{
+						const match = extRe.exec(Util.parseUrl(src).pathname);
+
+						if (match === null) {
+							throw new Error('source URL missing file extension');
+						}
+
+						const type = getType(match[1]);
+
+						if (type !== null) {
+							srcObj = { src, type };
+						}
+					}
+					break;
+
+				case 'object':
+					{
+						if (src === null) {
+							throw new Error('source object cannot be null');
+						}
+						else if (!src.hasOwnProperty('src')) {
+							throw new Error('source object missing required "src" property');
+						}
+						else if (!src.hasOwnProperty('format')) {
+							throw new Error('source object missing required "format" property');
+						}
+
+						const type = getType(src.format);
+
+						if (type !== null) {
+							srcObj = { src : src.src, type };
+						}
+					}
+					break;
+
+				default:
+					throw new Error(`invalid source value (type: ${typeof src})`);
+				}
+
+				if (srcObj !== null) {
+					const source = document.createElement('source');
+					source.src  = srcObj.src;
+					source.type = srcObj.type;
+					audio.appendChild(source);
+					sources.push(srcObj);
+				}
+			});
+
+			// Setup our own properties.
 			Object.defineProperties(this, {
 				audio : {
 					value : audio
+				},
+
+				sources : {
+					value : Object.freeze(sources)
+				},
+
+				originalSources : {
+					value : Object.freeze(clone(sourceList))
 				},
 
 				_faderId : {
@@ -41,18 +145,42 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 				}
 			});
 
-			// Ensure that, at least, the metadata is loaded.
-			if (this.audio.preload !== 'metadata' && this.audio.preload !== 'auto') {
-				this.audio.preload = 'metadata';
-			}
+			// Finally, attempt to preload the audio.
+			this.load();
 		}
 
-		/*
-			n.b. The various data constants (e.g. for comparison to `readyState` or `networkState`)
-			     are not defined by all browsers on the descendant elements `HTMLAudioElement` and
-			     `HTMLVideoElement` (notably, IE/Edge do not).  Therefore, the base media element,
-			     `HTMLMediaElement`, must be used to reference the constants.
-		*/
+		_copy(original) {
+			if (!(original instanceof AudioWrapper)) {
+				throw new Error('original parameter must be an instance of AudioWrapper');
+			}
+
+			// Setup our own properties.
+			Object.defineProperties(this, {
+				audio : {
+					value : original.audio.cloneNode(true)
+				},
+
+				sources : {
+					value : Object.freeze(clone(original.sources))
+				},
+
+				originalSources : {
+					value : Object.freeze(clone(original.originalSources))
+				},
+
+				_faderId : {
+					writable : true,
+					value    : null
+				}
+			});
+
+			// Finally, attempt to preload the audio.
+			this.load();
+		}
+
+		clone() {
+			return new AudioWrapper(this);
+		}
 
 		get duration() {
 			// n.b. May return a double, NaN, or Infinity.
@@ -114,6 +242,14 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 			this.audio.volume = Math.clamp(vol, 0, 1); // clamp to 0 (silent) & 1 (full loudness)
 		}
 
+		hasSource() {
+			return this.sources.length > 0;
+		}
+
+		hasNoData() {
+			return this.audio.readyState === HTMLMediaElement.HAVE_NOTHING;
+		}
+
 		hasMetadata() {
 			return this.audio.readyState >= HTMLMediaElement.HAVE_METADATA;
 		}
@@ -124,11 +260,6 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		hasData() {
 			return this.audio.readyState === HTMLMediaElement.HAVE_ENOUGH_DATA;
-		}
-
-		noSource() {
-			return !(this.audio.src || this.audio.hasChildNodes())
-				|| this.audio.networkState === HTMLMediaElement.NETWORK_NO_SOURCE;
 		}
 
 		isLoading() {
@@ -160,11 +291,13 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 				this.audio.preload = 'auto';
 			}
 
-			this.audio.load();
+			if (!this.isLoading()) {
+				this.audio.load();
+			}
 		}
 
 		play() {
-			if (!this.hasData() && !this.isLoading()) {
+			if (!this.hasData()) {
 				this.load();
 			}
 
@@ -297,7 +430,8 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 				throw new Error(`invalid eventNames parameter "${eventNames}"`);
 			}
 
-			return jQuery(this.audio).on(events, listener);
+			jQuery(this.audio).on(events, listener);
+			return this;
 		}
 
 		one(eventNames, listener) {
@@ -321,7 +455,8 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 				throw new Error(`invalid eventNames parameter "${eventNames}"`);
 			}
 
-			return jQuery(this.audio).one(events, listener);
+			jQuery(this.audio).one(events, listener);
+			return this;
 		}
 
 		off(eventNames, listener) {
@@ -354,16 +489,104 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 					throw new Error(`invalid eventNames parameter "${eventNames}"`);
 				}
 
-				return jQuery(this.audio).off(events, listener);
+				jQuery(this.audio).off(events, listener);
+				return this;
 			}
 		}
-
-		clone() {
-			// Do not use `jQuery.clone()` here, as we do not want event handlers carried over.
-			// return new AudioWrapper(this.audio.cloneNode(true));
-			return new this.constructor(this.audio.cloneNode(true));
-		}
 	}
+
+	// Static data members and methods.
+	Object.defineProperties(AudioWrapper, {
+		/*
+			Cache of supported MIME-types.
+		*/
+		_types : {
+			value : {}
+		},
+
+		/*
+			Format-ID to MIME-type mappings for common audio types.
+
+			In most cases, the codecs property should not be included with the MIME-type,
+			as we have no way of knowing which codec was used—and the browser will figure
+			it out.  Conversely, in cases where the relationship relationship between a
+			format-ID and a specific codec is strong, we should include the codecs property.
+
+			Caveats by browser:
+				Opera (Presto) will return a false-negative if the codecs value is quoted
+				with single quotes, requiring the use of either double quotes or no quotes.
+
+				Blink-based browsers (e.g. Chrome, Opera ≥15) will return a false-negative
+				for WAVE audio if the preferred MIME-type of 'audio/wave' is specified,
+				requiring the use of 'audio/wav' instead.
+		*/
+		formats : {
+			value : Object.freeze({
+				// AAC — Specific AAC profiles vary, but commonly "AAC-LC".
+				aac : 'audio/aac',
+
+				// CAF — Codecs vary.
+				caf : 'audio/x-caf',
+
+				// MP3 — MPEG-1/-2 Layer-III audio in an MPEG Audio container.
+				mp3 : 'audio/mpeg; codecs="mp3"',
+
+				// MP4 — Codecs vary, but commonly "AAC-LC" (a.k.a. "mp4a.40.2").
+				m4a : 'audio/mp4',
+				mp4 : 'audio/mp4',
+
+				// OGG — Codecs vary, but commonly "vorbis" and, recently, "opus".
+				oga : 'audio/ogg',
+				ogg : 'audio/ogg',
+
+				// OPUS — Opus audio in an Ogg container.
+				opus : 'audio/ogg; codecs="opus"',
+
+				// WAVE — Codecs vary, but commonly "1" (1 is the FourCC for PCM/LPCM).
+				wav : 'audio/wav',
+
+				// WEBM — Codecs vary, but commonly "vorbis" and, recently, "opus".
+				weba : 'audio/webm',
+				webm : 'audio/webm'
+			})
+		},
+
+		/*
+			Returns the MIME-type associated with the specified format-ID or `null`, if the
+			format is unsupported by the browser.
+		*/
+		getType : {
+			value(format) {
+				if (!format || !Has.audio) {
+					return false;
+				}
+
+				const
+					cache = AudioWrapper._types,
+					known = AudioWrapper.formats,
+					id    = format.toLowerCase(),
+					type  = known.hasOwnProperty(id) ? known[id] : `audio/${id}`;
+
+				if (!cache.hasOwnProperty(type)) {
+					const audio = document.createElement('audio');
+
+					// Some early implementations return 'no' instead of the empty string.
+					cache[type] = audio.canPlayType(type).replace(/^no$/i, '') !== '';
+				}
+
+				return cache[type] ? type : null;
+			}
+		},
+
+		/*
+			Returns whether the browser potentially supports a format.
+		*/
+		canPlay : {
+			value(format) {
+				return AudioWrapper.getType(format) !== null;
+			}
+		}
+	});
 
 
 	/*******************************************************************************************************************
