@@ -17,9 +17,9 @@
 	/*******************************************************************************************************************
 	 * Utility Functions.
 	 ******************************************************************************************************************/
-	function _getWikifyEvalHandler(content, widgetArgs, callback) {
+	function _createWidgetArgsWrapperHandler(widgetArgs, content, callback, passage) {
 		return function () {
-			if (content !== '') {
+			if (content || typeof callback === 'function') {
 				let argsCache;
 				/*
 					There's no catch clause because this try/finally is here simply to ensure that
@@ -36,8 +36,15 @@
 						State.variables.args = widgetArgs;
 					}
 
-					// Wikify the content and discard any output, unless there were errors.
-					Wikifier.wikifyEval(content);
+					// Wikify the content, if any, and discard any output.
+					if (content) {
+						Wikifier.wikifyEval(content);
+					}
+
+					// Call the callback function, if any.
+					if (typeof callback === 'function') {
+						callback.call(this);
+					}
 				}
 				finally {
 					// Teardown the `$args` variable, restoring the cached value if necessary.
@@ -52,9 +59,9 @@
 				}
 			}
 
-			// Call the given callback function, if any.
-			if (typeof callback === 'function') {
-				callback.call(this);
+			// Play the given passage, if any.
+			if (passage != null) { // lazy equality for null
+				Engine.play(passage);
 			}
 		};
 	}
@@ -729,14 +736,14 @@
 	 * Interactive Macros.
 	 ******************************************************************************************************************/
 	/*
-		<<button>> & <<click>>
+		<<button>> & <<link>>
 	*/
-	Macro.add(['button', 'click'], {
+	Macro.add(['button', 'link'], {
 		tags : null,
 
 		handler() {
 			if (this.args.length === 0) {
-				return this.error(`no ${this.name === 'click' ? 'link' : 'button'} text specified`);
+				return this.error(`no ${this.name === 'button' ? 'button' : 'link'} text specified`);
 			}
 
 			// Custom debug view setup.
@@ -748,7 +755,7 @@
 			}
 
 			const
-				$el        = jQuery(document.createElement(this.name === 'click' ? 'a' : 'button')),
+				$el        = jQuery(document.createElement(this.name === 'button' ? 'button' : 'a')),
 				widgetArgs = (() => {
 					let wargs;
 
@@ -824,10 +831,11 @@
 				.ariaClick({
 					namespace : '.macros',
 					one       : passage != null // lazy equality for null
-				}, _getWikifyEvalHandler(
-					this.payload[0].contents.trim(),
+				}, _createWidgetArgsWrapperHandler(
 					widgetArgs,
-					passage != null ? () => Engine.play(passage) : undefined // lazy equality for null
+					this.payload[0].contents.trim(),
+					null,
+					passage
 				))
 				.appendTo(this.output);
 		}
@@ -885,6 +893,94 @@
 			}
 			else {
 				Wikifier.setValue(varName, uncheckValue);
+			}
+		}
+	});
+
+	/*
+		<<click>>
+	*/
+	Macro.add('click', 'link'); // add <<click>> as an alias of <<link>>
+
+	/*
+		<<linkappend>>, <<linkprepend>>, & <<linkreplace>>
+	*/
+	Macro.add(['linkappend', 'linkprepend', 'linkreplace'], {
+		tags : null,
+
+		handler() {
+			if (this.args.length === 0) {
+				return this.error('no link text specified');
+			}
+
+			// Custom debug view setup.
+			if (Config.debug) {
+				this.createDebugView(
+					this.name,
+					`${this.source + this.payload[0].contents}<</${this.name}>>`
+				);
+			}
+
+			const
+				$link      = jQuery(document.createElement('a')),
+				$insert    = jQuery(document.createElement('span')),
+				transition = this.args.length > 1 && /^(?:transition|t8n)$/.test(this.args[1]),
+				widgetArgs = (() => {
+					let wargs;
+
+					if (
+						   State.variables.hasOwnProperty('args')
+						&& this.contextHas(c => c.self.isWidget)
+					) {
+						wargs = State.variables.args;
+					}
+
+					return wargs;
+				})();
+
+			$link
+				.wiki(this.args[0])
+				.addClass(`link-internal macro-${this.name}`)
+				.ariaClick({
+					namespace : '.macros',
+					one       : true
+				}, _createWidgetArgsWrapperHandler(
+					widgetArgs,
+					null,
+					() => {
+						if (this.name === 'linkreplace') {
+							$link.remove();
+						}
+						else {
+							$link
+								.wrap(`<span class="macro-${this.name}"></span>`)
+								.replaceWith(() => $link.html());
+						}
+
+						if (this.payload[0].contents !== '') {
+							const frag = document.createDocumentFragment();
+							new Wikifier(frag, this.payload[0].contents);
+							$insert.append(frag);
+						}
+
+						if (transition) {
+							setTimeout(() => $insert.removeClass(`macro-${this.name}-in`), Engine.minDomActionDelay);
+						}
+					}
+				))
+				.appendTo(this.output);
+
+			$insert.addClass(`macro-${this.name}-insert`);
+
+			if (transition) {
+				$insert.addClass(`macro-${this.name}-in`);
+			}
+
+			if (this.name === 'linkprepend') {
+				$insert.insertBefore($link);
+			}
+			else {
+				$insert.insertAfter($link);
 			}
 		}
 	});
