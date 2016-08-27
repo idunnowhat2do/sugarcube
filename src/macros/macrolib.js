@@ -1665,57 +1665,27 @@
 					return this.error(`no ${errors.join(' or ')} specified`);
 				}
 
-				const
-					types   = this.self.types,
-					canPlay = this.self.canPlay,
-					/*
-						Use `document.createElement('audio')` in favor of `new Audio()` as the
-						latter is treated differently (often unfavorably) in certain cases,
-						chiefly in mobile browsers.
-					*/
-					audio   = document.createElement('audio'),
-					id      = this.args[0],
-					extRe   = this.self.extRe;
+				const id = this.args[0];
+				let track;
 
-				for (let i = 1; i < this.args.length; ++i) {
-					const
-						url   = this.args[i],
-						match = extRe.exec(Util.parseUrl(url).pathname);
-
-					if (match === null) {
-						continue;
-					}
-
-					const
-						ext  = match[1].toLowerCase(),
-						type = types.hasOwnProperty(ext) ? types[ext] : `audio/${ext}`;
-
-					// Determine and cache the `canPlay` status for the audio type.
-					if (!canPlay.hasOwnProperty(type)) {
-						// Some early implementations return 'no' instead of the empty string.
-						canPlay[type] = audio.canPlayType(type).replace(/^no$/i, '') !== '';
-					}
-
-					if (canPlay[type]) {
-						const source = document.createElement('source');
-						source.src  = url;
-						source.type = type;
-						audio.appendChild(source);
-					}
+				try {
+					track = new AudioWrapper(this.args.slice(1));
+				}
+				catch (e) {
+					return this.error(`error during track initialization for "${id}": ${e.message}`);
 				}
 
-				// If in Test Mode and no <source> elements were generated, return an error.
-				if (Config.debug && !audio.hasChildNodes()) {
-					return this.error('no supported audio tracks found');
+				// If in Test Mode and no supported sources were specified, return an error.
+				if (Config.debug && !track.hasSource()) {
+					return this.error(`no supported audio sources found for "${id}"`);
 				}
 
 				/*
-					Wrap the <audio> element and add it to the tracks.  We do this even if no <source>
-					elements were generated to suppress errors for players.  The above Test Mode error
-					should suffice for authors.
+					Add the audio to the tracks cache.  We do this even if no valid sources were
+					found to suppress errors for players.  The above Test Mode error should
+					suffice for authors.
 				*/
-				audio.preload = 'auto';
-				this.self.tracks[id] = new AudioWrapper(audio);
+				this.self.tracks[id] = track;
 
 				// Custom debug view setup.
 				if (Config.debug) {
@@ -1723,50 +1693,7 @@
 				}
 			},
 
-			extRe : /\.([^\.\/\\]+)$/,
-			types : Object.freeze({
-				/*
-					Define a file extension to MIME-type mapping for common audio types.  Do not
-					include the codecs property in most cases, however, as we have no way of knowing
-					what codec the given files were actually encoded with—the browser will figure
-					it out.  In some cases, however, the relationship between extension and codec
-					is strong, so we may include the codec in those cases.
-
-					Caveats by browser:
-						Opera (Presto) will return a false-negative if the codecs value is quoted
-						with single quotes, requiring the use of either double quotes or no quotes.
-
-						Blink-based browsers (e.g. Chrome, Opera ≥15) will return a false-negative
-						for WAVE audio if the preferred MIME-type of 'audio/wave' is specified,
-						requiring the use of 'audio/wav' instead.
-				*/
-
-				// AAC — Specific AAC profiles vary, but commonly "AAC-LC".
-				aac : 'audio/aac',
-
-				// MP3 — MPEG-1/-2 Layer-III audio in an MPEG Audio container.
-				mp3 : 'audio/mpeg; codecs="mp3"',
-
-				// MP4 — Codecs vary, but commonly "AAC-LC" (a.k.a. "mp4a.40.2").
-				m4a : 'audio/mp4',
-				mp4 : 'audio/mp4',
-
-				// OGG — Codecs vary, but commonly "vorbis" and, recently, "opus".
-				oga : 'audio/ogg',
-				ogg : 'audio/ogg',
-
-				// OPUS — Opus audio in an Ogg container.
-				opus : 'audio/ogg; codecs="opus"',
-
-				// WAVE — Codecs vary, but commonly "1" (1 is the FourCC for PCM/LPCM).
-				wav : 'audio/wav',
-
-				// WEBM — Codecs vary, but commonly "vorbis" and, recently, "opus".
-				weba : 'audio/webm',
-				webm : 'audio/webm'
-			}),
-			canPlay : {},
-			tracks  : {}
+			tracks : {}
 		});
 
 		/*
@@ -2279,7 +2206,7 @@
 					return false;
 				}
 
-				if (this.current.noSource()) {
+				if (!this.current.hasSource()) {
 					return this.next();
 				}
 
@@ -2366,7 +2293,7 @@
 					track.unloop();
 					track.unmute();
 					track.volume = 1;
-					jQuery(track.audio).on('ended.macro-playlist', playlist.onEnd);
+					track.on('end.macro-playlist', playlist.onEnd);
 					list.push(track);
 				}
 
