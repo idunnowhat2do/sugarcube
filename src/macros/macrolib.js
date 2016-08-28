@@ -1995,6 +1995,7 @@
 					case 'play':
 					case 'pause':
 					case 'stop':
+					case 'skip':
 						action = arg;
 						break;
 
@@ -2116,6 +2117,12 @@
 
 					case 'stop':
 						self.stop();
+						break;
+
+					case 'skip':
+						self.stop();
+						self.next();
+						self.play();
 						break;
 
 					case 'fade':
