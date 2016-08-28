@@ -16,6 +16,7 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 		_events = Object.freeze({
 			canplay : 'canplaythrough',
 			end     : 'ended',
+			error   : 'error',
 			fade    : 'aw:fade',
 			pause   : 'pause',
 			play    : 'playing',
@@ -54,20 +55,23 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 
 			const
-				extRe   = /\.([^\.\/\\]+)$/,
-				getType = AudioWrapper.getType,
-				sources = [],
+				extRe       = /\.([^\.\/\\]+)$/,
+				getType     = AudioWrapper.getType,
+				usedSources = [],
+				// sourceElems = document.createDocumentFragment(),
 				/*
 					HTMLAudioElement: DOM factory method vs. constructor
 
-					Usage of the DOM factory method, `document.createElement('audio')`, should
-					be preferred over the constructor, `new Audio()`, as objects created by
-					the latter are, erroneously, treated differently, often unfavorably, by
-					certain browser engines—e.g. within some versions of the iOS browser core.
+					Use of the DOM factory method, `document.createElement('audio')`, should be
+					preferred over use of the constructor, `new Audio()`.  The reason being that
+					objects created by the latter are, erroneously, treated differently, often
+					unfavorably, by certain browser engines—e.g. within some versions of the iOS
+					browser core.
 
-					Buggy browser implementations aside, the only difference between the two
-					methods, per the specification, is that objects created by the constructor
-					should have their `preload` property automatically set to 'auto'.
+					Notably, the only difference between the two, per the specification, is that
+					objects created via the constructor should have their `preload` property
+					automatically set to 'auto'.  Thus, there's no technical reason to prefer
+					usage of the constructor, even discounting buggy browser implementations.
 				*/
 				audio = document.createElement('audio');
 
@@ -121,10 +125,31 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 					source.src  = srcObj.src;
 					source.type = srcObj.type;
 					audio.appendChild(source);
-					sources.push(srcObj);
+					// sourceElems.appendChild(source);
+					usedSources.push(srcObj);
 				}
 			});
 
+			// if (sourceElems.hasChildNodes()) {
+			// 	audio.appendChild(sourceElems);
+			// }
+
+			this._finalize(audio, usedSources, clone(sourceList));
+		}
+
+		_copy(original) {
+			if (!(original instanceof AudioWrapper)) {
+				throw new Error('original parameter must be an instance of AudioWrapper');
+			}
+
+			this._finalize(
+				original.audio.cloneNode(true),
+				clone(original.sources),
+				clone(original.originalSources)
+			);
+		}
+
+		_finalize(audio, sources, originalSources) {
 			// Setup our own properties.
 			Object.defineProperties(this, {
 				audio : {
@@ -136,7 +161,12 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 				},
 
 				originalSources : {
-					value : Object.freeze(clone(sourceList))
+					value : Object.freeze(originalSources)
+				},
+
+				_sourceError : {
+					writable : true,
+					value    : false
 				},
 
 				_faderId : {
@@ -144,38 +174,30 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 					value    : null
 				}
 			});
+
+			/*
+				Set `_sourceError` to true and trigger an `error` event on the audio element
+				upon receiving an `error` event on the final source element (if any)—the latter
+				is necessary since the source `error` event does not bubble.
+			*/
+			if (this.audio.hasChildNodes()) {
+				jQuery(this.audio.childNodes[this.audio.childNodes.length - 1])
+					.on('error', () => {
+						this._sourceError = true;
+						this._trigger('error');
+					});
+			}
+
+			// Set `_sourceError` to false upon receiving any `loadstart` events.
+			jQuery(this.audio).on('loadstart', () => this._sourceError = false);
 
 			// Finally, attempt to preload the audio.
 			this.load();
 		}
 
-		_copy(original) {
-			if (!(original instanceof AudioWrapper)) {
-				throw new Error('original parameter must be an instance of AudioWrapper');
-			}
-
-			// Setup our own properties.
-			Object.defineProperties(this, {
-				audio : {
-					value : original.audio.cloneNode(true)
-				},
-
-				sources : {
-					value : Object.freeze(clone(original.sources))
-				},
-
-				originalSources : {
-					value : Object.freeze(clone(original.originalSources))
-				},
-
-				_faderId : {
-					writable : true,
-					value    : null
-				}
-			});
-
-			// Finally, attempt to preload the audio.
-			this.load();
+		_trigger(eventName) {
+			// Do not use `trigger()` here as we do not want these events to bubble.
+			jQuery(this.audio).triggerHandler(eventName);
 		}
 
 		clone() {
@@ -262,6 +284,10 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 			return this.audio.readyState === HTMLMediaElement.HAVE_ENOUGH_DATA;
 		}
 
+		isFailed() {
+			return this._sourceError;
+		}
+
 		isLoading() {
 			return this.audio.networkState === HTMLMediaElement.NETWORK_LOADING;
 		}
@@ -311,7 +337,7 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 		stop() {
 			this.audio.pause();
 			this.time = 0;
-			jQuery(this.audio).triggerHandler('aw:stop');
+			this._trigger('aw:stop');
 		}
 
 		mute() {
@@ -389,7 +415,7 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 						if (this.volume === to) {
 							clearInterval(this._faderId);
 							this._faderId = null;
-							jQuery(this.audio).triggerHandler('aw:fade');
+							this._trigger('aw:fade');
 						}
 					}, interval);
 				});
