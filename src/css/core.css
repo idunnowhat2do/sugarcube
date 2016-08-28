@@ -208,10 +208,16 @@ audio, canvas, progress, video {
 }
 
 /* Macro styling. */
+.macro-linkappend-insert,
+.macro-linkprepend-insert,
+.macro-linkreplace-insert,
 .macro-repeat-insert,
 .macro-timed-insert {
 	transition: opacity 400ms ease-in;
 }
+.macro-linkappend-in,
+.macro-linkprepend-in,
+.macro-linkreplace-in,
 .macro-repeat-in,
 .macro-timed-in {
 	opacity: 0;
