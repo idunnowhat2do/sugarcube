@@ -55,6 +55,7 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 
 			const
+				dataUrlRe   = /^data:\s*audio\/([^;,]+)\s*[;,]/i,
 				extRe       = /\.([^\.\/\\]+)$/,
 				getType     = AudioWrapper.getType,
 				usedSources = [],
@@ -82,10 +83,21 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 				switch (typeof src) {
 				case 'string':
 					{
-						const match = extRe.exec(Util.parseUrl(src).pathname);
+						let match;
 
-						if (match === null) {
-							throw new Error('source URL missing file extension');
+						if (src.slice(0, 5) === 'data:') {
+							match = dataUrlRe.exec(src);
+
+							if (match === null) {
+								throw new Error('source data URI missing media type');
+							}
+						}
+						else {
+							match = extRe.exec(Util.parseUrl(src).pathname);
+
+							if (match === null) {
+								throw new Error('source URL missing file extension');
+							}
 						}
 
 						const type = getType(match[1]);
@@ -524,13 +536,6 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 	// Static data members and methods.
 	Object.defineProperties(AudioWrapper, {
 		/*
-			Cache of supported MIME-types.
-		*/
-		_types : {
-			value : {}
-		},
-
-		/*
 			Format-ID to MIME-type mappings for common audio types.
 
 			In most cases, the codecs property should not be included with the MIME-type,
@@ -547,19 +552,23 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 				requiring the use of 'audio/wav' instead.
 		*/
 		formats : {
-			value : Object.freeze({
-				// AAC — Specific AAC profiles vary, but commonly "AAC-LC".
+			value : { // Leave this object extensible for users.
+				// AAC — MPEG-2 AAC audio; specific profiles vary, but commonly "AAC-LC".
 				aac : 'audio/aac',
 
 				// CAF — Codecs vary.
-				caf : 'audio/x-caf',
+				caf     : 'audio/x-caf',
+				'x-caf' : 'audio/x-caf',
 
-				// MP3 — MPEG-1/-2 Layer-III audio in an MPEG Audio container.
-				mp3 : 'audio/mpeg; codecs="mp3"',
+				// MP3 — MPEG-1/-2 Layer-III audio.
+				mp3  : 'audio/mpeg; codecs="mp3"',
+				mpeg : 'audio/mpeg; codecs="mp3"',
 
-				// MP4 — Codecs vary, but commonly "AAC-LC" (a.k.a. "mp4a.40.2").
-				m4a : 'audio/mp4',
-				mp4 : 'audio/mp4',
+				// MP4 — Codecs vary, but commonly "mp4a.40.2" (a.k.a. "AAC-LC").
+				m4a     : 'audio/mp4',
+				mp4     : 'audio/mp4',
+				'x-m4a' : 'audio/mp4',
+				'x-mp4' : 'audio/mp4',
 
 				// OGG — Codecs vary, but commonly "vorbis" and, recently, "opus".
 				oga : 'audio/ogg',
@@ -569,29 +578,70 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 				opus : 'audio/ogg; codecs="opus"',
 
 				// WAVE — Codecs vary, but commonly "1" (1 is the FourCC for PCM/LPCM).
-				wav : 'audio/wav',
+				wav  : 'audio/wav',
+				wave : 'audio/wav',
 
 				// WEBM — Codecs vary, but commonly "vorbis" and, recently, "opus".
 				weba : 'audio/webm',
 				webm : 'audio/webm'
-			})
+			}
 		},
 
 		/*
-			Returns the MIME-type associated with the specified format-ID or `null`, if the
-			format is unsupported by the browser.
+			Retuns the MIME-type associated with the given format-ID, if it is supported,
+			elsewise `null`.
 		*/
 		getType : {
 			value(format) {
 				if (!format || !Has.audio) {
-					return false;
+					return null;
 				}
 
 				const
-					cache = AudioWrapper._types,
 					known = AudioWrapper.formats,
 					id    = format.toLowerCase(),
 					type  = known.hasOwnProperty(id) ? known[id] : `audio/${id}`;
+
+				return AudioWrapper._verifyType(type);
+			}
+		},
+
+		/*
+			Returns whether the browser potentially supports a format.
+		*/
+		canPlayFormat : {
+			value(format) {
+				return AudioWrapper.getType(format) !== null;
+			}
+		},
+
+		/*
+			Returns whether the browser potentially supports a MIME-type.
+		*/
+		canPlayType : {
+			value(type) {
+				return AudioWrapper._verifyType(type) !== null;
+			}
+		},
+
+		/*
+			Cache of supported MIME-types.
+		*/
+		_types : {
+			value : {}
+		},
+
+		/*
+			Verifies that the browser supports the given MIME-type and then retuns either
+			the MIME-type, if it is supported, or `null`, if it is not.
+		*/
+		_verifyType : {
+			value(type) {
+				if (!type || !Has.audio) {
+					return null;
+				}
+
+				const cache = AudioWrapper._types;
 
 				if (!cache.hasOwnProperty(type)) {
 					const audio = document.createElement('audio');
@@ -601,15 +651,6 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 				}
 
 				return cache[type] ? type : null;
-			}
-		},
-
-		/*
-			Returns whether the browser potentially supports a format.
-		*/
-		canPlay : {
-			value(format) {
-				return AudioWrapper.getType(format) !== null;
 			}
 		}
 	});
