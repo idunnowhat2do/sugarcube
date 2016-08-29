@@ -1657,6 +1657,8 @@
 			<<cacheaudio>>
 		*/
 		Macro.add('cacheaudio', {
+			tracks : {},
+
 			handler() {
 				if (this.args.length < 2) {
 					const errors = [];
@@ -1665,11 +1667,20 @@
 					return this.error(`no ${errors.join(' or ')} specified`);
 				}
 
-				const id = this.args[0];
-				let track;
+				const
+					fmtRe = /^format:\s*([\w-]+)\s*;\s*(\S.*)$/i,
+					id    = this.args[0];
+				let
+					track;
 
 				try {
-					track = new AudioWrapper(this.args.slice(1));
+					track = new AudioWrapper(this.args.slice(1).map(url => {
+						const match = fmtRe.exec(url);
+						return match === null ? url : {
+							format : match[1],
+							src    : match[2]
+						};
+					}));
 				}
 				catch (e) {
 					return this.error(`error during track initialization for "${id}": ${e.message}`);
@@ -1691,9 +1702,7 @@
 				if (Config.debug) {
 					this.createDebugView();
 				}
-			},
-
-			tracks : {}
+			}
 		});
 
 		/*
@@ -1969,6 +1978,14 @@
 			<<playlist>>
 		*/
 		Macro.add('playlist', {
+			tracks  : [],
+			list    : [],
+			current : null,
+			volume  : 1,
+			muted   : false,
+			loop    : true,
+			shuffle : false,
+
 			handler() {
 				if (this.args.length === 0) {
 					return this.error('no actions specified');
@@ -2263,15 +2280,7 @@
 						this.list.push(this.list.shift());
 					}
 				}
-			},
-
-			tracks  : [],
-			list    : [],
-			current : null,
-			volume  : 1,
-			muted   : false,
-			loop    : true,
-			shuffle : false
+			}
 		});
 
 		/*
