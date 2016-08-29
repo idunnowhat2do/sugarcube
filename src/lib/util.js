@@ -200,10 +200,15 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 		el.href = url;
 
 		// Populate the `queryObj` object with the query string attributes.
-		el.search.replace(/^\?/, '').split(/(?:&(?:amp;)?|;)/).forEach(query => {
-			const [key, value] = query.split('=');
-			queryObj[key] = value;
-		});
+		if (el.search) {
+			el.search
+				.replace(/^\?/, '')
+				.splitOrEmpty(/(?:&(?:amp;)?|;)/)
+				.forEach(query => {
+					const [key, value] = query.split('=');
+					queryObj[key] = value;
+				});
+		}
 
 		/*
 			Caveats by browser:
