@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global AudioWrapper, Config, DebugView, Engine, Has, Macro, Scripting, State, Story, TempState, TempVariables,
-	       Util, Wikifier, postdisplay, prehistory, storage, strings, toStringOrDefault
+	global AudioWrapper, AudioList, Config, DebugView, Engine, Has, Macro, Scripting, State, Story, TempState,
+	       TempVariables, Util, Wikifier, postdisplay, prehistory, storage, strings, toStringOrDefault
 */
 
 (() => {
@@ -1978,13 +1978,7 @@
 			<<playlist>>
 		*/
 		Macro.add('playlist', {
-			tracks  : [],
-			list    : [],
-			current : null,
-			volume  : 1,
-			muted   : false,
-			loop    : true,
-			shuffle : false,
+			list : null,
 
 			handler() {
 				if (this.args.length === 0) {
@@ -1992,7 +1986,7 @@
 				}
 
 				const
-					self = this.self,
+					list = this.self.list,
 					args = this.args.slice(0);
 				let
 					action,
@@ -2100,59 +2094,64 @@
 
 				try {
 					if (volume != null) { // lazy equality for null
-						self.setVolume(volume);
+						list.volume = volume;
 					}
 
 					if (mute != null) { // lazy equality for null
-						self.muted = mute;
-
 						if (mute) {
-							self.mute();
+							list.mute();
 						}
 						else {
-							self.unmute();
+							list.unmute();
 						}
 					}
 
 					if (loop != null) { // lazy equality for null
-						self.loop = loop;
+						if (loop) {
+							list.loop();
+						}
+						else {
+							list.unloop();
+						}
 					}
 
 					if (shuffle != null) { // lazy equality for null
-						self.shuffle = shuffle;
-						self.buildList();
+						if (shuffle) {
+							list.shuffle();
+						}
+						else {
+							list.unshuffle();
+						}
 					}
 
 					switch (action) {
 					case 'play':
-						self.play();
+						list.play();
 						break;
 
 					case 'pause':
-						self.pause();
+						list.pause();
 						break;
 
 					case 'stop':
-						self.stop();
+						list.stop();
 						break;
 
 					case 'skip':
-						self.stop();
-						self.next();
-						self.play();
+						list.skip();
 						break;
 
 					case 'fade':
-						if (self.volume === fadeTo) {
+						if (list.volume === fadeTo) {
 							if (fadeTo === 0) {
-								self.setVolume(1);
+								list.volume = 1;
 							}
 							else if (fadeTo === 1) {
-								self.setVolume(0);
+								list.volume = 0;
 							}
 						}
 
-						self.fade(fadeOver, fadeTo);
+						list.fadeWithDuration(fadeOver, fadeTo);
 						break;
 					}
 
@@ -2164,125 +2163,15 @@
 				catch (e) {
 					return this.error(`error playing audio: ${e.message}`);
 				}
-			},
-
-			play() {
-				if (this.list.length === 0) {
-					this.buildList();
-				}
-
-				if (this.current === null || this.current.isEnded()) {
-					if (!this.next()) {
-						return;
-					}
-				}
-
-				this.current.play();
-			},
-
-			pause() {
-				if (this.current !== null) {
-					this.current.pause();
-				}
-			},
-
-			stop() {
-				if (this.current !== null) {
-					this.current.stop();
-				}
-			},
-
-			fade(over, to) {
-				if (this.list.length === 0) {
-					this.buildList();
-				}
-
-				if (this.current === null || this.current.isEnded()) {
-					if (!this.next()) {
-						return;
-					}
-				}
-				else {
-					this.current.volume = this.volume;
-				}
-
-				this.current.fadeWithDuration(over, to);
-				this.volume = to; // kludgey, but necessary
-			},
-
-			mute() {
-				if (this.current !== null) {
-					this.current.mute();
-				}
-			},
-
-			unmute() {
-				if (this.current !== null) {
-					this.current.unmute();
-				}
-			},
-
-			next() {
-				this.current = this.list.shift();
-
-				if (this.current == null) { // lazy equality for null
-					this.current = null;
-					return false;
-				}
-
-				if (!this.current.hasSource()) {
-					return this.next();
-				}
-
-				this.current.volume = this.volume;
-
-				return true;
-			},
-
-			setVolume(vol) {
-				this.volume = vol;
-
-				if (this.current !== null) {
-					this.current.volume = vol;
-				}
-			},
-
-			onEnd() {
-				const _this = Macro.get('playlist');
-
-				if (_this.list.length === 0) {
-					if (!_this.loop) {
-						return;
-					}
-
-					_this.buildList();
-				}
-
-				if (!_this.next()) {
-					return;
-				}
-
-				if (_this.muted) {
-					_this.mute();
-				}
-
-				_this.current.play();
-			},
-
-			buildList() {
-				this.list = this.tracks.slice(0);
-
-				if (this.shuffle) {
-					this.list.shuffle();
-
-					// Try not to immediately replay the last track when shuffling.
-					if (this.list.length > 1 && this.list[0] === this.current) {
-						this.list.push(this.list.shift());
-					}
-				}
 			}
 		});
 
+		/*
+			<<createplaylist "listId">>
+				<<track "trackId" volume 1 rate 1 copy>>
+				<<track "trackId" volume 1 rate 1 claim>>
+			<</createplaylist>>
+		*/
 		/*
 			<<setplaylist>>
 		*/
@@ -2294,8 +2183,13 @@
 
 				const
 					tracks   = Macro.get('cacheaudio').tracks,
-					playlist = Macro.get('playlist'),
-					list     = [];
+					playlist = Macro.get('playlist');
+
+				if (playlist.list !== null) {
+					playlist.list.pause();
+				}
+
+				playlist.list = new AudioList();
 
 				for (let i = 0; i < this.args.length; ++i) {
 					const id = this.args[i];
@@ -2304,26 +2198,8 @@
 						return this.error(`track "${id}" does not exist`);
 					}
 
-					const track = tracks[id].clone();
-					track.stop();
-					track.unloop();
-					track.unmute();
-					track.volume = 1;
-					track.on('end.macro-playlist', playlist.onEnd);
-					list.push(track);
+					playlist.list.add(tracks[id]);
 				}
-
-				if (playlist.current !== null) {
-					playlist.current.pause();
-				}
-
-				playlist.tracks  = list;
-				playlist.list    = [];
-				playlist.current = null;
-				playlist.volume  = 1;
-				playlist.muted   = false;
-				playlist.loop    = true;
-				playlist.shuffle = false;
 
 				// Custom debug view setup.
 				if (Config.debug) {
