@@ -217,7 +217,7 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		get duration() {
-			// n.b. May return a double, NaN, or Infinity.
+			// n.b. May return a double (normally), Infinity (for streams), or NaN (without metadata).
 			return this.audio.duration;
 		}
 
@@ -242,7 +242,7 @@ var AudioWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		get remaining() {
-			// n.b. May return a double, NaN, or Infinity.
+			// n.b. May return a double (normally), Infinity (for streams), or NaN (without metadata).
 			return this.audio.duration - this.audio.currentTime;
 		}
 
