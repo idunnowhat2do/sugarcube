@@ -166,14 +166,18 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 			return false;
 		}
 
-		const saves = savesObjGet();
-		saves.autosave = _marshal();
-		saves.autosave.title = title || Story.get(State.passage).description();
-		saves.autosave.date = Date.now();
+		const
+			saves        = savesObjGet(),
+			supplemental = {
+				title : title || Story.get(State.passage).description(),
+				date  : Date.now()
+			};
 
 		if (metadata != null) { // lazy equality for null
-			saves.autosave.metadata = metadata;
+			supplemental.metadata = metadata;
 		}
+
+		saves.autosave = _marshal(supplemental);
 
 		return _savesObjSave(saves);
 	}
@@ -273,13 +277,16 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 			return false;
 		}
 
-		saves.slots[slot] = _marshal();
-		saves.slots[slot].title = title || Story.get(State.passage).description();
-		saves.slots[slot].date = Date.now();
+		const supplemental = {
+			title : title || Story.get(State.passage).description(),
+			date  : Date.now()
+		};
 
 		if (metadata != null) { // lazy equality for null
-			saves.slots[slot].metadata = metadata;
+			supplemental.metadata = metadata;
 		}
+
+		saves.slots[slot] = _marshal(supplemental);
 
 		return _savesObjSave(saves);
 	}
@@ -303,7 +310,7 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 	/*******************************************************************************************************************
 	 * Disk Functions.
 	 ******************************************************************************************************************/
-	function exportSave(filename) {
+	function exportSave(filename, metadata) {
 		if (typeof Config.saves.isAllowed === 'function' && !Config.saves.isAllowed()) {
 			UI.alert(strings.saves.disallowed);
 			return;
@@ -339,9 +346,10 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		const
-			saveName = `${filename == null ? Story.domId : Util.slugify(filename)}` // lazy equality for null
-				+ `-${datestamp()}.save`,
-			saveObj  = LZString.compressToBase64(JSON.stringify(_marshal()));
+			baseName     = filename == null ? Story.domId : Util.slugify(filename), // lazy equality for null
+			saveName     = `${baseName}-${datestamp()}.save`,
+			supplemental = metadata == null ? {} : { metadata }, // lazy equality for null
+			saveObj      = LZString.compressToBase64(JSON.stringify(_marshal(supplemental)));
 		saveAs(new Blob([saveObj], { type : 'text/plain;charset=UTF-8' }), saveName);
 	}
 
@@ -486,13 +494,17 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 		return updated;
 	}
 
-	function _marshal() {
+	function _marshal(supplemental) {
 		if (DEBUG) { console.log('[Save/_marshal()]'); }
 
-		const saveObj = {
+		if (supplemental != null && typeof supplemental !== 'object') { // lazy equality for null
+			throw new Error('supplemental parameter must be an object');
+		}
+
+		const saveObj = Object.assign({}, supplemental, {
 			id    : Config.saves.id,
 			state : State.marshalForSave()
-		};
+		});
 
 		if (Config.saves.version) {
 			saveObj.version = Config.saves.version;
@@ -523,7 +535,7 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 				throw new Error(strings.errors.saveMissingData);
 			}
 
-			// Delta decode the state history.
+			// Delta decode the state history and delete the encoded property.
 			saveObj.state.history = State.deltaDecode(saveObj.state.delta);
 			delete saveObj.state.delta;
 
