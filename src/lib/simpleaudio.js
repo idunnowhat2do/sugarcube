@@ -234,26 +234,10 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			*/
 			SimpleAudio.subscribe(this, mesg => {
 				switch (mesg) {
-				case 'mute':
-					if (SimpleAudio.mute) {
-						this.audio.muted = true;
-					}
-					else if (!this._mute) {
-						this.audio.muted = false;
-					}
-					break;
-
-				case 'rate':
-					this.rate = this.rate; // the setter knows what to do
-					break;
-
-				case 'stop':
-					this.stop();
-					break;
-
-				case 'volume':
-					this.volume = this.volume; // the setter knows what to do
-					break;
+				case 'mute':   this._updateAudioMute();   break;
+				case 'rate':   this._updateAudioRate();   break;
+				case 'stop':   this.stop();               break;
+				case 'volume': this._updateAudioVolume(); break;
 				}
 			});
 
@@ -275,6 +259,24 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			return this.audio.duration;
 		}
 
+		get loop() {
+			return this.audio.loop;
+		}
+		set loop(state) {
+			this.audio.loop = !!state;
+		}
+
+		get mute() {
+			return this._mute;
+		}
+		set mute(state) {
+			this._mute = !!state;
+			this._updateAudioMute();
+		}
+		_updateAudioMute() {
+			this.audio.muted = this._mute || SimpleAudio.mute;
+		}
+
 		get rate() {
 			return this._rate;
 		}
@@ -293,6 +295,9 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 				: Math.clamp(playRate, 0.2, 5);  // clamp to 5× slower & faster, forward
 			*/
 			this._rate = Math.clamp(playRate, 0.2, 5); // clamp to 5× slower & faster
+			this._updateAudioRate();
+		}
+		_updateAudioRate() {
 			this.audio.playbackRate = this._rate * SimpleAudio.rate;
 		}
 
@@ -329,6 +334,9 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 		set volume(vol) {
 			this._volume = Math.clamp(vol, 0, 1); // clamp to 0 (silent) & 1 (full loudness)
+			this._updateAudioVolume();
+		}
+		_updateAudioVolume() {
 			this.audio.volume = this._volume * SimpleAudio.volume;
 		}
 
@@ -373,7 +381,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		isMuted() {
-			return this.audio.muted;
+			return this._mute;
 		}
 
 		isLooped() {
@@ -406,24 +414,6 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			this.audio.pause();
 			this.time = 0;
 			this._trigger('aw:stop');
-		}
-
-		mute() {
-			this._mute = true;
-			this.audio.muted = true;
-		}
-
-		unmute() {
-			this._mute = false;
-			this.audio.muted = false;
-		}
-
-		loop() {
-			this.audio.loop = true;
-		}
-
-		unloop() {
-			this.audio.loop = false;
 		}
 
 		fadeWithDuration(fadeDuration, toVol, fromVol) {
@@ -798,8 +788,8 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 
 			track.stop();
-			track.unloop();
-			track.unmute();
+			track.loop = false;
+			track.mute = false;
 			track.volume = volume;
 			track.rate = rate;
 			track.on('end.AudioListEvent', () => this._onEnd());
@@ -812,6 +802,24 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			return this.tracks
 				.map(trackObj => trackObj.track.duration)
 				.reduce((p, c) => p + c, 0);
+		}
+
+		get loop() {
+			return this._loop;
+		}
+		set loop(state) {
+			this._loop = !!state;
+		}
+
+		get mute() {
+			return this._mute;
+		}
+		set mute(state) {
+			this._mute = !!state;
+
+			if (this.current !== null) {
+				this.current.track.mute = this._mute;
+			}
 		}
 
 		get rate() {
@@ -836,6 +844,13 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 
 			return remainingTime;
+		}
+
+		get shuffle() {
+			return this._shuffle;
+		}
+		set shuffle(state) {
+			this._shuffle = !!state;
 		}
 
 		get time() {
@@ -915,38 +930,6 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 		}
 
-		mute() {
-			this._mute = true;
-
-			if (this.current !== null) {
-				this.current.track.mute();
-			}
-		}
-
-		unmute() {
-			this._mute = false;
-
-			if (this.current !== null) {
-				this.current.track.unmute();
-			}
-		}
-
-		loop() {
-			this._loop = true;
-		}
-
-		unloop() {
-			this._loop = false;
-		}
-
-		shuffle() {
-			this._shuffle = true;
-		}
-
-		unshuffle() {
-			this._shuffle = false;
-		}
-
 		fadeWithDuration(fadeDuration, toVol, fromVol) {
 			if (this.list.length === 0) {
 				this._buildList();
@@ -997,12 +980,9 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 				return this._next();
 			}
 
-			this.current.track.volume = this.volume * this.current.volume;
+			this.current.track.mute = this._mute;
 			this.current.track.rate = this.rate * this.current.rate;
-
-			if (this._mute) {
-				this.current.track.mute();
-			}
+			this.current.track.volume = this.volume * this.current.volume;
 
 			return true;
 		}

@@ -1871,21 +1871,11 @@
 					}
 
 					if (mute != null) { // lazy equality for null
-						if (mute) {
-							audio.mute();
-						}
-						else {
-							audio.unmute();
-						}
+						audio.mute = mute;
 					}
 
 					if (loop != null) { // lazy equality for null
-						if (loop) {
-							audio.loop();
-						}
-						else {
-							audio.unloop();
-						}
+						audio.loop = loop;
 					}
 
 					if (passage != null) { // lazy equality for null
@@ -1935,20 +1925,16 @@
 		*/
 		Macro.add('fadeoutplayingaudio', {
 			handler() {
-				const
-					tracks   = Macro.get('cacheaudio').tracks,
-					fadeOver = this.args.length === 0 ? 5 : Number(this.args[0]);
+				const fadeOver = this.args.length === 0 ? 5 : Number(this.args[0]);
 
 				if (isNaN(fadeOver) || !isFinite(fadeOver) || fadeOver <= 0) {
 					return this.error(`seconds value (${this.args[0]}) is not a finite number greater than zero`);
 				}
 
+				const tracks = Macro.get('cacheaudio').tracks;
 				Object.keys(tracks)
 					.filter(id => tracks[id].isPlaying())
-					.forEach(id => {
-						const track = tracks[id];
-						track.fadeWithDuration(fadeOver, 0);
-					});
+					.forEach(id => tracks[id].fadeWithDuration(fadeOver, 0));
 
 				// Custom debug view setup.
 				if (Config.debug) {
@@ -1974,6 +1960,9 @@
 			}
 		});
 
+		/*
+			<<playlist "listId" actions>>
+		*/
 		/*
 			<<playlist>>
 		*/
@@ -2098,30 +2087,15 @@
 					}
 
 					if (mute != null) { // lazy equality for null
-						if (mute) {
-							list.mute();
-						}
-						else {
-							list.unmute();
-						}
+						list.mute = mute;
 					}
 
 					if (loop != null) { // lazy equality for null
-						if (loop) {
-							list.loop();
-						}
-						else {
-							list.unloop();
-						}
+						list.loop = loop;
 					}
 
 					if (shuffle != null) { // lazy equality for null
-						if (shuffle) {
-							list.shuffle();
-						}
-						else {
-							list.unshuffle();
-						}
+						list.shuffle = shuffle;
 					}
 
 					switch (action) {
