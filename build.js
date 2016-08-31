@@ -4,7 +4,7 @@
 	  - Description : Node.js-hosted build script for SugarCube
 	  - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
 	  - Copyright   : Copyright © 2014–2016 Thomas Michael Edwards. All rights reserved.
-	  - Version     : 1.3.2, 2016-08-30
+	  - Version     : 1.3.3, 2016-08-31
 */
 /* eslint-env node, es6 */
 /* eslint-disable camelcase, object-shorthand, prefer-template, strict */
@@ -23,8 +23,7 @@ const CONFIG = {
 			'src/lib/has.js',
 			'src/lib/helpers.js',
 			'src/lib/util.js',
-			'src/lib/audiowrapper.js',
-			'src/lib/audiolist.js',
+			'src/lib/simpleaudio.js',
 			'src/lib/debugview.js',
 			'src/lib/keyvaluestore.js',
 			'src/lib/prngwrapper.js',

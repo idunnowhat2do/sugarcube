@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global AudioWrapper, AudioList, Config, DebugView, Engine, Has, Macro, Scripting, State, Story, TempState,
-	       TempVariables, Util, Wikifier, postdisplay, prehistory, storage, strings, toStringOrDefault
+	global Config, DebugView, Engine, Has, Macro, Scripting, SimpleAudio, State, Story, TempState, TempVariables,
+	       Util, Wikifier, postdisplay, prehistory, storage, strings, toStringOrDefault
 */
 
 (() => {
@@ -1674,7 +1674,7 @@
 					track;
 
 				try {
-					track = new AudioWrapper(this.args.slice(1).map(url => {
+					track = SimpleAudio.create(this.args.slice(1).map(url => {
 						const match = fmtRe.exec(url);
 						return match === null ? url : {
 							format : match[1],
@@ -2189,7 +2189,7 @@
 					playlist.list.pause();
 				}
 
-				playlist.list = new AudioList();
+				playlist.list = SimpleAudio.createList();
 
 				for (let i = 0; i < this.args.length; ++i) {
 					const id = this.args[i];

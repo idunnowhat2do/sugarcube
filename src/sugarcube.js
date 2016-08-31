@@ -8,7 +8,7 @@
  **********************************************************************************************************************/
 /*
 	global Alert, Browser, Config, Dialog, DebugView, Engine, Has, KeyValueStore, Macro, Passage, Save, Scripting,
-	       Setting, State, Story, UI, Util, Wikifier, strings
+	       Setting, SimpleAudio, State, Story, UI, Util, Wikifier, strings
 */
 /* eslint-disable no-var */
 
@@ -179,6 +179,7 @@ jQuery(() => {
 			Save,
 			Scripting,
 			Setting,
+			SimpleAudio,
 			State,
 			Story,
 			TempVariables,
