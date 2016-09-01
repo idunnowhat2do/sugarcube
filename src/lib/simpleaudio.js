@@ -764,9 +764,10 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 				throw new Error('track parameter must be an object');
 			}
 
-			let track, volume, rate;
+			let copy, track, volume, rate;
 
 			if (trackObj instanceof AudioWrapper) {
+				copy   = true;
 				track  = trackObj.clone();
 				volume = trackObj.volume;
 				rate   = trackObj.rate;
@@ -782,9 +783,10 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 				// 	throw new Error('track object missing required "volume" property');
 				// }
 
-				track  = trackObj.track.clone();
-				volume = trackObj.hasOwnProperty('volume') ? trackObj.volume : 1;
-				rate   = trackObj.hasOwnProperty('rate') ? trackObj.rate : 1;
+				copy   = trackObj.hasOwnProperty('copy') && trackObj.copy;
+				track  = copy ? trackObj.track.clone() : trackObj.track;
+				volume = trackObj.hasOwnProperty('volume') ? trackObj.volume : trackObj.track.volume;
+				rate   = trackObj.hasOwnProperty('rate') ? trackObj.rate : trackObj.track.rate;
 			}
 
 			track.stop();
@@ -794,7 +796,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			track.rate = rate;
 			track.on('end.AudioListEvent', () => this._onEnd());
 
-			this.tracks.push({ track, volume, rate });
+			this.tracks.push({ copy, track, volume, rate });
 		}
 
 		get duration() {
