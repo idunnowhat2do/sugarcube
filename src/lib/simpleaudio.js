@@ -173,15 +173,18 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			// Setup our own properties.
 			Object.defineProperties(this, {
 				audio : {
-					value : audio
+					configurable : true,
+					value        : audio
 				},
 
 				sources : {
-					value : Object.freeze(sources)
+					configurable : true,
+					value        : Object.freeze(sources)
 				},
 
 				originalSources : {
-					value : Object.freeze(originalSources)
+					configurable : true,
+					value        : Object.freeze(originalSources)
 				},
 
 				_error : {
@@ -252,6 +255,57 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		clone() {
 			return new AudioWrapper(this);
+		}
+
+		destroy() {
+			/*
+				Strictly speaking, self-destruction is not necessary as this object will,
+				eventually, be garbage collected.  That said, since the audio element contains
+				data buffers for the selected audio source, which may be quite large, manually
+				purging them as soon as we know that they're no longer needed is not a bad idea.
+			*/
+			// Stop and remove an in-progress fade.
+			if (this._faderId !== null) {
+				clearInterval(this._faderId);
+				this._faderId = null;
+			}
+
+			// Stop playback.
+			this.stop();
+
+			const audio = this.audio;
+
+			// Remove all event handlers.
+			jQuery(audio).off();
+
+			// Remove all source elements.
+			while (audio.hasChildNodes()) {
+				audio.removeChild(audio.firstChild);
+			}
+
+			/*
+				Now that all sources have been removed from the audio element, call for a load
+				so that it drops all of its existing audio data buffers.
+			*/
+			audio.load();
+			this._error = true;
+
+			// // Set the reference-type properties' values to `null` and then freeze them.
+			// Object.defineProperties(this, {
+			// 	audio           : { writable : true, value : null },
+			// 	sources         : { writable : true, value : null },
+			// 	originalSources : { writable : true, value : null }
+			// });
+			// Object.defineProperties(this, {
+			// 	audio           : { configurable : false, writable : false },
+			// 	sources         : { configurable : false, writable : false },
+			// 	originalSources : { configurable : false, writable : false }
+			// });
+
+			// Delete the reference-type properties.
+			delete this.audio;
+			delete this.sources;
+			delete this.originalSources;
 		}
 
 		get duration() {
@@ -712,11 +766,13 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			// Setup our own properties.
 			Object.defineProperties(this, {
 				tracks : {
-					value : []
+					configurable : true,
+					value        : []
 				},
 
 				list : {
-					value : []
+					configurable : true,
+					value        : []
 				},
 
 				current : {
@@ -797,6 +853,29 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			track.on('end.AudioListEvent', () => this._onEnd());
 
 			this.tracks.push({ copy, track, volume, rate });
+		}
+
+		destroy() {
+			/*
+				Strictly speaking, self-destruction is not necessary as this object will,
+				eventually, be garbage collected.
+			*/
+			// Stop playback.
+			this.stop();
+
+			// // Set the reference-type properties' values to `null` and then freeze them.
+			// Object.defineProperties(this, {
+			// 	tracks : { writable : true, value : null },
+			// 	list   : { writable : true, value : null }
+			// });
+			// Object.defineProperties(this, {
+			// 	tracks : { configurable : false, writable : false },
+			// 	list   : { configurable : false, writable : false }
+			// });
+
+			// Delete the reference-type properties.
+			delete this.tracks;
+			delete this.list;
 		}
 
 		get duration() {
@@ -1008,6 +1087,10 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 		_buildList() {
 			this.list.splice(0);
 			this.list.push(...this.tracks);
+
+			if (this.list.length === 0) {
+				return;
+			}
 
 			if (this._shuffle) {
 				this.list.shuffle();
