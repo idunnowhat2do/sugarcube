@@ -1921,7 +1921,7 @@
 		});
 
 		/*
-			<<fadeoutplayingaudio>>
+			<<fadeoutplayingaudio [seconds]>>
 		*/
 		Macro.add('fadeoutplayingaudio', {
 			handler() {
@@ -1961,22 +1961,42 @@
 		});
 
 		/*
-			<<playlist "listId" actions>>
-		*/
-		/*
-			<<playlist>>
+			<<playlist list_id action_list>>  ← <<createplaylist>> syntax
+			<<playlist action_list>>          ← <<setplaylist>> syntax
 		*/
 		Macro.add('playlist', {
-			list : null,
+			from : null,
 
 			handler() {
 				if (this.args.length === 0) {
 					return this.error('no actions specified');
 				}
 
-				const
-					list = this.self.list,
+				const from = this.self.from;
+
+				if (from === null) {
+					return this.error('no playlists have been defined');
+				}
+
+				let list, args;
+
+				if (from === 'createplaylist') {
+					const
+						lists = Macro.get('createplaylist').lists,
+						id    = this.args[0];
+
+					if (!lists.hasOwnProperty(id)) {
+						return this.error(`playlist "${id}" does not exist`);
+					}
+
+					list = lists[id];
+					args = this.args.slice(1);
+				}
+				else {
+					list = Macro.get('setplaylist').list;
 					args = this.args.slice(0);
+				}
+
 				let
 					action,
 					volume,
@@ -2141,10 +2161,13 @@
 		});
 
 		/*
-			<<createplaylist "listId">>
-				<<track "trackId" volume 1 rate 1 copy>>
-				<<track "trackId" volume 1 rate 1 claim>>
+			<<createplaylist list_id>>
+				<<track track_id action_list>>
+				<<track track_id action_list>>
+				…
 			<</createplaylist>>
+
+			Actions: volume #, rate #, copy
 		*/
 		Macro.add('createplaylist', {
 			tags  : ['track'],
@@ -2153,6 +2176,12 @@
 			handler() {
 				if (this.args.length === 0) {
 					return this.error('no list ID specified');
+				}
+
+				const playlist = Macro.get('playlist');
+
+				if (playlist.from !== null && playlist.from !== 'createplaylist') {
+					return this.error('a playlist has already been defined with <<setplaylist>>');
 				}
 
 				const
@@ -2232,6 +2261,7 @@
 					}
 
 					this.self.lists[listId] = list;
+					playlist.from = 'createplaylist';
 				}
 
 				// Custom debug view setup.
@@ -2242,23 +2272,58 @@
 		});
 
 		/*
-			<<setplaylist>>
+			<<removeplaylist list_id>>
+		*/
+		Macro.add('removeplaylist', {
+			handler() {
+				if (this.args.length === 0) {
+					return this.error('no list ID specified');
+				}
+
+				const
+					lists = Macro.get('createplaylist').lists,
+					id    = this.args[0];
+
+				if (!lists.hasOwnProperty(id)) {
+					return this.error(`playlist "${id}" does not exist`);
+				}
+
+				lists[id].destroy();
+				delete lists[id];
+
+				// Custom debug view setup.
+				if (Config.debug) {
+					this.createDebugView();
+				}
+			}
+		});
+
+		/*
+			<<setplaylist track_id_list>>
 		*/
 		Macro.add('setplaylist', {
+			list : null,
+
 			handler() {
 				if (this.args.length === 0) {
 					return this.error('no track ID(s) specified');
 				}
 
-				const
-					tracks   = Macro.get('cacheaudio').tracks,
-					playlist = Macro.get('playlist');
+				const playlist = Macro.get('playlist');
 
-				if (playlist.list !== null) {
-					playlist.list.pause();
+				if (playlist.from !== null && playlist.from !== 'setplaylist') {
+					return this.error('playlists have already been defined with <<createplaylist>>');
 				}
 
-				playlist.list = SimpleAudio.createList();
+				const
+					self   = this.self,
+					tracks = Macro.get('cacheaudio').tracks;
+
+				if (self.list !== null) {
+					self.list.pause();
+				}
+
+				self.list = SimpleAudio.createList();
 
 				for (let i = 0; i < this.args.length; ++i) {
 					const id = this.args[i];
@@ -2267,8 +2332,10 @@
 						return this.error(`track "${id}" does not exist`);
 					}
 
-					playlist.list.add(tracks[id]);
+					self.list.add(tracks[id]);
 				}
+
+				playlist.from = 'setplaylist';
 
 				// Custom debug view setup.
 				if (Config.debug) {
