@@ -2146,6 +2146,101 @@
 				<<track "trackId" volume 1 rate 1 claim>>
 			<</createplaylist>>
 		*/
+		Macro.add('createplaylist', {
+			tags  : ['track'],
+			lists : {},
+
+			handler() {
+				if (this.args.length === 0) {
+					return this.error('no list ID specified');
+				}
+
+				const
+					tracks = Macro.get('cacheaudio').tracks,
+					listId = this.args[0];
+
+				if (this.payload.length > 1) {
+					const list = SimpleAudio.createList();
+
+					for (let i = 1, len = this.payload.length; i < len; ++i) {
+						const id = this.payload[i].args[0];
+
+						if (!tracks.hasOwnProperty(id)) {
+							return this.error(`track "${id}" does not exist`);
+						}
+
+						const
+							args = this.payload[i].args.slice(1);
+						let
+							copy   = false,
+							// rate,
+							volume;
+
+						// Process arguments.
+						while (args.length > 0) {
+							const arg = args.shift();
+							let raw; // eslint-disable-line prefer-const
+
+							switch (arg) {
+							case 'copy':
+								copy = true;
+								break;
+
+							case 'rate':
+								if (args.length > 0) {
+									args.shift();
+								}
+								break;
+							// case 'rate':
+							// 	if (args.length === 0) {
+							// 		return this.error('rate missing required speed value');
+							// 	}
+							//
+							// 	raw = args.shift();
+							// 	rate = parseFloat(raw);
+							//
+							// 	if (isNaN(rate) || !isFinite(rate)) {
+							// 		return this.error(`cannot parse rate: ${raw}`);
+							// 	}
+							// 	break;
+
+							case 'volume':
+								if (args.length === 0) {
+									return this.error('volume missing required level value');
+								}
+
+								raw = args.shift();
+								volume = parseFloat(raw);
+
+								if (isNaN(volume) || !isFinite(volume)) {
+									return this.error(`cannot parse volume: ${raw}`);
+								}
+								break;
+
+							default:
+								return this.error(`unknown action: ${arg}`);
+							}
+						}
+
+						const track = tracks[id];
+						list.add({
+							copy,
+							// rate,
+							track,
+							volume : volume != null ? volume : track.volume
+						});
+					}
+
+					this.self.lists[listId] = list;
+				}
+
+				// Custom debug view setup.
+				if (Config.debug) {
+					this.createDebugView();
+				}
+			}
+		});
+
 		/*
 			<<setplaylist>>
 		*/
