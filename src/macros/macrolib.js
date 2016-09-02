@@ -1956,93 +1956,117 @@
 					tracks = Macro.get('cacheaudio').tracks,
 					listId = this.args[0];
 
-				if (this.payload.length > 1) {
-					const list = SimpleAudio.createList();
+				if (this.payload.length === 1) {
+					return this.error('no tracks defined via <<track>>');
+				}
 
-					for (let i = 1, len = this.payload.length; i < len; ++i) {
-						if (this.payload[i].args.length < 2) {
-							const errors = [];
-							if (this.payload[i].args.length < 1) { errors.push('track ID'); }
-							if (this.payload[i].args.length < 2) { errors.push('actions'); }
-							return this.error(`no ${errors.join(' or ')} specified`);
-						}
-
-						const id = this.payload[i].args[0];
-
-						if (!tracks.hasOwnProperty(id)) {
-							return this.error(`track "${id}" does not exist`);
-						}
-
-						const
-							args = this.payload[i].args.slice(1);
-						let
-							copy   = false,
-							// rate,
-							volume;
-
-						// Process arguments.
-						while (args.length > 0) {
-							const arg = args.shift();
-							let raw; // eslint-disable-line prefer-const
-
-							switch (arg) {
-							case 'copy':
-								copy = true;
-								break;
-
-							case 'rate':
-								if (args.length > 0) {
-									args.shift();
-								}
-								break;
-							// case 'rate':
-							// 	if (args.length === 0) {
-							// 		return this.error('rate missing required speed value');
-							// 	}
-							//
-							// 	raw = args.shift();
-							// 	rate = parseFloat(raw);
-							//
-							// 	if (isNaN(rate) || !isFinite(rate)) {
-							// 		return this.error(`cannot parse rate: ${raw}`);
-							// 	}
-							// 	break;
-
-							case 'volume':
-								if (args.length === 0) {
-									return this.error('volume missing required level value');
-								}
-
-								raw = args.shift();
-								volume = parseFloat(raw);
-
-								if (isNaN(volume) || !isFinite(volume)) {
-									return this.error(`cannot parse volume: ${raw}`);
-								}
-								break;
-
-							default:
-								return this.error(`unknown action: ${arg}`);
-							}
-						}
-
-						const track = tracks[id];
-						list.add({
-							copy,
-							// rate,
-							track,
-							volume : volume != null ? volume : track.volume
+				// Initial debug view setup for `<<createplaylist>>`.
+				if (Config.debug) {
+					this.debugView
+						.modes({
+							nonvoid : false,
+							hidden  : true
 						});
+				}
+
+				const list = SimpleAudio.createList();
+
+				for (let i = 1, len = this.payload.length; i < len; ++i) {
+					if (this.payload[i].args.length < 2) {
+						const errors = [];
+						if (this.payload[i].args.length < 1) { errors.push('track ID'); }
+						if (this.payload[i].args.length < 2) { errors.push('actions'); }
+						return this.error(`no ${errors.join(' or ')} specified`);
 					}
 
-					this.self.lists[listId] = list;
-					playlist.from = 'createplaylist';
+					const id = this.payload[i].args[0];
+
+					if (!tracks.hasOwnProperty(id)) {
+						return this.error(`track "${id}" does not exist`);
+					}
+
+					const
+						args = this.payload[i].args.slice(1);
+					let
+						copy   = false,
+						// rate,
+						volume;
+
+					// Process arguments.
+					while (args.length > 0) {
+						const arg = args.shift();
+						let raw; // eslint-disable-line prefer-const
+
+						switch (arg) {
+						case 'copy':
+							copy = true;
+							break;
+
+						case 'rate':
+							if (args.length > 0) {
+								args.shift();
+							}
+							break;
+						// case 'rate':
+						// 	if (args.length === 0) {
+						// 		return this.error('rate missing required speed value');
+						// 	}
+						//
+						// 	raw = args.shift();
+						// 	rate = parseFloat(raw);
+						//
+						// 	if (isNaN(rate) || !isFinite(rate)) {
+						// 		return this.error(`cannot parse rate: ${raw}`);
+						// 	}
+						// 	break;
+
+						case 'volume':
+							if (args.length === 0) {
+								return this.error('volume missing required level value');
+							}
+
+							raw = args.shift();
+							volume = parseFloat(raw);
+
+							if (isNaN(volume) || !isFinite(volume)) {
+								return this.error(`cannot parse volume: ${raw}`);
+							}
+							break;
+
+						default:
+							return this.error(`unknown action: ${arg}`);
+						}
+					}
+
+					const track = tracks[id];
+					list.add({
+						copy,
+						// rate,
+						track,
+						volume : volume != null ? volume : track.volume
+					});
+
+					// Custom debug view setup for the current `<<track>>`.
+					if (Config.debug) {
+						this
+							.createDebugView(this.payload[i].name, this.payload[i].source)
+							.modes({
+								nonvoid : false,
+								hidden  : true
+							});
+					}
 				}
 
-				// Custom debug view setup.
-				if (Config.debug) {
-					this.createDebugView();
-				}
+				this.self.lists[listId] = list;
+				playlist.from = 'createplaylist';
+
+				// Custom fake debug view setup for `<</createplaylist>>`.
+				this
+					.createDebugView(`/${this.name}`, `<</${this.name}>>`)
+					.modes({
+						nonvoid : false,
+						hidden  : true
+					});
 			}
 		});
 
