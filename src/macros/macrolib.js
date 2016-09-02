@@ -2354,15 +2354,6 @@
 						break;
 
 					case 'fade':
-						if (list.volume === fadeTo) {
-							if (fadeTo === 0) {
-								list.volume = 1;
-							}
-							else if (fadeTo === 1) {
-								list.volume = 0;
-							}
-						}
-
 						list.fadeWithDuration(fadeOver, fadeTo);
 						break;
 					}
