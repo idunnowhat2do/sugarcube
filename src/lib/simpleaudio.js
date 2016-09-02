@@ -425,7 +425,18 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		isPaused() {
-			return this.audio.paused && this.audio.currentTime > 0 && !this.audio.ended;
+			/*
+				If the selected audio resource is a stream, `currentTime` may return a non-zero
+				value even at the earliest available position within the stream as the browser
+				may have dropped the earliest chunks of buffered data or the stream may have a
+				timeline that does not start at zero.
+
+				In an attempt to guard against these possiblities, as best as we can, we test
+				`duration` against `Infinity` first, which should yield true for actual streams.
+			*/
+			return this.audio.paused
+				&& (this.audio.duration === Infinity || this.audio.currentTime > 0)
+				&& !this.audio.ended;
 		}
 
 		isMuted() {
