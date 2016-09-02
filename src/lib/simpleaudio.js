@@ -880,6 +880,9 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			// Stop playback.
 			this.stop();
 
+			// Destroy all copied tracks.
+			this.tracks.filter(t => t.copy).forEach(t => t.track.destroy());
+
 			// // Set the reference-type properties' values to `null` and then freeze them.
 			// Object.defineProperties(this, {
 			// 	tracks : { writable : true, value : null },
