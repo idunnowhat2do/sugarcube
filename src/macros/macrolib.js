@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global Config, DebugView, Engine, Has, Macro, Scripting, SimpleAudio, State, Story, TempState, TempVariables,
-	       Util, Wikifier, postdisplay, prehistory, storage, strings, toStringOrDefault
+	global Config, DebugView, Engine, Has, LoadScreen, Macro, Scripting, SimpleAudio, State, Story, TempState,
+	       TempVariables, Util, Wikifier, postdisplay, prehistory, storage, strings, toStringOrDefault
 */
 
 (() => {
@@ -898,11 +898,6 @@
 	});
 
 	/*
-		<<click>>
-	*/
-	Macro.add('click', 'link'); // add <<click>> as an alias of <<link>>
-
-	/*
 		<<linkappend>>, <<linkprepend>>, & <<linkreplace>>
 	*/
 	Macro.add(['linkappend', 'linkprepend', 'linkreplace'], {
@@ -1211,6 +1206,13 @@
 			}
 		}
 	});
+
+	/*
+		NOTE: This macro is deprecated.
+
+		<<click>>
+	*/
+	Macro.add('click', 'link'); // add <<click>> as an alias of <<link>>
 
 
 	/*******************************************************************************************************************
@@ -1666,11 +1668,11 @@
 				}
 
 				const
-					tracks     = Macro.get('cacheaudio').tracks,
-					specialIds = [':all', ':looped', ':muted', ':paused', ':playing'],
-					id         = this.args[0];
+					tracks   = Macro.get('cacheaudio').tracks,
+					groupIds = [':all', ':looped', ':muted', ':paused', ':playing'],
+					id       = String(this.args[0]).trim();
 
-				if (!specialIds.includes(id) && !tracks.hasOwnProperty(id)) {
+				if (!groupIds.includes(id) && !tracks.hasOwnProperty(id)) {
 					return this.error(`track "${id}" does not exist`);
 				}
 
@@ -1889,11 +1891,12 @@
 				}
 
 				const
-					badIdRe = /^:/,
-					id      = this.args[0];
+					id      = String(this.args[0]).trim(),
+					badIdRe = /^:|\s/; // cannot start with a colon or contain whitespace
 
 				if (badIdRe.test(id)) {
-					return this.error(`invalid track ID "${id}": track IDs may not start with a colon`);
+					return this.error(`invalid track ID "${id}"`
+						+ ': track IDs may not start with a colon or contain whitespace');
 				}
 
 				const formatRe = /^format:\s*([\w-]+)\s*;\s*(\S.*)$/i;
@@ -1917,12 +1920,19 @@
 					return this.error(`no supported audio sources found for "${id}"`);
 				}
 
+				const tracks = this.self.tracks;
+
+				// If a track by the given ID already exists, destroy it.
+				if (tracks.hasOwnProperty(id)) {
+					tracks[id].destroy();
+				}
+
 				/*
 					Add the audio to the tracks cache.  We do this even if no valid sources were
 					found to suppress errors for players.  The above Test Mode error should
 					suffice for authors.
 				*/
-				this.self.tracks[id] = track;
+				tracks[id] = track;
 
 				// Custom debug view setup.
 				if (Config.debug) {
@@ -1953,8 +1963,14 @@
 				}
 
 				const
-					tracks = Macro.get('cacheaudio').tracks,
-					listId = this.args[0];
+					tracks  = Macro.get('cacheaudio').tracks,
+					listId  = String(this.args[0]).trim(),
+					badIdRe = /^:|\s/; // cannot start with a colon or contain whitespace
+
+				if (badIdRe.test(listId)) {
+					return this.error(`invalid list ID "${listId}"`
+						+ ': list IDs may not start with a colon or contain whitespace');
+				}
 
 				if (this.payload.length === 1) {
 					return this.error('no tracks defined via <<track>>');
@@ -1979,7 +1995,7 @@
 						return this.error(`no ${errors.join(' or ')} specified`);
 					}
 
-					const id = this.payload[i].args[0];
+					const id = String(this.payload[i].args[0]).trim();
 
 					if (!tracks.hasOwnProperty(id)) {
 						return this.error(`track "${id}" does not exist`);
@@ -2057,8 +2073,20 @@
 					}
 				}
 
-				this.self.lists[listId] = list;
-				playlist.from = 'createplaylist';
+				const lists = this.self.lists;
+
+				// If a playlist by the given ID already exists, destroy it.
+				if (lists.hasOwnProperty(listId)) {
+					lists[listId].destroy();
+				}
+
+				// Add the new playlist to the cache.
+				lists[listId] = list;
+
+				// Lock `<<playlist>>` into our syntax.
+				if (playlist.from === null) {
+					playlist.from = 'createplaylist';
+				}
 
 				// Custom fake debug view setup for `<</createplaylist>>`.
 				this
@@ -2154,7 +2182,7 @@
 				const from = this.self.from;
 
 				if (from === null) {
-					return this.error('no playlists have been defined');
+					return this.error('no playlists have been created');
 				}
 
 				let list, args;
@@ -2169,7 +2197,7 @@
 
 					const
 						lists = Macro.get('createplaylist').lists,
-						id    = this.args[0];
+						id    = String(this.args[0]).trim();
 
 					if (!lists.hasOwnProperty(id)) {
 						return this.error(`playlist "${id}" does not exist`);
@@ -2361,7 +2389,7 @@
 
 				const
 					lists = Macro.get('createplaylist').lists,
-					id    = this.args[0];
+					id    = String(this.args[0]).trim();
 
 				if (!lists.hasOwnProperty(id)) {
 					return this.error(`playlist "${id}" does not exist`);
@@ -2378,6 +2406,77 @@
 		});
 
 		/*
+			<<waitforaudio>>
+		*/
+		Macro.add('waitforaudio', {
+			skipArgs : true,
+			queue    : [],
+
+			handler() {
+				const queue = this.self.queue;
+
+				if (queue.length > 0) {
+					return;
+				}
+
+				function processQueue() {
+					if (queue.length === 0) {
+						return LoadScreen.unlock();
+					}
+
+					const nextTrack = queue.shift();
+
+					if (nextTrack.hasData()) {
+						return processQueue();
+					}
+
+					nextTrack
+						.one('canplay.waitforaudio error.waitforaudio', function () { // do not use an arrow function
+							jQuery(this).off('.waitforaudio');
+							processQueue();
+						})
+						.load();
+				}
+
+				this.self.fillQueue(queue);
+
+				if (queue.length > 0) {
+					LoadScreen.lock();
+					processQueue();
+				}
+			},
+
+			fillQueue(queue) {
+				// Gather all tracks from `<<cacheaudio>>`.
+				const tracks = Macro.get('cacheaudio').tracks;
+				Object.keys(tracks).forEach(id => queue.push(tracks[id]));
+
+				// Gather copied tracks from `<<createplaylist>>`.
+				const lists = Macro.get('createplaylist').lists;
+				Object.keys(lists)
+					.map(id => lists[id].tracks)
+					.flatten()
+					.filter(trackObj => trackObj.copy)
+					.forEach(trackObj => queue.push(trackObj.track));
+
+				/*
+					Gather all tracks from `<<setplaylist>>`, since they're all copies.
+
+					n.b. `<<setplaylist>>` is deprecated, so don't assume that it exists.
+				*/
+				if (Macro.has('setplaylist')) {
+					const list = Macro.get('setplaylist').list;
+
+					if (list !== null) {
+						list.tracks.forEach(trackObj => queue.push(trackObj.track));
+					}
+				}
+			}
+		});
+
+		/*
+			NOTE: This macro is deprecated.
+
 			<<setplaylist track_id_list>>
 		*/
 		Macro.add('setplaylist', {
@@ -2398,10 +2497,12 @@
 					self   = this.self,
 					tracks = Macro.get('cacheaudio').tracks;
 
+				// If a playlist already exists, destroy it.
 				if (self.list !== null) {
-					self.list.pause();
+					self.list.destroy();
 				}
 
+				// Create the new playlist.
 				self.list = SimpleAudio.createList();
 
 				for (let i = 0; i < this.args.length; ++i) {
@@ -2414,7 +2515,10 @@
 					self.list.add(tracks[id]);
 				}
 
-				playlist.from = 'setplaylist';
+				// Lock `<<playlist>>` into our syntax.
+				if (playlist.from === null) {
+					playlist.from = 'setplaylist';
+				}
 
 				// Custom debug view setup.
 				if (Config.debug) {
@@ -2424,6 +2528,8 @@
 		});
 
 		/*
+			NOTE: This macro is deprecated.
+
 			<<stopallaudio>>
 		*/
 		Macro.add('stopallaudio', {
@@ -2442,19 +2548,22 @@
 	}
 	else {
 		/* The HTML5 <audio> API appears to be missing or disabled, setup no-op macros. */
-		Macro.add(['cacheaudio', 'audio', 'fadeoutplayingaudio', 'stopallaudio', 'playlist', 'setplaylist'], {
+		Macro.add([
+			'audio',
+			'cacheaudio',
+			'createplaylist',
+			'masteraudio',
+			'playlist',
+			'removeplaylist',
+			'waitforaudio',
+
+			// Deprecated.
+			'setplaylist',
+			'stopallaudio'
+		], {
 			skipArgs : true,
 
 			handler() { /* empty */ }
-		});
-
-		/*
-			Add a `tracks` object to the no-op `<<cacheaudio>>` to prevent scripts which attempt to
-			access the audio track cache, without checking the status of `Has.audio`, from throwing
-			exceptions.
-		*/
-		Object.defineProperty(Macro.get('cacheaudio'), 'tracks', {
-			value : { /* empty */ }
 		});
 	}
 
