@@ -1654,58 +1654,6 @@
 	 ******************************************************************************************************************/
 	if (Has.audio) {
 		/*
-			<<cacheaudio>>
-		*/
-		Macro.add('cacheaudio', {
-			tracks : {},
-
-			handler() {
-				if (this.args.length < 2) {
-					const errors = [];
-					if (this.args.length < 1) { errors.push('track ID'); }
-					if (this.args.length < 2) { errors.push('sources'); }
-					return this.error(`no ${errors.join(' or ')} specified`);
-				}
-
-				const
-					fmtRe = /^format:\s*([\w-]+)\s*;\s*(\S.*)$/i,
-					id    = this.args[0];
-				let
-					track;
-
-				try {
-					track = SimpleAudio.create(this.args.slice(1).map(url => {
-						const match = fmtRe.exec(url);
-						return match === null ? url : {
-							format : match[1],
-							src    : match[2]
-						};
-					}));
-				}
-				catch (e) {
-					return this.error(`error during track initialization for "${id}": ${e.message}`);
-				}
-
-				// If in Test Mode and no supported sources were specified, return an error.
-				if (Config.debug && !track.hasSource()) {
-					return this.error(`no supported audio sources found for "${id}"`);
-				}
-
-				/*
-					Add the audio to the tracks cache.  We do this even if no valid sources were
-					found to suppress errors for players.  The above Test Mode error should
-					suffice for authors.
-				*/
-				this.self.tracks[id] = track;
-
-				// Custom debug view setup.
-				if (Config.debug) {
-					this.createDebugView();
-				}
-			}
-		});
-
-		/*
 			<<audio>>
 		*/
 		Macro.add('audio', {
@@ -1718,15 +1666,15 @@
 				}
 
 				const
-					tracks = Macro.get('cacheaudio').tracks,
-					id     = this.args[0];
+					tracks     = Macro.get('cacheaudio').tracks,
+					specialIds = [':all', ':looped', ':muted', ':paused', ':playing'],
+					id         = this.args[0];
 
-				if (!tracks.hasOwnProperty(id)) {
+				if (!specialIds.includes(id) && !tracks.hasOwnProperty(id)) {
 					return this.error(`track "${id}" does not exist`);
 				}
 
 				const
-					audio = tracks[id],
 					args  = this.args.slice(1);
 				let
 					action,
@@ -1861,52 +1809,303 @@
 					}
 				}
 
+				let selected;
+
+				switch (id) {
+				case ':all':     selected = Object.keys(tracks); break;
+				case ':looped':  selected = Object.keys(tracks).filter(id => tracks[id].isLooped()); break;
+				case ':muted':   selected = Object.keys(tracks).filter(id => tracks[id].isMuted()); break;
+				case ':paused':  selected = Object.keys(tracks).filter(id => tracks[id].isPaused()); break;
+				case ':playing': selected = Object.keys(tracks).filter(id => tracks[id].isPlaying()); break;
+				default:         selected = [id]; break;
+				}
+
 				try {
-					if (volume != null) { // lazy equality for null
-						audio.volume = volume;
+					selected.forEach(id => {
+						const audio = tracks[id];
+
+						if (volume != null) { // lazy equality for null
+							audio.volume = volume;
+						}
+
+						if (time != null) { // lazy equality for null
+							audio.time = time;
+						}
+
+						if (mute != null) { // lazy equality for null
+							audio.mute = mute;
+						}
+
+						if (loop != null) { // lazy equality for null
+							audio.loop = loop;
+						}
+
+						if (passage != null) { // lazy equality for null
+							audio.one('end', () => Engine.play(passage)); // execute the callback once only
+						}
+
+						switch (action) {
+						case 'play':
+							audio.play();
+							break;
+
+						case 'pause':
+							audio.pause();
+							break;
+
+						case 'stop':
+							audio.stop();
+							break;
+
+						case 'fade':
+							audio.fadeWithDuration(fadeOver, fadeTo);
+							break;
+						}
+					});
+
+					// Custom debug view setup.
+					if (Config.debug) {
+						this.createDebugView();
 					}
+				}
+				catch (e) {
+					return this.error(`error executing audio action: ${e.message}`);
+				}
+			}
+		});
 
-					if (time != null) { // lazy equality for null
-						audio.time = time;
-					}
+		/*
+			<<cacheaudio track_id source_list>>
+		*/
+		Macro.add('cacheaudio', {
+			tracks : {},
 
-					if (mute != null) { // lazy equality for null
-						audio.mute = mute;
-					}
+			handler() {
+				if (this.args.length < 2) {
+					const errors = [];
+					if (this.args.length < 1) { errors.push('track ID'); }
+					if (this.args.length < 2) { errors.push('sources'); }
+					return this.error(`no ${errors.join(' or ')} specified`);
+				}
 
-					if (loop != null) { // lazy equality for null
-						audio.loop = loop;
-					}
+				const
+					badIdRe = /^:/,
+					id      = this.args[0];
 
-					if (passage != null) { // lazy equality for null
-						audio.one('end', () => Engine.play(passage)); // execute the callback once only
-					}
+				if (badIdRe.test(id)) {
+					return this.error(`invalid track ID "${id}": track IDs may not start with a colon`);
+				}
 
-					switch (action) {
-					case 'play':
-						audio.play();
-						break;
+				const formatRe = /^format:\s*([\w-]+)\s*;\s*(\S.*)$/i;
+				let track;
 
-					case 'pause':
-						audio.pause();
-						break;
+				try {
+					track = SimpleAudio.create(this.args.slice(1).map(url => {
+						const match = formatRe.exec(url);
+						return match === null ? url : {
+							format : match[1],
+							src    : match[2]
+						};
+					}));
+				}
+				catch (e) {
+					return this.error(`error during track initialization for "${id}": ${e.message}`);
+				}
 
-					case 'stop':
-						audio.stop();
-						break;
+				// If in Test Mode and no supported sources were specified, return an error.
+				if (Config.debug && !track.hasSource()) {
+					return this.error(`no supported audio sources found for "${id}"`);
+				}
 
-					case 'fade':
-						if (audio.volume === fadeTo) {
-							if (fadeTo === 0) {
-								audio.volume = 1;
-							}
-							else if (fadeTo === 1) {
-								audio.volume = 0;
+				/*
+					Add the audio to the tracks cache.  We do this even if no valid sources were
+					found to suppress errors for players.  The above Test Mode error should
+					suffice for authors.
+				*/
+				this.self.tracks[id] = track;
+
+				// Custom debug view setup.
+				if (Config.debug) {
+					this.createDebugView();
+				}
+			}
+		});
+
+		/*
+			<<createplaylist list_id>>
+				<<track track_id action_list>>
+				…
+			<</createplaylist>>
+		*/
+		Macro.add('createplaylist', {
+			tags  : ['track'],
+			lists : {},
+
+			handler() {
+				if (this.args.length === 0) {
+					return this.error('no list ID specified');
+				}
+
+				const playlist = Macro.get('playlist');
+
+				if (playlist.from !== null && playlist.from !== 'createplaylist') {
+					return this.error('a playlist has already been defined with <<setplaylist>>');
+				}
+
+				const
+					tracks = Macro.get('cacheaudio').tracks,
+					listId = this.args[0];
+
+				if (this.payload.length > 1) {
+					const list = SimpleAudio.createList();
+
+					for (let i = 1, len = this.payload.length; i < len; ++i) {
+						if (this.payload[i].args.length < 2) {
+							const errors = [];
+							if (this.payload[i].args.length < 1) { errors.push('track ID'); }
+							if (this.payload[i].args.length < 2) { errors.push('actions'); }
+							return this.error(`no ${errors.join(' or ')} specified`);
+						}
+
+						const id = this.payload[i].args[0];
+
+						if (!tracks.hasOwnProperty(id)) {
+							return this.error(`track "${id}" does not exist`);
+						}
+
+						const
+							args = this.payload[i].args.slice(1);
+						let
+							copy   = false,
+							// rate,
+							volume;
+
+						// Process arguments.
+						while (args.length > 0) {
+							const arg = args.shift();
+							let raw; // eslint-disable-line prefer-const
+
+							switch (arg) {
+							case 'copy':
+								copy = true;
+								break;
+
+							case 'rate':
+								if (args.length > 0) {
+									args.shift();
+								}
+								break;
+							// case 'rate':
+							// 	if (args.length === 0) {
+							// 		return this.error('rate missing required speed value');
+							// 	}
+							//
+							// 	raw = args.shift();
+							// 	rate = parseFloat(raw);
+							//
+							// 	if (isNaN(rate) || !isFinite(rate)) {
+							// 		return this.error(`cannot parse rate: ${raw}`);
+							// 	}
+							// 	break;
+
+							case 'volume':
+								if (args.length === 0) {
+									return this.error('volume missing required level value');
+								}
+
+								raw = args.shift();
+								volume = parseFloat(raw);
+
+								if (isNaN(volume) || !isFinite(volume)) {
+									return this.error(`cannot parse volume: ${raw}`);
+								}
+								break;
+
+							default:
+								return this.error(`unknown action: ${arg}`);
 							}
 						}
 
-						audio.fadeWithDuration(fadeOver, fadeTo);
+						const track = tracks[id];
+						list.add({
+							copy,
+							// rate,
+							track,
+							volume : volume != null ? volume : track.volume
+						});
+					}
+
+					this.self.lists[listId] = list;
+					playlist.from = 'createplaylist';
+				}
+
+				// Custom debug view setup.
+				if (Config.debug) {
+					this.createDebugView();
+				}
+			}
+		});
+
+		/*
+			<<masteraudio action_list>>
+		*/
+		Macro.add('masteraudio', {
+			handler() {
+				if (this.args.length === 0) {
+					return this.error('no actions specified');
+				}
+
+				const
+					args = this.args.slice(0);
+				let
+					stop   = false,
+					mute,
+					volume;
+
+				// Process arguments.
+				while (args.length > 0) {
+					const arg = args.shift();
+					let raw; // eslint-disable-line prefer-const
+
+					switch (arg) {
+					case 'stop':
+						stop = true;
 						break;
+
+					case 'mute':
+					case 'unmute':
+						mute = arg === 'mute';
+						break;
+
+					case 'volume':
+						if (args.length === 0) {
+							return this.error('volume missing required level value');
+						}
+
+						raw = args.shift();
+						volume = parseFloat(raw);
+
+						if (isNaN(volume) || !isFinite(volume)) {
+							return this.error(`cannot parse volume: ${raw}`);
+						}
+						break;
+
+					default:
+						return this.error(`unknown action: ${arg}`);
+					}
+				}
+
+				try {
+					if (mute != null) { // lazy equality for null
+						SimpleAudio.mute = mute;
+					}
+
+					if (volume != null) { // lazy equality for null
+						SimpleAudio.volume = volume;
+					}
+
+					if (stop) {
+						SimpleAudio.stop();
 					}
 
 					// Custom debug view setup.
@@ -1915,47 +2114,7 @@
 					}
 				}
 				catch (e) {
-					return this.error(`error playing audio: ${e.message}`);
-				}
-			}
-		});
-
-		/*
-			<<fadeoutplayingaudio [seconds]>>
-		*/
-		Macro.add('fadeoutplayingaudio', {
-			handler() {
-				const fadeOver = this.args.length === 0 ? 5 : Number(this.args[0]);
-
-				if (isNaN(fadeOver) || !isFinite(fadeOver) || fadeOver <= 0) {
-					return this.error(`seconds value (${this.args[0]}) is not a finite number greater than zero`);
-				}
-
-				const tracks = Macro.get('cacheaudio').tracks;
-				Object.keys(tracks)
-					.filter(id => tracks[id].isPlaying())
-					.forEach(id => tracks[id].fadeWithDuration(fadeOver, 0));
-
-				// Custom debug view setup.
-				if (Config.debug) {
-					this.createDebugView();
-				}
-			}
-		});
-
-		/*
-			<<stopallaudio>>
-		*/
-		Macro.add('stopallaudio', {
-			skipArgs : true,
-
-			handler() {
-				const tracks = Macro.get('cacheaudio').tracks;
-				Object.keys(tracks).forEach(id => tracks[id].stop());
-
-				// Custom debug view setup.
-				if (Config.debug) {
-					this.createDebugView();
+					return this.error(`error executing master audio action: ${e.message}`);
 				}
 			}
 		});
@@ -1968,10 +2127,6 @@
 			from : null,
 
 			handler() {
-				if (this.args.length === 0) {
-					return this.error('no actions specified');
-				}
-
 				const from = this.self.from;
 
 				if (from === null) {
@@ -1981,6 +2136,13 @@
 				let list, args;
 
 				if (from === 'createplaylist') {
+					if (this.args.length < 2) {
+						const errors = [];
+						if (this.args.length < 1) { errors.push('list ID'); }
+						if (this.args.length < 2) { errors.push('actions'); }
+						return this.error(`no ${errors.join(' or ')} specified`);
+					}
+
 					const
 						lists = Macro.get('createplaylist').lists,
 						id    = this.args[0];
@@ -1993,6 +2155,10 @@
 					args = this.args.slice(1);
 				}
 				else {
+					if (this.args.length === 0) {
+						return this.error('no actions specified');
+					}
+
 					list = Macro.get('setplaylist').list;
 					args = this.args.slice(0);
 				}
@@ -2161,117 +2327,6 @@
 		});
 
 		/*
-			<<createplaylist list_id>>
-				<<track track_id action_list>>
-				<<track track_id action_list>>
-				…
-			<</createplaylist>>
-
-			Actions: volume #, rate #, copy
-		*/
-		Macro.add('createplaylist', {
-			tags  : ['track'],
-			lists : {},
-
-			handler() {
-				if (this.args.length === 0) {
-					return this.error('no list ID specified');
-				}
-
-				const playlist = Macro.get('playlist');
-
-				if (playlist.from !== null && playlist.from !== 'createplaylist') {
-					return this.error('a playlist has already been defined with <<setplaylist>>');
-				}
-
-				const
-					tracks = Macro.get('cacheaudio').tracks,
-					listId = this.args[0];
-
-				if (this.payload.length > 1) {
-					const list = SimpleAudio.createList();
-
-					for (let i = 1, len = this.payload.length; i < len; ++i) {
-						const id = this.payload[i].args[0];
-
-						if (!tracks.hasOwnProperty(id)) {
-							return this.error(`track "${id}" does not exist`);
-						}
-
-						const
-							args = this.payload[i].args.slice(1);
-						let
-							copy   = false,
-							// rate,
-							volume;
-
-						// Process arguments.
-						while (args.length > 0) {
-							const arg = args.shift();
-							let raw; // eslint-disable-line prefer-const
-
-							switch (arg) {
-							case 'copy':
-								copy = true;
-								break;
-
-							case 'rate':
-								if (args.length > 0) {
-									args.shift();
-								}
-								break;
-							// case 'rate':
-							// 	if (args.length === 0) {
-							// 		return this.error('rate missing required speed value');
-							// 	}
-							//
-							// 	raw = args.shift();
-							// 	rate = parseFloat(raw);
-							//
-							// 	if (isNaN(rate) || !isFinite(rate)) {
-							// 		return this.error(`cannot parse rate: ${raw}`);
-							// 	}
-							// 	break;
-
-							case 'volume':
-								if (args.length === 0) {
-									return this.error('volume missing required level value');
-								}
-
-								raw = args.shift();
-								volume = parseFloat(raw);
-
-								if (isNaN(volume) || !isFinite(volume)) {
-									return this.error(`cannot parse volume: ${raw}`);
-								}
-								break;
-
-							default:
-								return this.error(`unknown action: ${arg}`);
-							}
-						}
-
-						const track = tracks[id];
-						list.add({
-							copy,
-							// rate,
-							track,
-							volume : volume != null ? volume : track.volume
-						});
-					}
-
-					this.self.lists[listId] = list;
-					playlist.from = 'createplaylist';
-				}
-
-				// Custom debug view setup.
-				if (Config.debug) {
-					this.createDebugView();
-				}
-			}
-		});
-
-		/*
 			<<removeplaylist list_id>>
 		*/
 		Macro.add('removeplaylist', {
@@ -2336,6 +2391,23 @@
 				}
 
 				playlist.from = 'setplaylist';
+
+				// Custom debug view setup.
+				if (Config.debug) {
+					this.createDebugView();
+				}
+			}
+		});
+
+		/*
+			<<stopallaudio>>
+		*/
+		Macro.add('stopallaudio', {
+			skipArgs : true,
+
+			handler() {
+				const tracks = Macro.get('cacheaudio').tracks;
+				Object.keys(tracks).forEach(id => tracks[id].stop());
 
 				// Custom debug view setup.
 				if (Config.debug) {
