@@ -13,21 +13,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 
 	const
 		// Mapping of subscriber -> callback pairs.
-		_subscribers = new Map(),
-
-		// Mapping of AudioWrapper event names -> actual event names.
-		_events = Object.freeze({
-			canplay : 'canplaythrough',
-			end     : 'ended',
-			error   : 'error',
-			fade    : 'aw:fade',
-			pause   : 'pause',
-			play    : 'playing',
-			rate    : 'ratechange',
-			seek    : 'seeked',
-			stop    : 'aw:stop',
-			volume  : 'volumechange'
-		});
+		_subscribers = new Map();
 
 	let
 		// Master playback rate.
@@ -313,6 +299,10 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			return this.audio.duration;
 		}
 
+		get ended() {
+			return this.audio.ended;
+		}
+
 		get loop() {
 			return this.audio.loop;
 		}
@@ -329,6 +319,10 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 		_updateAudioMute() {
 			this.audio.muted = this._mute || SimpleAudio.mute;
+		}
+
+		get paused() {
+			return this.audio.paused;
 		}
 
 		get rate() {
@@ -431,7 +425,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		isPaused() {
-			return this.audio.paused;
+			return this.audio.paused && this.audio.currentTime > 0 && !this.audio.ended;
 		}
 
 		isMuted() {
@@ -554,17 +548,19 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 				throw new Error('listener parameter must be a function');
 			}
 
-			const events = eventNames.trim().splitOrEmpty(/\s+/)
-				.map(nameAndNS => {
-					const name = nameAndNS.split('.', 1)[0];
+			const
+				awEvents = AudioWrapper._events,
+				events   = eventNames.trim().splitOrEmpty(/\s+/)
+					.map(nameAndNS => {
+						const name = nameAndNS.split('.', 1)[0];
 
-					if (!_events.hasOwnProperty(name)) {
-						throw new Error(`unknown event "${name}"; valid: ${Object.keys(_events).join(', ')}`);
-					}
+						if (!awEvents.hasOwnProperty(name)) {
+							throw new Error(`unknown event "${name}"; valid: ${Object.keys(awEvents).join(', ')}`);
+						}
 
-					return `${nameAndNS.replace(name, _events[name])}.AudioWrapperEvent`;
-				})
-				.join(' ');
+						return `${nameAndNS.replace(name, awEvents[name])}.AudioWrapperEvent`;
+					})
+					.join(' ');
 
 			if (events === '') {
 				throw new Error(`invalid eventNames parameter "${eventNames}"`);
@@ -579,17 +575,19 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 				throw new Error('listener parameter must be a function');
 			}
 
-			const events = eventNames.trim().splitOrEmpty(/\s+/)
-				.map(nameAndNS => {
-					const name = nameAndNS.split('.', 1)[0];
+			const
+				awEvents = AudioWrapper._events,
+				events   = eventNames.trim().splitOrEmpty(/\s+/)
+					.map(nameAndNS => {
+						const name = nameAndNS.split('.', 1)[0];
 
-					if (!_events.hasOwnProperty(name)) {
-						throw new Error(`unknown event "${name}"; valid: ${Object.keys(_events).join(', ')}`);
-					}
+						if (!awEvents.hasOwnProperty(name)) {
+							throw new Error(`unknown event "${name}"; valid: ${Object.keys(awEvents).join(', ')}`);
+						}
 
-					return `${nameAndNS.replace(name, _events[name])}.AudioWrapperEvent`;
-				})
-				.join(' ');
+						return `${nameAndNS.replace(name, awEvents[name])}.AudioWrapperEvent`;
+					})
+					.join(' ');
 
 			if (events === '') {
 				throw new Error(`invalid eventNames parameter "${eventNames}"`);
@@ -607,17 +605,19 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			if (!eventNames) {
 				return jQuery(this.audio).off('.AudioWrapperEvent', listener);
 			}
-			else {
-				const events = eventNames.trim().splitOrEmpty(/\s+/)
+
+			const
+				awEvents = AudioWrapper._events,
+				events   = eventNames.trim().splitOrEmpty(/\s+/)
 					.map(nameAndNS => {
 						const name = nameAndNS.split('.', 1)[0];
 
 						if (name) {
-							if (!_events.hasOwnProperty(name)) {
-								throw new Error(`unknown event "${name}"; valid: ${Object.keys(_events).join(', ')}`);
+							if (!awEvents.hasOwnProperty(name)) {
+								throw new Error(`unknown event "${name}"; valid: ${Object.keys(awEvents).join(', ')}`);
 							}
 
-							return `${nameAndNS.replace(name, _events[name])}.AudioWrapperEvent`;
+							return `${nameAndNS.replace(name, awEvents[name])}.AudioWrapperEvent`;
 						}
 						else {
 							return `${nameAndNS}.AudioWrapperEvent`;
@@ -625,13 +625,12 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 					})
 					.join(' ');
 
-				if (events === '') {
-					throw new Error(`invalid eventNames parameter "${eventNames}"`);
-				}
-
-				jQuery(this.audio).off(events, listener);
-				return this;
+			if (events === '') {
+				throw new Error(`invalid eventNames parameter "${eventNames}"`);
 			}
+
+			jQuery(this.audio).off(events, listener);
+			return this;
 		}
 	}
 
@@ -754,6 +753,24 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 
 				return cache[type] ? type : null;
 			}
+		},
+
+		/*
+			Mapping of AudioWrapper event names -> actual event names.
+		*/
+		_events : {
+			value : Object.freeze({
+				canplay : 'canplaythrough',
+				end     : 'ended',
+				error   : 'error',
+				fade    : 'aw:fade',
+				pause   : 'pause',
+				play    : 'playing',
+				rate    : 'ratechange',
+				seek    : 'seeked',
+				stop    : 'aw:stop',
+				volume  : 'volumechange'
+			})
 		}
 	});
 
@@ -770,7 +787,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 					value        : []
 				},
 
-				list : {
+				queue : {
 					configurable : true,
 					value        : []
 				},
@@ -866,16 +883,16 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			// // Set the reference-type properties' values to `null` and then freeze them.
 			// Object.defineProperties(this, {
 			// 	tracks : { writable : true, value : null },
-			// 	list   : { writable : true, value : null }
+			// 	queue  : { writable : true, value : null }
 			// });
 			// Object.defineProperties(this, {
 			// 	tracks : { configurable : false, writable : false },
-			// 	list   : { configurable : false, writable : false }
+			// 	queue  : { configurable : false, writable : false }
 			// });
 
 			// Delete the reference-type properties.
 			delete this.tracks;
-			delete this.list;
+			delete this.queue;
 		}
 
 		get duration() {
@@ -916,7 +933,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		get remaining() {
 			// n.b. May return a double (normally), Infinity (for streams), or NaN (without metadata).
-			let remainingTime = this.list
+			let remainingTime = this.queue
 				.map(trackObj => trackObj.track.duration)
 				.reduce((p, c) => p + c, 0);
 
@@ -954,7 +971,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		isEnded() {
-			return this.list.length === 0 && (this.current === null ? true : this.current.track.isEnded());
+			return this.queue.length === 0 && (this.current === null ? true : this.current.track.isEnded());
 		}
 
 		isPaused() {
@@ -975,7 +992,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		play() {
 			if (this.current === null || this.current.track.isEnded()) {
-				if (this.list.length === 0) {
+				if (this.queue.length === 0) {
 					this._buildList();
 				}
 
@@ -999,7 +1016,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 				this.current = null;
 			}
 
-			this.list.splice(0);
+			this.queue.splice(0);
 		}
 
 		skip() {
@@ -1012,7 +1029,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		fadeWithDuration(fadeDuration, toVol, fromVol) {
-			if (this.list.length === 0) {
+			if (this.queue.length === 0) {
 				this._buildList();
 			}
 
@@ -1050,12 +1067,12 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 				this.current.track.stop();
 			}
 
-			if (this.list.length === 0) {
+			if (this.queue.length === 0) {
 				this.current = null;
 				return false;
 			}
 
-			this.current = this.list.shift();
+			this.current = this.queue.shift();
 
 			if (!this.current.track.hasSource() || this.current.track.isFailed()) {
 				return this._next();
@@ -1069,7 +1086,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		_onEnd() {
-			if (this.list.length === 0) {
+			if (this.queue.length === 0) {
 				if (!this._loop) {
 					return;
 				}
@@ -1085,19 +1102,19 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		_buildList() {
-			this.list.splice(0);
-			this.list.push(...this.tracks);
+			this.queue.splice(0);
+			this.queue.push(...this.tracks);
 
-			if (this.list.length === 0) {
+			if (this.queue.length === 0) {
 				return;
 			}
 
 			if (this._shuffle) {
-				this.list.shuffle();
+				this.queue.shuffle();
 
 				// Try not to immediately replay the last track when shuffling.
-				if (this.list.length > 1 && this.list[0] === this.current) {
-					this.list.push(this.list.shift());
+				if (this.queue.length > 1 && this.queue[0] === this.current) {
+					this.queue.push(this.queue.shift());
 				}
 			}
 		}
@@ -1107,6 +1124,14 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 	/*******************************************************************************************************************
 	 * Master Audio Functions.
 	 ******************************************************************************************************************/
+	function masterMuteGet() {
+		return _masterMute;
+	}
+	function masterMuteSet(mute) {
+		_masterMute = !!mute;
+		publish('mute', _masterMute);
+	}
+
 	function masterRateGet() {
 		return _masterRate;
 	}
@@ -1121,14 +1146,6 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 	function masterVolumeSet(vol) {
 		_masterVolume = Math.clamp(vol, 0, 1); // clamp to 0 (silent) & 1 (full loudness)
 		publish('volume', _masterVolume);
-	}
-
-	function masterMuteGet() {
-		return _masterMute;
-	}
-	function masterMuteSet(mute) {
-		_masterMute = !!mute;
-		publish('mute', _masterMute);
 	}
 
 	function masterStop() {
@@ -1175,6 +1192,10 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Master Audio Functions.
 		*/
+		mute : {
+			get : masterMuteGet,
+			set : masterMuteSet
+		},
 		rate : {
 			get : masterRateGet,
 			set : masterRateSet
@@ -1182,10 +1203,6 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 		volume : {
 			get : masterVolumeGet,
 			set : masterVolumeSet
-		},
-		mute : {
-			get : masterMuteGet,
-			set : masterMuteSet
 		},
 		stop : { value : masterStop },
 
