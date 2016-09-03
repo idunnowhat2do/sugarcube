@@ -1231,15 +1231,17 @@ function safeActiveElement() {
 		Extend jQuery's chainable methods with a `wiki()` method.
 	*/
 	jQuery.fn.extend({
-		wiki(source) {
-			// Bail out if there are no target element(s) or parameters.
+		wiki(/* variadic */) {
+			// Bail out if there are no target element(s) or content sources.
 			if (this.length === 0 || arguments.length === 0) {
 				return this;
 			}
 
-			// Wikify the source text into a fragment and append it to the target element(s).
+			// Wikify the content sources into a fragment.
 			const frag = document.createDocumentFragment();
-			new Wikifier(frag, source);
+			Array.from(arguments).forEach(content => new Wikifier(frag, content));
+
+			// Append the fragment to the target element(s).
 			this.append(frag);
 
 			// Return `this` for further chaining.
