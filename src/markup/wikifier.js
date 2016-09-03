@@ -72,7 +72,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				},
 
 				source : {
-					value : source
+					value : String(source)
 				},
 
 				nextMatch : {
