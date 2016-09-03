@@ -116,10 +116,6 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 			&& (classNames ? classNames.splitOrEmpty(/\s+/).every(c => _$dialogBody.hasClass(c)) : true);
 	}
 
-	function dialogBody() {
-		return _$dialogBody.get(0);
-	}
-
 	function dialogSetup(title, classNames) {
 		_$dialogBody
 			.empty()
@@ -133,6 +129,20 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 			.empty()
 			.append((title != null ? String(title) : '') || '\u00A0'); // lazy equality for null
 		return _$dialogBody.get(0);
+	}
+
+	function dialogBody() {
+		return _$dialogBody.get(0);
+	}
+
+	function dialogBodyAppend(...args) {
+		_$dialogBody.append(...args);
+		return Dialog;
+	}
+
+	function dialogBodyWiki(...args) {
+		_$dialogBody.wiki(...args);
+		return Dialog;
 	}
 
 	/**
@@ -214,6 +224,8 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		// Trigger a global `tw:dialogopened` event.
 		setTimeout(() => jQuery.event.trigger('tw:dialogopened'), Engine.minDomActionDelay);
+
+		return Dialog;
 	}
 
 	function dialogClose(evt) {
@@ -257,6 +269,8 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		// Trigger a global `tw:dialogclosed` event.
 		setTimeout(() => jQuery.event.trigger('tw:dialogclosed'), Engine.minDomActionDelay);
+
+		return Dialog;
 	}
 
 	function dialogResizeHandler(evt) {
@@ -326,8 +340,10 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 	return Object.freeze(Object.defineProperties({}, {
 		init            : { value : dialogInit },
 		isOpen          : { value : dialogIsOpen },
-		body            : { value : dialogBody },
 		setup           : { value : dialogSetup },
+		body            : { value : dialogBody },
+		append          : { value : dialogBodyAppend },
+		wiki            : { value : dialogBodyWiki },
 		addClickHandler : { value : dialogAddClickHandler },
 		open            : { value : dialogOpen },
 		close           : { value : dialogClose },
