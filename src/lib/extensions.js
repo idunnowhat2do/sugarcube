@@ -997,12 +997,12 @@ function safeActiveElement() {
 		configurable : true,
 		writable     : true,
 
-		value(code) {
+		value(code, data) {
 			if (typeof code !== 'string') {
 				throw new TypeError('JSON.reviveWrapper code parameter must be a string');
 			}
 
-			return ['(revive:eval)', code];
+			return ['(revive:eval)', [code, data]];
 		}
 	});
 
@@ -1036,7 +1036,19 @@ function safeActiveElement() {
 						break;
 					case '(revive:eval)':
 						try {
-							value = eval(value[1]); // eslint-disable-line no-eval
+							/* eslint-disable no-eval */
+							/* legacy */
+							if (Array.isArray(value[1])) {
+							/* /legacy */
+								const $ReviveData$ = value[1][1]; // eslint-disable-line no-unused-vars
+								value = eval(value[1][0]);
+							/* legacy */
+							}
+							else {
+								value = eval(value[1]);
+							}
+							/* /legacy */
+							/* eslint-enable no-eval */
 						}
 						catch (e) { /* no-op; although, perhaps, it would be better to throw an error here */ }
 						break;
