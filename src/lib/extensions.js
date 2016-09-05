@@ -196,6 +196,64 @@ function safeActiveElement() {
 		return Math.floor(_nativeMathRandom() * (max - min + 1)) + min;
 	}
 
+	/*
+		Returns an array containing the Unicode character at position `pos`, the actual
+		start position, and the end position.  If `pos` is out-of-bounds, returns an array
+		containing the empty string, start position of `-1`, and end position of `-1`.
+
+		NOTE: Will throw exceptions on invalid surrogate-pair sequences.
+
+		ADAPTED FROM: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/charAt
+	*/
+	function _getCharStartAndEnd(str, pos) {
+		const code = str.charCodeAt(pos);
+
+		// Given position was out-of-bounds.
+		if (Number.isNaN(code)) {
+			return ['', -1, -1];
+		}
+
+		// Not a surrogate character.
+		if (code < 0xD800 || code > 0xDFFF) {
+			return [str.charAt(pos), pos, pos];
+		}
+
+		// Character is a high surrogate (D800–DBFF).
+		if (code >= 0xD800 && code <= 0xDBFF) {
+			// No next character.
+			if (str.length <= (pos + 1)) {
+				throw new Error('high surrogate without following low surrogate');
+			}
+
+			const
+				nextPos  = pos + 1,
+				nextCode = str.charCodeAt(nextPos);
+
+			// Next character is not a low surrogate (DC00–DFFF).
+			if (nextCode < 0xDC00 || nextCode > 0xDFFF) {
+				throw new Error('high surrogate without following low surrogate');
+			}
+
+			return [str.charAt(pos) + str.charAt(nextPos), pos, nextPos];
+		}
+
+		// Character is a low surrogate (DC00–DFFF) in the first position.
+		if (pos === 0) {
+			throw new Error('low surrogate without preceding high surrogate');
+		}
+
+		const
+			prevPos  = pos - 1,
+			prevCode = str.charCodeAt(prevPos);
+
+		// Previous character is not a high surrogate (D800–DBFF).
+		if (prevCode < 0xD800 || prevCode > 0xDBFF) {
+			throw new Error('low surrogate without preceding high surrogate');
+		}
+
+		return [str.charAt(prevPos) + str.charAt(pos), prevPos, pos];
+	}
+
 
 	/*******************************************************************************************************************
 	 * JavaScript Extensions, General.
@@ -826,13 +884,13 @@ function safeActiveElement() {
 	});
 
 	/*
-		Returns a copy of the base string with `count` characters replaced with `replacement`, starting at `startAt`.
+		Returns a copy of the base string with `delCount` characters replaced with `replacement`, starting at `startAt`.
 	*/
 	Object.defineProperty(String.prototype, 'splice', {
 		configurable : true,
 		writable     : true,
 
-		value(startAt, charCount, replacement) {
+		value(startAt, delCount, replacement) {
 			if (this == null) { // lazy equality for null
 				throw new TypeError('String.prototype.splice called on null or undefined');
 			}
@@ -860,7 +918,7 @@ function safeActiveElement() {
 				start = length;
 			}
 
-			let count = +charCount || 0;
+			let count = +delCount || 0;
 
 			if (!isFinite(count) || count < 0) {
 				count = 0;
@@ -898,6 +956,29 @@ function safeActiveElement() {
 			}
 
 			return String.prototype.split.apply(this, arguments);
+		}
+	});
+
+	/*
+		Returns a copy of the base string with the first character upper cased.
+	*/
+	Object.defineProperty(String.prototype, 'toUpperFirst', {
+		configurable : true,
+		writable     : true,
+
+		value() {
+			if (this == null) { // lazy equality for null
+				throw new TypeError('String.prototype.toUpperFirst called on null or undefined');
+			}
+
+			const
+				// Required as `this` could be a `String` object or come from a `call()` or `apply()`.
+				str            = String(this),
+
+				// Get the first character, being mindful of UTF-16 surrogate pairs.
+				[char, _, end] = _getCharStartAndEnd(str, 0);
+
+			return end === -1 ? '' : char.toLocaleUpperCase() + str.slice(end + 1);
 		}
 	});
 
