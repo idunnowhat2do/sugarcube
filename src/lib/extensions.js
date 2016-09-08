@@ -220,14 +220,14 @@ function safeActiveElement() {
 
 		// Character is a high surrogate (D800–DBFF).
 		if (code >= 0xD800 && code <= 0xDBFF) {
+			const nextPos = pos + 1;
+
 			// No next character.
-			if (str.length <= (pos + 1)) {
+			if (nextPos >= str.length) {
 				throw new Error('high surrogate without following low surrogate');
 			}
 
-			const
-				nextPos  = pos + 1,
-				nextCode = str.charCodeAt(nextPos);
+			const nextCode = str.charCodeAt(nextPos);
 
 			// Next character is not a low surrogate (DC00–DFFF).
 			if (nextCode < 0xDC00 || nextCode > 0xDFFF) {
@@ -976,7 +976,7 @@ function safeActiveElement() {
 				str          = String(this),
 
 				// Get the first Unicode grapheme, being mindful of surrogate pairs.
-				[ch, _, end] = _getCharStartAndEnd(str, 0);
+				[ch, _, end] = _getCharStartAndEnd(str, 0); // eslint-disable-line no-unused-vars
 
 			return end === -1 ? '' : ch.toLocaleUpperCase() + str.slice(end + 1);
 		}
