@@ -197,9 +197,9 @@ function safeActiveElement() {
 	}
 
 	/*
-		Returns an array containing the Unicode character at position `pos`, the actual
-		start position, and the end position.  If `pos` is out-of-bounds, returns an array
-		containing the empty string, start position of `-1`, and end position of `-1`.
+		Returns an array containing the Unicode grapheme at position `pos`, the start
+		position, and the end position.  If `pos` is out-of-bounds, returns an array
+		containing the empty string and start/end positions of `-1`.
 
 		NOTE: Will throw exceptions on invalid surrogate-pair sequences.
 
@@ -960,7 +960,7 @@ function safeActiveElement() {
 	});
 
 	/*
-		Returns a copy of the base string with the first character upper cased.
+		Returns a copy of the base string with the first Unicode grapheme uppercased.
 	*/
 	Object.defineProperty(String.prototype, 'toUpperFirst', {
 		configurable : true,
@@ -973,12 +973,12 @@ function safeActiveElement() {
 
 			const
 				// Required as `this` could be a `String` object or come from a `call()` or `apply()`.
-				str            = String(this),
+				str          = String(this),
 
-				// Get the first character, being mindful of UTF-16 surrogate pairs.
-				[char, _, end] = _getCharStartAndEnd(str, 0);
+				// Get the first Unicode grapheme, being mindful of surrogate pairs.
+				[ch, _, end] = _getCharStartAndEnd(str, 0);
 
-			return end === -1 ? '' : char.toLocaleUpperCase() + str.slice(end + 1);
+			return end === -1 ? '' : ch.toLocaleUpperCase() + str.slice(end + 1);
 		}
 	});
 
