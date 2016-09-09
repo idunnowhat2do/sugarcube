@@ -197,61 +197,79 @@ function safeActiveElement() {
 	}
 
 	/*
-		Returns an array containing the Unicode grapheme at position `pos`, the start
-		position, and the end position.  If `pos` is out-of-bounds, returns an array
-		containing the empty string and start/end positions of `-1`.
+		Returns an object (`{ char, start, end }`) containing the Unicode code point at
+		position `pos`, its starting position, and its ending position—surrogate pairs
+		are properly handled.  If `pos` is out-of-bounds, returns an object containing
+		the empty string and start/end positions of `-1`.
+
+		This function is necessary because JavaScript strings are sequences of UTF-16
+		code units, so surrogate pairs are exposed and thus must be handled.  While the
+		ES6/2015 standard does improve the situation somewhat, it does not alleviate
+		the need for this function.
 
 		NOTE: Will throw exceptions on invalid surrogate-pair sequences.
 
-		ADAPTED FROM: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/charAt
+		IDEA: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/charAt
 	*/
-	function _getCharStartAndEnd(str, pos) {
+	function _getCodePointStartAndEnd(str, pos) {
 		const code = str.charCodeAt(pos);
 
 		// Given position was out-of-bounds.
 		if (Number.isNaN(code)) {
-			return ['', -1, -1];
+			return { char : '', start : -1, end : -1 };
 		}
 
-		// Not a surrogate character.
+		// Code unit is not a UTF-16 surrogate.
 		if (code < 0xD800 || code > 0xDFFF) {
-			return [str.charAt(pos), pos, pos];
+			return {
+				char  : str.charAt(pos),
+				start : pos,
+				end   : pos
+			};
 		}
 
-		// Character is a high surrogate (D800–DBFF).
+		// Code unit is a high surrogate (D800–DBFF).
 		if (code >= 0xD800 && code <= 0xDBFF) {
 			const nextPos = pos + 1;
 
-			// No next character.
+			// End of string.
 			if (nextPos >= str.length) {
-				throw new Error('high surrogate without following low surrogate');
+				throw new Error('high surrogate without trailing low surrogate');
 			}
 
 			const nextCode = str.charCodeAt(nextPos);
 
-			// Next character is not a low surrogate (DC00–DFFF).
+			// Next code unit is not a low surrogate (DC00–DFFF).
 			if (nextCode < 0xDC00 || nextCode > 0xDFFF) {
-				throw new Error('high surrogate without following low surrogate');
+				throw new Error('high surrogate without trailing low surrogate');
 			}
 
-			return [str.charAt(pos) + str.charAt(nextPos), pos, nextPos];
+			return {
+				char  : str.charAt(pos) + str.charAt(nextPos),
+				start : pos,
+				end   : nextPos
+			};
 		}
 
-		// Character is a low surrogate (DC00–DFFF) in the first position.
+		// Code unit is a low surrogate (DC00–DFFF) in the first position.
 		if (pos === 0) {
-			throw new Error('low surrogate without preceding high surrogate');
+			throw new Error('low surrogate without leading high surrogate');
 		}
 
 		const
 			prevPos  = pos - 1,
 			prevCode = str.charCodeAt(prevPos);
 
-		// Previous character is not a high surrogate (D800–DBFF).
+		// Previous code unit is not a high surrogate (D800–DBFF).
 		if (prevCode < 0xD800 || prevCode > 0xDBFF) {
-			throw new Error('low surrogate without preceding high surrogate');
+			throw new Error('low surrogate without leading high surrogate');
 		}
 
-		return [str.charAt(prevPos) + str.charAt(pos), prevPos, pos];
+		return {
+			char  : str.charAt(prevPos) + str.charAt(pos),
+			start : prevPos,
+			end   : pos
+		};
 	}
 
 
@@ -960,7 +978,7 @@ function safeActiveElement() {
 	});
 
 	/*
-		Returns a copy of the base string with the first Unicode grapheme uppercased,
+		Returns a copy of the base string with the first Unicode code point uppercased,
 		according to any locale-specific rules.
 	*/
 	Object.defineProperty(String.prototype, 'toLocaleUpperFirst', {
@@ -974,17 +992,17 @@ function safeActiveElement() {
 
 			const
 				// Required as `this` could be a `String` object or come from a `call()` or `apply()`.
-				str          = String(this),
+				str = String(this),
 
-				// Get the first Unicode grapheme, being mindful of surrogate pairs.
-				[ch, _, end] = _getCharStartAndEnd(str, 0); // eslint-disable-line no-unused-vars
+				// Get the first code point—may be one or two code units—and its end position.
+				{ char, end } = _getCodePointStartAndEnd(str, 0); // eslint-disable-line no-unused-vars
 
-			return end === -1 ? '' : ch.toLocaleUpperCase() + str.slice(end + 1);
+			return end === -1 ? '' : char.toLocaleUpperCase() + str.slice(end + 1);
 		}
 	});
 
 	/*
-		Returns a copy of the base string with the first Unicode grapheme uppercased.
+		Returns a copy of the base string with the first Unicode code point uppercased.
 	*/
 	Object.defineProperty(String.prototype, 'toUpperFirst', {
 		configurable : true,
@@ -997,12 +1015,12 @@ function safeActiveElement() {
 
 			const
 				// Required as `this` could be a `String` object or come from a `call()` or `apply()`.
-				str          = String(this),
+				str = String(this),
 
-				// Get the first Unicode grapheme, being mindful of surrogate pairs.
-				[ch, _, end] = _getCharStartAndEnd(str, 0); // eslint-disable-line no-unused-vars
+				// Get the first code point—may be one or two code units—and its end position.
+				{ char, end } = _getCodePointStartAndEnd(str, 0); // eslint-disable-line no-unused-vars
 
-			return end === -1 ? '' : ch.toUpperCase() + str.slice(end + 1);
+			return end === -1 ? '' : char.toUpperCase() + str.slice(end + 1);
 		}
 	});
 
