@@ -182,7 +182,10 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 		}
 
-		return cssName
+		// Strip the leading hyphen from the `-ms-` vendor prefix, so it stays lowercased.
+		const normalized = cssName.slice(0, 4) === '-ms-' ? cssName.slice(1) : cssName;
+
+		return normalized
 			.split('-')
 			.map((part, i) => i === 0 ? part : part.toUpperFirst())
 			.join('');
