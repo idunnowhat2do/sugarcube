@@ -1240,12 +1240,12 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 						else if (match[7]) {
 							arg = match[7];
 
-							// variable, so substitute its value.
+							// A variable, so substitute its value.
 							if (varTest.test(arg)) {
 								arg = Wikifier.getValue(arg);
 							}
 
-							// Settings or setup object, so try to evaluate it.
+							// Property access on the settings or setup objects, so try to evaluate it.
 							else if (/^(?:settings|setup)[\.\[]/.test(arg)) {
 								try {
 									arg = Scripting.evalTwineScript(arg);
@@ -1254,20 +1254,6 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 									throw new Error(`unable to parse macro argument "${arg}": ${e.message}`);
 								}
 							}
-
-							// // Object or Array literal, so try to evaluate it.
-							// //
-							// // n.b. Authors really shouldn't be passing object/array literals as arguments.  If they
-							// //      want to pass a complex type, then store it in a variable and pass that instead.
-							// else if (/^(?:\{.*\}|\[.*\])$/.test(arg)) {
-							// 	try {
-							// 		// The parens are to protect object literals from being confused with blocks.
-							// 		arg = Scripting.evalTwineScript(`(${arg})`);
-							// 	}
-							// 	catch (e) {
-							// 		throw new Error(`unable to parse macro argument "${arg}": ${e.message}`);
-							// 	}
-							// }
 
 							// Null literal, so convert it into null.
 							else if (arg === 'null') {
