@@ -57,7 +57,13 @@ var Patterns = (() => { // eslint-disable-line no-unused-vars, no-var
 		].join('|'),
 
 		// URL pattern.
-		url = '(?:file|https?|mailto|ftp|javascript|irc|news|data):[^\\s\'"]+(?:/|\\b)';
+		/*
+			TODO: The end of this pattern `(?:/|\\b)` should be unnecessary, so comment it
+			      out for now and, if no one complains, remove it later.
+
+			url = '(?:file|https?|mailto|ftp|javascript|irc|news|data):[^\\s\'"]+(?:/|\\b)';
+		*/
+		url = '(?:file|https?|mailto|ftp|javascript|irc|news|data):[^\\s\'"]+';
 
 
 	/*******************************************************************************************************************
