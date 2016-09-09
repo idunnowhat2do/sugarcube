@@ -66,7 +66,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		*/
 		Config.history.maxStates = Math.max(0, Config.history.maxStates);
 
-		if (isNaN(Config.history.maxStates) || !isFinite(Config.history.maxStates)) {
+		if (!Number.isSafeInteger(Config.history.maxStates)) {
 			// TODO: Maybe this should throw instead?
 			Config.history.maxStates = 100;
 		}

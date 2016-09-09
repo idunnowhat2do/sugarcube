@@ -176,7 +176,7 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 		/* eslint-disable no-param-reassign */
 		let increment = incrementBy != null ? Number(incrementBy) : 0.1; // lazy equality for null
 
-		if (isNaN(increment) || !isFinite(increment) || increment < 0) {
+		if (Number.isNaN(increment) || !Number.isFinite(increment) || increment < 0) {
 			increment = 0.1;
 		}
 		else if (increment > 1) {
@@ -330,7 +330,7 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 		if (arguments.length > 0) {
 			const offset = Number(arguments[0]);
 
-			if (isNaN(offset) || !isFinite(offset) || offset < 1) {
+			if (!Number.isSafeInteger(offset) || offset < 1) {
 				throw new RangeError('previous offset parameter must be a positive integer greater than zero');
 			}
 

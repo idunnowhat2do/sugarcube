@@ -32,7 +32,7 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 		// Finalize the `Config.saves.slots` property here, before it's used.
 		Config.saves.slots = Math.max(0, Config.saves.slots);
 
-		if (isNaN(Config.saves.slots) || !isFinite(Config.saves.slots)) {
+		if (!Number.isSafeInteger(Config.saves.slots)) {
 			// TODO: Maybe this should throw instead?
 			Config.saves.slots = 8;
 		}

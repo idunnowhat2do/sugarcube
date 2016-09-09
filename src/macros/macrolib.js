@@ -1717,9 +1717,9 @@
 
 						action = 'fade';
 						raw = args.shift();
-						fadeTo = parseFloat(raw);
+						fadeTo = Number.parseFloat(raw);
 
-						if (isNaN(fadeTo) || !isFinite(fadeTo)) {
+						if (Number.isNaN(fadeTo) || !Number.isFinite(fadeTo)) {
 							return this.error(`cannot parse fadeto: ${raw}`);
 						}
 						break;
@@ -1735,16 +1735,16 @@
 
 						action = 'fade';
 						raw = args.shift();
-						fadeOver = parseFloat(raw);
+						fadeOver = Number.parseFloat(raw);
 
-						if (isNaN(fadeOver) || !isFinite(fadeOver)) {
+						if (Number.isNaN(fadeOver) || !Number.isFinite(fadeOver)) {
 							return this.error(`cannot parse fadeoverto: ${raw}`);
 						}
 
 						raw = args.shift();
-						fadeTo = parseFloat(raw);
+						fadeTo = Number.parseFloat(raw);
 
-						if (isNaN(fadeTo) || !isFinite(fadeTo)) {
+						if (Number.isNaN(fadeTo) || !Number.isFinite(fadeTo)) {
 							return this.error(`cannot parse fadeoverto: ${raw}`);
 						}
 						break;
@@ -1755,9 +1755,9 @@
 						}
 
 						raw = args.shift();
-						volume = parseFloat(raw);
+						volume = Number.parseFloat(raw);
 
-						if (isNaN(volume) || !isFinite(volume)) {
+						if (Number.isNaN(volume) || !Number.isFinite(volume)) {
 							return this.error(`cannot parse volume: ${raw}`);
 						}
 						break;
@@ -1773,9 +1773,9 @@
 						}
 
 						raw = args.shift();
-						time = parseFloat(raw);
+						time = Number.parseFloat(raw);
 
-						if (isNaN(time) || !isFinite(time)) {
+						if (Number.isNaN(time) || !Number.isFinite(time)) {
 							return this.error(`cannot parse time: ${raw}`);
 						}
 						break;
@@ -2029,9 +2029,9 @@
 						// 	}
 						//
 						// 	raw = args.shift();
-						// 	rate = parseFloat(raw);
+						// 	rate = Number.parseFloat(raw);
 						//
-						// 	if (isNaN(rate) || !isFinite(rate)) {
+						// 	if (Number.isNaN(rate) || !Number.isFinite(rate)) {
 						// 		return this.error(`cannot parse rate: ${raw}`);
 						// 	}
 						// 	break;
@@ -2042,9 +2042,9 @@
 							}
 
 							raw = args.shift();
-							volume = parseFloat(raw);
+							volume = Number.parseFloat(raw);
 
-							if (isNaN(volume) || !isFinite(volume)) {
+							if (Number.isNaN(volume) || !Number.isFinite(volume)) {
 								return this.error(`cannot parse volume: ${raw}`);
 							}
 							break;
@@ -2135,9 +2135,9 @@
 						}
 
 						raw = args.shift();
-						volume = parseFloat(raw);
+						volume = Number.parseFloat(raw);
 
-						if (isNaN(volume) || !isFinite(volume)) {
+						if (Number.isNaN(volume) || !Number.isFinite(volume)) {
 							return this.error(`cannot parse volume: ${raw}`);
 						}
 						break;
@@ -2254,9 +2254,9 @@
 
 						action = 'fade';
 						raw = args.shift();
-						fadeTo = parseFloat(raw);
+						fadeTo = Number.parseFloat(raw);
 
-						if (isNaN(fadeTo) || !isFinite(fadeTo)) {
+						if (Number.isNaN(fadeTo) || !Number.isFinite(fadeTo)) {
 							return this.error(`cannot parse fadeto: ${raw}`);
 						}
 						break;
@@ -2272,16 +2272,16 @@
 
 						action = 'fade';
 						raw = args.shift();
-						fadeOver = parseFloat(raw);
+						fadeOver = Number.parseFloat(raw);
 
-						if (isNaN(fadeOver) || !isFinite(fadeOver)) {
+						if (Number.isNaN(fadeOver) || !Number.isFinite(fadeOver)) {
 							return this.error(`cannot parse fadeoverto: ${raw}`);
 						}
 
 						raw = args.shift();
-						fadeTo = parseFloat(raw);
+						fadeTo = Number.parseFloat(raw);
 
-						if (isNaN(fadeTo) || !isFinite(fadeTo)) {
+						if (Number.isNaN(fadeTo) || !Number.isFinite(fadeTo)) {
 							return this.error(`cannot parse fadeoverto: ${raw}`);
 						}
 						break;
@@ -2292,9 +2292,9 @@
 						}
 
 						raw = args.shift();
-						volume = parseFloat(raw);
+						volume = Number.parseFloat(raw);
 
-						if (isNaN(volume) || !isFinite(volume)) {
+						if (Number.isNaN(volume) || !Number.isFinite(volume)) {
 							return this.error(`cannot parse volume: ${raw}`);
 						}
 						break;

@@ -719,7 +719,7 @@ function safeActiveElement() {
 
 		value(num, min, max) {
 			const n = Number(num);
-			return isNaN(n) ? NaN : n.clamp(min, max);
+			return Number.isNaN(n) ? NaN : n.clamp(min, max);
 		}
 	});
 
@@ -847,7 +847,7 @@ function safeActiveElement() {
 					break;
 				}
 
-				return padString(retval, !align ? 0 : parseInt(align, 10), ' ');
+				return padString(retval, !align ? 0 : Number.parseInt(align, 10), ' ');
 			});
 		}
 	});
@@ -919,9 +919,9 @@ function safeActiveElement() {
 				return '';
 			}
 
-			let start = +startAt || 0;
+			let start = Number(startAt);
 
-			if (!isFinite(start)) {
+			if (!Number.isSafeInteger(start)) {
 				start = 0;
 			}
 			else if (start < 0) {
@@ -936,9 +936,9 @@ function safeActiveElement() {
 				start = length;
 			}
 
-			let count = +delCount || 0;
+			let count = Number(delCount);
 
-			if (!isFinite(count) || count < 0) {
+			if (!Number.isSafeInteger(count) || count < 0) {
 				count = 0;
 			}
 

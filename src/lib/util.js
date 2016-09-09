@@ -34,7 +34,7 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 			return false;
 		}
 
-		return !isNaN(num) && isFinite(num);
+		return !Number.isNaN(num) && Number.isFinite(num);
 	}
 
 	/**
@@ -136,7 +136,7 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 			msec *= 1000;
 		}
 
-		if (isNaN(msec) || !isFinite(msec)) {
+		if (Number.isNaN(msec) || !Number.isFinite(msec)) {
 			throw new RangeError(`invalid time value: "${cssTime}"`);
 		}
 
@@ -147,7 +147,7 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 		Returns the CSS time string represented by the passed number of milliseconds.
 	**/
 	function utilToCssTime(msec) {
-		if (typeof msec !== 'number' || isNaN(msec) || !isFinite(msec)) {
+		if (typeof msec !== 'number' || Number.isNaN(msec) || !Number.isFinite(msec)) {
 			let what;
 
 			switch (typeof msec) {

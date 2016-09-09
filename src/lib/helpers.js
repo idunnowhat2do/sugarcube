@@ -285,7 +285,7 @@ var { // eslint-disable-line no-var
 	function toStringOrDefault(val, defVal) {
 		switch (typeof val) {
 		case 'number':
-			if (isNaN(val)) {
+			if (Number.isNaN(val)) {
 				return defVal;
 			}
 			break;

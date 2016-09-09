@@ -1289,9 +1289,13 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 								arg = false;
 							}
 
-							// Numeric literal, so convert it into a number.
-							else if (!isNaN(parseFloat(arg)) && isFinite(arg)) {
-								arg = Number(arg);
+							// Attempt to convert it into a number, in case it's a numeric literal.
+							else {
+								const argAsNum = Number(arg);
+
+								if (!Number.isNaN(argAsNum)) {
+									arg = argAsNum;
+								}
 							}
 						}
 
