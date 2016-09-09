@@ -960,6 +960,30 @@ function safeActiveElement() {
 	});
 
 	/*
+		Returns a copy of the base string with the first Unicode grapheme uppercased,
+		according to any locale-specific rules.
+	*/
+	Object.defineProperty(String.prototype, 'toLocaleUpperFirst', {
+		configurable : true,
+		writable     : true,
+
+		value() {
+			if (this == null) { // lazy equality for null
+				throw new TypeError('String.prototype.toLocaleUpperFirst called on null or undefined');
+			}
+
+			const
+				// Required as `this` could be a `String` object or come from a `call()` or `apply()`.
+				str          = String(this),
+
+				// Get the first Unicode grapheme, being mindful of surrogate pairs.
+				[ch, _, end] = _getCharStartAndEnd(str, 0); // eslint-disable-line no-unused-vars
+
+			return end === -1 ? '' : ch.toLocaleUpperCase() + str.slice(end + 1);
+		}
+	});
+
+	/*
 		Returns a copy of the base string with the first Unicode grapheme uppercased.
 	*/
 	Object.defineProperty(String.prototype, 'toUpperFirst', {
@@ -978,7 +1002,7 @@ function safeActiveElement() {
 				// Get the first Unicode grapheme, being mindful of surrogate pairs.
 				[ch, _, end] = _getCharStartAndEnd(str, 0); // eslint-disable-line no-unused-vars
 
-			return end === -1 ? '' : ch.toLocaleUpperCase() + str.slice(end + 1);
+			return end === -1 ? '' : ch.toUpperCase() + str.slice(end + 1);
 		}
 	});
 
