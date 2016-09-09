@@ -555,7 +555,7 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 			/* eslint-enable no-param-reassign */
 		}
 		catch (e) {
-			UI.alert(`${e.message[0].toUpperCase() + e.message.slice(1)}.</p><p>${strings.aborting}.`);
+			UI.alert(`${e.message.toUpperFirst()}.</p><p>${strings.aborting}.`);
 			return false;
 		}
 

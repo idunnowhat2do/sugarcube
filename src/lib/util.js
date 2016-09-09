@@ -184,7 +184,7 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		return cssName
 			.split('-')
-			.map((part, i) => i === 0 ? part : part.slice(0, 1).toUpperCase() + part.slice(1))
+			.map((part, i) => i === 0 ? part : part.toUpperFirst())
 			.join('');
 	}
 
