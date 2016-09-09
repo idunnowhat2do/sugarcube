@@ -643,9 +643,61 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			jQuery(this.audio).off(events, listener);
 			return this;
 		}
+
+		/*
+			Verifies that the browser supports the given MIME-type and then retuns either
+			the MIME-type, if it is supported, or `null`, if it is not.
+		*/
+		static _verifyType(type) {
+			if (!type || !Has.audio) {
+				return null;
+			}
+
+			const cache = AudioWrapper._types;
+
+			if (!cache.hasOwnProperty(type)) {
+				const audio = document.createElement('audio');
+
+				// Some early implementations return 'no' instead of the empty string.
+				cache[type] = audio.canPlayType(type).replace(/^no$/i, '') !== '';
+			}
+
+			return cache[type] ? type : null;
+		}
+
+		/*
+			Retuns the MIME-type associated with the given format-ID, if it is supported,
+			elsewise `null`.
+		*/
+		static getType(format) {
+			if (!format || !Has.audio) {
+				return null;
+			}
+
+			const
+				known = AudioWrapper.formats,
+				id    = format.toLowerCase(),
+				type  = known.hasOwnProperty(id) ? known[id] : `audio/${id}`;
+
+			return AudioWrapper._verifyType(type);
+		}
+
+		/*
+			Returns whether the browser potentially supports a format.
+		*/
+		static canPlayFormat(format) {
+			return AudioWrapper.getType(format) !== null;
+		}
+
+		/*
+			Returns whether the browser potentially supports a MIME-type.
+		*/
+		static canPlayType(type) {
+			return AudioWrapper._verifyType(type) !== null;
+		}
 	}
 
-	// Static data members and methods.
+	// Attach the static data members.
 	Object.defineProperties(AudioWrapper, {
 		/*
 			Format-ID to MIME-type mappings for common audio types.
@@ -700,70 +752,10 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 		},
 
 		/*
-			Retuns the MIME-type associated with the given format-ID, if it is supported,
-			elsewise `null`.
-		*/
-		getType : {
-			value(format) {
-				if (!format || !Has.audio) {
-					return null;
-				}
-
-				const
-					known = AudioWrapper.formats,
-					id    = format.toLowerCase(),
-					type  = known.hasOwnProperty(id) ? known[id] : `audio/${id}`;
-
-				return AudioWrapper._verifyType(type);
-			}
-		},
-
-		/*
-			Returns whether the browser potentially supports a format.
-		*/
-		canPlayFormat : {
-			value(format) {
-				return AudioWrapper.getType(format) !== null;
-			}
-		},
-
-		/*
-			Returns whether the browser potentially supports a MIME-type.
-		*/
-		canPlayType : {
-			value(type) {
-				return AudioWrapper._verifyType(type) !== null;
-			}
-		},
-
-		/*
 			Cache of supported MIME-types.
 		*/
 		_types : {
 			value : {}
-		},
-
-		/*
-			Verifies that the browser supports the given MIME-type and then retuns either
-			the MIME-type, if it is supported, or `null`, if it is not.
-		*/
-		_verifyType : {
-			value(type) {
-				if (!type || !Has.audio) {
-					return null;
-				}
-
-				const cache = AudioWrapper._types;
-
-				if (!cache.hasOwnProperty(type)) {
-					const audio = document.createElement('audio');
-
-					// Some early implementations return 'no' instead of the empty string.
-					cache[type] = audio.canPlayType(type).replace(/^no$/i, '') !== '';
-				}
-
-				return cache[type] ? type : null;
-			}
 		},
 
 		/*
