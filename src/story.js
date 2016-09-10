@@ -16,13 +16,13 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 		_passages = {},
 
 		// List of style passages.
-		_styles   = [],
+		_styles = [],
 
 		// List of script passages.
-		_scripts  = [],
+		_scripts = [],
 
 		// List of widget passages.
-		_widgets  = [];
+		_widgets = [];
 
 	let
 		// Story title.
@@ -47,7 +47,12 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 				Set the default starting passage.
 			*/
 			Config.passages.start = (() => {
-				// Handle the Twine 1.4+ Test Play From Here feature (pattern: "START_AT").
+				/*
+					Handle the Twine 1.4+ Test Play From Here feature.
+
+					NOTE: Do not change the quote style around the START_AT replacement target,
+					      as the Twine 1 pattern which matches it depends upon double quotes.
+				*/
 				const testPlay = "START_AT"; // eslint-disable-line quotes
 				if (testPlay !== '') {
 					if (DEBUG) { console.log(`\tTest play; starting passage: "${testPlay}"`); }
