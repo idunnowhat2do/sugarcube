@@ -23,11 +23,7 @@ var { // eslint-disable-line no-var
 	/*
 		Appends a new <style> element to the document's <head>.
 	*/
-	const
-		_imageMarkupRe    = /\[[<>]?[Ii][Mm][Gg]\[(?:\s|\S)*?\]\]+/g,
-		_hasImageMarkupRe = new RegExp(_imageMarkupRe.source); // to drop the global flag
-
-	function addStyle(rawCSS) {
+	function addStyle(css) {
 		let style = document.getElementById('style-story');
 
 		if (style === null) {
@@ -38,40 +34,6 @@ var { // eslint-disable-line no-var
 		}
 
 		style = new StyleWrapper(style);
-
-		let css = rawCSS;
-
-		// Check for wiki image transclusion.
-		if (_hasImageMarkupRe.test(css)) {
-			css = css.replace(_imageMarkupRe, wikiImage => {
-				const markup = Wikifier.helpers.parseSquareBracketedMarkup({
-					source     : wikiImage,
-					matchStart : 0
-				});
-
-				if (markup.hasOwnProperty('error') || markup.pos < wikiImage.length) {
-					return wikiImage;
-				}
-
-				let source = markup.source;
-
-				// Handle image passage transclusion.
-				if (source.slice(0, 5) !== 'data:' && Story.has(source)) {
-					const passage = Story.get(source);
-
-					if (passage.tags.includes('Twine.image')) {
-						source = passage.text;
-					}
-				}
-
-				/*
-					The source may be URI- or Base64-encoded, so we cannot use encodeURIComponent()
-					here.  Instead, we simply encode any double quotes, since the URI will be
-					delimited by them.
-				*/
-				return `url("${source.replace(/"/g, '%22')}")`;
-			});
-		}
 
 		style.add(css);
 	}
