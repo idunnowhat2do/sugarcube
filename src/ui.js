@@ -102,7 +102,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 				$forward.prop('disabled', State.length === State.size);
 			})(jQuery('#history-backward'), jQuery('#history-forward')))
 			// Setup accessible outline handling.
-			//   based on: http://www.paciellogroup.com/blog/2012/04/how-to-remove-css-outlines-in-an-accessible-manner/
+			// IDEA: http://www.paciellogroup.com/blog/2012/04/how-to-remove-css-outlines-in-an-accessible-manner/
 			.on('mousedown.outline-handler keydown.outline-handler', evt => {
 				switch (evt.type) {
 				case 'mousedown':
