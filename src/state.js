@@ -294,8 +294,8 @@ var State = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Restore the seedable PRNG.
 
-			n.b. We cannot simply set `_prng.pull` to `_active.pull` as that would not
-			     properly mutate the PRNG's internal state.
+			NOTE: We cannot simply set `_prng.pull` to `_active.pull` as that would not
+			      properly mutate the PRNG's internal state.
 		*/
 		if (_prng !== null) {
 			_prng = PRNGWrapper.unmarshal({
@@ -312,8 +312,8 @@ var State = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Trigger a global `tw:historyupdate` event.
 
-			n.b. We do this here because setting a new active moment is a core component of,
-			     virtually, all history updates.
+			NOTE: We do this here because setting a new active moment is a core component of,
+			      virtually, all history updates.
 		*/
 		jQuery.event.trigger('tw:historyupdate');
 

@@ -107,8 +107,8 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 			/*
 				Set the default saves ID (must be done after the call to `_storySetTitle()`).
 
-				n.b. If not for the requirement to support Twine 1/Twee, we could use the
-				     story's IFID attribute here.
+				NOTE: If not for the requirement to support Twine 1/Twee, we could use the
+				      story's IFID attribute here.
 			*/
 			Config.saves.id = Story.domId;
 		}
@@ -129,8 +129,8 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 			/*
 				Process story options.
 
-				n.b. Currently, the only option of interest to us is 'debug' (it may be the
-				     only one period), so we simply use `<RegExp>.test()` to check for it.
+				NOTE: Currently, the only option of interest to us is 'debug' (it may be the
+				      only one period), so we simply use `<RegExp>.test()` to check for it.
 			*/
 			Config.debug = /\bdebug\b/.test($storydata.attr('options'));
 
@@ -193,8 +193,8 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 			/*
 				Set the default saves ID (must be done after the call to `_storySetTitle()`).
 
-				n.b. If not for the requirement to support Twine 1/Twee, we could use the
-				     story's IFID attribute here.
+				NOTE: If not for the requirement to support Twine 1/Twee, we could use the
+				      story's IFID attribute here.
 			*/
 			Config.saves.id = Story.domId;
 		}

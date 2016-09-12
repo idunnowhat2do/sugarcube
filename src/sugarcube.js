@@ -132,7 +132,7 @@ jQuery(() => {
 		Story.load();
 
 		// Instantiate the storage and session objects.
-		// n.b. `KeyValueStore()` params: driverType, persist, storageId
+		// NOTE: `KeyValueStore()` params: driverType, persist, storageId
 		storage = new KeyValueStore('webStorage', true, Story.domId);
 		session = new KeyValueStore('webStorage', false, Story.domId);
 

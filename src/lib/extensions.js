@@ -37,8 +37,8 @@ function safeActiveElement() {
 /*
 	JavaScript Polyfills.
 
-	n.b. Most of the ES5 & ES6 polyfills now come from the `es5-shim.js` and `es6-shim.js`
-	     libraries, respectively.
+	NOTE: Most of the ES5 & ES6 polyfills now come from the `es5-shim.js` and `es6-shim.js`
+	      libraries, respectively.
 */
 (() => {
 	'use strict';
@@ -726,7 +726,7 @@ function safeActiveElement() {
 	/*
 		Returns a decimal number eased from 0 to 1.
 
-		n.b. The magnitude of the returned value decreases if num < 0.5 or increases if num > 0.5.
+		NOTE: The magnitude of the returned value decreases if num < 0.5 or increases if num > 0.5.
 	*/
 	Object.defineProperty(Math, 'easeInOut', {
 		configurable : true,
@@ -1027,7 +1027,7 @@ function safeActiveElement() {
 	/*
 		[DEPRECATED] Returns an array of link titles, parsed from the string.
 
-		n.b. Unused in SugarCube, only included for compatibility.
+		NOTE: Unused in SugarCube, only included for compatibility.
 	*/
 	Object.defineProperty(String.prototype, 'readBracketedList', {
 		configurable : true,
@@ -1212,7 +1212,7 @@ function safeActiveElement() {
 
 	Makes the target element(s) WAI-ARIA compatible clickables.
 
-	n.b. Has a dependency in the `safeActiveElement()` function (see: top of file).
+	NOTE: Has a dependency in the `safeActiveElement()` function (see: top of file).
 */
 (() => {
 	'use strict';
@@ -1220,7 +1220,7 @@ function safeActiveElement() {
 	/*
 		Event handler & utility functions.
 
-		n.b. Do not replace the anonymous functions herein with arrow functions.
+		NOTE: Do not replace the anonymous functions herein with arrow functions.
 	*/
 	function onKeypressFn(evt) {
 		// 13 is Enter/Return, 32 is Space.
@@ -1332,7 +1332,7 @@ function safeActiveElement() {
 			}
 
 			// Set the keypress handlers, for non-<button> elements.
-			//   n.b. For the single-use case, the click handler will also remove this handler.
+			// NOTE: For the single-use case, the click handler will also remove this handler.
 			this.not('button').on(
 				`keypress.aria-clickable${opts.namespace}`,
 				opts.selector,
@@ -1340,7 +1340,7 @@ function safeActiveElement() {
 			);
 
 			// Set the click handlers.
-			//   n.b. To ensure both handlers are properly removed, `one()` must not be used here.
+			// NOTE: To ensure both handlers are properly removed, `one()` must not be used here.
 			this.on(
 				`click.aria-clickable${opts.namespace}`,
 				opts.selector,

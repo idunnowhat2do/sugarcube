@@ -295,7 +295,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		get duration() {
-			// n.b. May return a double (normally), Infinity (for streams), or NaN (without metadata).
+			// NOTE: May return a double (normally), Infinity (for streams), or NaN (without metadata).
 			return this.audio.duration;
 		}
 
@@ -332,10 +332,10 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			/*
 				Clamp the playback rate to sane values—some browsers also do this to varying degrees.
 
-				n.b. The specification allows negative values for backwards playback, however, most
-				     browsers (as of Aug 2016) either completely ignore negative values or clamp them
-				     to some positive value.  In some (notably, IE/Edge), setting a negative playback
-				     rate breaks the associated controls, if they're being displayed.
+				NOTE: The specification allows negative values for backwards playback, however,
+				      most browsers (ca. Aug 2016) either completely ignore negative values or
+				      clamp them to some positive value.  In some (notably, IE/Edge), setting a
+				      negative playback rate breaks the associated controls, if displayed.
 			*/
 			/*
 			this._rate = playRate < 0
@@ -350,7 +350,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		get remaining() {
-			// n.b. May return a double (normally), Infinity (for streams), or NaN (without metadata).
+			// NOTE: May return a double (normally), Infinity (for streams), or NaN (without metadata).
 			return this.audio.duration - this.audio.currentTime;
 		}
 
@@ -902,7 +902,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		get duration() {
-			// n.b. May return a double (normally), Infinity (for streams), or NaN (without metadata).
+			// NOTE: May return a double (normally), Infinity (for streams), or NaN (without metadata).
 			return this.tracks
 				.map(trackObj => trackObj.track.duration)
 				.reduce((p, c) => p + c, 0);
@@ -938,7 +938,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		get remaining() {
-			// n.b. May return a double (normally), Infinity (for streams), or NaN (without metadata).
+			// NOTE: May return a double (normally), Infinity (for streams), or NaN (without metadata).
 			let remainingTime = this.queue
 				.map(trackObj => trackObj.track.duration)
 				.reduce((p, c) => p + c, 0);

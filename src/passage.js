@@ -110,8 +110,8 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 						/*
 							Return the sorted list of unique classes.
 
-							n.b. The `this.tags` array is already sorted and unique, so we only need
-							     to filter and map here.
+							NOTE: The `this.tags` array is already sorted and unique, so we only
+							      need to filter and map here.
 						*/
 						this.tags
 							.filter(tag => !_tagsToSkip.test(tag))

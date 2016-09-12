@@ -34,19 +34,19 @@ var { // eslint-disable-line no-var
 		}
 
 		style = new StyleWrapper(style);
-
 		style.add(css);
 	}
 
 	/*
 		Returns a deep copy of the passed object.
 
-		n.b. 1. `clone()` does not clone functions, however, since function definitions are immutable,
-		        the only issues are with expando properties and scope.  The former really should not
-		        be done.  The latter is problematic either way (damned if you do, damned if you don't).
-		     2. `clone()` does not maintain referential relationships (e.g. multiple references to the
-		        same object will, post-cloning, refer to different equivalent objects; i.e. each
-		        reference will get its own clone of the original object).
+		NOTE: 1. `clone()` does not clone functions, however, since function definitions are
+		         immutable, the only issues are with expando properties and scope.  The former
+		         really should not be done.  The latter is problematic either way (damned if
+		         you do, damned if you don't).
+		      2. `clone()` does not maintain referential relationships (e.g. multiple references
+		         to the same object will, post-cloning, refer to different equivalent objects;
+		         i.e. each reference will get its own clone of the original object).
 	*/
 	function clone(orig) {
 		/*
@@ -69,15 +69,17 @@ var { // eslint-disable-line no-var
 		/*
 			Create a copy of the original object.
 
-			n.b. 1. Each non-generic object that we wish to support must receive a special case below.
-			     2. Since we're using the `instanceof` operator to identify special cases, this may
-			        fail to properly identify such cases if the author engages in cross-<iframe>
-			        object manipulation.  The solution to this problem would be for the author to
-			        pass messages between the frames, rather than doing direct cross-frame object
-			        manipulation.  That is, in fact, what they should be doing in the first place.
-			     3. We cannot use `Object.prototype.toString.call(orig)` to solve #2 because the shims
-			        for `Map` and `Set` return `[object Object]` rather than `[object Map]` and
-			        `[object Set]`.
+			NOTE: 1. Each non-generic object that we wish to support must receive a special
+			         case below.
+			      2. Since we're using the `instanceof` operator to identify special cases,
+			         this may fail to properly identify such cases if the author engages in
+			         cross-<iframe> object manipulation.  The solution to this problem would
+			         be for the author to pass messages between the frames, rather than doing
+			         direct cross-frame object manipulation.  That is, in fact, what they should
+			         be doing in the first place.
+			      3. We cannot use `Object.prototype.toString.call(orig)` to solve #2 because
+			         the shims for `Map` and `Set` return `[object Object]` rather than
+			         `[object Map]` and `[object Set]`.
 		*/
 		let copy;
 
@@ -107,8 +109,8 @@ var { // eslint-disable-line no-var
 			Duplicate the original object's own enumerable properties, which will include expando
 			properties on non-generic objects.
 
-			n.b. This does not preserve ES5 property attributes.  Neither does the delta coding
-				 or serialization code, however, so it's not really an issue at the moment.
+			NOTE: This does not preserve ES5 property attributes.  Neither does the delta coding
+			      or serialization code, however, so it's not really an issue at the moment.
 		*/
 		Object.keys(orig).forEach(name => copy[name] = clone(orig[name]));
 

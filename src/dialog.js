@@ -92,9 +92,9 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Cache the dialog elements, since they're going to be used often.
 
-			n.b. We rewrap the elements themselves, rather than simply using the results of
-			     `find()`, so that we cache uncluttered jQuery-wrappers (i.e. `context` refers
-			     to the elements and there is no `prevObject`).
+			NOTE: We rewrap the elements themselves, rather than simply using the results
+			      of `find()`, so that we cache uncluttered jQuery-wrappers (i.e. `context`
+			      refers to the elements and there is no `prevObject`).
 		*/
 		_$overlay     = jQuery($uiTree.find('#ui-overlay').get(0));
 		_$dialog      = jQuery($uiTree.find('#ui-dialog').get(0));
@@ -183,12 +183,18 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 		_$overlay
 			.addClass('open');
 
-		// Add the imagesLoaded handler to the dialog body, if necessary.
-		// n.b. We use `querySelector()` as jQuery has no equivalent.
+		/*
+			Add the imagesLoaded handler to the dialog body, if necessary.
+
+			NOTE: We use `querySelector()` here as jQuery has no simple way to check if,
+			      and only if, at least one element of the specified type exists.  The
+			      best that jQuery offers is analogous to `querySelectorAll()`, which
+			      enumerates all elements of the specified type.
+		*/
 		if (_$dialogBody[0].querySelector('img') !== null) {
 			_$dialogBody
 				.imagesLoaded()
-				.always(() => dialogResizeHandler({ data : { top } }));
+					.always(() => dialogResizeHandler({ data : { top } }));
 		}
 
 		// Add `aria-hidden=true` to all direct non-dialog-children of <body> to

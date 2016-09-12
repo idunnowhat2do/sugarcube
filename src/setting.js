@@ -72,11 +72,6 @@ var Setting = (() => { // eslint-disable-line no-unused-vars, no-var
 		const savedSettings = settingsCreate();
 
 		if (Object.keys(settings).length > 0) {
-			// _definitions.forEach(definition => {
-			// 	if (definition.type !== Types.Header && settings[definition.name] !== definition.default) {
-			// 		savedSettings[definition.name] = settings[definition.name];
-			// 	}
-			// });
 			_definitions
 				.filter(d => d.type !== Types.Header && settings[d.name] !== d.default)
 				.forEach(d => savedSettings[d.name] = settings[d.name]);
@@ -96,11 +91,6 @@ var Setting = (() => { // eslint-disable-line no-unused-vars, no-var
 			loadedSettings  = storage.get('settings') || settingsCreate();
 
 		// Load the defaults.
-		// _definitions.forEach(definition => {
-		// 	if (definition.type !== Types.Header) {
-		// 		defaultSettings[definition.name] = definition.default;
-		// 	}
-		// });
 		_definitions
 			.filter(d => d.type !== Types.Header)
 			.forEach(d => defaultSettings[d.name] = d.default);

@@ -62,7 +62,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Finalize various `Config` properties here, before any passages are displayed.
 
-			n.b. We do this here to give authors every opportunity to modify these properties.
+			We do this here to give authors every opportunity to modify these properties.
 		*/
 		Config.history.maxStates = Math.max(0, Config.history.maxStates);
 
@@ -251,9 +251,10 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Retrieve the passage by the given title.
 
-			n.b. The `title` parameter may be empty, a string, or a number (though using a number
-			     as reference to a numeric title should be discouraged), so after loading the
-			     passage, always refer to `passage.title` and never the `title` parameter.
+			NOTE: The `title` parameter may be empty, a string, or a number (though using a
+			      number as reference to a numeric title should be discouraged), so after
+			      loading the passage, always refer to `passage.title` and never the `title`
+			      parameter.
 		*/
 		const passage = Story.get(title);
 

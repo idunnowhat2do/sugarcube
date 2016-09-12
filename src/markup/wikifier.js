@@ -920,9 +920,9 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 										/*
 											Call the handler.
 
-											n.b. There's no catch clause here because this try/finally exists simply
-											     to ensure that the execution context is properly restored in the event
-											     that an uncaught exception is thrown during the handler call.
+											NOTE: There's no catch clause here because this try/finally exists simply
+											      to ensure that the execution context is properly restored in the
+											      event that an uncaught exception is thrown during the handler call.
 										*/
 										try {
 											macro.handler.call(this.context);

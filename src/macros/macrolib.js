@@ -2453,7 +2453,7 @@
 				/*
 					Gather all tracks from `<<setplaylist>>`, since they're all copies.
 
-					n.b. `<<setplaylist>>` is deprecated, so don't assume that it exists.
+					NOTE: `<<setplaylist>>` is deprecated, so don't assume that it exists.
 				*/
 				if (Macro.has('setplaylist')) {
 					const list = Macro.get('setplaylist').list;
@@ -2589,10 +2589,10 @@
 			/*
 				Call `Engine.play()`.
 
-				n.b. This does not terminate the current Wikifier call chain, though, ideally, it
-				     probably should.  Doing so would not be trivial, however, and then there's the
-				     question of whether that behavior would be unwanted by users, who are used to
-				     the current behavior from similar macros and constructs.
+				NOTE: This does not terminate the current Wikifier call chain, though, ideally,
+				      it probably should.  Doing so would not be trivial, however, and there's
+				      also the question of whether that behavior would be unwanted by users, who
+				      are used to the current behavior from similar macros and constructs.
 			*/
 			setTimeout(() => Engine.play(passage), Engine.minDomActionDelay);
 		}
