@@ -18,6 +18,15 @@ var L10n = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
+	 * Localization Functions.
+	 ******************************************************************************************************************/
+	function l10nInit() {
+		/* legacy */
+		_mapStringsToL10nStrings();
+		/* /legacy */
+	}
+
+	/*******************************************************************************************************************
 	 * Localized String Functions.
 	 ******************************************************************************************************************/
 	function l10nGet(ids, overrides) {
@@ -75,7 +84,10 @@ var L10n = (() => { // eslint-disable-line no-unused-vars, no-var
 	/*******************************************************************************************************************
 	 * Legacy Functions.
 	 ******************************************************************************************************************/
-	function l10nMapLegacyStrings() {
+	/*
+		Attempt to map legacy `strings` object properties to the `l10nStrings` object.
+	*/
+	function _mapStringsToL10nStrings() {
 		if (strings && Object.keys(strings).length > 0) {
 			Object.keys(l10nStrings).forEach(id => {
 				try {
@@ -198,13 +210,13 @@ var L10n = (() => { // eslint-disable-line no-unused-vars, no-var
 	 ******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
 		/*
-			Localized String Functions.
+			Localization Functions.
 		*/
-		get : { value : l10nGet },
+		init : { value : l10nInit },
 
 		/*
-			Legacy Functions.
+			Localized String Functions.
 		*/
-		mapLegacyStrings : { value : l10nMapLegacyStrings }
+		get : { value : l10nGet }
 	}));
 })();

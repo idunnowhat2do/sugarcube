@@ -7,7 +7,6 @@
  *
  **********************************************************************************************************************/
 
-/* legacy */
 /*
 	[DEPRECATED] The `strings` object is deprecated and should no longer be used.
 	All new or updated translations should be based upon the `l10nStrings` object
@@ -32,4 +31,3 @@ var strings = { // eslint-disable-line no-unused-vars, no-var
 		return : {}
 	}
 };
-/* /legacy */

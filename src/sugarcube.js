@@ -143,7 +143,10 @@ jQuery(() => {
 		// Initialize the story (largely load the user styles, scripts, and widgets).
 		Story.init();
 
-		// Alert when the browser is degrading required capabilities (must be done after story initialization).
+		// Initialize the localization (must be done after story initialization).
+		L10n.init();
+
+		// Alert when the browser is degrading required capabilities (must be done after localization initialization).
 		if (!session.has('rcWarn') && storage.name === 'cookie') {
 			/* eslint-disable no-alert */
 			session.set('rcWarn', 1);

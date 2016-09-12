@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global Alert, Config, L10n, Passage, Scripting, Util, Wikifier, addStyle */
+/* global Alert, Config, Passage, Scripting, Util, Wikifier, addStyle */
 
 var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
@@ -233,19 +233,6 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 				Alert.error(_widgets[i].title, e.message);
 			}
 		}
-
-		/* legacy */
-		/*
-			Attempt to map legacy `strings` object properties to the `l10nStrings` object.
-
-			We do this here to catch `strings` object modifications placed within user
-			scripts.  It's temping to do this after the `StoryInit` special passage has
-			been processed, since we cannot be sure where authors will have placed their
-			modifications, however, we need to get this done as soon as possible so that
-			localized strings are available to the system.
-		*/
-		L10n.mapLegacyStrings();
-		/* /legacy */
 	}
 
 	function _storySetTitle(title) {
