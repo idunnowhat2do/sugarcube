@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global Config, DebugView, Engine, Has, LoadScreen, Macro, Scripting, SimpleAudio, State, Story, TempState,
-	       TempVariables, Util, Wikifier, postdisplay, prehistory, storage, strings, toStringOrDefault
+	global Config, DebugView, Engine, Has, L10n, LoadScreen, Macro, Scripting, SimpleAudio, State, Story, TempState,
+	       TempVariables, Util, Wikifier, postdisplay, prehistory, storage, toStringOrDefault
 */
 
 (() => {
@@ -1425,7 +1425,7 @@
 
 			$el
 				.addClass(`macro-${this.name}`)
-				.append($image || document.createTextNode(text || strings.macros[this.name].text))
+				.append($image || document.createTextNode(text || L10n.get(`macro${this.name.toUpperFirst()}Text`)))
 				.appendTo(this.output);
 		}
 	});

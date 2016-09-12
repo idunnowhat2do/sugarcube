@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global strings */
+/* global L10n */
 
 /*
 	TODO: Make this use jQuery throughout.
@@ -115,9 +115,9 @@ var DebugView = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		static init() {
 			// Inject the the debug view toggle button into the UI bar.
-			jQuery(`<button id="debug-view-toggle">${strings.debugView.title}</button>`)
+			jQuery(`<button id="debug-view-toggle">${L10n.get('debugViewTitle')}</button>`)
 				.ariaClick({
-					label : strings.debugView.toggle
+					label : L10n.get('debugViewToggle')
 				}, () => DebugView.toggle())
 				.prependTo('#ui-bar-body');
 

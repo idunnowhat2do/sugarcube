@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global Config, Engine, State, Story, UI, Util, storage, strings */
+/* global Config, Engine, L10n, State, Story, UI, Util, storage */
 
 var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
@@ -264,7 +264,7 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 
 	function slotsSave(slot, title, metadata) {
 		if (typeof Config.saves.isAllowed === 'function' && !Config.saves.isAllowed()) {
-			UI.alert(strings.saves.disallowed);
+			UI.alert(L10n.get('savesDisallowed'));
 			return false;
 		}
 
@@ -312,7 +312,7 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 	 ******************************************************************************************************************/
 	function exportSave(filename, metadata) {
 		if (typeof Config.saves.isAllowed === 'function' && !Config.saves.isAllowed()) {
-			UI.alert(strings.saves.disallowed);
+			UI.alert(L10n.get('savesDisallowed'));
 			return;
 		}
 
@@ -532,7 +532,7 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 			/* /legacy */
 
 			if (!saveObj || !saveObj.hasOwnProperty('id') || !saveObj.hasOwnProperty('state')) {
-				throw new Error(strings.errors.saveMissingData);
+				throw new Error(L10n.get('errorSaveMissingData'));
 			}
 
 			// Delta decode the state history and delete the encoded property.
@@ -544,7 +544,7 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 
 			if (saveObj.id !== Config.saves.id) {
-				throw new Error(strings.errors.saveIdMismatch.replace(/%identity%/g, strings.identity));
+				throw new Error(L10n.get('errorSaveIdMismatch'));
 			}
 
 			// Restore the state.
@@ -555,7 +555,7 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 			/* eslint-enable no-param-reassign */
 		}
 		catch (e) {
-			UI.alert(`${e.message.toUpperFirst()}.</p><p>${strings.aborting}.`);
+			UI.alert(`${e.message.toUpperFirst()}.</p><p>${L10n.get('aborting')}.`);
 			return false;
 		}
 

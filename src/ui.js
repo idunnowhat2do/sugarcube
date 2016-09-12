@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global Dialog, Engine, Has, Save, Setting, State, Story, StyleWrapper, Util, Wikifier, Config, setPageElement,
-	       settings, strings
+	global Dialog, Engine, Has, L10n, Save, Setting, State, Story, StyleWrapper, Util, Wikifier, Config, setPageElement,
+	       settings
 */
 
 var UI = (() => { // eslint-disable-line no-unused-vars, no-var
@@ -47,10 +47,10 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 		(() => {
 			const
 				$uiTree       = jQuery(document.createDocumentFragment()),
-				toggleLabel   = strings.uiBar.toggle,
-				backwardLabel = strings.uiBar.backward.replace(/%identity%/g, strings.identity),
-				jumptoLabel   = strings.uiBar.jumpto.replace(/%identity%/g, strings.identity),
-				forwardLabel  = strings.uiBar.forward.replace(/%identity%/g, strings.identity);
+				toggleLabel   = L10n.get('uiBarToggle'),
+				backwardLabel = L10n.get('uiBarBackward'),
+				jumptoLabel   = L10n.get('uiBarJumpto'),
+				forwardLabel  = L10n.get('uiBarForward');
 
 			$uiTree
 				.append(
@@ -76,10 +76,10 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 					+         '<nav id="menu" role="navigation">'
 					+             '<ul id="menu-story"></ul>'
 					+             '<ul id="menu-core">'
-					+                 `<li id="menu-item-saves"><a tabindex="0">${strings.saves.title}</a></li>`
-					+                 `<li id="menu-item-settings"><a tabindex="0">${strings.settings.title}</a></li>`
-					+                 `<li id="menu-item-restart"><a tabindex="0">${strings.restart.title}</a></li>`
-					+                 `<li id="menu-item-share"><a tabindex="0">${strings.share.title}</a></li>`
+					+                 `<li id="menu-item-saves"><a tabindex="0">${L10n.get('savesTitle')}</a></li>`
+					+                 `<li id="menu-item-settings"><a tabindex="0">${L10n.get('settingsTitle')}</a></li>`
+					+                 `<li id="menu-item-restart"><a tabindex="0">${L10n.get('restartTitle')}</a></li>`
+					+                 `<li id="menu-item-share"><a tabindex="0">${L10n.get('shareTitle')}</a></li>`
 					+             '</ul>'
 					+         '</nav>'
 					+     '</div>'
@@ -134,20 +134,20 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 		// Setup the #ui-bar-toggle and #ui-bar-history widgets.
 		jQuery('#ui-bar-toggle')
 			.ariaClick({
-				label : strings.uiBar.toggle
+				label : L10n.get('uiBarToggle')
 			}, () => $uiBar.toggleClass('stowed'));
 
 		if (Config.history.controls) {
 			jQuery('#history-backward')
 				.prop('disabled', State.length < 2)
 				.ariaClick({
-					label : strings.uiBar.backward.replace(/%identity%/g, strings.identity)
+					label : L10n.get('uiBarBackward')
 				}, () => Engine.backward());
 
 			if (Story.lookup('tags', 'bookmark').length > 0) {
 				jQuery('#history-jumpto')
 					.ariaClick({
-						label : strings.uiBar.jumpto.replace(/%identity%/g, strings.identity)
+						label : L10n.get('uiBarJumpto')
 					}, () => UI.jumpto());
 			}
 			else {
@@ -157,7 +157,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 			jQuery('#history-forward')
 				.prop('disabled', State.length === State.size)
 				.ariaClick({
-					label : strings.uiBar.forward.replace(/%identity%/g, strings.identity)
+					label : L10n.get('uiBarForward')
 				}, () => Engine.forward());
 		}
 		else {
@@ -191,12 +191,12 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		// Setup the Saves menu item.
 		Dialog.addClickHandler('#menu-item-saves a', null, uiBuildSaves)
-			.text(strings.saves.title);
+			.text(L10n.get('savesTitle'));
 
 		// Setup the Settings menu item.
 		if (!Setting.isEmpty()) {
 			Dialog.addClickHandler('#menu-item-settings a', null, uiBuildSettings)
-				.text(strings.settings.title);
+				.text(L10n.get('settingsTitle'));
 		}
 		else {
 			jQuery('#menu-item-settings').remove();
@@ -204,12 +204,12 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		// Setup the Restart menu item.
 		Dialog.addClickHandler('#menu-item-restart a', null, uiBuildRestart)
-			.text(strings.restart.title);
+			.text(L10n.get('restartTitle'));
 
 		// Setup the Share menu item.
 		if (Story.has('StoryShare')) {
 			Dialog.addClickHandler('#menu-item-share a', null, uiBuildShare)
-				.text(strings.share.title);
+				.text(L10n.get('shareTitle'));
 		}
 		else {
 			jQuery('#menu-item-share').remove();
@@ -304,7 +304,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 		jQuery(Dialog.setup('Alert', 'alert'))
 			.append(
 				  `<p>${message}</p><ul class="buttons">`
-				+ `<li><button id="alert-ok" class="ui-close">${strings.alert.ok || strings.ok}</button></li>`
+				+ `<li><button id="alert-ok" class="ui-close">${L10n.get(['alertOk', 'ok'])}</button></li>`
 				+ '</ul>'
 			);
 		Dialog.open(...args);
@@ -338,12 +338,12 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 	function uiBuildAutoload() {
 		if (DEBUG) { console.log('[UI/uiBuildAutoload()]'); }
 
-		jQuery(Dialog.setup(strings.autoload.title, 'autoload'))
+		jQuery(Dialog.setup(L10n.get('autoloadTitle'), 'autoload'))
 			.append(
 				/* eslint-disable max-len */
-				  `<p>${strings.autoload.prompt}</p><ul class="buttons">`
-				+ `<li><button id="autoload-ok" class="ui-close">${strings.autoload.ok || strings.ok}</button></li>`
-				+ `<li><button id="autoload-cancel" class="ui-close">${strings.autoload.cancel || strings.cancel}</button></li>`
+				  `<p>${L10n.get('autoloadPrompt')}</p><ul class="buttons">`
+				+ `<li><button id="autoload-ok" class="ui-close">${L10n.get(['autoloadOk', 'ok'])}</button></li>`
+				+ `<li><button id="autoload-cancel" class="ui-close">${L10n.get(['autoloadCancel', 'cancel'])}</button></li>`
 				+ '</ul>'
 				/* eslint-enable max-len */
 			);
@@ -368,7 +368,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		const list = document.createElement('ul');
 
-		jQuery(Dialog.setup(strings.jumpto.title, 'jumpto list'))
+		jQuery(Dialog.setup(L10n.get('jumptoTitle'), 'jumpto list'))
 			.append(list);
 
 		const expired = State.expired.length;
@@ -388,26 +388,26 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 								return () => jQuery(document).one('tw:dialogclosed', () => Engine.goTo(idx));
 							})(i))
 							.addClass('ui-close')
-							.text(`${strings.jumpto.turn} ${expired + i + 1}: ${passage.description()}`)
+							.text(`${L10n.get('jumptoTurn')} ${expired + i + 1}: ${passage.description()}`)
 					)
 					.appendTo(list);
 			}
 		}
 
 		if (!list.hasChildNodes()) {
-			jQuery(list).append(`<li><a><em>${strings.jumpto.unavailable}</em></a></li>`);
+			jQuery(list).append(`<li><a><em>${L10n.get('jumptoUnavailable')}</em></a></li>`);
 		}
 	}
 
 	function uiBuildRestart() {
 		if (DEBUG) { console.log('[UI/uiBuildRestart()]'); }
 
-		jQuery(Dialog.setup(strings.restart.title, 'restart'))
+		jQuery(Dialog.setup(L10n.get('restartTitle'), 'restart'))
 			.append(
 				/* eslint-disable max-len */
-				  `<p>${strings.restart.prompt}</p><ul class="buttons">`
-				+ `<li><button id="restart-ok">${strings.restart.ok || strings.ok}</button></li>`
-				+ `<li><button id="restart-cancel" class="ui-close">${strings.restart.cancel || strings.cancel}</button></li>`
+				  `<p>${L10n.get('restartPrompt')}</p><ul class="buttons">`
+				+ `<li><button id="restart-ok">${L10n.get(['restartOk', 'ok'])}</button></li>`
+				+ `<li><button id="restart-cancel" class="ui-close">${L10n.get(['restartCancel', 'cancel'])}</button></li>`
 				+ '</ul>'
 				/* eslint-enable max-len */
 			)
@@ -462,12 +462,12 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 				if (bAction) {
 					if (bSlot === 'auto') {
 						$btn.ariaClick({
-							label : `${bText} ${strings.saves.labelAuto}`
+							label : `${bText} ${L10n.get('savesLabelAuto')}`
 						}, () => bAction());
 					}
 					else {
 						$btn.ariaClick({
-							label : `${bText} ${strings.saves.labelSlot} ${bSlot + 1}`
+							label : `${bText} ${L10n.get('savesLabelSlot')} ${bSlot + 1}`
 						}, () => bAction(bSlot));
 					}
 				}
@@ -492,8 +492,8 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 				// Add the slot ID.
 				jQuery(document.createElement('b'))
 					.attr({
-						title        : strings.saves.labelAuto,
-						'aria-label' : strings.saves.labelAuto
+						title        : L10n.get('savesLabelAuto'),
+						'aria-label' : L10n.get('savesLabelAuto')
 					})
 					.text('A') // '\u25C6' Black Diamond
 					.appendTo($tdSlot);
@@ -501,7 +501,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 				if (saves.autosave) {
 					// Add the load button.
 					$tdLoad.append(
-						createButton('load', 'ui-close', strings.saves.labelLoad, 'auto', () => {
+						createButton('load', 'ui-close', L10n.get('savesLabelLoad'), 'auto', () => {
 							jQuery(document).one('tw:dialogclosed', () => Save.autosave.load());
 						})
 					);
@@ -514,14 +514,14 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 						.addClass('datestamp')
 						.html(
 							saves.autosave.date
-								? `${strings.saves.savedOn} ${new Date(saves.autosave.date).toLocaleString()}`
-								: `${strings.saves.savedOn} <em>${strings.saves.unknownDate}</em>`
+								? `${L10n.get('savesSavedOn')} ${new Date(saves.autosave.date).toLocaleString()}`
+								: `${L10n.get('savesSavedOn')} <em>${L10n.get('savesUnknownDate')}</em>`
 						)
 						.appendTo($tdDesc);
 
 					// Add the delete button.
 					$tdDele.append(
-						createButton('delete', null, strings.saves.labelDelete, 'auto', () => {
+						createButton('delete', null, L10n.get('savesLabelDelete'), 'auto', () => {
 							Save.autosave.delete();
 							uiBuildSaves();
 							Dialog.resize();
@@ -531,18 +531,18 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 				else {
 					// Add the load button.
 					$tdLoad.append(
-						createButton('load', null, strings.saves.labelLoad, 'auto')
+						createButton('load', null, L10n.get('savesLabelLoad'), 'auto')
 					);
 
 					// Add the description.
 					jQuery(document.createElement('em'))
-						.text(strings.saves.emptySlot)
+						.text(L10n.get('savesEmptySlot'))
 						.appendTo($tdDesc);
 					$tdDesc.addClass('empty');
 
 					// Add the delete button.
 					$tdDele.append(
-						createButton('delete', null, strings.saves.labelDelete, 'auto')
+						createButton('delete', null, L10n.get('savesLabelDelete'), 'auto')
 					);
 				}
 
@@ -567,7 +567,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 				if (saves.slots[i]) {
 					// Add the load button.
 					$tdLoad.append(
-						createButton('load', 'ui-close', strings.saves.labelLoad, i, slot => {
+						createButton('load', 'ui-close', L10n.get('savesLabelLoad'), i, slot => {
 							jQuery(document).one('tw:dialogclosed', () => Save.slots.load(slot));
 						})
 					);
@@ -580,14 +580,14 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 						.addClass('datestamp')
 						.html(
 							saves.slots[i].date
-								? `${strings.saves.savedOn} ${new Date(saves.slots[i].date).toLocaleString()}`
-								: `${strings.saves.savedOn} <em>${strings.saves.unknownDate}</em>`
+								? `${L10n.get('savesSavedOn')} ${new Date(saves.slots[i].date).toLocaleString()}`
+								: `${L10n.get('savesSavedOn')} <em>${L10n.get('savesUnknownDate')}</em>`
 						)
 						.appendTo($tdDesc);
 
 					// Add the delete button.
 					$tdDele.append(
-						createButton('delete', null, strings.saves.labelDelete, i, slot => {
+						createButton('delete', null, L10n.get('savesLabelDelete'), i, slot => {
 							Save.slots.delete(slot);
 							uiBuildSaves();
 							Dialog.resize();
@@ -597,18 +597,18 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 				else {
 					// Add the load button.
 					$tdLoad.append(
-						createButton('save', 'ui-close', strings.saves.labelSave, i, Save.slots.save)
+						createButton('save', 'ui-close', L10n.get('savesLabelSave'), i, Save.slots.save)
 					);
 
 					// Add the description.
 					jQuery(document.createElement('em'))
-						.text(strings.saves.emptySlot)
+						.text(L10n.get('savesEmptySlot'))
 						.appendTo($tdDesc);
 					$tdDesc.addClass('empty');
 
 					// Add the delete button.
 					$tdDele.append(
-						createButton('delete', null, strings.saves.labelDelete, i)
+						createButton('delete', null, L10n.get('savesLabelDelete'), i)
 					);
 				}
 
@@ -628,7 +628,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 		if (DEBUG) { console.log('[UI/uiBuildSaves()]'); }
 
 		const
-			$dialogBody = jQuery(Dialog.setup(strings.saves.title, 'saves')),
+			$dialogBody = jQuery(Dialog.setup(L10n.get('savesTitle'), 'saves')),
 			savesOk     = Save.ok();
 
 		// Add saves list.
@@ -643,9 +643,9 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 				.appendTo($dialogBody);
 
 			if (Has.fileAPI) {
-				$btnBar.append(createActionItem('export', 'ui-close', strings.saves.labelExport,
+				$btnBar.append(createActionItem('export', 'ui-close', L10n.get('savesLabelExport'),
 					() => Save.export()));
-				$btnBar.append(createActionItem('import', null, strings.saves.labelImport,
+				$btnBar.append(createActionItem('import', null, L10n.get('savesLabelImport'),
 					() => $dialogBody.find('#saves-import-file').trigger('click')));
 
 				// Add the hidden `input[type=file]` element which will be triggered by the `#saves-import` button.
@@ -674,7 +674,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			if (savesOk) {
 				$btnBar.append(
-					createActionItem('clear', null, strings.saves.labelClear,
+					createActionItem('clear', null, L10n.get('savesLabelClear'),
 						Save.autosave.has() || !Save.slots.isEmpty()
 							? () => {
 								Save.clear();
@@ -689,7 +689,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 			return true;
 		}
 		else {
-			uiOpenAlert(strings.saves.incapable.replace(/%identity%/g, strings.identity));
+			uiOpenAlert(L10n.get('savesIncapable'));
 			return false;
 		}
 	}
@@ -697,7 +697,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 	function uiBuildSettings() {
 		if (DEBUG) { console.log('[UI/uiBuildSettings()]'); }
 
-		const $dialogBody = jQuery(Dialog.setup(strings.settings.title, 'settings'));
+		const $dialogBody = jQuery(Dialog.setup(L10n.get('settingsTitle'), 'settings'));
 
 		Setting.forEach(control => {
 			if (control.type === Setting.Types.Header) {
@@ -758,24 +758,24 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 				if (settings[name]) {
 					$elControl
 						.addClass('enabled')
-						.text(strings.settings.on);
+						.text(L10n.get('settingsOn'));
 				}
 				else {
 					$elControl
-						.text(strings.settings.off);
+						.text(L10n.get('settingsOff'));
 				}
 
 				$elControl.ariaClick(function () {
 					if (settings[name]) {
 						jQuery(this)
 							.removeClass('enabled')
-							.text(strings.settings.off);
+							.text(L10n.get('settingsOff'));
 						settings[name] = false;
 					}
 					else {
 						jQuery(this)
 							.addClass('enabled')
-							.text(strings.settings.on);
+							.text(L10n.get('settingsOn'));
 						settings[name] = true;
 					}
 
@@ -829,8 +829,8 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 		$dialogBody
 			.append(
 				  '<ul class="buttons">'
-				+ `<li><button id="settings-ok" class="ui-close">${strings.settings.ok || strings.ok}</button></li>`
-				+ `<li><button id="settings-reset">${strings.settings.reset}</button></li>`
+				+ `<li><button id="settings-ok" class="ui-close">${L10n.get(['settingsOk', 'ok'])}</button></li>`
+				+ `<li><button id="settings-reset">${L10n.get('settingsReset')}</button></li>`
 				+ '</ul>'
 			)
 			.find('#settings-reset')
@@ -855,7 +855,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 	function uiBuildShare() {
 		if (DEBUG) { console.log('[UI/uiBuildShare()]'); }
 
-		jQuery(Dialog.setup(strings.share.title, 'share list'))
+		jQuery(Dialog.setup(L10n.get('shareTitle'), 'share list'))
 			.append(uiAssembleLinkList('StoryShare'));
 
 		return true;

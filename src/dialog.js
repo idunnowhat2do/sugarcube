@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global Engine, safeActiveElement, strings */
+/* global Engine, L10n, safeActiveElement */
 
 var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
@@ -82,7 +82,7 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 				+ '<div id="ui-dialog" tabindex="0" role="dialog" aria-labelledby="ui-dialog-title">'
 				+     '<div id="ui-dialog-titlebar">'
 				+         '<h1 id="ui-dialog-title"></h1>'
-				+         `<button id="ui-dialog-close" class="ui-close" tabindex="0" aria-label="${strings.close}">\uE804</button>`
+				+         `<button id="ui-dialog-close" class="ui-close" tabindex="0" aria-label="${L10n.get('close')}">\uE804</button>`
 				+     '</div>'
 				+     '<div id="ui-dialog-body"></div>'
 				+ '</div>'

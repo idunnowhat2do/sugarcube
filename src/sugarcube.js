@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global Alert, Browser, Config, Dialog, DebugView, Engine, Has, KeyValueStore, Macro, Passage, Save, Scripting,
-	       Setting, SimpleAudio, State, Story, UI, Util, Wikifier, strings
+	global Alert, Browser, Config, Dialog, DebugView, Engine, Has, KeyValueStore, L10n, Macro, Passage, Save,
+	       Scripting, Setting, SimpleAudio, State, Story, UI, Util, Wikifier
 */
 /* eslint-disable no-var */
 
@@ -136,20 +136,20 @@ jQuery(() => {
 		storage = new KeyValueStore('webStorage', true, Story.domId);
 		session = new KeyValueStore('webStorage', false, Story.domId);
 
-		// Alert players when their browser is degrading required capabilities.
-		if (!session.has('rcWarn') && storage.name === 'cookie') {
-			/* eslint-disable no-alert */
-			session.set('rcWarn', 1);
-			window.alert(strings.warnings.degraded.replace(/%identity%/g, strings.identity));
-			/* eslint-enable no-alert */
-		}
-
 		// Initialize the user interface (must be done before story initialization, specifically before scripts).
 		Dialog.init();
 		UI.init();
 
 		// Initialize the story (largely load the user styles, scripts, and widgets).
 		Story.init();
+
+		// Alert when the browser is degrading required capabilities (must be done after story initialization).
+		if (!session.has('rcWarn') && storage.name === 'cookie') {
+			/* eslint-disable no-alert */
+			session.set('rcWarn', 1);
+			window.alert(L10n.get('warningDegraded'));
+			/* eslint-enable no-alert */
+		}
 
 		// Initialize the saves (must be done after story initialization, but before engine start).
 		Save.init();
@@ -174,6 +174,7 @@ jQuery(() => {
 			DebugView,
 			Engine,
 			Has,
+			L10n,
 			Macro,
 			Passage,
 			Save,

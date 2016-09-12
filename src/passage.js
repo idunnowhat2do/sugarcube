@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global Config, Story, Util, Wikifier, convertBreaks, postrender, prerender, strings */
+/* global Config, L10n, Story, Util, Wikifier, convertBreaks, postrender, prerender */
 
 var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
@@ -128,11 +128,10 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		get text() {
 			if (this.element == null) { // lazy equality for null
-				return (
-					  '<span class="error" title="%passage%">'
-					+ `${strings.errors.title}: ${strings.errors.nonexistentPassage}`
-					+ '</span>'
-				).replace(/%passage%/g, Util.escape(this.title));
+				const passage = Util.escape(this.title);
+				return `<span class="error" title="${passage}">`
+					+ `${L10n.get('errorTitle')}: ${L10n.get('errorNonexistentPassage', { passage })}`
+					+ '</span>';
 			}
 
 			// For Twine 1

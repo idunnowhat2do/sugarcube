@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global Story, StyleWrapper, Wikifier, strings */
+/* global L10n, Story, StyleWrapper, Wikifier */
 
 var { // eslint-disable-line no-var
 	/* eslint-disable no-unused-vars */
@@ -237,7 +237,7 @@ var { // eslint-disable-line no-var
 		jQuery(document.createElement('span'))
 			.addClass('error')
 			.attr('title', title)
-			.text(`${strings.errors.title}: ${message || 'unknown error'}`)
+			.text(`${L10n.get('errorTitle')}: ${message || 'unknown error'}`)
 			.appendTo(place);
 		return false;
 	}
