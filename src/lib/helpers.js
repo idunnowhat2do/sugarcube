@@ -21,7 +21,7 @@ var { // eslint-disable-line no-var
 	'use strict';
 
 	/*
-		Appends a new <style> element to the document's <head>.
+		Adds the given styles to the story's <style> element, creating it if necessary.
 	*/
 	function addStyle(css) {
 		let style = document.getElementById('style-story');
@@ -38,7 +38,7 @@ var { // eslint-disable-line no-var
 	}
 
 	/*
-		Returns a deep copy of the passed object.
+		Returns a deep copy of the given object.
 
 		NOTE: 1. `clone()` does not clone functions, however, since function definitions are
 		         immutable, the only issues are with expando properties and scope.  The former
