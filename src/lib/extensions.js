@@ -79,10 +79,7 @@ function safeActiveElement() {
 				for (/* empty */; i < length; ++i) {
 					const current = this[i];
 
-					if (
-						   needle === current
-						|| (needle !== needle && current !== current) // eslint-disable-line no-extra-parens
-					) {
+					if (needle === current || needle !== needle && current !== current) {
 						return true;
 					}
 				}
@@ -317,7 +314,7 @@ function safeActiveElement() {
 				throw new TypeError('Array.prototype.contains called on null or undefined');
 			}
 
-			return Array.prototype.indexOf.apply(this, arguments) !== -1;
+			return Array.prototype.includes.apply(this, arguments);
 		}
 	});
 
@@ -338,14 +335,14 @@ function safeActiveElement() {
 					return Array.prototype.containsAll.apply(this, arguments[0]);
 				}
 				else {
-					return Array.prototype.indexOf.apply(this, arguments) !== -1;
+					return Array.prototype.includes.apply(this, arguments);
 				}
 			}
 			else {
 				for (let i = 0, iend = arguments.length; i < iend; ++i) {
 					if (
 						!Array.prototype.some.call(this, function (v) {
-							return v === this.val;
+							return v === this.val || v !== v && this.val !== this.val;
 						}, { val : arguments[i] })
 					) {
 						return false;
@@ -374,14 +371,14 @@ function safeActiveElement() {
 					return Array.prototype.containsAny.apply(this, arguments[0]);
 				}
 				else {
-					return Array.prototype.indexOf.apply(this, arguments) !== -1;
+					return Array.prototype.includes.apply(this, arguments);
 				}
 			}
 			else {
 				for (let i = 0, iend = arguments.length; i < iend; ++i) {
 					if (
 						Array.prototype.some.call(this, function (v) {
-							return v === this.val;
+							return v === this.val || v !== v && this.val !== this.val;
 						}, { val : arguments[i] })
 					) {
 						return true;
