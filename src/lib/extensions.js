@@ -303,94 +303,6 @@ function safeActiveElement() {
 	});
 
 	/*
-		Returns whether the given element was found within the array.
-	*/
-	Object.defineProperty(Array.prototype, 'contains', {
-		configurable : true,
-		writable     : true,
-
-		value(/* needle [, fromIndex] */) {
-			if (this == null) { // lazy equality for null
-				throw new TypeError('Array.prototype.contains called on null or undefined');
-			}
-
-			return Array.prototype.includes.apply(this, arguments);
-		}
-	});
-
-	/*
-		Returns whether all of the given elements were found within the array.
-	*/
-	Object.defineProperty(Array.prototype, 'containsAll', {
-		configurable : true,
-		writable     : true,
-
-		value(/* needles */) {
-			if (this == null) { // lazy equality for null
-				throw new TypeError('Array.prototype.containsAll called on null or undefined');
-			}
-
-			if (arguments.length === 1) {
-				if (Array.isArray(arguments[0])) {
-					return Array.prototype.containsAll.apply(this, arguments[0]);
-				}
-				else {
-					return Array.prototype.includes.apply(this, arguments);
-				}
-			}
-			else {
-				for (let i = 0, iend = arguments.length; i < iend; ++i) {
-					if (
-						!Array.prototype.some.call(this, function (v) {
-							return v === this.val || v !== v && this.val !== this.val;
-						}, { val : arguments[i] })
-					) {
-						return false;
-					}
-				}
-
-				return true;
-			}
-		}
-	});
-
-	/*
-		Returns whether any of the given elements were found within the array.
-	*/
-	Object.defineProperty(Array.prototype, 'containsAny', {
-		configurable : true,
-		writable     : true,
-
-		value(/* needles */) {
-			if (this == null) { // lazy equality for null
-				throw new TypeError('Array.prototype.containsAny called on null or undefined');
-			}
-
-			if (arguments.length === 1) {
-				if (Array.isArray(arguments[0])) {
-					return Array.prototype.containsAny.apply(this, arguments[0]);
-				}
-				else {
-					return Array.prototype.includes.apply(this, arguments);
-				}
-			}
-			else {
-				for (let i = 0, iend = arguments.length; i < iend; ++i) {
-					if (
-						Array.prototype.some.call(this, function (v) {
-							return v === this.val || v !== v && this.val !== this.val;
-						}, { val : arguments[i] })
-					) {
-						return true;
-					}
-				}
-
-				return false;
-			}
-		}
-	});
-
-	/*
 		Returns the number of times the given element was found within the array.
 	*/
 	Object.defineProperty(Array.prototype, 'count', {
@@ -523,6 +435,78 @@ function safeActiveElement() {
 
 			return Array.prototype.reduce.call(this,
 				(prev, cur) => prev.concat(Array.isArray(cur) ? cur.flatten() : cur), []);
+		}
+	});
+
+	/*
+		Returns whether all of the given elements were found within the array.
+	*/
+	Object.defineProperty(Array.prototype, 'includesAll', {
+		configurable : true,
+		writable     : true,
+
+		value(/* needles */) {
+			if (this == null) { // lazy equality for null
+				throw new TypeError('Array.prototype.includesAll called on null or undefined');
+			}
+
+			if (arguments.length === 1) {
+				if (Array.isArray(arguments[0])) {
+					return Array.prototype.includesAll.apply(this, arguments[0]);
+				}
+				else {
+					return Array.prototype.includes.apply(this, arguments);
+				}
+			}
+			else {
+				for (let i = 0, iend = arguments.length; i < iend; ++i) {
+					if (
+						!Array.prototype.some.call(this, function (v) {
+							return v === this.val || v !== v && this.val !== this.val;
+						}, { val : arguments[i] })
+					) {
+						return false;
+					}
+				}
+
+				return true;
+			}
+		}
+	});
+
+	/*
+		Returns whether any of the given elements were found within the array.
+	*/
+	Object.defineProperty(Array.prototype, 'includesAny', {
+		configurable : true,
+		writable     : true,
+
+		value(/* needles */) {
+			if (this == null) { // lazy equality for null
+				throw new TypeError('Array.prototype.includesAny called on null or undefined');
+			}
+
+			if (arguments.length === 1) {
+				if (Array.isArray(arguments[0])) {
+					return Array.prototype.includesAny.apply(this, arguments[0]);
+				}
+				else {
+					return Array.prototype.includes.apply(this, arguments);
+				}
+			}
+			else {
+				for (let i = 0, iend = arguments.length; i < iend; ++i) {
+					if (
+						Array.prototype.some.call(this, function (v) {
+							return v === this.val || v !== v && this.val !== this.val;
+						}, { val : arguments[i] })
+					) {
+						return true;
+					}
+				}
+
+				return false;
+			}
 		}
 	});
 
@@ -1021,40 +1005,6 @@ function safeActiveElement() {
 		}
 	});
 
-	/*
-		[DEPRECATED] Returns an array of link titles, parsed from the string.
-
-		NOTE: Unused in SugarCube, only included for compatibility.
-	*/
-	Object.defineProperty(String.prototype, 'readBracketedList', {
-		configurable : true,
-		writable     : true,
-
-		value() {
-			if (this == null) { // lazy equality for null
-				throw new TypeError('String.prototype.readBracketedList called on null or undefined');
-			}
-
-			// RegExp groups: Double-square-bracket quoted | Unquoted.
-			const
-				re    = new RegExp('(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^"\'\\s]\\S*)', 'gm'),
-				names = [];
-			let
-				match;
-
-			while ((match = re.exec(this)) !== null) {
-				if (match[1]) { // double-square-bracket quoted
-					names.push(match[1]);
-				}
-				else if (match[2]) { // unquoted
-					names.push(match[2]);
-				}
-			}
-
-			return names;
-		}
-	});
-
 
 	/*******************************************************************************************************************
 	 * JavaScript Extensions, JSON.
@@ -1196,6 +1146,92 @@ function safeActiveElement() {
 
 				return value;
 			});
+		}
+	});
+
+
+	/*******************************************************************************************************************
+	 * JavaScript Extensions, Deprecated.
+	 ******************************************************************************************************************/
+	/*
+		[DEPRECATED] Returns whether the given element was found within the array.
+	*/
+	Object.defineProperty(Array.prototype, 'contains', {
+		configurable : true,
+		writable     : true,
+
+		value(/* needle [, fromIndex] */) {
+			if (this == null) { // lazy equality for null
+				throw new TypeError('Array.prototype.contains called on null or undefined');
+			}
+
+			return Array.prototype.includes.apply(this, arguments);
+		}
+	});
+
+	/*
+		[DEPRECATED] Returns whether all of the given elements were found within the array.
+	*/
+	Object.defineProperty(Array.prototype, 'containsAll', {
+		configurable : true,
+		writable     : true,
+
+		value(/* needle [, fromIndex] */) {
+			if (this == null) { // lazy equality for null
+				throw new TypeError('Array.prototype.containsAll called on null or undefined');
+			}
+
+			return Array.prototype.includesAll.apply(this, arguments);
+		}
+	});
+
+	/*
+		[DEPRECATED] Returns whether any of the given elements were found within the array.
+	*/
+	Object.defineProperty(Array.prototype, 'containsAny', {
+		configurable : true,
+		writable     : true,
+
+		value(/* needle [, fromIndex] */) {
+			if (this == null) { // lazy equality for null
+				throw new TypeError('Array.prototype.containsAny called on null or undefined');
+			}
+
+			return Array.prototype.includesAny.apply(this, arguments);
+		}
+	});
+
+	/*
+		[DEPRECATED] Returns an array of link titles, parsed from the string.
+
+		NOTE: Unused in SugarCube, only included for compatibility.
+	*/
+	Object.defineProperty(String.prototype, 'readBracketedList', {
+		configurable : true,
+		writable     : true,
+
+		value() {
+			if (this == null) { // lazy equality for null
+				throw new TypeError('String.prototype.readBracketedList called on null or undefined');
+			}
+
+			// RegExp groups: Double-square-bracket quoted | Unquoted.
+			const
+				re    = new RegExp('(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^"\'\\s]\\S*)', 'gm'),
+				names = [];
+			let
+				match;
+
+			while ((match = re.exec(this)) !== null) {
+				if (match[1]) { // double-square-bracket quoted
+					names.push(match[1]);
+				}
+				else if (match[2]) { // unquoted
+					names.push(match[2]);
+				}
+			}
+
+			return names;
 		}
 	});
 })();
@@ -1352,9 +1388,9 @@ function safeActiveElement() {
 })();
 
 /*
-	`wiki(source)` method plugin.
+	`wiki(sources)` method plugin.
 
-	Wikifies the source text and appends the result to the target element(s).
+	Wikifies the given content source(s) and appends the result to the target element(s).
 */
 (() => {
 	'use strict';
