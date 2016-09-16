@@ -755,7 +755,7 @@
 			}
 
 			const
-				$el        = jQuery(document.createElement(this.name === 'button' ? 'button' : 'a')),
+				$link      = jQuery(document.createElement(this.name === 'button' ? 'button' : 'a')),
 				widgetArgs = (() => {
 					let wargs;
 
@@ -776,7 +776,7 @@
 					// Argument was in wiki image syntax.
 					const $image = jQuery(document.createElement('img'))
 						.attr('src', this.args[0].source)
-						.appendTo($el);
+						.appendTo($link);
 
 					if (this.args[0].hasOwnProperty('passage')) {
 						$image.attr('data-passage', this.args[0].passage);
@@ -798,35 +798,35 @@
 				}
 				else {
 					// Argument was in wiki link syntax.
-					$el.append(document.createTextNode(this.args[0].text));
+					$link.append(document.createTextNode(this.args[0].text));
 					passage = this.args[0].link;
 				}
 			}
 			else {
 				// Argument was simply the link text.
-				$el.append(document.createTextNode(this.args[0]));
+				$link.wiki(this.args[0]);
 				passage = this.args.length > 1 ? this.args[1] : undefined;
 			}
 
 			if (passage != null) { // lazy equality for null
-				$el.attr('data-passage', passage);
+				$link.attr('data-passage', passage);
 
 				if (Story.has(passage)) {
-					$el.addClass('link-internal');
+					$link.addClass('link-internal');
 
 					if (Config.addVisitedLinkClass && State.hasPlayed(passage)) {
-						$el.addClass('link-visited');
+						$link.addClass('link-visited');
 					}
 				}
 				else {
-					$el.addClass('link-broken');
+					$link.addClass('link-broken');
 				}
 			}
 			else {
-				$el.addClass('link-internal');
+				$link.addClass('link-internal');
 			}
 
-			$el
+			$link
 				.addClass(`macro-${this.name}`)
 				.ariaClick({
 					namespace : '.macros',
