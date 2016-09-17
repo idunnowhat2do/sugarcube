@@ -9,16 +9,24 @@
 /* eslint-disable max-len, prefer-template */
 
 /*
-	The capitalization and punctuation used within the default replacement strings is
-	deliberate, especially within the error strings.  Translators would do well to keep
-	their translations similar.
+	ATTENTION TRANSLATORS
 
-	Replacement patterns have the format `%NAME%` (e.g. %identity%), where NAME is the
-	name of the associated property within either the `l10nStrings` table or a specifed
-	overrides table.  During replacement, patterns are replaced recursively, so
-	replacement strings may contain patterns whose replacements contain other patterns.
-	Because replacement is recursive, care must be taken to ensure infinite loops are
-	not created—the system will detect an infinite loop and throw an error.
+	The capitalization and punctuation used within the default replacement strings is
+	deliberate, especially within the error strings.  You would do well to keep your
+	translations similar when possible.
+
+	Replacement patterns have the format `{NAME}` (e.g. {identity}), where NAME is the
+	name of a property within either the `l10nStrings` object or, in a few cases, an
+	object supplied locally where the string is used—these instances will be commented.
+
+	By convention, properties starting with an underscore (e.g. _warningIntro) are used
+	as templates, only being included within other strings, so feel free to add your
+	own if that makes localization easier—e.g. for gender, plurals, and whatnot.
+
+	In use, replacement patterns are replaced recursively, so replacement strings may
+	contain patterns whose replacements contain other patterns.  Because replacement is
+	recursive, care must be taken to ensure infinite loops are not created—the system
+	will detect an infinite loop and throw an error.
 */
 var l10nStrings = { // eslint-disable-line no-unused-vars, no-var
 	/*
@@ -34,14 +42,17 @@ var l10nStrings = { // eslint-disable-line no-unused-vars, no-var
 		Errors.
 	*/
 	errorTitle              : 'Error',
-	errorNonexistentPassage : 'the passage "%passage%" does not exist', // `passage` is supplied locally
-	errorSaveMissingData    : "save is missing required data. Either you've loaded a file which is not a save or the save has become corrupted",
-	errorSaveIdMismatch     : 'save is from the wrong %identity%',
+	errorNonexistentPassage : 'the passage "{passage}" does not exist', // NOTE: `passage` is supplied locally
+	errorSaveMissingData    : 'save is missing required data. Either the loaded file is not a save or the save has become corrupted',
+	errorSaveIdMismatch     : 'save is from the wrong {identity}',
 
 	/*
 		Warnings.
 	*/
-	warningDegraded : 'Apologies! Your browser either lacks some of the capabilities required by this %identity% or has disabled them, so this %identity% is running in a degraded mode. You may be able to continue, but some parts may not work properly.\n\nThe former may, probably, be solved by upgrading your browser. The latter may be solved by loosening its security restrictions' + (window.location.protocol === 'file:' ? ' or, perhaps, by viewing this %identity% via the HTTP protocol.' : '.'),
+	_warningIntro       : 'Apologies! Your browser either lacks or has disabled',
+	_warningOutro       : ', so this {identity} is running in a degraded mode. You may be able to continue, however, some parts may not work properly.',
+	warningNoWebStorage : '{_warningIntro} the Web Storage API{_warningOutro}',
+	warningDegraded     : '{_warningIntro} some of the capabilities required by this {identity}{_warningOutro}',
 
 	/*
 		Debug View.
@@ -53,9 +64,9 @@ var l10nStrings = { // eslint-disable-line no-unused-vars, no-var
 		UI bar.
 	*/
 	uiBarToggle   : 'Toggle the UI bar',
-	uiBarBackward : 'Go backward within the %identity% history',
-	uiBarForward  : 'Go forward within the %identity% history',
-	uiBarJumpto   : 'Jump to a specific point within the %identity% history',
+	uiBarBackward : 'Go backward within the {identity} history',
+	uiBarForward  : 'Go forward within the {identity} history',
+	uiBarJumpto   : 'Jump to a specific point within the {identity} history',
 
 	/*
 		Jump To.
@@ -70,7 +81,7 @@ var l10nStrings = { // eslint-disable-line no-unused-vars, no-var
 	savesTitle       : 'Saves',
 	savesDisallowed  : 'Saving has been disallowed on this passage.',
 	savesEmptySlot   : '— slot empty —',
-	savesIncapable   : 'Apologies! Your browser either lacks the capabilities required to support saves or has disabled them, so saves have been disabled for this session.<br><br>The former may, probably, be solved by <a href="http://browsehappy.com/" target="_blank">upgrading your browser</a>. The latter may be solved by loosening its security restrictions' + (window.location.protocol === 'file:' ? ' or, perhaps, by viewing this %identity% via the HTTP protocol.' : '.'),
+	savesIncapable   : '{_warningIntro} the capabilities required to support saves, so saves have been disabled for this session.',
 	savesLabelAuto   : 'Autosave',
 	savesLabelDelete : 'Delete',
 	savesLabelExport : 'Save to Disk\u2026',

@@ -13,7 +13,7 @@ var L10n = (() => { // eslint-disable-line no-unused-vars, no-var
 
 	const
 		// Replacement pattern regular expressions.
-		_patternRe    = /%\w+%/g,
+		_patternRe    = /\{\w+\}/g,
 		_hasPatternRe = new RegExp(_patternRe.source); // to drop the global flag
 
 
@@ -65,14 +65,14 @@ var L10n = (() => { // eslint-disable-line no-unused-vars, no-var
 			// Possibly required by some old buggy browsers.
 			_patternRe.lastIndex = 0;
 
-			processed = processed.replace(_patternRe, pattern => {
-				const replaceId = pattern.slice(1, -1);
+			processed = processed.replace(_patternRe, pat => {
+				const subId = pat.slice(1, -1);
 
-				if (overrides && overrides.hasOwnProperty(replaceId)) {
-					return overrides[replaceId];
+				if (overrides && overrides.hasOwnProperty(subId)) {
+					return overrides[subId];
 				}
-				else if (l10nStrings.hasOwnProperty(replaceId)) {
-					return l10nStrings[replaceId];
+				else if (l10nStrings.hasOwnProperty(subId)) {
+					return l10nStrings[subId];
 				}
 			});
 		}
@@ -196,7 +196,7 @@ var L10n = (() => { // eslint-disable-line no-unused-vars, no-var
 					}
 
 					if (value) {
-						l10nStrings[id] = value;
+						l10nStrings[id] = value.replace(/%\w+%/g, p => `{${p.slice(1, -1)}}`);
 					}
 				}
 				catch (e) { /* no-op */ }
