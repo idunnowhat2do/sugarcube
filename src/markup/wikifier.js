@@ -440,7 +440,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 
 			const urlRegExp = new RegExp(`^${Patterns.url}`, 'gim');
-			return urlRegExp.test(link) || /[\/\.\?\#]/.test(link);
+			return urlRegExp.test(link) || /[\/\.\?#]/.test(link);
 		}
 	}
 
@@ -548,7 +548,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 						}
 					}
 				}
-				catch (e) {
+				catch (ex) {
 					result = text;
 				}
 
@@ -595,7 +595,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 				function error(/* variadic: fmt [, … ] */) {
 					return {
-						error : String.format.apply(null, arguments),
+						error : String.format(...arguments),
 						pos
 					};
 				}
@@ -629,9 +629,9 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 						case '\\':
 							{
 								++pos;
-								const c = peek();
+								const ch = peek();
 
-								if (c !== EOF && c !== '\n') {
+								if (ch !== EOF && ch !== '\n') {
 									break;
 								}
 							}
@@ -652,23 +652,23 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				}
 
 				const
-					EOF = -1; // end of file (string, really)
+					EOF  = -1, // end of file (string, really)
+					item = {}; // scanned item object
 				let
-					item   = {},           // scanned item object
 					start  = w.matchStart, // start position of a component
 					pos    = start + 1,    // current position in w.source
 					depth,                 // current square bracket nesting depth
 					cid,                   // current component ID
 					isLink,                // markup is a link, else image
-					c;
+					ch;
 
 				// [[text|~link][setter]]
 				// [<>img[title|source][~link][setter]]
 
 				// Scan left delimiter.
-				c = peek();
+				ch = peek();
 
-				if (c === '[') {
+				if (ch === '[') {
 					// Link.
 					isLink = item.isLink = true;
 				}
@@ -676,7 +676,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 					// Image.
 					isLink = false;
 
-					switch (c) {
+					switch (ch) {
 					case '<':
 						item.align = 'left';
 						++pos;
@@ -707,7 +707,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 				try {
 					loop: for (;;) {
-						switch ((c = peek())) { // eslint-disable-line no-extra-parens
+						switch ((ch = peek())) { // eslint-disable-line no-extra-parens
 						case EOF:
 						case '\n':
 							return error('unterminated wiki {0}', isLink ? 'link' : 'image');
@@ -719,7 +719,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 								string to contain unpaired double quotes.  The likelihood is low enough, however,
 								that I'm deeming the risk acceptable, for now at least.
 							*/
-							if (slurpQuote(c) === EOF) {
+							if (slurpQuote(ch) === EOF) {
 								return error('unterminated double quoted string in wiki {0}', isLink ? 'link' : 'image');
 							}
 							break;
@@ -731,7 +731,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 								unpaired single quotes.
 							*/
 							if (cid === 4 || cid === 3 && isLink) {
-								if (slurpQuote(c) === EOF) {
+								if (slurpQuote(ch) === EOF) {
 									return error('unterminated single quoted string in wiki {0}', isLink ? 'link' : 'image');
 								}
 							}
@@ -824,8 +824,8 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 						++pos;
 					}
 				}
-				catch (e) {
-					return error(e.message);
+				catch (ex) {
+					return error(ex.message);
 				}
 
 				item.pos = pos;
@@ -845,7 +845,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			{
 				name        : 'macro',
 				match       : '<<',
-				lookahead   : /<<(\/?[A-Za-z][^>\s]*|[=-])(?:\s*)((?:(?:\"(?:\\.|[^\"\\])*\")|(?:\'(?:\\.|[^\'\\])*\')|(?:\[(?:[<>]?[Ii][Mm][Gg])?\[[^\r\n]*?\]\]+)|[^>]|(?:>(?!>)))*)>>/gm,
+				lookahead   : /<<(\/?[A-Za-z][^>\s]*|[=-])(?:\s*)((?:(?:"(?:\\.|[^"\\])*")|(?:'(?:\\.|[^'\\])*')|(?:\[(?:[<>]?[Ii][Mm][Gg])?\[[^\r\n]*?\]\]+)|[^>]|(?:>(?!>)))*)>>/gm,
 				argsPattern : [
 					'(``)',                                             // 1=Empty backticks
 					'`((?:\\\\.|[^`\\\\])+)`',                          // 2=Backticked, non-empty
@@ -943,24 +943,31 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 									}
 								}
 								else {
-									return throwError(w.output, `macro <<${name}>> handler function `
-										+ `${macro.hasOwnProperty('handler') ? 'is not a function' : 'does not exist'}`,
-										  w.source.slice(matchStart, w.nextMatch));
+									return throwError(
+										w.output,
+										`macro <<${name}>> handler function ${macro.hasOwnProperty('handler') ? 'is not a function' : 'does not exist'}`,
+										w.source.slice(matchStart, w.nextMatch)
+									);
 								}
 							}
 							else if (Macro.tags.has(name)) {
 								const tags = Macro.tags.get(name);
-								return throwError(w.output, `child tag <<${name}>> was found outside of a call to its parent macro`
-									+ `${tags.length === 1 ? '' : 's'} <<${tags.join('>>, <<')}>>`,
-									  w.source.slice(matchStart, w.nextMatch));
+								return throwError(
+									w.output,
+									`child tag <<${name}>> was found outside of a call to its parent macro${tags.length === 1 ? '' : 's'} <<${tags.join('>>, <<')}>>`,
+									w.source.slice(matchStart, w.nextMatch)
+								  );
 							}
 							else {
 								return throwError(w.output, `macro <<${name}>> does not exist`, w.source.slice(matchStart, w.nextMatch));
 							}
 						}
-						catch (e) {
-							return throwError(w.output, `cannot execute ${macro && macro.isWidget ? 'widget' : 'macro'} <<${name}>>: ${e.message}`,
-								w.source.slice(matchStart, w.nextMatch));
+						catch (ex) {
+							return throwError(
+								w.output,
+								`cannot execute ${macro && macro.isWidget ? 'widget' : 'macro'} <<${name}>>: ${ex.message}`,
+								w.source.slice(matchStart, w.nextMatch)
+							);
 						}
 						finally {
 							this.working.source    = '';
@@ -1130,8 +1137,8 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 							try {
 								arg = Scripting.evalTwineScript(arg);
 							}
-							catch (e) {
-								throw new Error(`unable to parse macro argument "${arg}": ${e.message}`);
+							catch (ex) {
+								throw new Error(`unable to parse macro argument "${arg}": ${ex.message}`);
 							}
 						}
 
@@ -1148,8 +1155,8 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 							try {
 								arg = Scripting.evalJavaScript(arg);
 							}
-							catch (e) {
-								throw new Error(`unable to parse macro argument '${arg}': ${e.message}`);
+							catch (ex) {
+								throw new Error(`unable to parse macro argument '${arg}': ${ex.message}`);
 							}
 						}
 
@@ -1161,8 +1168,8 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 							try {
 								arg = Scripting.evalJavaScript(arg);
 							}
-							catch (e) {
-								throw new Error(`unable to parse macro argument "${arg}": ${e.message}`);
+							catch (ex) {
+								throw new Error(`unable to parse macro argument "${arg}": ${ex.message}`);
 							}
 						}
 
@@ -1180,8 +1187,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 							}
 
 							if (markup.pos < arg.length) {
-								throw new Error(`unable to parse macro argument "${arg}": unexpected character(s)`
-									+ ` "${arg.slice(markup.pos)}" (pos: ${markup.pos})`);
+								throw new Error(`unable to parse macro argument "${arg}": unexpected character(s) "${arg.slice(markup.pos)}" (pos: ${markup.pos})`);
 							}
 
 							// Convert to a link or image object.
@@ -1250,8 +1256,8 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 								try {
 									arg = Scripting.evalTwineScript(arg);
 								}
-								catch (e) {
-									throw new Error(`unable to parse macro argument "${arg}": ${e.message}`);
+								catch (ex) {
+									throw new Error(`unable to parse macro argument "${arg}": ${ex.message}`);
 								}
 							}
 
@@ -1548,7 +1554,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			{
 				name      : 'verbatimText',
 				match     : '"{3}|<nowiki>',
-				lookahead : /(?:\"{3}((?:.|\n)*?)\"{3})|(?:<nowiki>((?:.|\n)*?)<\/nowiki>)/gm,
+				lookahead : /(?:"{3}((?:.|\n)*?)"{3})|(?:<nowiki>((?:.|\n)*?)<\/nowiki>)/gm,
 
 				handler(w) {
 					this.lookahead.lastIndex = w.matchStart;
@@ -1567,7 +1573,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			{
 				name  : 'rule',
-				match : '^----+$\\n?|<hr\s*/?>\\n?',
+				match : '^----+$\\n?|<hr\\s*/?>\\n?',
 
 				handler(w) {
 					jQuery(document.createElement('hr')).appendTo(w.output);
@@ -1585,7 +1591,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			{
 				name  : 'doubleDollarSign',
-				match : '\\${2}',
+				match : '\\${2}', // eslint-disable-line no-template-curly-in-string
 
 				handler(w) {
 					jQuery(document.createTextNode('$')).appendTo(w.output);
@@ -1722,7 +1728,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				rowTerminator  : '\\|(?:[cfhk]?)$\\n?',
 				cellPattern    : '(?:\\|([^\\n\\|]*)\\|)|(\\|[cfhk]?$\\n?)',
 				cellTerminator : '(?:\\u0020*)\\|',
-				rowTypes       : { c : 'caption', f : 'tfoot', h : 'thead', '' : 'tbody' },
+				rowTypes       : { c : 'caption', f : 'tfoot', h : 'thead', '' : 'tbody' }, // eslint-disable-line id-length
 
 				handler(w) {
 					const
@@ -2051,8 +2057,9 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			},
 
 			{
-				name  : 'lineContinuation',
-				// The end-of-line patter must come first.
+				name : 'lineContinuation',
+
+				// NOTE: The end-of-line patter must come first.
 				match : `\\\\${Patterns.space}*?(?:\\n|$)|(?:^|\\n)${Patterns.space}*?\\\\`,
 
 				handler(w) {
@@ -2062,7 +2069,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			{
 				name  : 'lineBreak',
-				match : '\\n|<br\s*/?>',
+				match : '\\n|<br\\s*/?>',
 
 				handler(w) {
 					if (w._nobr.length === 0 || !w._nobr[0]) {
@@ -2082,7 +2089,11 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				}
 			},
 
-			{   // This formatter MUST come after any formatter which handles HTML tag-like constructs (e.g. html & rawText).
+			{
+				/*
+					NOTE: This formatter MUST come after any formatter which handles HTML tag-like
+					      constructs (e.g. html & rawText).
+				*/
 				name         : 'htmlTag',
 				match        : '<\\w+(?:\\s+[^\\u0000-\\u001F\\u007F-\\u009F\\s"\'>\\/=]+(?:\\s*=\\s*(?:"[^"]*?"|\'[^\']*?\'|[^\\s"\'=<>`]+))?)*\\s*\\/?>',
 				tagPattern   : '<(\\w+)',

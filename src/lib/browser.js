@@ -9,8 +9,8 @@
 
 var Browser = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
-	/* eslint-disable max-len */
 
+	/* eslint-disable max-len */
 	const ua = {
 		userAgent : navigator.userAgent.toLowerCase()
 	};
@@ -20,7 +20,7 @@ var Browser = (() => { // eslint-disable-line no-unused-vars, no-var
 	ua.isIE      = /msie|trident/.test(ua.userAgent) && !ua.userAgent.includes('opera');
 	ua.ieVersion = (() => {
 		const ver = /(?:msie\s+|rv:)(\d{1,2}\.\d)/.exec(ua.userAgent);
-		return ver ? +ver[1] : 0;
+		return ver ? Number([1]) : 0;
 	})();
 
 	// opera <= 12: "opera/9.80 (windows nt 6.1; wow64) presto/2.12.388 version/12.16"
@@ -30,7 +30,7 @@ var Browser = (() => { // eslint-disable-line no-unused-vars, no-var
 		const
 			re  = new RegExp(`${/applewebkit|chrome/.test(ua.userAgent) ? 'opr' : 'version'}\\/(\\d{1,2}\\.\\d+)`),
 			ver = re.exec(ua.userAgent);
-		return ver ? +ver[1] : 0;
+		return ver ? Number(ver[1]) : 0;
 	})();
 
 	ua.isMobile = Object.freeze({
@@ -40,8 +40,8 @@ var Browser = (() => { // eslint-disable-line no-unused-vars, no-var
 		Windows    : /iemobile/.test(ua.userAgent),
 
 		any() {
-			const m = ua.isMobile;
-			return m.Android || m.BlackBerry || m.iOS || m.Windows;
+			const is = ua.isMobile;
+			return is.Android || is.BlackBerry || is.iOS || is.Windows;
 		}
 	});
 

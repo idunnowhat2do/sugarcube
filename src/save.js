@@ -359,8 +359,10 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 			reader = new FileReader();
 
 		// Add the handler that will capture the file information once the load is finished.
-		jQuery(reader).on('load', evt => {
-			if (!evt.target.result) {
+		jQuery(reader).on('load', ev => {
+			const target = ev.currentTarget;
+
+			if (!target.result) {
 				return;
 			}
 
@@ -368,12 +370,12 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			try {
 				saveObj = JSON.parse(
-					/\.json$/i.test(file.name) || /^\{/.test(evt.target.result)
-						? evt.target.result
-						: LZString.decompressFromBase64(evt.target.result)
+					/\.json$/i.test(file.name) || /^\{/.test(target.result)
+						? target.result
+						: LZString.decompressFromBase64(target.result)
 				);
 			}
-			catch (e) { /* no-op; `_unmarshal()` will handle the error */ }
+			catch (ex) { /* no-op; `_unmarshal()` will handle the error */ }
 
 			_unmarshal(saveObj);
 		});
@@ -554,8 +556,8 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 			Engine.show();
 			/* eslint-enable no-param-reassign */
 		}
-		catch (e) {
-			UI.alert(`${e.message.toUpperFirst()}.</p><p>${L10n.get('aborting')}.`);
+		catch (ex) {
+			UI.alert(`${ex.message.toUpperFirst()}.</p><p>${L10n.get('aborting')}.`);
 			return false;
 		}
 

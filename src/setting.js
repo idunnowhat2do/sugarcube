@@ -47,19 +47,19 @@ var Setting = (() => { // eslint-disable-line no-unused-vars, no-var
 		settingsLoad();
 
 		// Execute `onInit` callbacks.
-		_definitions.forEach(d => {
-			if (d.hasOwnProperty('onInit')) {
+		_definitions.forEach(def => {
+			if (def.hasOwnProperty('onInit')) {
 				const thisArg = {
-					name    : d.name,
-					value   : settings[d.name],
-					default : d.default
+					name    : def.name,
+					value   : settings[def.name],
+					default : def.default
 				};
 
-				if (d.hasOwnProperty('list')) {
-					thisArg.list = d.list;
+				if (def.hasOwnProperty('list')) {
+					thisArg.list = def.list;
 				}
 
-				d.onInit.call(thisArg);
+				def.onInit.call(thisArg);
 			}
 		});
 	}
@@ -73,8 +73,8 @@ var Setting = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		if (Object.keys(settings).length > 0) {
 			_definitions
-				.filter(d => d.type !== Types.Header && settings[d.name] !== d.default)
-				.forEach(d => savedSettings[d.name] = settings[d.name]);
+				.filter(def => def.type !== Types.Header && settings[def.name] !== def.default)
+				.forEach(def => savedSettings[def.name] = settings[def.name]);
 		}
 
 		if (Object.keys(savedSettings).length === 0) {
@@ -92,8 +92,8 @@ var Setting = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		// Load the defaults.
 		_definitions
-			.filter(d => d.type !== Types.Header)
-			.forEach(d => defaultSettings[d.name] = d.default);
+			.filter(def => def.type !== Types.Header)
+			.forEach(def => defaultSettings[def.name] = def.default);
 
 		// Assign to the `settings` object while overwriting the defaults with the loaded settings.
 		window.SugarCube.settings = settings = Object.assign(defaultSettings, loadedSettings);
@@ -115,10 +115,10 @@ var Setting = (() => { // eslint-disable-line no-unused-vars, no-var
 				throw new Error(`nonexistent setting "${name}"`);
 			}
 
-			const d = definitionsGet(name);
+			const def = definitionsGet(name);
 
-			if (d.type !== Types.Header) {
-				settings[name] = d.default;
+			if (def.type !== Types.Header) {
+				settings[name] = def.default;
 			}
 		}
 

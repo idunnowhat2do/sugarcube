@@ -370,7 +370,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			try {
 				this.audio.currentTime = time;
 			}
-			catch (e) {
+			catch (ex) {
 				jQuery(this.audio)
 					.off('loadedmetadata.AudioWrapper:time')
 					.one('loadedmetadata.AudioWrapper:time', () => this.audio.currentTime = time);
@@ -884,7 +884,9 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			this.stop();
 
 			// Destroy all copied tracks.
-			this.tracks.filter(t => t.copy).forEach(t => t.track.destroy());
+			this.tracks
+				.filter(trackObj => trackObj.copy)
+				.forEach(trackObj => trackObj.track.destroy());
 
 			// // Set the reference-type properties' values to `null` and then freeze them.
 			// Object.defineProperties(this, {
@@ -905,7 +907,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			// NOTE: May return a double (normally), Infinity (for streams), or NaN (without metadata).
 			return this.tracks
 				.map(trackObj => trackObj.track.duration)
-				.reduce((p, c) => p + c, 0);
+				.reduce((prev, cur) => prev + cur, 0);
 		}
 
 		get loop() {
@@ -941,7 +943,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			// NOTE: May return a double (normally), Infinity (for streams), or NaN (without metadata).
 			let remainingTime = this.queue
 				.map(trackObj => trackObj.track.duration)
-				.reduce((p, c) => p + c, 0);
+				.reduce((prev, cur) => prev + cur, 0);
 
 			if (this.current !== null) {
 				remainingTime += this.current.track.remaining;

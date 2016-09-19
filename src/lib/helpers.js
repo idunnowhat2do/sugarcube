@@ -91,14 +91,14 @@ var { // eslint-disable-line no-var
 		}
 		else if (orig instanceof Map) {
 			copy = new Map();
-			orig.forEach((v, k) => { copy.set(k, clone(v)); });
+			orig.forEach((val, key) => { copy.set(key, clone(val)); });
 		}
 		else if (orig instanceof RegExp) {
 			copy = new RegExp(orig);
 		}
 		else if (orig instanceof Set) {
 			copy = new Set();
-			orig.forEach(v => { copy.add(clone(v)); });
+			orig.forEach(val => { copy.add(clone(val)); });
 		}
 		else { // unknown or generic object
 			// Try to ensure that the returned object has the same prototype as the original.
@@ -246,44 +246,44 @@ var { // eslint-disable-line no-var
 		Returns the simple string representation of the passed value or, if there is none,
 		the passed default value.
 	*/
-	function toStringOrDefault(val, defVal) {
-		switch (typeof val) {
+	function toStringOrDefault(value, defValue) {
+		switch (typeof value) {
 		case 'number':
-			if (Number.isNaN(val)) {
-				return defVal;
+			if (Number.isNaN(value)) {
+				return defValue;
 			}
 			break;
 
 		case 'object':
-			if (val === null) {
-				return defVal;
+			if (value === null) {
+				return defValue;
 			}
-			else if (Array.isArray(val) || val instanceof Set) {
-				return [...val].map(v => toStringOrDefault(v, defVal)).join(', ');
+			else if (Array.isArray(value) || value instanceof Set) {
+				return [...value].map(val => toStringOrDefault(val, defValue)).join(', ');
 			}
-			else if (val instanceof Map) {
-				/* eslint-disable prefer-template */
-				const tSOD = toStringOrDefault;
-				return '(\u202F'
-					+ [...val].map(kv => tSOD(kv[0], defVal) + ' \u21D2 ' + tSOD(kv[1], defVal)).join('; ')
-					+ '\u202F)';
-				/* eslint-enable prefer-template */
+			else if (value instanceof Map) {
+				const
+					tSOD = toStringOrDefault,
+					str  = [...value]
+						.map(kv => `${tSOD(kv[0], defValue)} \u21D2 ${tSOD(kv[1], defValue)}`)
+						.join('; ');
+				return `(\u202F${str}\u202F)`;
 			}
-			else if (val instanceof Date) {
-				return val.toLocaleString();
+			else if (value instanceof Date) {
+				return value.toLocaleString();
 			}
-			else if (typeof val.toString === 'function') {
-				return val.toString();
+			else if (typeof value.toString === 'function') {
+				return value.toString();
 			}
 
-			return Object.prototype.toString.call(val);
+			return Object.prototype.toString.call(value);
 
 		case 'function':
 		case 'undefined':
-			return defVal;
+			return defValue;
 		}
 
-		return String(val);
+		return String(value);
 	}
 
 

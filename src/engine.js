@@ -54,8 +54,8 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 					_storyInitDebugView = debugView.output;
 				}
 			}
-			catch (e) {
-				Alert.error('StoryInit', e.message);
+			catch (ex) {
+				Alert.error('StoryInit', ex.message);
 			}
 		}
 
@@ -291,8 +291,8 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 			try {
 				passageReadyOutput = Wikifier.wikifyEval(Story.get('PassageReady').text);
 			}
-			catch (e) {
-				Alert.error('PassageReady', e.message);
+			catch (ex) {
+				Alert.error('PassageReady', ex.message);
 			}
 		}
 
@@ -332,8 +332,8 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 							.addClass('passage-out');
 
 						if (typeof Config.passages.transitionOut === 'string') {
-							$outgoing.on(Config.transitionEndEventName, evt => {
-								if (evt.originalEvent.propertyName === Config.passages.transitionOut) {
+							$outgoing.on(Config.transitionEndEventName, ev => {
+								if (ev.originalEvent.propertyName === Config.passages.transitionOut) {
 									$outgoing.remove();
 								}
 							});
@@ -382,8 +382,8 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 			try {
 				passageDoneOutput = Wikifier.wikifyEval(Story.get('PassageDone').text);
 			}
-			catch (e) {
-				Alert.error('PassageDone', e.message);
+			catch (ex) {
+				Alert.error('PassageDone', ex.message);
 			}
 		}
 
@@ -472,7 +472,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		case 'object':
 			if (
 				   Array.isArray(Config.saves.autosave)
-				&& passage.tags.some(t => Config.saves.autosave.includes(t))
+				&& passage.tags.some(tag => Config.saves.autosave.includes(tag))
 			) {
 				Save.autosave.save();
 			}
@@ -512,8 +512,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 			break;
 
 		default:
-			throw new Error('Engine.display option parameter called with'
-				+ ` obsolete value "${option}"; please notify the developer`);
+			throw new Error(`Engine.display option parameter called with obsolete value "${option}"; please notify the developer`);
 		}
 
 		enginePlay(title, noHistory);

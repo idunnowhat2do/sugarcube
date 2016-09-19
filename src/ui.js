@@ -103,8 +103,8 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 			})(jQuery('#history-backward'), jQuery('#history-forward')))
 			// Setup accessible outline handling.
 			// IDEA: http://www.paciellogroup.com/blog/2012/04/how-to-remove-css-outlines-in-an-accessible-manner/
-			.on('mousedown.outline-handler keydown.outline-handler', evt => {
-				switch (evt.type) {
+			.on('mousedown.outline-handler keydown.outline-handler', ev => {
+				switch (ev.type) {
 				case 'mousedown':
 					uiHideOutlines();
 					break;
@@ -349,8 +349,8 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 			);
 
 		// Add an additional delegated click handler for the `.ui-close` elements to handle autoloading.
-		jQuery(document).one('click.autoload', '.ui-close', evt => {
-			const isAutoloadOk = evt.target.id === 'autoload-ok';
+		jQuery(document).one('click.autoload', '.ui-close', ev => {
+			const isAutoloadOk = ev.target.id === 'autoload-ok';
 			jQuery(document).one('tw:dialogclosed', () => {
 				if (DEBUG) { console.log(`\tattempting autoload: "${Save.autosave.get().title}"`); }
 
@@ -665,8 +665,8 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 						tabindex      : -1,
 						'aria-hidden' : true
 					})
-					.on('change', evt => {
-						jQuery(document).one('tw:dialogclosed', () => Save.import(evt));
+					.on('change', ev => {
+						jQuery(document).one('tw:dialogclosed', () => Save.import(ev));
 						Dialog.close();
 					})
 					.appendTo($dialogBody);
@@ -829,8 +829,8 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 		$dialogBody
 			.append(
 				  '<ul class="buttons">'
-				+ `<li><button id="settings-ok" class="ui-close">${L10n.get(['settingsOk', 'ok'])}</button></li>`
-				+ `<li><button id="settings-reset">${L10n.get('settingsReset')}</button></li>`
+				+     `<li><button id="settings-ok" class="ui-close">${L10n.get(['settingsOk', 'ok'])}</button></li>`
+				+     `<li><button id="settings-reset">${L10n.get('settingsReset')}</button></li>`
 				+ '</ul>'
 			)
 			.find('#settings-reset')

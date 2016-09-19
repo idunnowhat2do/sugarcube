@@ -57,7 +57,7 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		NOTE: Unused, included only for compatibility.
 	*/
-	function insertElement(place, type, id, classNames, text, title) {
+	function insertElement(place, type, id, classNames, text, title) { // eslint-disable-line max-params
 		const $el = jQuery(document.createElement(type));
 
 		// Add attributes/properties.
@@ -125,7 +125,7 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 		let
 			current,
 			proxy      = el.cloneNode(true),
-			intervalId;
+			intervalId; // eslint-disable-line prefer-const
 
 		function tick() {
 			current += 0.05 * direction;
@@ -190,7 +190,7 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 			direction = start > end ? -1 : 1;
 		let
 			progress   = 0,
-			intervalId;
+			intervalId; // eslint-disable-line prefer-const
 
 		function tick() {
 			progress += increment;

@@ -146,7 +146,7 @@ var L10n = (() => { // eslint-disable-line no-unused-vars, no-var
 					case 'savesIncapable':   value = strings.saves.incapable; break;
 					case 'savesLabelAuto':   value = strings.saves.labelAuto; break;
 					case 'savesLabelDelete': value = strings.saves.labelDelete; break;
-					case 'savesLabelImport': value = strings.saves.labelExport; break;
+					case 'savesLabelExport': value = strings.saves.labelExport; break;
 					case 'savesLabelImport': value = strings.saves.labelImport; break;
 					case 'savesLabelLoad':   value = strings.saves.labelLoad; break;
 					case 'savesLabelClear':  value = strings.saves.labelClear; break;
@@ -196,10 +196,10 @@ var L10n = (() => { // eslint-disable-line no-unused-vars, no-var
 					}
 
 					if (value) {
-						l10nStrings[id] = value.replace(/%\w+%/g, p => `{${p.slice(1, -1)}}`);
+						l10nStrings[id] = value.replace(/%\w+%/g, pat => `{${pat.slice(1, -1)}}`);
 					}
 				}
-				catch (e) { /* no-op */ }
+				catch (ex) { /* no-op */ }
 			});
 		}
 	}

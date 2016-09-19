@@ -217,8 +217,8 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 			try {
 				Scripting.evalJavaScript(_scripts[i].text);
 			}
-			catch (e) {
-				Alert.error(_scripts[i].title, e.message);
+			catch (ex) {
+				Alert.error(_scripts[i].title, ex.message);
 			}
 		}
 
@@ -229,8 +229,8 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 			try {
 				Wikifier.wikifyEval(_widgets[i].processText());
 			}
-			catch (e) {
-				Alert.error(_widgets[i].title, e.message);
+			catch (ex) {
+				Alert.error(_widgets[i].title, ex.message);
 			}
 		}
 	}

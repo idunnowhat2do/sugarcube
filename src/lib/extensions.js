@@ -28,7 +28,7 @@ function safeActiveElement() {
 	try {
 		return document.activeElement || null;
 	}
-	catch (e) {
+	catch (ex) {
 		return null;
 	}
 }
@@ -461,8 +461,8 @@ function safeActiveElement() {
 			else {
 				for (let i = 0, iend = arguments.length; i < iend; ++i) {
 					if (
-						!Array.prototype.some.call(this, function (v) {
-							return v === this.val || v !== v && this.val !== this.val;
+						!Array.prototype.some.call(this, function (val) {
+							return val === this.val || val !== val && this.val !== this.val;
 						}, { val : arguments[i] })
 					) {
 						return false;
@@ -497,8 +497,8 @@ function safeActiveElement() {
 			else {
 				for (let i = 0, iend = arguments.length; i < iend; ++i) {
 					if (
-						Array.prototype.some.call(this, function (v) {
-							return v === this.val || v !== v && this.val !== this.val;
+						Array.prototype.some.call(this, function (val) {
+							return val === this.val || val !== val && this.val !== this.val;
 						}, { val : arguments[i] })
 					) {
 						return true;
@@ -699,8 +699,8 @@ function safeActiveElement() {
 		writable     : true,
 
 		value(num, min, max) {
-			const n = Number(num);
-			return Number.isNaN(n) ? NaN : n.clamp(min, max);
+			const value = Number(num);
+			return Number.isNaN(value) ? NaN : value.clamp(min, max);
 		}
 	});
 
@@ -750,88 +750,105 @@ function safeActiveElement() {
 		Returns a copy of the given string with all RegExp metacharacters escaped.
 	*/
 	if (!RegExp.escape) {
-		const
-			_regExpMetaCharsRe    = /[\\^$*+?.()|[\]{}]/g,
-			_hasRegExpMetaCharsRe = new RegExp(_regExpMetaCharsRe.source); // to drop the global flag
+		(() => {
+			const
+				_regExpMetaCharsRe    = /[\\^$*+?.()|[\]{}]/g,
+				_hasRegExpMetaCharsRe = new RegExp(_regExpMetaCharsRe.source); // to drop the global flag
 
-		Object.defineProperty(RegExp, 'escape', {
-			configurable : true,
-			writable     : true,
+			Object.defineProperty(RegExp, 'escape', {
+				configurable : true,
+				writable     : true,
 
-			value(str) {
-				const s = String(str);
-				return s && _hasRegExpMetaCharsRe.test(s)
-					? s.replace(_regExpMetaCharsRe, '\\$&')
-					: s;
-			}
-		});
+				value(str) {
+					const val = String(str);
+					return val && _hasRegExpMetaCharsRe.test(val)
+						? val.replace(_regExpMetaCharsRe, '\\$&')
+						: val;
+				}
+			});
+		})();
 	}
 
 	/*
 		Returns a formatted string, after replacing each format item in the given format string
 		with the text equivalent of the corresponding argument's value.
 	*/
-	Object.defineProperty(String, 'format', {
-		configurable : true,
-		writable     : true,
+	(() => {
+		const
+			_formatRegExp    = /{(\d+)(?:,([+-]?\d+))?}/g,
+			_hasFormatRegExp = new RegExp(_formatRegExp.source); // to drop the global flag
 
-		value(format) {
-			function padString(str, align, pad) {
-				if (!align) {
-					return str;
+		Object.defineProperty(String, 'format', {
+			configurable : true,
+			writable     : true,
+
+			value(format) {
+				function padString(str, align, pad) {
+					if (!align) {
+						return str;
+					}
+
+					const plen = Math.abs(align) - str.length;
+
+					if (plen < 1) {
+						return str;
+					}
+
+					// const padding = Array(plen + 1).join(pad);
+					const padding = String(pad).repeat(plen);
+					return align < 0 ? str + padding : padding + str;
 				}
 
-				const plen = Math.abs(align) - str.length;
-
-				if (plen < 1) {
-					return str;
+				if (arguments.length < 2) {
+					return arguments.length === 0 ? '' : format;
 				}
 
-				const padding = Array(plen + 1).join(pad);
-				return align < 0 ? str + padding : padding + str;
+				const args = arguments.length === 2 && Array.isArray(arguments[1])
+					? [...arguments[1]]
+					: Array.prototype.slice.call(arguments, 1); // Array.from(arguments).slice(1);
+
+				if (args.length === 0) {
+					return format;
+				}
+
+				if (!_hasFormatRegExp.test(format)) {
+					return format;
+				}
+
+				// Possibly required by some old buggy browsers.
+				_formatRegExp.lastIndex = 0;
+
+				return format.replace(_formatRegExp, (match, index, align) => {
+					let retval = args[index];
+
+					if (retval == null) { // lazy equality for null
+						return '';
+					}
+
+					while (typeof retval === 'function') {
+						retval = retval();
+					}
+
+					switch (typeof retval) {
+					case 'string':
+						/* no-op */
+						break;
+
+					case 'object':
+						retval = JSON.stringify(retval);
+						break;
+
+					default:
+						retval = String(retval);
+						break;
+					}
+
+					// FIXME: Do we really need `Number.parseInt(align, 10)` as opposed to simply `Number(align)`?
+					return padString(retval, !align ? 0 : Number.parseInt(align, 10), ' ');
+				});
 			}
-
-			if (arguments.length < 2) {
-				return arguments.length === 0 ? '' : format;
-			}
-
-			const args = arguments.length === 2 && Array.isArray(arguments[1])
-				? arguments[1].slice(0)
-				: Array.prototype.slice.call(arguments, 1);
-
-			if (args.length === 0) {
-				return format;
-			}
-
-			return format.replace(/{(\d+)(?:,([+-]?\d+))?}/g, (match, index, align) => {
-				let retval = args[index];
-
-				if (retval == null) { // lazy equality for null
-					return '';
-				}
-
-				while (typeof retval === 'function') {
-					retval = retval();
-				}
-
-				switch (typeof retval) {
-				case 'string':
-					/* nothing */
-					break;
-
-				case 'object':
-					retval = JSON.stringify(retval);
-					break;
-
-				default:
-					retval = String(retval);
-					break;
-				}
-
-				return padString(retval, !align ? 0 : Number.parseInt(align, 10), ' ');
-			});
-		}
-	});
+		});
+	})();
 
 	/*
 		Returns whether the given string was found within the string.
@@ -1107,20 +1124,19 @@ function safeActiveElement() {
 					case '(revive:eval)':
 						try {
 							/* eslint-disable no-eval */
-							/* legacy */
+							// For post-v2.9.0 `JSON.reviveWrapper()`.
 							if (Array.isArray(value[1])) {
-							/* /legacy */
 								const $ReviveData$ = value[1][1]; // eslint-disable-line no-unused-vars
 								value = eval(value[1][0]);
-							/* legacy */
 							}
+
+							// For regular expressions, functions, and pre-v2.9.0 `JSON.reviveWrapper()`.
 							else {
 								value = eval(value[1]);
 							}
-							/* /legacy */
 							/* eslint-enable no-eval */
 						}
-						catch (e) { /* no-op; although, perhaps, it would be better to throw an error here */ }
+						catch (ex) { /* no-op; although, perhaps, it would be better to throw an error here */ }
 						break;
 					}
 				}
@@ -1130,7 +1146,7 @@ function safeActiveElement() {
 					try {
 						value = eval(value.slice(10)); // eslint-disable-line no-eval
 					}
-					catch (e) { /* no-op; although, perhaps, it would be better to throw an error here */ }
+					catch (ex) { /* no-op; although, perhaps, it would be better to throw an error here */ }
 				}
 				/* /legacy */
 
@@ -1141,7 +1157,7 @@ function safeActiveElement() {
 					try {
 						value = reviver(key, value);
 					}
-					catch (e) { /* no-op; although, perhaps, it would be better to throw an error here */ }
+					catch (ex) { /* no-op; although, perhaps, it would be better to throw an error here */ }
 				}
 
 				return value;
@@ -1255,10 +1271,10 @@ function safeActiveElement() {
 
 		NOTE: Do not replace the anonymous functions herein with arrow functions.
 	*/
-	function onKeypressFn(evt) {
+	function onKeypressFn(ev) {
 		// 13 is Enter/Return, 32 is Space.
-		if (evt.which === 13 || evt.which === 32) {
-			evt.preventDefault();
+		if (ev.which === 13 || ev.which === 32) {
+			ev.preventDefault();
 
 			// To allow delegation, attempt to trigger the event on `document.activeElement`,
 			// if possible, elsewise on `this`.

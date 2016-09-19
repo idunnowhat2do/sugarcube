@@ -24,7 +24,7 @@ var Macro = (() => { // eslint-disable-line no-unused-vars, no-var
 	 ******************************************************************************************************************/
 	function macrosAdd(name, def, deep) {
 		if (Array.isArray(name)) {
-			name.forEach(n => macrosAdd(n, def, deep));
+			name.forEach(name => macrosAdd(name, def, deep));
 			return;
 		}
 
@@ -60,12 +60,12 @@ var Macro = (() => { // eslint-disable-line no-unused-vars, no-var
 			_macros[name]._MACRO_API = true;
 			/* /legacy */
 		}
-		catch (e) {
-			if (e.name === 'TypeError') {
+		catch (ex) {
+			if (ex.name === 'TypeError') {
 				throw new Error(`cannot clobber protected macro <<${name}>>`);
 			}
 			else {
-				throw new Error(`unknown error when attempting to add macro <<${name}>>: [${e.name}] ${e.message}`);
+				throw new Error(`unknown error when attempting to add macro <<${name}>>: [${ex.name}] ${ex.message}`);
 			}
 		}
 
@@ -85,7 +85,7 @@ var Macro = (() => { // eslint-disable-line no-unused-vars, no-var
 
 	function macrosDelete(name) {
 		if (Array.isArray(name)) {
-			name.forEach(n => macrosDelete(n));
+			name.forEach(name => macrosDelete(name));
 			return;
 		}
 
@@ -100,8 +100,8 @@ var Macro = (() => { // eslint-disable-line no-unused-vars, no-var
 				Object.defineProperty(_macros, name, { writable : true });
 				delete _macros[name];
 			}
-			catch (e) {
-				throw new Error(`unknown error removing macro <<${name}>>: ${e.message}`);
+			catch (ex) {
+				throw new Error(`unknown error removing macro <<${name}>>: ${ex.message}`);
 			}
 		}
 		else if (tagsHas(name)) {
@@ -135,14 +135,14 @@ var Macro = (() => { // eslint-disable-line no-unused-vars, no-var
 	function macrosInit(handler = 'init') { // eslint-disable-line no-unused-vars
 		Object.keys(_macros).forEach(name => {
 			if (typeof _macros[name][handler] === 'function') {
-				_macros[name][handler].call(_macros[name], name);
+				_macros[name][handler](name);
 			}
 		});
 
 		/* legacy macro support */
 		Object.keys(macros).forEach(name => {
 			if (typeof macros[name][handler] === 'function') {
-				macros[name][handler].call(macros[name], name);
+				macros[name][handler](name);
 			}
 		});
 		/* /legacy macro support */

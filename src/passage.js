@@ -13,7 +13,7 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 
 	let
 		_tagsToSkip,
-		_unescapeTwine1Chars;
+		_twine1Unescape;
 
 	/*
 		Tags which should not be transformed into classes:
@@ -40,9 +40,9 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 			Returns a decoded version of the passed Twine 1 passage store encoded string.
 		*/
 		const
-			_escapedTwine1CharsRe    = /(?:\\n|\\t|\\s|\\|\r)/g,
-			_hasEscapedTwine1CharsRe = new RegExp(_escapedTwine1CharsRe.source), // to drop the global flag
-			_escapedTwine1CharsMap   = Object.freeze({
+			_twine1EscapesRe    = /(?:\\n|\\t|\\s|\\|\r)/g,
+			_hasTwine1EscapesRe = new RegExp(_twine1EscapesRe.source), // to drop the global flag
+			_twine1EscapesMap   = Object.freeze({
 				'\\n' : '\n',
 				'\\t' : '\t',
 				'\\s' : '\\',
@@ -50,15 +50,15 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 				'\r'  : ''
 			});
 
-		_unescapeTwine1Chars = function (str) {
+		_twine1Unescape = function (str) {
 			if (str == null) { // lazy equality for null
 				return '';
 			}
 
-			const s = String(str);
-			return s && _hasEscapedTwine1CharsRe.test(s)
-				? s.replace(_escapedTwine1CharsRe, c => _escapedTwine1CharsMap[c])
-				: s;
+			const val = String(str);
+			return val && _hasTwine1EscapesRe.test(val)
+				? val.replace(_twine1EscapesRe, esc => _twine1EscapesMap[esc])
+				: val;
 		};
 	}
 
@@ -129,14 +129,12 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 		get text() {
 			if (this.element == null) { // lazy equality for null
 				const passage = Util.escape(this.title);
-				return `<span class="error" title="${passage}">`
-					+ `${L10n.get('errorTitle')}: ${L10n.get('errorNonexistentPassage', { passage })}`
-					+ '</span>';
+				return `<span class="error" title="${passage}">${L10n.get('errorTitle')}: ${L10n.get('errorNonexistentPassage', { passage })}</span>`;
 			}
 
 			// For Twine 1
 			if (TWINE1) {
-				return _unescapeTwine1Chars(this.element.textContent);
+				return _twine1Unescape(this.element.textContent);
 			}
 			// For Twine 2
 			else {
@@ -301,7 +299,7 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 					// Clean wiki !headings.
 					.replace(/^\s*!+(.*?)$/gm, '$1')
 					// Clean wiki bold/italic/underline/highlight formatting.
-					.replace(/\'{2}|\/{2}|_{2}|@{2}/g, '')
+					.replace(/'{2}|\/{2}|_{2}|@{2}/g, '')
 					// A final trim.
 					.trim()
 					// Compact whitespace.

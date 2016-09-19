@@ -200,8 +200,8 @@ jQuery(() => {
 
 		if (DEBUG) { console.log('[SugarCube/main()] Startup complete; story ready.'); }
 	}
-	catch (e) {
+	catch (ex) {
 		jQuery(document).off('readystatechange.SugarCube');
-		return Alert.fatal(null, e.message, e);
+		return Alert.fatal(null, ex.message, ex);
 	}
 });
