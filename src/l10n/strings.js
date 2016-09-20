@@ -12,21 +12,25 @@
 	ATTENTION TRANSLATORS
 
 	The capitalization and punctuation used within the default replacement strings is
-	deliberate, especially within the error strings.  You would do well to keep your
-	translations similar when possible.
+	deliberate, especially within the error and warning strings.  You would do well
+	to keep your translations similar when possible.
 
 	Replacement patterns have the format `{NAME}` (e.g. {identity}), where NAME is the
 	name of a property within either the `l10nStrings` object or, in a few cases, an
 	object supplied locally where the string is used—these instances will be commented.
 
-	By convention, properties starting with an underscore (e.g. _warningIntro) are used
-	as templates, only being included within other strings, so feel free to add your
-	own if that makes localization easier—e.g. for gender, plurals, and whatnot.
+	By convention, properties starting with an underscore (e.g. _warningIntroLacking)
+	are used as templates, only being included within other localized strings.  Feel
+	free to add your own if that makes localization easier—e.g. for gender, plurals,
+	and whatnot.  As an example, the default replacement strings make use of this to
+	handle various warning intros and outros.
 
 	In use, replacement patterns are replaced recursively, so replacement strings may
 	contain patterns whose replacements contain other patterns.  Because replacement is
 	recursive, care must be taken to ensure infinite loops are not created—the system
 	will detect an infinite loop and throw an error.
+
+	FOR MORE INFO, SEE: http://www.motoslave.net/sugarcube/2/docs/localization.html
 */
 var l10nStrings = { // eslint-disable-line no-unused-vars, no-var
 	/*
@@ -49,10 +53,10 @@ var l10nStrings = { // eslint-disable-line no-unused-vars, no-var
 	/*
 		Warnings.
 	*/
-	_warningIntro       : 'Apologies! Your browser either lacks or has disabled',
-	_warningOutro       : ', so this {identity} is running in a degraded mode. You may be able to continue, however, some parts may not work properly.',
-	warningNoWebStorage : '{_warningIntro} the Web Storage API{_warningOutro}',
-	warningDegraded     : '{_warningIntro} some of the capabilities required by this {identity}{_warningOutro}',
+	_warningIntroLacking  : 'Apologies! Your browser either lacks or has disabled',
+	_warningOutroDegraded : ', so this {identity} is running in a degraded mode. You may be able to continue, however, some parts may not work properly.',
+	warningNoWebStorage   : '{_warningIntroLacking} the Web Storage API{_warningOutroDegraded}',
+	warningDegraded       : '{_warningIntroLacking} some of the capabilities required by this {identity}{_warningOutroDegraded}',
 
 	/*
 		Debug View.
@@ -81,7 +85,7 @@ var l10nStrings = { // eslint-disable-line no-unused-vars, no-var
 	savesTitle       : 'Saves',
 	savesDisallowed  : 'Saving has been disallowed on this passage.',
 	savesEmptySlot   : '— slot empty —',
-	savesIncapable   : '{_warningIntro} the capabilities required to support saves, so saves have been disabled for this session.',
+	savesIncapable   : '{_warningIntroLacking} the capabilities required to support saves, so saves have been disabled for this session.',
 	savesLabelAuto   : 'Autosave',
 	savesLabelDelete : 'Delete',
 	savesLabelExport : 'Save to Disk\u2026',
