@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global Alert, Browser, Config, Dialog, DebugView, Engine, Has, KeyValueStore, Macro, Passage, Save, Scripting,
-	       Setting, SimpleAudio, State, Story, UI, Util, Wikifier, strings
+	global Alert, Browser, Config, Dialog, DebugView, Engine, Has, KeyValueStore, L10n, Macro, Passage, Save,
+	       Scripting, Setting, SimpleAudio, State, Story, UI, Util, Wikifier
 */
 /* eslint-disable no-var */
 
@@ -132,17 +132,9 @@ jQuery(() => {
 		Story.load();
 
 		// Instantiate the storage and session objects.
-		// n.b. `KeyValueStore()` params: driverType, persist, storageId
+		// NOTE: `KeyValueStore()` params: driverType, persist, storageId
 		storage = new KeyValueStore('webStorage', true, Story.domId);
 		session = new KeyValueStore('webStorage', false, Story.domId);
-
-		// Alert players when their browser is degrading required capabilities.
-		if (!session.has('rcWarn') && storage.name === 'cookie') {
-			/* eslint-disable no-alert */
-			session.set('rcWarn', 1);
-			window.alert(strings.warnings.degraded.replace(/%identity%/g, strings.identity));
-			/* eslint-enable no-alert */
-		}
 
 		// Initialize the user interface (must be done before story initialization, specifically before scripts).
 		Dialog.init();
@@ -150,6 +142,17 @@ jQuery(() => {
 
 		// Initialize the story (largely load the user styles, scripts, and widgets).
 		Story.init();
+
+		// Initialize the localization (must be done after story initialization).
+		L10n.init();
+
+		// Alert when the browser is degrading required capabilities (must be done after localization initialization).
+		if (!session.has('rcWarn') && storage.name === 'cookie') {
+			/* eslint-disable no-alert */
+			session.set('rcWarn', 1);
+			window.alert(L10n.get('warningNoWebStorage'));
+			/* eslint-enable no-alert */
+		}
 
 		// Initialize the saves (must be done after story initialization, but before engine start).
 		Save.init();
@@ -174,6 +177,7 @@ jQuery(() => {
 			DebugView,
 			Engine,
 			Has,
+			L10n,
 			Macro,
 			Passage,
 			Save,
@@ -196,8 +200,8 @@ jQuery(() => {
 
 		if (DEBUG) { console.log('[SugarCube/main()] Startup complete; story ready.'); }
 	}
-	catch (e) {
+	catch (ex) {
 		jQuery(document).off('readystatechange.SugarCube');
-		return Alert.fatal(null, e.message, e);
+		return Alert.fatal(null, ex.message, ex);
 	}
 });

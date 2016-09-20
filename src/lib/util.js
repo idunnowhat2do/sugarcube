@@ -79,10 +79,10 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 			return '';
 		}
 
-		const s = String(str);
-		return s && _hasHtmlCharsRe.test(s)
-			? s.replace(_htmlCharsRe, c => _htmlCharsMap[c])
-			: s;
+		const val = String(str);
+		return val && _hasHtmlCharsRe.test(val)
+			? val.replace(_htmlCharsRe, ch => _htmlCharsMap[ch])
+			: val;
 	}
 
 	/**
@@ -108,10 +108,10 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 			return '';
 		}
 
-		const s = String(str);
-		return s && _hasEscapedHtmlRe.test(s)
-			? s.replace(_escapedHtmlRe, c => _escapedHtmlMap[c])
-			: s;
+		const val = String(str);
+		return val && _hasEscapedHtmlRe.test(val)
+			? val.replace(_escapedHtmlRe, entity => _escapedHtmlMap[entity])
+			: val;
 	}
 
 
@@ -296,6 +296,7 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 		Returns a patch object containing the differences between the orig and the dest objects.
 	**/
 	function utilDiff(orig, dest) /* diff object */ {
+		/* eslint-disable id-length, max-depth */
 		const
 			objToString = Object.prototype.toString,
 			origIsArray = Array.isArray(orig),
@@ -307,32 +308,34 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 		let
 			aOpRef;
 
+		const keyIsAOpRef = key => key === aOpRef;
+
 		for (let i = 0, klen = keys.length; i < klen; ++i) {
 			const
-				p     = keys[i],
-				origP = orig[p],
-				destP = dest[p];
+				key   = keys[i],
+				origP = orig[key],
+				destP = dest[key];
 
-			if (orig.hasOwnProperty(p)) {
+			if (orig.hasOwnProperty(key)) {
 				// Key exists in both.
-				if (dest.hasOwnProperty(p)) {
+				if (dest.hasOwnProperty(key)) {
 					// Values are exactly the same, so do nothing.
 					if (origP === destP) {
 						continue;
 					}
 
 					// Values are of the same basic type.
-					if (typeof origP === typeof destP) {
+					if (typeof origP === typeof destP) { // eslint-disable-line valid-typeof
 						// Values are functions.
 						if (typeof origP === 'function') {
-							/* diff[p] = [DiffOp.Copy, destP]; */
+							/* diff[key] = [DiffOp.Copy, destP]; */
 							if (origP.toString() !== destP.toString()) {
-								diff[p] = [DiffOp.Copy, destP];
+								diff[key] = [DiffOp.Copy, destP];
 							}
 						}
 						// Values are scalars or null.
 						else if (typeof origP !== 'object' || origP === null) {
-							diff[p] = [DiffOp.Copy, destP];
+							diff[key] = [DiffOp.Copy, destP];
 						}
 						// Values are objects.
 						else {
@@ -344,33 +347,35 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 							if (origPType === destPType) {
 								// Special case: `Date` object.
 								if (origPType === '[object Date]') {
-									if (+origP !== +destP) {
-										diff[p] = [DiffOp.CopyDate, +destP];
+									const nDestP = Number(destP);
+
+									if (Number(origP) !== nDestP) {
+										diff[key] = [DiffOp.CopyDate, nDestP];
 									}
 								}
 								// Special case: `RegExp` object.
 								else if (origPType === '[object RegExp]') {
 									if (origP.toString() !== destP.toString()) {
-										diff[p] = [DiffOp.Copy, clone(destP)];
+										diff[key] = [DiffOp.Copy, clone(destP)];
 									}
 								}
 								else {
 									const recurse = Util.diff(origP, destP);
 
 									if (recurse !== null) {
-										diff[p] = recurse;
+										diff[key] = recurse;
 									}
 								}
 							}
 							// Values are objects of different prototypes.
 							else {
-								diff[p] = [DiffOp.Copy, clone(destP)];
+								diff[key] = [DiffOp.Copy, clone(destP)];
 							}
 						}
 					}
 					// Values are of different types.
 					else {
-						diff[p] = [
+						diff[key] = [
 							DiffOp.Copy,
 							typeof destP !== 'object' || destP === null ? destP : clone(destP)
 						];
@@ -378,35 +383,35 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 				}
 				// Key only exists in orig.
 				else {
-					if (origIsArray && Util.isNumeric(p)) {
-						const np = +p;
+					if (origIsArray && Util.isNumeric(key)) {
+						const nKey = Number(key);
 
 						if (!aOpRef) {
 							aOpRef = '';
 
 							do {
 								aOpRef += '~';
-							} while (keys.some(function (v) { return v === this.val; }, { val : aOpRef }));
+							} while (keys.some(keyIsAOpRef));
 
-							diff[aOpRef] = [DiffOp.SpliceArray, np, np];
+							diff[aOpRef] = [DiffOp.SpliceArray, nKey, nKey];
 						}
 
-						if (np < diff[aOpRef][1]) {
-							diff[aOpRef][1] = np;
+						if (nKey < diff[aOpRef][1]) {
+							diff[aOpRef][1] = nKey;
 						}
 
-						if (np > diff[aOpRef][2]) {
-							diff[aOpRef][2] = np;
+						if (nKey > diff[aOpRef][2]) {
+							diff[aOpRef][2] = nKey;
 						}
 					}
 					else {
-						diff[p] = DiffOp.Delete;
+						diff[key] = DiffOp.Delete;
 					}
 				}
 			}
 			// Key only exists in dest.
 			else {
-				diff[p] = [
+				diff[key] = [
 					DiffOp.Copy,
 					typeof destP !== 'object' || destP === null ? destP : clone(destP)
 				];
@@ -414,6 +419,7 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		return Object.keys(diff).length > 0 ? diff : null;
+		/* eslint-enable id-length, max-depth */
 	}
 
 	/**
@@ -426,27 +432,29 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		for (let i = 0, klen = keys.length; i < klen; ++i) {
 			const
-				p     = keys[i],
-				diffP = diff[p];
+				key   = keys[i],
+				diffP = diff[key];
 
 			if (diffP === DiffOp.Delete) {
-				delete patched[p];
+				delete patched[key];
 			}
 			else if (Array.isArray(diffP)) {
 				switch (diffP[0]) {
 				case DiffOp.SpliceArray:
 					patched.splice(diffP[1], 1 + (diffP[2] - diffP[1]));
 					break;
+
 				case DiffOp.Copy:
-					patched[p] = clone(diffP[1]);
+					patched[key] = clone(diffP[1]);
 					break;
+
 				case DiffOp.CopyDate:
-					patched[p] = new Date(diffP[1]);
+					patched[key] = new Date(diffP[1]);
 					break;
 				}
 			}
 			else {
-				patched[p] = Util.patch(patched[p], diffP);
+				patched[key] = Util.patch(patched[key], diffP);
 			}
 		}
 

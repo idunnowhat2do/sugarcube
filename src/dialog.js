@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global Engine, safeActiveElement, strings */
+/* global Engine, L10n, safeActiveElement */
 
 var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
@@ -67,7 +67,7 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 
 				scrollbarWidth = w1 - w2;
 			}
-			catch (e) { /* no-op */ }
+			catch (ex) { /* no-op */ }
 
 			return scrollbarWidth || 17; // 17px is a reasonable failover
 		})();
@@ -82,7 +82,7 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 				+ '<div id="ui-dialog" tabindex="0" role="dialog" aria-labelledby="ui-dialog-title">'
 				+     '<div id="ui-dialog-titlebar">'
 				+         '<h1 id="ui-dialog-title"></h1>'
-				+         `<button id="ui-dialog-close" class="ui-close" tabindex="0" aria-label="${strings.close}">\uE804</button>`
+				+         `<button id="ui-dialog-close" class="ui-close" tabindex="0" aria-label="${L10n.get('close')}">\uE804</button>`
 				+     '</div>'
 				+     '<div id="ui-dialog-body"></div>'
 				+ '</div>'
@@ -92,9 +92,9 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Cache the dialog elements, since they're going to be used often.
 
-			n.b. We rewrap the elements themselves, rather than simply using the results of
-			     `find()`, so that we cache uncluttered jQuery-wrappers (i.e. `context` refers
-			     to the elements and there is no `prevObject`).
+			NOTE: We rewrap the elements themselves, rather than simply using the results
+			      of `find()`, so that we cache uncluttered jQuery-wrappers (i.e. `context`
+			      refers to the elements and there is no `prevObject`).
 		*/
 		_$overlay     = jQuery($uiTree.find('#ui-overlay').get(0));
 		_$dialog      = jQuery($uiTree.find('#ui-dialog').get(0));
@@ -113,7 +113,7 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 	 ******************************************************************************************************************/
 	function dialogIsOpen(classNames) {
 		return _$dialog.hasClass('open')
-			&& (classNames ? classNames.splitOrEmpty(/\s+/).every(c => _$dialogBody.hasClass(c)) : true);
+			&& (classNames ? classNames.splitOrEmpty(/\s+/).every(cn => _$dialogBody.hasClass(cn)) : true);
 	}
 
 	function dialogSetup(title, classNames) {
@@ -149,12 +149,12 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 		Adds a click hander to the target element(s) which opens the dialog modal.
 	**/
 	function dialogAddClickHandler(targets, options, startFn, doneFn, closeFn) {
-		return jQuery(targets).ariaClick(evt => {
-			evt.preventDefault();
+		return jQuery(targets).ariaClick(ev => {
+			ev.preventDefault();
 
 			// Call the start function.
 			if (typeof startFn === 'function') {
-				startFn(evt);
+				startFn(ev);
 			}
 
 			// Open the dialog.
@@ -162,7 +162,7 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			// Call the done function.
 			if (typeof doneFn === 'function') {
-				doneFn(evt);
+				doneFn(ev);
 			}
 		});
 	}
@@ -183,12 +183,18 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 		_$overlay
 			.addClass('open');
 
-		// Add the imagesLoaded handler to the dialog body, if necessary.
-		// n.b. We use `querySelector()` as jQuery has no equivalent.
+		/*
+			Add the imagesLoaded handler to the dialog body, if necessary.
+
+			NOTE: We use `querySelector()` here as jQuery has no simple way to check if,
+			      and only if, at least one element of the specified type exists.  The
+			      best that jQuery offers is analogous to `querySelectorAll()`, which
+			      enumerates all elements of the specified type.
+		*/
 		if (_$dialogBody[0].querySelector('img') !== null) {
 			_$dialogBody
 				.imagesLoaded()
-				.always(() => dialogResizeHandler({ data : { top } }));
+					.always(() => dialogResizeHandler({ data : { top } }));
 		}
 
 		// Add `aria-hidden=true` to all direct non-dialog-children of <body> to
@@ -215,9 +221,9 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 		// Setup the delegated UI close handler.
 		jQuery(document)
 			.on('click.ui-close', '.ui-close', { closeFn }, dialogClose) // yes, namespace and class have the same name
-			.on('keypress.ui-close', '.ui-close', function (evt) {
+			.on('keypress.ui-close', '.ui-close', function (ev) {
 				// 13 is Enter/Return, 32 is Space.
-				if (evt.which === 13 || evt.which === 32) {
+				if (ev.which === 13 || ev.which === 32) {
 					jQuery(this).trigger('click');
 				}
 			});
@@ -228,7 +234,7 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 		return Dialog;
 	}
 
-	function dialogClose(evt) {
+	function dialogClose(ev) {
 		// Largely reverse the actions taken in `dialogOpen()`.
 		jQuery(document)
 			.off('.ui-close'); // namespace, not to be confused with the class by the same name
@@ -263,8 +269,8 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		// Call the given "on close" callback function, if any.
-		if (evt && evt.data && typeof evt.data.closeFn === 'function') {
-			evt.data.closeFn(evt);
+		if (ev && ev.data && typeof ev.data.closeFn === 'function') {
+			ev.data.closeFn(ev);
 		}
 
 		// Trigger a global `tw:dialogclosed` event.
@@ -273,8 +279,8 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 		return Dialog;
 	}
 
-	function dialogResizeHandler(evt) {
-		const top = evt && evt.data && typeof evt.data.top !== 'undefined' ? evt.data.top : 50;
+	function dialogResizeHandler(ev) {
+		const top = ev && ev.data && typeof ev.data.top !== 'undefined' ? ev.data.top : 50;
 
 		if (_$dialog.css('display') === 'block') {
 			// Stow the dialog.
@@ -324,9 +330,9 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 		}
 
-		Object.keys(dialogPos).forEach(p => {
-			if (dialogPos[p] !== '') {
-				dialogPos[p] += 'px';
+		Object.keys(dialogPos).forEach(key => {
+			if (dialogPos[key] !== '') {
+				dialogPos[key] += 'px';
 			}
 		});
 

@@ -26,8 +26,8 @@ var Patterns = (() => { // eslint-disable-line no-unused-vars, no-var
 		space = '[\\s\\u00A0\\u2028\\u2029]', // Unicode space-character escapes required for IE < 11 (maybe < 10?)
 
 		// Character patterns.
-		anyLetter       = '[0-9A-Z_a-z\\-\\u00C0-\\u00D6\\u00D8-\\u00DE\\u00DF-\\u00F6\\u00F8-\\u00FF'
-			+ `${_unicodeOk ? '\\u0150\\u0170\\u0151\\u0171' /* Include surrogate pairs? '\\uD800-\\uDFFF' */ : ''}]`,
+		// FIXME: Should we include surrogate pairs ('\\uD800-\\uDFFF') within `anyLetter`?
+		anyLetter       = `[0-9A-Z_a-z\\-\\u00C0-\\u00D6\\u00D8-\\u00DE\\u00DF-\\u00F6\\u00F8-\\u00FF${_unicodeOk ? '\\u0150\\u0170\\u0151\\u0171' /* Surrogates? */ : ''}]`,
 		anyLetterStrict = anyLetter.replace('\\-', ''), // anyLetter sans hyphens
 
 		/*
@@ -49,12 +49,11 @@ var Patterns = (() => { // eslint-disable-line no-unused-vars, no-var
 		variable      = variableSigil + identifier,
 
 		// Inline CSS pattern.
-		inlineCss = [
-			`(?:(${anyLetter}+)\\(([^\\)\\|\\n]+)\\):)`, // [1,2]=style(value):
-			`(?:(${anyLetter}+):([^;\\|\\n]+);)`,        // [3,4]=style:value;
-			`(?:((?:\\.${anyLetter}+)+);)`,              // [5]  =.className;
-			`(?:((?:#${anyLetter}+)+);)`                 // [6]  =#id;
-		].join('|'),
+		_twStyle   = `(${anyLetter}+)\\(([^\\)\\|\\n]+)\\):`, // [1,2]=style(value):
+		_cssStyle  = `(${anyLetter}+):([^;\\|\\n]+);`,        // [3,4]=style:value;
+		_className = `((?:\\.${anyLetter}+)+);`,              // [5]  =.className;
+		_idName    = `((?:#${anyLetter}+)+);`,                // [6]  =#id;
+		inlineCss  = `${_twStyle}|${_cssStyle}|${_className}|${_idName}`,
 
 		// URL pattern.
 		/*

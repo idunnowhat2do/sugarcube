@@ -98,8 +98,7 @@ var Config = (() => { // eslint-disable-line no-unused-vars, no-var
 	});
 
 	function _throwHistoryModeError() {
-		throw new Error('Config.history.mode has been deprecated and'
-			+ ' is no longer used by SugarCube, please remove it from your code');
+		throw new Error('Config.history.mode has been deprecated and is no longer used by SugarCube, please remove it from your code');
 	}
 
 	function _throwHistoryTrackingError() {

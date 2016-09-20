@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global Story, StyleWrapper, Wikifier, strings */
+/* global L10n, Story, StyleWrapper, Wikifier */
 
 var { // eslint-disable-line no-var
 	/* eslint-disable no-unused-vars */
@@ -21,13 +21,9 @@ var { // eslint-disable-line no-var
 	'use strict';
 
 	/*
-		Appends a new <style> element to the document's <head>.
+		Adds the given styles to the story's <style> element, creating it if necessary.
 	*/
-	const
-		_imageMarkupRe    = /\[[<>]?[Ii][Mm][Gg]\[(?:\s|\S)*?\]\]+/g,
-		_hasImageMarkupRe = new RegExp(_imageMarkupRe.source); // to drop the global flag
-
-	function addStyle(rawCSS) {
+	function addStyle(css) {
 		let style = document.getElementById('style-story');
 
 		if (style === null) {
@@ -38,53 +34,19 @@ var { // eslint-disable-line no-var
 		}
 
 		style = new StyleWrapper(style);
-
-		let css = rawCSS;
-
-		// Check for wiki image transclusion.
-		if (_hasImageMarkupRe.test(css)) {
-			css = css.replace(_imageMarkupRe, wikiImage => {
-				const markup = Wikifier.helpers.parseSquareBracketedMarkup({
-					source     : wikiImage,
-					matchStart : 0
-				});
-
-				if (markup.hasOwnProperty('error') || markup.pos < wikiImage.length) {
-					return wikiImage;
-				}
-
-				let source = markup.source;
-
-				// Handle image passage transclusion.
-				if (source.slice(0, 5) !== 'data:' && Story.has(source)) {
-					const passage = Story.get(source);
-
-					if (passage.tags.includes('Twine.image')) {
-						source = passage.text;
-					}
-				}
-
-				/*
-					The source may be URI- or Base64-encoded, so we cannot use encodeURIComponent()
-					here.  Instead, we simply encode any double quotes, since the URI will be
-					delimited by them.
-				*/
-				return `url("${source.replace(/"/g, '%22')}")`;
-			});
-		}
-
 		style.add(css);
 	}
 
 	/*
-		Returns a deep copy of the passed object.
+		Returns a deep copy of the given object.
 
-		n.b. 1. `clone()` does not clone functions, however, since function definitions are immutable,
-		        the only issues are with expando properties and scope.  The former really should not
-		        be done.  The latter is problematic either way (damned if you do, damned if you don't).
-		     2. `clone()` does not maintain referential relationships (e.g. multiple references to the
-		        same object will, post-cloning, refer to different equivalent objects; i.e. each
-		        reference will get its own clone of the original object).
+		NOTE: 1. `clone()` does not clone functions, however, since function definitions are
+		         immutable, the only issues are with expando properties and scope.  The former
+		         really should not be done.  The latter is problematic either way (damned if
+		         you do, damned if you don't).
+		      2. `clone()` does not maintain referential relationships (e.g. multiple references
+		         to the same object will, post-cloning, refer to different equivalent objects;
+		         i.e. each reference will get its own clone of the original object).
 	*/
 	function clone(orig) {
 		/*
@@ -107,15 +69,17 @@ var { // eslint-disable-line no-var
 		/*
 			Create a copy of the original object.
 
-			n.b. 1. Each non-generic object that we wish to support must receive a special case below.
-			     2. Since we're using the `instanceof` operator to identify special cases, this may
-			        fail to properly identify such cases if the author engages in cross-<iframe>
-			        object manipulation.  The solution to this problem would be for the author to
-			        pass messages between the frames, rather than doing direct cross-frame object
-			        manipulation.  That is, in fact, what they should be doing in the first place.
-			     3. We cannot use `Object.prototype.toString.call(orig)` to solve #2 because the shims
-			        for `Map` and `Set` return `[object Object]` rather than `[object Map]` and
-			        `[object Set]`.
+			NOTE: 1. Each non-generic object that we wish to support must receive a special
+			         case below.
+			      2. Since we're using the `instanceof` operator to identify special cases,
+			         this may fail to properly identify such cases if the author engages in
+			         cross-<iframe> object manipulation.  The solution to this problem would
+			         be for the author to pass messages between the frames, rather than doing
+			         direct cross-frame object manipulation.  That is, in fact, what they should
+			         be doing in the first place.
+			      3. We cannot use `Object.prototype.toString.call(orig)` to solve #2 because
+			         the shims for `Map` and `Set` return `[object Object]` rather than
+			         `[object Map]` and `[object Set]`.
 		*/
 		let copy;
 
@@ -127,14 +91,14 @@ var { // eslint-disable-line no-var
 		}
 		else if (orig instanceof Map) {
 			copy = new Map();
-			orig.forEach((v, k) => { copy.set(k, clone(v)); });
+			orig.forEach((val, key) => { copy.set(key, clone(val)); });
 		}
 		else if (orig instanceof RegExp) {
 			copy = new RegExp(orig);
 		}
 		else if (orig instanceof Set) {
 			copy = new Set();
-			orig.forEach(v => { copy.add(clone(v)); });
+			orig.forEach(val => { copy.add(clone(val)); });
 		}
 		else { // unknown or generic object
 			// Try to ensure that the returned object has the same prototype as the original.
@@ -145,8 +109,8 @@ var { // eslint-disable-line no-var
 			Duplicate the original object's own enumerable properties, which will include expando
 			properties on non-generic objects.
 
-			n.b. This does not preserve ES5 property attributes.  Neither does the delta coding
-				 or serialization code, however, so it's not really an issue at the moment.
+			NOTE: This does not preserve ES5 property attributes.  Neither does the delta coding
+			      or serialization code, however, so it's not really an issue at the moment.
 		*/
 		Object.keys(orig).forEach(name => copy[name] = clone(orig[name]));
 
@@ -273,7 +237,7 @@ var { // eslint-disable-line no-var
 		jQuery(document.createElement('span'))
 			.addClass('error')
 			.attr('title', title)
-			.text(`${strings.errors.title}: ${message || 'unknown error'}`)
+			.text(`${L10n.get('errorTitle')}: ${message || 'unknown error'}`)
 			.appendTo(place);
 		return false;
 	}
@@ -282,44 +246,44 @@ var { // eslint-disable-line no-var
 		Returns the simple string representation of the passed value or, if there is none,
 		the passed default value.
 	*/
-	function toStringOrDefault(val, defVal) {
-		switch (typeof val) {
+	function toStringOrDefault(value, defValue) {
+		switch (typeof value) {
 		case 'number':
-			if (Number.isNaN(val)) {
-				return defVal;
+			if (Number.isNaN(value)) {
+				return defValue;
 			}
 			break;
 
 		case 'object':
-			if (val === null) {
-				return defVal;
+			if (value === null) {
+				return defValue;
 			}
-			else if (Array.isArray(val) || val instanceof Set) {
-				return [...val].map(v => toStringOrDefault(v, defVal)).join(', ');
+			else if (Array.isArray(value) || value instanceof Set) {
+				return [...value].map(val => toStringOrDefault(val, defValue)).join(', ');
 			}
-			else if (val instanceof Map) {
-				/* eslint-disable prefer-template */
-				const tSOD = toStringOrDefault;
-				return '(\u202F'
-					+ [...val].map(kv => tSOD(kv[0], defVal) + ' \u21D2 ' + tSOD(kv[1], defVal)).join('; ')
-					+ '\u202F)';
-				/* eslint-enable prefer-template */
+			else if (value instanceof Map) {
+				const
+					tSOD = toStringOrDefault,
+					str  = [...value]
+						.map(kv => `${tSOD(kv[0], defValue)} \u21D2 ${tSOD(kv[1], defValue)}`)
+						.join('; ');
+				return `(\u202F${str}\u202F)`;
 			}
-			else if (val instanceof Date) {
-				return val.toLocaleString();
+			else if (value instanceof Date) {
+				return value.toLocaleString();
 			}
-			else if (typeof val.toString === 'function') {
-				return val.toString();
+			else if (typeof value.toString === 'function') {
+				return value.toString();
 			}
 
-			return Object.prototype.toString.call(val);
+			return Object.prototype.toString.call(value);
 
 		case 'function':
 		case 'undefined':
-			return defVal;
+			return defValue;
 		}
 
-		return String(val);
+		return String(value);
 	}
 
 

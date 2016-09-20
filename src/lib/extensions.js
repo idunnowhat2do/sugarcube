@@ -28,7 +28,7 @@ function safeActiveElement() {
 	try {
 		return document.activeElement || null;
 	}
-	catch (e) {
+	catch (ex) {
 		return null;
 	}
 }
@@ -37,8 +37,8 @@ function safeActiveElement() {
 /*
 	JavaScript Polyfills.
 
-	n.b. Most of the ES5 & ES6 polyfills now come from the `es5-shim.js` and `es6-shim.js`
-	     libraries, respectively.
+	NOTE: Most of the ES5 & ES6 polyfills now come from the `es5-shim.js` and `es6-shim.js`
+	      libraries, respectively.
 */
 (() => {
 	'use strict';
@@ -79,10 +79,7 @@ function safeActiveElement() {
 				for (/* empty */; i < length; ++i) {
 					const current = this[i];
 
-					if (
-						   needle === current
-						|| (needle !== needle && current !== current) // eslint-disable-line no-extra-parens
-					) {
+					if (needle === current || needle !== needle && current !== current) {
 						return true;
 					}
 				}
@@ -306,94 +303,6 @@ function safeActiveElement() {
 	});
 
 	/*
-		Returns whether the given element was found within the array.
-	*/
-	Object.defineProperty(Array.prototype, 'contains', {
-		configurable : true,
-		writable     : true,
-
-		value(/* needle [, fromIndex] */) {
-			if (this == null) { // lazy equality for null
-				throw new TypeError('Array.prototype.contains called on null or undefined');
-			}
-
-			return Array.prototype.indexOf.apply(this, arguments) !== -1;
-		}
-	});
-
-	/*
-		Returns whether all of the given elements were found within the array.
-	*/
-	Object.defineProperty(Array.prototype, 'containsAll', {
-		configurable : true,
-		writable     : true,
-
-		value(/* needles */) {
-			if (this == null) { // lazy equality for null
-				throw new TypeError('Array.prototype.containsAll called on null or undefined');
-			}
-
-			if (arguments.length === 1) {
-				if (Array.isArray(arguments[0])) {
-					return Array.prototype.containsAll.apply(this, arguments[0]);
-				}
-				else {
-					return Array.prototype.indexOf.apply(this, arguments) !== -1;
-				}
-			}
-			else {
-				for (let i = 0, iend = arguments.length; i < iend; ++i) {
-					if (
-						!Array.prototype.some.call(this, function (v) {
-							return v === this.val;
-						}, { val : arguments[i] })
-					) {
-						return false;
-					}
-				}
-
-				return true;
-			}
-		}
-	});
-
-	/*
-		Returns whether any of the given elements were found within the array.
-	*/
-	Object.defineProperty(Array.prototype, 'containsAny', {
-		configurable : true,
-		writable     : true,
-
-		value(/* needles */) {
-			if (this == null) { // lazy equality for null
-				throw new TypeError('Array.prototype.containsAny called on null or undefined');
-			}
-
-			if (arguments.length === 1) {
-				if (Array.isArray(arguments[0])) {
-					return Array.prototype.containsAny.apply(this, arguments[0]);
-				}
-				else {
-					return Array.prototype.indexOf.apply(this, arguments) !== -1;
-				}
-			}
-			else {
-				for (let i = 0, iend = arguments.length; i < iend; ++i) {
-					if (
-						Array.prototype.some.call(this, function (v) {
-							return v === this.val;
-						}, { val : arguments[i] })
-					) {
-						return true;
-					}
-				}
-
-				return false;
-			}
-		}
-	});
-
-	/*
 		Returns the number of times the given element was found within the array.
 	*/
 	Object.defineProperty(Array.prototype, 'count', {
@@ -526,6 +435,78 @@ function safeActiveElement() {
 
 			return Array.prototype.reduce.call(this,
 				(prev, cur) => prev.concat(Array.isArray(cur) ? cur.flatten() : cur), []);
+		}
+	});
+
+	/*
+		Returns whether all of the given elements were found within the array.
+	*/
+	Object.defineProperty(Array.prototype, 'includesAll', {
+		configurable : true,
+		writable     : true,
+
+		value(/* needles */) {
+			if (this == null) { // lazy equality for null
+				throw new TypeError('Array.prototype.includesAll called on null or undefined');
+			}
+
+			if (arguments.length === 1) {
+				if (Array.isArray(arguments[0])) {
+					return Array.prototype.includesAll.apply(this, arguments[0]);
+				}
+				else {
+					return Array.prototype.includes.apply(this, arguments);
+				}
+			}
+			else {
+				for (let i = 0, iend = arguments.length; i < iend; ++i) {
+					if (
+						!Array.prototype.some.call(this, function (val) {
+							return val === this.val || val !== val && this.val !== this.val;
+						}, { val : arguments[i] })
+					) {
+						return false;
+					}
+				}
+
+				return true;
+			}
+		}
+	});
+
+	/*
+		Returns whether any of the given elements were found within the array.
+	*/
+	Object.defineProperty(Array.prototype, 'includesAny', {
+		configurable : true,
+		writable     : true,
+
+		value(/* needles */) {
+			if (this == null) { // lazy equality for null
+				throw new TypeError('Array.prototype.includesAny called on null or undefined');
+			}
+
+			if (arguments.length === 1) {
+				if (Array.isArray(arguments[0])) {
+					return Array.prototype.includesAny.apply(this, arguments[0]);
+				}
+				else {
+					return Array.prototype.includes.apply(this, arguments);
+				}
+			}
+			else {
+				for (let i = 0, iend = arguments.length; i < iend; ++i) {
+					if (
+						Array.prototype.some.call(this, function (val) {
+							return val === this.val || val !== val && this.val !== this.val;
+						}, { val : arguments[i] })
+					) {
+						return true;
+					}
+				}
+
+				return false;
+			}
 		}
 	});
 
@@ -718,15 +699,15 @@ function safeActiveElement() {
 		writable     : true,
 
 		value(num, min, max) {
-			const n = Number(num);
-			return Number.isNaN(n) ? NaN : n.clamp(min, max);
+			const value = Number(num);
+			return Number.isNaN(value) ? NaN : value.clamp(min, max);
 		}
 	});
 
 	/*
 		Returns a decimal number eased from 0 to 1.
 
-		n.b. The magnitude of the returned value decreases if num < 0.5 or increases if num > 0.5.
+		NOTE: The magnitude of the returned value decreases if num < 0.5 or increases if num > 0.5.
 	*/
 	Object.defineProperty(Math, 'easeInOut', {
 		configurable : true,
@@ -769,88 +750,96 @@ function safeActiveElement() {
 		Returns a copy of the given string with all RegExp metacharacters escaped.
 	*/
 	if (!RegExp.escape) {
-		const
-			_regExpMetaCharsRe    = /[\\^$*+?.()|[\]{}]/g,
-			_hasRegExpMetaCharsRe = new RegExp(_regExpMetaCharsRe.source); // to drop the global flag
+		(() => {
+			const
+				_regExpMetaCharsRe    = /[\\^$*+?.()|[\]{}]/g,
+				_hasRegExpMetaCharsRe = new RegExp(_regExpMetaCharsRe.source); // to drop the global flag
 
-		Object.defineProperty(RegExp, 'escape', {
-			configurable : true,
-			writable     : true,
+			Object.defineProperty(RegExp, 'escape', {
+				configurable : true,
+				writable     : true,
 
-			value(str) {
-				const s = String(str);
-				return s && _hasRegExpMetaCharsRe.test(s)
-					? s.replace(_regExpMetaCharsRe, '\\$&')
-					: s;
-			}
-		});
+				value(str) {
+					const val = String(str);
+					return val && _hasRegExpMetaCharsRe.test(val)
+						? val.replace(_regExpMetaCharsRe, '\\$&')
+						: val;
+				}
+			});
+		})();
 	}
 
 	/*
 		Returns a formatted string, after replacing each format item in the given format string
 		with the text equivalent of the corresponding argument's value.
 	*/
-	Object.defineProperty(String, 'format', {
-		configurable : true,
-		writable     : true,
+	(() => {
+		const
+			_formatRegExp    = /{(\d+)(?:,([+-]?\d+))?}/g,
+			_hasFormatRegExp = new RegExp(_formatRegExp.source); // to drop the global flag
 
-		value(format) {
-			function padString(str, align, pad) {
-				if (!align) {
-					return str;
+		Object.defineProperty(String, 'format', {
+			configurable : true,
+			writable     : true,
+
+			value(format) {
+				function padString(str, align, pad) {
+					if (!align) {
+						return str;
+					}
+
+					const plen = Math.abs(align) - str.length;
+
+					if (plen < 1) {
+						return str;
+					}
+
+					// const padding = Array(plen + 1).join(pad);
+					const padding = String(pad).repeat(plen);
+					return align < 0 ? str + padding : padding + str;
 				}
 
-				const plen = Math.abs(align) - str.length;
-
-				if (plen < 1) {
-					return str;
+				if (arguments.length < 2) {
+					return arguments.length === 0 ? '' : format;
 				}
 
-				const padding = Array(plen + 1).join(pad);
-				return align < 0 ? str + padding : padding + str;
+				const args = arguments.length === 2 && Array.isArray(arguments[1])
+					? [...arguments[1]]
+					: Array.prototype.slice.call(arguments, 1);
+
+				if (args.length === 0) {
+					return format;
+				}
+
+				if (!_hasFormatRegExp.test(format)) {
+					return format;
+				}
+
+				// Possibly required by some old buggy browsers.
+				_formatRegExp.lastIndex = 0;
+
+				return format.replace(_formatRegExp, (match, index, align) => {
+					let retval = args[index];
+
+					if (retval == null) { // lazy equality for null
+						return '';
+					}
+
+					while (typeof retval === 'function') {
+						retval = retval();
+					}
+
+					switch (typeof retval) {
+					case 'string': /* no-op */ break;
+					case 'object': retval = JSON.stringify(retval); break;
+					default:       retval = String(retval); break;
+					}
+
+					return padString(retval, !align ? 0 : Number.parseInt(align, 10), ' ');
+				});
 			}
-
-			if (arguments.length < 2) {
-				return arguments.length === 0 ? '' : format;
-			}
-
-			const args = arguments.length === 2 && Array.isArray(arguments[1])
-				? arguments[1].slice(0)
-				: Array.prototype.slice.call(arguments, 1);
-
-			if (args.length === 0) {
-				return format;
-			}
-
-			return format.replace(/{(\d+)(?:,([+-]?\d+))?}/g, (match, index, align) => {
-				let retval = args[index];
-
-				if (retval == null) { // lazy equality for null
-					return '';
-				}
-
-				while (typeof retval === 'function') {
-					retval = retval();
-				}
-
-				switch (typeof retval) {
-				case 'string':
-					/* nothing */
-					break;
-
-				case 'object':
-					retval = JSON.stringify(retval);
-					break;
-
-				default:
-					retval = String(retval);
-					break;
-				}
-
-				return padString(retval, !align ? 0 : Number.parseInt(align, 10), ' ');
-			});
-		}
-	});
+		});
+	})();
 
 	/*
 		Returns whether the given string was found within the string.
@@ -1024,40 +1013,6 @@ function safeActiveElement() {
 		}
 	});
 
-	/*
-		[DEPRECATED] Returns an array of link titles, parsed from the string.
-
-		n.b. Unused in SugarCube, only included for compatibility.
-	*/
-	Object.defineProperty(String.prototype, 'readBracketedList', {
-		configurable : true,
-		writable     : true,
-
-		value() {
-			if (this == null) { // lazy equality for null
-				throw new TypeError('String.prototype.readBracketedList called on null or undefined');
-			}
-
-			// RegExp groups: Double-square-bracket quoted | Unquoted.
-			const
-				re    = new RegExp('(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^"\'\\s]\\S*)', 'gm'),
-				names = [];
-			let
-				match;
-
-			while ((match = re.exec(this)) !== null) {
-				if (match[1]) { // double-square-bracket quoted
-					names.push(match[1]);
-				}
-				else if (match[2]) { // unquoted
-					names.push(match[2]);
-				}
-			}
-
-			return names;
-		}
-	});
-
 
 	/*******************************************************************************************************************
 	 * JavaScript Extensions, JSON.
@@ -1160,20 +1115,19 @@ function safeActiveElement() {
 					case '(revive:eval)':
 						try {
 							/* eslint-disable no-eval */
-							/* legacy */
+							// For post-v2.9.0 `JSON.reviveWrapper()`.
 							if (Array.isArray(value[1])) {
-							/* /legacy */
 								const $ReviveData$ = value[1][1]; // eslint-disable-line no-unused-vars
 								value = eval(value[1][0]);
-							/* legacy */
 							}
+
+							// For regular expressions, functions, and pre-v2.9.0 `JSON.reviveWrapper()`.
 							else {
 								value = eval(value[1]);
 							}
-							/* /legacy */
 							/* eslint-enable no-eval */
 						}
-						catch (e) { /* no-op; although, perhaps, it would be better to throw an error here */ }
+						catch (ex) { /* no-op; although, perhaps, it would be better to throw an error here */ }
 						break;
 					}
 				}
@@ -1183,7 +1137,7 @@ function safeActiveElement() {
 					try {
 						value = eval(value.slice(10)); // eslint-disable-line no-eval
 					}
-					catch (e) { /* no-op; although, perhaps, it would be better to throw an error here */ }
+					catch (ex) { /* no-op; although, perhaps, it would be better to throw an error here */ }
 				}
 				/* /legacy */
 
@@ -1194,11 +1148,97 @@ function safeActiveElement() {
 					try {
 						value = reviver(key, value);
 					}
-					catch (e) { /* no-op; although, perhaps, it would be better to throw an error here */ }
+					catch (ex) { /* no-op; although, perhaps, it would be better to throw an error here */ }
 				}
 
 				return value;
 			});
+		}
+	});
+
+
+	/*******************************************************************************************************************
+	 * JavaScript Extensions, Deprecated.
+	 ******************************************************************************************************************/
+	/*
+		[DEPRECATED] Returns whether the given element was found within the array.
+	*/
+	Object.defineProperty(Array.prototype, 'contains', {
+		configurable : true,
+		writable     : true,
+
+		value(/* needle [, fromIndex] */) {
+			if (this == null) { // lazy equality for null
+				throw new TypeError('Array.prototype.contains called on null or undefined');
+			}
+
+			return Array.prototype.includes.apply(this, arguments);
+		}
+	});
+
+	/*
+		[DEPRECATED] Returns whether all of the given elements were found within the array.
+	*/
+	Object.defineProperty(Array.prototype, 'containsAll', {
+		configurable : true,
+		writable     : true,
+
+		value(/* needle [, fromIndex] */) {
+			if (this == null) { // lazy equality for null
+				throw new TypeError('Array.prototype.containsAll called on null or undefined');
+			}
+
+			return Array.prototype.includesAll.apply(this, arguments);
+		}
+	});
+
+	/*
+		[DEPRECATED] Returns whether any of the given elements were found within the array.
+	*/
+	Object.defineProperty(Array.prototype, 'containsAny', {
+		configurable : true,
+		writable     : true,
+
+		value(/* needle [, fromIndex] */) {
+			if (this == null) { // lazy equality for null
+				throw new TypeError('Array.prototype.containsAny called on null or undefined');
+			}
+
+			return Array.prototype.includesAny.apply(this, arguments);
+		}
+	});
+
+	/*
+		[DEPRECATED] Returns an array of link titles, parsed from the string.
+
+		NOTE: Unused in SugarCube, only included for compatibility.
+	*/
+	Object.defineProperty(String.prototype, 'readBracketedList', {
+		configurable : true,
+		writable     : true,
+
+		value() {
+			if (this == null) { // lazy equality for null
+				throw new TypeError('String.prototype.readBracketedList called on null or undefined');
+			}
+
+			// RegExp groups: Double-square-bracket quoted | Unquoted.
+			const
+				re    = new RegExp('(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^"\'\\s]\\S*)', 'gm'),
+				names = [];
+			let
+				match;
+
+			while ((match = re.exec(this)) !== null) {
+				if (match[1]) { // double-square-bracket quoted
+					names.push(match[1]);
+				}
+				else if (match[2]) { // unquoted
+					names.push(match[2]);
+				}
+			}
+
+			return names;
 		}
 	});
 })();
@@ -1212,7 +1252,7 @@ function safeActiveElement() {
 
 	Makes the target element(s) WAI-ARIA compatible clickables.
 
-	n.b. Has a dependency in the `safeActiveElement()` function (see: top of file).
+	NOTE: Has a dependency in the `safeActiveElement()` function (see: top of file).
 */
 (() => {
 	'use strict';
@@ -1220,12 +1260,12 @@ function safeActiveElement() {
 	/*
 		Event handler & utility functions.
 
-		n.b. Do not replace the anonymous functions herein with arrow functions.
+		NOTE: Do not replace the anonymous functions herein with arrow functions.
 	*/
-	function onKeypressFn(evt) {
+	function onKeypressFn(ev) {
 		// 13 is Enter/Return, 32 is Space.
-		if (evt.which === 13 || evt.which === 32) {
-			evt.preventDefault();
+		if (ev.which === 13 || ev.which === 32) {
+			ev.preventDefault();
 
 			// To allow delegation, attempt to trigger the event on `document.activeElement`,
 			// if possible, elsewise on `this`.
@@ -1332,7 +1372,7 @@ function safeActiveElement() {
 			}
 
 			// Set the keypress handlers, for non-<button> elements.
-			//   n.b. For the single-use case, the click handler will also remove this handler.
+			// NOTE: For the single-use case, the click handler will also remove this handler.
 			this.not('button').on(
 				`keypress.aria-clickable${opts.namespace}`,
 				opts.selector,
@@ -1340,7 +1380,7 @@ function safeActiveElement() {
 			);
 
 			// Set the click handlers.
-			//   n.b. To ensure both handlers are properly removed, `one()` must not be used here.
+			// NOTE: To ensure both handlers are properly removed, `one()` must not be used here.
 			this.on(
 				`click.aria-clickable${opts.namespace}`,
 				opts.selector,
@@ -1355,9 +1395,9 @@ function safeActiveElement() {
 })();
 
 /*
-	`wiki(source)` method plugin.
+	`wiki(sources)` method plugin.
 
-	Wikifies the source text and appends the result to the target element(s).
+	Wikifies the given content source(s) and appends the result to the target element(s).
 */
 (() => {
 	'use strict';

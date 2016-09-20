@@ -16,13 +16,13 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 		_passages = {},
 
 		// List of style passages.
-		_styles   = [],
+		_styles = [],
 
 		// List of script passages.
-		_scripts  = [],
+		_scripts = [],
 
 		// List of widget passages.
-		_widgets  = [];
+		_widgets = [];
 
 	let
 		// Story title.
@@ -47,7 +47,12 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 				Set the default starting passage.
 			*/
 			Config.passages.start = (() => {
-				// Handle the Twine 1.4+ Test Play From Here feature (pattern: "START_AT").
+				/*
+					Handle the Twine 1.4+ Test Play From Here feature.
+
+					NOTE: Do not change the quote style around the START_AT replacement target,
+					      as the Twine 1 pattern which matches it depends upon double quotes.
+				*/
 				const testPlay = "START_AT"; // eslint-disable-line quotes
 				if (testPlay !== '') {
 					if (DEBUG) { console.log(`\tTest play; starting passage: "${testPlay}"`); }
@@ -102,8 +107,8 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 			/*
 				Set the default saves ID (must be done after the call to `_storySetTitle()`).
 
-				n.b. If not for the requirement to support Twine 1/Twee, we could use the
-				     story's IFID attribute here.
+				NOTE: If not for the requirement to support Twine 1/Twee, we could use the
+				      story's IFID attribute here.
 			*/
 			Config.saves.id = Story.domId;
 		}
@@ -124,8 +129,8 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 			/*
 				Process story options.
 
-				n.b. Currently, the only option of interest to us is 'debug' (it may be the
-				     only one period), so we simply use `<RegExp>.test()` to check for it.
+				NOTE: Currently, the only option of interest to us is 'debug' (it may be the
+				      only one period), so we simply use `<RegExp>.test()` to check for it.
 			*/
 			Config.debug = /\bdebug\b/.test($storydata.attr('options'));
 
@@ -188,8 +193,8 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 			/*
 				Set the default saves ID (must be done after the call to `_storySetTitle()`).
 
-				n.b. If not for the requirement to support Twine 1/Twee, we could use the
-				     story's IFID attribute here.
+				NOTE: If not for the requirement to support Twine 1/Twee, we could use the
+				      story's IFID attribute here.
 			*/
 			Config.saves.id = Story.domId;
 		}
@@ -212,8 +217,8 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 			try {
 				Scripting.evalJavaScript(_scripts[i].text);
 			}
-			catch (e) {
-				Alert.error(_scripts[i].title, e.message);
+			catch (ex) {
+				Alert.error(_scripts[i].title, ex.message);
 			}
 		}
 
@@ -224,8 +229,8 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 			try {
 				Wikifier.wikifyEval(_widgets[i].processText());
 			}
-			catch (e) {
-				Alert.error(_widgets[i].title, e.message);
+			catch (ex) {
+				Alert.error(_widgets[i].title, ex.message);
 			}
 		}
 	}

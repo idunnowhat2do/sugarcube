@@ -68,14 +68,14 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		get length() {
 			/*
-				DO NOT do something like `return this._engine.length;` as that will return
-				the length of the entire store, rather than just our prefixed keys.
+				NOTE: DO NOT do something like `return this._engine.length;` here, as that will
+				      return the length of the entire store, rather than just our prefixed keys.
 			*/
 			return this.keys().length;
 		}
 
 		keys() {
-			if (this._engine === null) {
+			if (!this._ok) {
 				return [];
 			}
 
@@ -93,56 +93,62 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		has(key) {
-			if (this._engine === null || !key) {
+			if (!key || !this._ok) {
 				return false;
 			}
 
-			// Ideally, we really should be checking keys here.
+			// TODO: We probably should be checking keys here.
 			return this._engine.getItem(this._prefix + key) != null; // lazy equality for null
 		}
 
 		get(key) {
-			if (this._engine === null || !key) {
+			if (!key || !this._ok) {
 				return null;
 			}
 
-			return this._engine.getItem(this._prefix + key);
+			const value = this._engine.getItem(this._prefix + key);
+
+			if (value == null) { // lazy equality for null
+				return null;
+			}
+
+			return _WebStorageDriver._deserialize(value);
 		}
 
 		set(key, value) {
-			if (this._engine === null || !key) {
+			if (!key || !this._ok) {
 				return false;
 			}
 
 			try {
-				this._engine.setItem(this._prefix + key, value);
+				this._engine.setItem(this._prefix + key, _WebStorageDriver._serialize(value));
 			}
-			catch (e) {
+			catch (ex) {
 				/*
 					Massage the quota exceeded error—the most likely error—into something
 					a bit nicer for the player.
 
 					Ideally, we could simply do:
-						e.code === 22
+						ex.code === 22
 					Or, preferably, something like:
-						e.code === DOMException.QUOTA_EXCEEDED_ERR
+						ex.code === DOMException.QUOTA_EXCEEDED_ERR
 					However, both of those are browser convention, not part of the standard,
 					and are not supported in all browsers.  So, we have to resort to pattern
 					matching the damn name.  I hate the parties responsible for this snafu
 					so much.
 				*/
-				if (/quota_?(?:exceeded|reached)/i.test(e.name)) {
-					e.message = `${this.name} quota exceeded`;
+				if (/quota_?(?:exceeded|reached)/i.test(ex.name)) {
+					ex.message = `${this.name} quota exceeded`;
 				}
 
-				throw e;
+				throw ex;
 			}
 
 			return true;
 		}
 
 		delete(key) {
-			if (this._engine === null || !key) {
+			if (!key || !this._ok) {
 				return false;
 			}
 
@@ -151,14 +157,14 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 			return true;
 		}
 
-		serialize(obj) {
+		static _serialize(obj) {
 			return LZString.compressToUTF16(JSON.stringify(obj));
 		}
 
-		deserialize(str) {
+		static _deserialize(str) {
 			return JSON.parse(LZString.decompressFromUTF16(str));
 		}
-	 }
+	}
 
 
 	/*******************************************************************************************************************
@@ -171,7 +177,8 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			Object.defineProperties(this, {
 				_ok : {
-					value : 'cookie' in document // should really try to test cookie functionality
+					// TODO: We probably should try to test cookie functionality here.
+					value : 'cookie' in document
 				},
 
 				_prefix : {
@@ -201,120 +208,176 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		keys() {
-			return Object.keys(this._getCookies());
+			if (!this._ok) {
+				return [];
+			}
+
+			return Object.keys(this._getAllCookies());
 		}
 
 		has(key) {
-			if (!key) {
+			if (!key || !this._ok) {
 				return false;
 			}
 
-			return this._getCookies().hasOwnProperty(this._prefix + key);
+			return this._getCookie(this._prefix + key) !== null;
 		}
 
 		get(key) {
-			if (!key) {
+			if (!key || !this._ok) {
 				return null;
 			}
 
-			const
-				cookies = this._getCookies(),
-				pKey    = this._prefix + key;
+			const value = this._getCookie(this._prefix + key);
 
-			if (cookies.hasOwnProperty(pKey)) {
-				return cookies[pKey];
+			if (value === null) {
+				return null;
 			}
 
-			return null;
+			return _CookieDriver._deserialize(value);
 		}
 
 		set(key, value) {
-			if (!key) {
+			if (!key || !this._ok) {
 				return false;
 			}
 
 			try {
-				// Undefined expiry means a session cookie.
-				this._setCookie(key, value, this.persist ? 'Tue, 19 Jan 2038 03:14:07 GMT' : undefined);
-			}
-			catch (e) {
-				e.message = `cookie error: ${e.message}`;
-				throw e;
-			}
+				this._setCookie(
+					this._prefix + key,
+					_CookieDriver._serialize(value),
 
-			if (!this.has(key)) {
-				throw new Error('unknown cookie error');
+					// An undefined expiry denotes a session cookie.
+					this.persist ? 'Tue, 19 Jan 2038 03:14:07 GMT' : undefined
+				);
+
+				if (!this.has(key)) {
+					throw new Error('unknown validation error');
+				}
+			}
+			catch (ex) {
+				ex.message = `cookie error: ${ex.message}`;
+				throw ex;
 			}
 
 			return true;
 		}
 
 		delete(key) {
-			if (!key) {
+			/*
+				Attempting to delete a cookie implies setting it, so we test for its existence
+				beforehand, to avoid creating it in the event that it does not already exist.
+			*/
+			if (!key || !this._ok || !this.has(key)) {
 				return false;
 			}
 
 			try {
-				this._setCookie(key, undefined, 'Thu, 01 Jan 1970 00:00:00 GMT');
-			}
-			catch (e) {
-				e.message = `cookie error: ${e.message}`;
-				throw e;
-			}
+				this._setCookie(
+					this._prefix + key,
 
-			// It seems like we cannot simply use `.has()` here for validation because of IE shenanigans?
-			// if (this.has(key)) {
-			const test = this.get(key);
-			if (test !== null && test !== '') {
-				throw new Error('unknown cookie error');
+					// Use `undefined` as the value.
+					undefined,
+
+					// Use the epoch as the expiry.
+					'Thu, 01 Jan 1970 00:00:00 GMT'
+				);
+
+				if (this.has(key)) {
+					throw new Error('unknown validation error');
+				}
+			}
+			catch (ex) {
+				ex.message = `cookie error: ${ex.message}`;
+				throw ex;
 			}
 
 			return true;
 		}
 
-		serialize(obj) {
-			return LZString.compressToBase64(JSON.stringify(obj));
-		}
+		_getAllCookies() {
+			if (!this._ok || document.cookie === '') {
+				return {};
+			}
 
-		deserialize(str) {
-			return JSON.parse(LZString.decompressFromBase64(str));
-		}
+			const
+				cookies   = document.cookie.split(/;\s*/),
+				cookieObj = {};
 
-		_getCookies() {
-			const cookieObj = {};
+			for (let i = 0; i < cookies.length; ++i) {
+				const
+					kvPair    = cookies[i].split('='),
+					cookieKey = decodeURIComponent(kvPair[0]);
 
-			if ('cookie' in document && document.cookie !== '') {
-				const cookies = document.cookie.split(/;\s*/);
+				if (this._prefixRe.test(cookieKey)) {
+					const value = decodeURIComponent(kvPair[1]);
 
-				for (let i = 0; i < cookies.length; ++i) {
-					const
-						kv  = cookies[i].split('='),
-						key = decodeURIComponent(kv[0]);
-
-					if (this._prefixRe.test(key)) {
-						cookieObj[key] = decodeURIComponent(kv[1]);
-					}
+					/*
+						All stored values are serialized and an empty string serializes to a non-empty
+						string.  Therefore, receiving an empty string here signifies a deleted value,
+						not a serialized empty string, so we should yield `null` for that case.
+					*/
+					// cookieObj[cookieKey] = value !== '' ? value : null;
+					cookieObj[cookieKey] = value || null;
 				}
 			}
 
 			return cookieObj;
 		}
 
-		_setCookie(key, value, expiry) {
-			if ('cookie' in document) {
-				let payload = `${encodeURIComponent(this._prefix + key)}=`;
-
-				if (value != null) { // lazy equality for null
-					payload += encodeURIComponent(value);
-				}
-
-				if (expiry != null) { // lazy equality for null
-					payload += `; ${expiry}`;
-				}
-
-				payload += '; path=/';
-				document.cookie = payload;
+		_getCookie(prefixedKey) {
+			if (!prefixedKey || !this._ok || document.cookie === '') {
+				return null;
 			}
+
+			const cookies = document.cookie.split(/;\s*/);
+
+			for (let i = 0; i < cookies.length; ++i) {
+				const
+					kvPair    = cookies[i].split('='),
+					cookieKey = decodeURIComponent(kvPair[0]);
+
+				if (prefixedKey === cookieKey) {
+					const value = decodeURIComponent(kvPair[1]);
+
+					/*
+						All stored values are serialized and an empty string serializes to a non-empty
+						string.  Therefore, receiving an empty string here signifies a deleted value,
+						not a serialized empty string, so we should yield `null` for that case.
+					*/
+					// return value !== '' ? value : null;
+					return value || null;
+				}
+			}
+
+			return null;
+		}
+
+		_setCookie(prefixedKey, value, expiry) {
+			if (!prefixedKey || !this._ok) {
+				return;
+			}
+
+			let payload = `${encodeURIComponent(prefixedKey)}=`;
+
+			if (value != null) { // lazy equality for null
+				payload += encodeURIComponent(value);
+			}
+
+			if (expiry != null) { // lazy equality for null
+				payload += `; ${expiry}`;
+			}
+
+			payload += '; path=/';
+			document.cookie = payload;
+		}
+
+		static _serialize(obj) {
+			return LZString.compressToBase64(JSON.stringify(obj));
+		}
+
+		static _deserialize(str) {
+			return JSON.parse(LZString.decompressFromBase64(str));
 		}
 	}
 
@@ -419,9 +482,9 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 			try {
 				return this._driver.has(key);
 			}
-			catch (e) {
+			catch (ex) {
 				if (!quiet) {
-					Alert.error(null, `unable to check key "${key}"; ${e.message}`, e);
+					Alert.error(null, `unable to check key "${key}"; ${ex.message}`, ex);
 				}
 
 				return false;
@@ -436,17 +499,11 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 
 			try {
-				const value = this._driver.get(key);
-
-				if (value == null) { // lazy equality for null
-					return null;
-				}
-
-				return this._driver.deserialize(value);
+				return this._driver.get(key);
 			}
-			catch (e) {
+			catch (ex) {
 				if (!quiet) {
-					Alert.error(null, `unable to get key "${key}"; ${e.message}`, e);
+					Alert.error(null, `unable to get key "${key}"; ${ex.message}`, ex);
 				}
 
 				return null;
@@ -461,11 +518,11 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 
 			try {
-				return this._driver.set(key, this._driver.serialize(value), quiet);
+				return this._driver.set(key, value, quiet);
 			}
-			catch (e) {
+			catch (ex) {
 				if (!quiet) {
-					Alert.error(null, `unable to set key "${key}"; ${e.message}`, e);
+					Alert.error(null, `unable to set key "${key}"; ${ex.message}`, ex);
 				}
 
 				return false;
@@ -482,9 +539,9 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 			try {
 				return this._driver.delete(key, quiet);
 			}
-			catch (e) {
+			catch (ex) {
 				if (!quiet) {
-					Alert.error(null, `unable to delete key "${key}"; ${e.message}`, e);
+					Alert.error(null, `unable to delete key "${key}"; ${ex.message}`, ex);
 				}
 
 				return false;

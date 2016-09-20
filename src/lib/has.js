@@ -26,7 +26,7 @@ var Has = (() => { // eslint-disable-line no-unused-vars, no-var
 				}
 			}
 		}
-		catch (e) { /* no-op */ }
+		catch (ex) { /* no-op */ }
 
 		return false;
 	}

@@ -192,7 +192,7 @@ var State = (() => { // eslint-disable-line no-unused-vars, no-var
 		Returns the passage titles of all played moments (expired + in-play history moments).
 	**/
 	function stateTitles() {
-		return _expired.concat(_history.slice(0, historyLength()).map(m => m.title));
+		return _expired.concat(_history.slice(0, historyLength()).map(moment => moment.title));
 	}
 
 	/**
@@ -206,7 +206,7 @@ var State = (() => { // eslint-disable-line no-unused-vars, no-var
 		if (_expired.includes(title)) {
 			return true;
 		}
-		else if (_history.slice(0, historyLength()).some(m => m.title === title)) {
+		else if (_history.slice(0, historyLength()).some(moment => moment.title === title)) {
 			return true;
 		}
 
@@ -279,23 +279,21 @@ var State = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 
 			if (moment < 0 || moment >= historySize()) {
-				throw new RangeError('moment activation attempted with out-of-bounds index;'
-					+ ` need [0, ${historySize() - 1}], got ${moment}`);
+				throw new RangeError(`moment activation attempted with out-of-bounds index; need [0, ${historySize() - 1}], got ${moment}`);
 			}
 
 			_active = clone(_history[moment]);
 			break;
 
 		default:
-			throw new TypeError(`moment activation attempted with a "${typeof moment}";`
-				+ ' must be an object or valid history stack index');
+			throw new TypeError(`moment activation attempted with a "${typeof moment}"; must be an object or valid history stack index`);
 		}
 
 		/*
 			Restore the seedable PRNG.
 
-			n.b. We cannot simply set `_prng.pull` to `_active.pull` as that would not
-			     properly mutate the PRNG's internal state.
+			NOTE: We cannot simply set `_prng.pull` to `_active.pull` as that would not
+			      properly mutate the PRNG's internal state.
 		*/
 		if (_prng !== null) {
 			_prng = PRNGWrapper.unmarshal({
@@ -312,8 +310,8 @@ var State = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Trigger a global `tw:historyupdate` event.
 
-			n.b. We do this here because setting a new active moment is a core component of,
-			     virtually, all history updates.
+			NOTE: We do this here because setting a new active moment is a core component of,
+			      virtually, all history updates.
 		*/
 		jQuery.event.trigger('tw:historyupdate');
 
@@ -558,8 +556,7 @@ var State = (() => { // eslint-disable-line no-unused-vars, no-var
 				scriptSection = 'the Story JavaScript';
 			}
 
-			throw new Error('State.initPRNG must be called during initialization,'
-				+ ` within either ${scriptSection} or the StoryInit special passage`);
+			throw new Error(`State.initPRNG must be called during initialization, within either ${scriptSection} or the StoryInit special passage`);
 		}
 
 		_prng = new PRNGWrapper(seed, useEntropy);

@@ -38,6 +38,7 @@ var LoadScreen = (() => { // eslint-disable-line no-unused-vars, no-var
 		if (document.readyState === 'complete') {
 			if ($html.hasClass('init-loading')) {
 				if (Config.loadDelay > 0) {
+					// TODO: Maybe check `_locked` before removing the load screen in the callback?
 					setTimeout(() => $html.removeClass('init-loading'),
 						Math.max(Engine.minDomActionDelay, Config.loadDelay));
 				}

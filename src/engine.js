@@ -54,15 +54,15 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 					_storyInitDebugView = debugView.output;
 				}
 			}
-			catch (e) {
-				Alert.error('StoryInit', e.message);
+			catch (ex) {
+				Alert.error('StoryInit', ex.message);
 			}
 		}
 
 		/*
 			Finalize various `Config` properties here, before any passages are displayed.
 
-			n.b. We do this here to give authors every opportunity to modify these properties.
+			We do this here to give authors every opportunity to modify these properties.
 		*/
 		Config.history.maxStates = Math.max(0, Config.history.maxStates);
 
@@ -251,9 +251,10 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Retrieve the passage by the given title.
 
-			n.b. The `title` parameter may be empty, a string, or a number (though using a number
-			     as reference to a numeric title should be discouraged), so after loading the
-			     passage, always refer to `passage.title` and never the `title` parameter.
+			NOTE: The `title` parameter may be empty, a string, or a number (though using a
+			      number as reference to a numeric title should be discouraged), so after
+			      loading the passage, always refer to `passage.title` and never the `title`
+			      parameter.
 		*/
 		const passage = Story.get(title);
 
@@ -290,8 +291,8 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 			try {
 				passageReadyOutput = Wikifier.wikifyEval(Story.get('PassageReady').text);
 			}
-			catch (e) {
-				Alert.error('PassageReady', e.message);
+			catch (ex) {
+				Alert.error('PassageReady', ex.message);
 			}
 		}
 
@@ -331,8 +332,8 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 							.addClass('passage-out');
 
 						if (typeof Config.passages.transitionOut === 'string') {
-							$outgoing.on(Config.transitionEndEventName, evt => {
-								if (evt.originalEvent.propertyName === Config.passages.transitionOut) {
+							$outgoing.on(Config.transitionEndEventName, ev => {
+								if (ev.originalEvent.propertyName === Config.passages.transitionOut) {
 									$outgoing.remove();
 								}
 							});
@@ -381,8 +382,8 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 			try {
 				passageDoneOutput = Wikifier.wikifyEval(Story.get('PassageDone').text);
 			}
-			catch (e) {
-				Alert.error('PassageDone', e.message);
+			catch (ex) {
+				Alert.error('PassageDone', ex.message);
 			}
 		}
 
@@ -471,7 +472,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		case 'object':
 			if (
 				   Array.isArray(Config.saves.autosave)
-				&& passage.tags.some(t => Config.saves.autosave.includes(t))
+				&& passage.tags.some(tag => Config.saves.autosave.includes(tag))
 			) {
 				Save.autosave.save();
 			}
@@ -511,8 +512,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 			break;
 
 		default:
-			throw new Error('Engine.display option parameter called with'
-				+ ` obsolete value "${option}"; please notify the developer`);
+			throw new Error(`Engine.display option parameter called with obsolete value "${option}"; please notify the developer`);
 		}
 
 		enginePlay(title, noHistory);

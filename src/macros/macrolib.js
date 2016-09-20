@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global Config, DebugView, Engine, Has, LoadScreen, Macro, Scripting, SimpleAudio, State, Story, TempState,
-	       TempVariables, Util, Wikifier, postdisplay, prehistory, storage, strings, toStringOrDefault
+	global Config, DebugView, Engine, Has, L10n, LoadScreen, Macro, Scripting, SimpleAudio, State, Story, TempState,
+	       TempVariables, Util, Wikifier, postdisplay, prehistory, storage, toStringOrDefault
 */
 
 (() => {
@@ -84,8 +84,8 @@
 			try {
 				Scripting.evalJavaScript(this.args.full);
 			}
-			catch (e) {
-				return this.error(`bad evaluation: ${e.message}`);
+			catch (ex) {
+				return this.error(`bad evaluation: ${ex.message}`);
 			}
 
 			// Custom debug view setup.
@@ -143,8 +143,8 @@
 			try {
 				Scripting.evalJavaScript(this.args.full);
 			}
-			catch (e) {
-				return this.error(`bad evaluation: ${e.message}`);
+			catch (ex) {
+				return this.error(`bad evaluation: ${ex.message}`);
 			}
 
 			const
@@ -249,9 +249,9 @@
 					);
 				}
 			}
-			catch (e) {
+			catch (ex) {
 				return this.error(
-					`bad evaluation: ${e.message}`,
+					`bad evaluation: ${ex.message}`,
 					`${this.source + this.payload[0].contents}<</${this.name}>>`
 				);
 			}
@@ -346,8 +346,8 @@
 					new Wikifier(this.output, this.name === '-' ? Util.escape(result) : result);
 				}
 			}
-			catch (e) {
-				return this.error(`bad evaluation: ${e.message}`);
+			catch (ex) {
+				return this.error(`bad evaluation: ${ex.message}`);
 			}
 		}
 	});
@@ -413,37 +413,22 @@
 						}
 						if (this.payload[i].args.raw.length > 0) {
 							if (/^\s*if\b/i.test(this.payload[i].args.raw)) {
-								return this.error(
-									  'whitespace is not allowed between the "else" and "if" in <<elseif>> clause'
-									+ (i > 0 ? ' (#' + i + ')' : '')
-								);
+								return this.error(`whitespace is not allowed between the "else" and "if" in <<elseif>> clause${i > 0 ? ' (#' + i + ')' : ''}`);
 							}
 
-							return this.error(
-								  '<<else>> does not accept a conditional expression'
-								+ ' (perhaps you meant to use <<elseif>>),'
-								+ ` invalid: ${this.payload[i].args.raw}`
-							);
+							return this.error(`<<else>> does not accept a conditional expression (perhaps you meant to use <<elseif>>), invalid: ${this.payload[i].args.raw}`);
 						}
 						break;
 
 					default:
 						if (this.payload[i].args.full.length === 0) {
-							return this.error(
-								  `no conditional expression specified for <<${this.payload[i].name}>> clause`
-								+ (i > 0 ? ' (#' + i + ')' : '')
-							);
+							return this.error(`no conditional expression specified for <<${this.payload[i].name}>> clause${i > 0 ? ' (#' + i + ')' : ''}`);
 						}
 						else if (
 							   Config.macros.ifAssignmentError
 							&& /[^!=&^|<>*/%+-]=[^=]/.test(this.payload[i].args.full)
 						) {
-							return this.error(
-								  `assignment operator found within <<${this.payload[i].name}>> clause`
-								+ (i > 0 ? ' (#' + i + ')' : '')
-								+ ' (perhaps you meant to use an equality operator: ==, ===, eq, is),'
-								+ ` invalid: ${this.payload[i].args.raw}`
-							);
+							return this.error(`assignment operator found within <<${this.payload[i].name}>> clause${i > 0 ? ' (#' + i + ')' : ''} (perhaps you meant to use an equality operator: ==, ===, eq, is), invalid: ${this.payload[i].args.raw}`);
 						}
 						break;
 					}
@@ -496,9 +481,8 @@
 						});
 				}
 			}
-			catch (e) {
-				return this.error(`bad conditional expression in <<${i === 0 ? 'if' : 'elseif'}>> clause`
-					+ `${i > 0 ? ' (#' + i + ')' : ''}: ${e.message}`); // eslint-disable-line prefer-template
+			catch (ex) {
+				return this.error(`bad conditional expression in <<${i === 0 ? 'if' : 'elseif'}>> clause${i > 0 ? ' (#' + i + ')' : ''}: ${ex.message}`); // eslint-disable-line prefer-template
 			}
 		}
 	});
@@ -526,8 +510,8 @@
 			try {
 				result = Scripting.evalJavaScript(this.args.full);
 			}
-			catch (e) {
-				return this.error(`bad evaluation: ${e.message}`);
+			catch (ex) {
+				return this.error(`bad evaluation: ${ex.message}`);
 			}
 
 			const
@@ -553,9 +537,7 @@
 						return this.error('<<default>> must be the final case');
 					}
 					if (this.payload[i].args.length > 0) {
-						return this.error(
-							`<<default>> does not accept values, invalid: ${this.payload[i].args.raw}`
-						);
+						return this.error(`<<default>> does not accept values, invalid: ${this.payload[i].args.raw}`);
 					}
 					break;
 
@@ -574,7 +556,7 @@
 				}
 
 				// Case test(s).
-				if (this.payload[i].name === 'default' || this.payload[i].args.some(v => v === result)) {
+				if (this.payload[i].name === 'default' || this.payload[i].args.some(val => val === result)) {
 					success = true;
 					new Wikifier(this.output, this.payload[i].contents);
 					break;
@@ -668,15 +650,14 @@
 					try {
 						evalJavaScript(init);
 					}
-					catch (e) {
-						return this.error(`bad init expression: ${e.message}`);
+					catch (ex) {
+						return this.error(`bad init expression: ${ex.message}`);
 					}
 				}
 
 				while (evalJavaScript(condition)) {
 					if (--safety < 0) {
-						return this.error('exceeded configured maximum loop iterations'
-							+ ` (${Config.macros.maxLoopIterations})`);
+						return this.error(`exceeded configured maximum loop iterations (${Config.macros.maxLoopIterations})`);
 					}
 
 					new Wikifier(this.output, first ? payload.replace(/^\n/, '') : payload);
@@ -699,14 +680,14 @@
 						try {
 							evalJavaScript(post);
 						}
-						catch (e) {
-							return this.error(`bad post expression: ${e.message}`);
+						catch (ex) {
+							return this.error(`bad post expression: ${ex.message}`);
 						}
 					}
 				}
 			}
-			catch (e) {
-				return this.error(`bad conditional expression: ${e.message}`);
+			catch (ex) {
+				return this.error(`bad conditional expression: ${ex.message}`);
 			}
 			finally {
 				TempState.break = null;
@@ -717,7 +698,7 @@
 		skipArgs : true,
 
 		handler() {
-			if (this.contextHas(c => c.name === 'for')) {
+			if (this.contextHas(ctx => ctx.name === 'for')) {
 				TempState.break = this.name === 'continue' ? 1 : 2;
 			}
 			else {
@@ -755,13 +736,13 @@
 			}
 
 			const
-				$el        = jQuery(document.createElement(this.name === 'button' ? 'button' : 'a')),
+				$link      = jQuery(document.createElement(this.name === 'button' ? 'button' : 'a')),
 				widgetArgs = (() => {
 					let wargs;
 
 					if (
 						   State.variables.hasOwnProperty('args')
-						&& this.contextHas(c => c.self.isWidget)
+						&& this.contextHas(ctx => ctx.self.isWidget)
 					) {
 						wargs = State.variables.args;
 					}
@@ -776,7 +757,7 @@
 					// Argument was in wiki image syntax.
 					const $image = jQuery(document.createElement('img'))
 						.attr('src', this.args[0].source)
-						.appendTo($el);
+						.appendTo($link);
 
 					if (this.args[0].hasOwnProperty('passage')) {
 						$image.attr('data-passage', this.args[0].passage);
@@ -798,35 +779,35 @@
 				}
 				else {
 					// Argument was in wiki link syntax.
-					$el.append(document.createTextNode(this.args[0].text));
+					$link.append(document.createTextNode(this.args[0].text));
 					passage = this.args[0].link;
 				}
 			}
 			else {
 				// Argument was simply the link text.
-				$el.append(document.createTextNode(this.args[0]));
+				$link.wiki(this.args[0]);
 				passage = this.args.length > 1 ? this.args[1] : undefined;
 			}
 
 			if (passage != null) { // lazy equality for null
-				$el.attr('data-passage', passage);
+				$link.attr('data-passage', passage);
 
 				if (Story.has(passage)) {
-					$el.addClass('link-internal');
+					$link.addClass('link-internal');
 
 					if (Config.addVisitedLinkClass && State.hasPlayed(passage)) {
-						$el.addClass('link-visited');
+						$link.addClass('link-visited');
 					}
 				}
 				else {
-					$el.addClass('link-broken');
+					$link.addClass('link-broken');
 				}
 			}
 			else {
-				$el.addClass('link-internal');
+				$link.addClass('link-internal');
 			}
 
-			$el
+			$link
 				.addClass(`macro-${this.name}`)
 				.ariaClick({
 					namespace : '.macros',
@@ -925,7 +906,7 @@
 
 					if (
 						   State.variables.hasOwnProperty('args')
-						&& this.contextHas(c => c.self.isWidget)
+						&& this.contextHas(ctx => ctx.self.isWidget)
 					) {
 						wargs = State.variables.args;
 					}
@@ -1173,11 +1154,12 @@
 				.on('change', function () {
 					Wikifier.setValue(varName, this.value);
 				})
-				.on('keypress', function (evt) {
+				.on('keypress', function (ev) {
 					// If Return/Enter is pressed, set the story variable and, optionally, forward to another passage.
-					if (evt.which === 13) { // 13 is Return/Enter
-						evt.preventDefault();
+					if (ev.which === 13) { // 13 is Return/Enter
+						ev.preventDefault();
 						Wikifier.setValue(varName, this.value);
+
 						if (passage != null) { // lazy equality for null
 							Engine.play(passage);
 						}
@@ -1282,8 +1264,9 @@
 					jQuery(document.createElement('li')).appendTo($list),
 					passage,
 					null,
-					((p, fn) => () => {
-						State.variables['#actions'][p] = true;
+					((passage, fn) => () => {
+						State.variables['#actions'][passage] = true;
+
 						if (typeof fn === 'function') {
 							fn();
 						}
@@ -1425,7 +1408,7 @@
 
 			$el
 				.addClass(`macro-${this.name}`)
-				.append($image || document.createTextNode(text || strings.macros[this.name].text))
+				.append($image || document.createTextNode(text || L10n.get(`macro${this.name.toUpperFirst()}Text`)))
 				.appendTo(this.output);
 		}
 	});
@@ -1729,8 +1712,7 @@
 							const errors = [];
 							if (args.length < 1) { errors.push('seconds'); }
 							if (args.length < 2) { errors.push('level'); }
-							return this.error(`fadeoverto missing required ${errors.join(' and ')}`
-								+ ` value${errors.length > 1 ? 's' : ''}`);
+							return this.error(`fadeoverto missing required ${errors.join(' and ')} value${errors.length > 1 ? 's' : ''}`);
 						}
 
 						action = 'fade';
@@ -1870,8 +1852,8 @@
 						this.createDebugView();
 					}
 				}
-				catch (e) {
-					return this.error(`error executing audio action: ${e.message}`);
+				catch (ex) {
+					return this.error(`error executing audio action: ${ex.message}`);
 				}
 			}
 		});
@@ -1895,8 +1877,7 @@
 					badIdRe = /^:|\s/; // cannot start with a colon or contain whitespace
 
 				if (badIdRe.test(id)) {
-					return this.error(`invalid track ID "${id}"`
-						+ ': track IDs may not start with a colon or contain whitespace');
+					return this.error(`invalid track ID "${id}": track IDs may not start with a colon or contain whitespace`);
 				}
 
 				const formatRe = /^format:\s*([\w-]+)\s*;\s*(\S.*)$/i;
@@ -1911,8 +1892,8 @@
 						};
 					}));
 				}
-				catch (e) {
-					return this.error(`error during track initialization for "${id}": ${e.message}`);
+				catch (ex) {
+					return this.error(`error during track initialization for "${id}": ${ex.message}`);
 				}
 
 				// If in Test Mode and no supported sources were specified, return an error.
@@ -1968,8 +1949,7 @@
 					badIdRe = /^:|\s/; // cannot start with a colon or contain whitespace
 
 				if (badIdRe.test(listId)) {
-					return this.error(`invalid list ID "${listId}"`
-						+ ': list IDs may not start with a colon or contain whitespace');
+					return this.error(`invalid list ID "${listId}": list IDs may not start with a colon or contain whitespace`);
 				}
 
 				if (this.payload.length === 1) {
@@ -2165,8 +2145,8 @@
 						this.createDebugView();
 					}
 				}
-				catch (e) {
-					return this.error(`error executing master audio action: ${e.message}`);
+				catch (ex) {
+					return this.error(`error executing master audio action: ${ex.message}`);
 				}
 			}
 		});
@@ -2266,8 +2246,7 @@
 							const errors = [];
 							if (args.length < 1) { errors.push('seconds'); }
 							if (args.length < 2) { errors.push('level'); }
-							return this.error(`fadeoverto missing required ${errors.join(' and ')}`
-								+ ` value${errors.length > 1 ? 's' : ''}`);
+							return this.error(`fadeoverto missing required ${errors.join(' and ')} value${errors.length > 1 ? 's' : ''}`);
 						}
 
 						action = 'fade';
@@ -2363,8 +2342,8 @@
 						this.createDebugView();
 					}
 				}
-				catch (e) {
-					return this.error(`error playing audio: ${e.message}`);
+				catch (ex) {
+					return this.error(`error playing audio: ${ex.message}`);
 				}
 			}
 		});
@@ -2453,7 +2432,7 @@
 				/*
 					Gather all tracks from `<<setplaylist>>`, since they're all copies.
 
-					n.b. `<<setplaylist>>` is deprecated, so don't assume that it exists.
+					NOTE: `<<setplaylist>>` is deprecated, so don't assume that it exists.
 				*/
 				if (Macro.has('setplaylist')) {
 					const list = Macro.get('setplaylist').list;
@@ -2589,10 +2568,10 @@
 			/*
 				Call `Engine.play()`.
 
-				n.b. This does not terminate the current Wikifier call chain, though, ideally, it
-				     probably should.  Doing so would not be trivial, however, and then there's the
-				     question of whether that behavior would be unwanted by users, who are used to
-				     the current behavior from similar macros and constructs.
+				NOTE: This does not terminate the current Wikifier call chain, though, ideally,
+				      it probably should.  Doing so would not be trivial, however, and there's
+				      also the question of whether that behavior would be unwanted by users, who
+				      are used to the current behavior from similar macros and constructs.
 			*/
 			setTimeout(() => Engine.play(passage), Engine.minDomActionDelay);
 		}
@@ -2620,8 +2599,8 @@
 					content : this.payload[0].contents
 				});
 			}
-			catch (e) {
-				return this.error(`${e.message} in <<timed>>`);
+			catch (ex) {
+				return this.error(`${ex.message} in <<timed>>`);
 			}
 
 			if (this.payload.length > 1) {
@@ -2641,8 +2620,8 @@
 						});
 					}
 				}
-				catch (e) {
-					return this.error(`${e.message} in <<next>> (#${i})`);
+				catch (ex) {
+					return this.error(`${ex.message} in <<next>> (#${i})`);
 				}
 			}
 
@@ -2753,8 +2732,8 @@
 			try {
 				delay = Math.max(Engine.minDomActionDelay, Util.fromCssTime(this.args[0]));
 			}
-			catch (e) {
-				return this.error(e.message);
+			catch (ex) {
+				return this.error(ex.message);
 			}
 
 			// Custom debug view setup.
@@ -2927,12 +2906,11 @@
 									this.output.appendChild(resFrag);
 								}
 								else {
-									return this.error(`error${errList.length > 1 ? 's' : ''} within`
-										+ ` widget contents (${errList.join('; ')})`);
+									return this.error(`error${errList.length > 1 ? 's' : ''} within widget contents (${errList.join('; ')})`);
 								}
 							}
-							catch (e) {
-								return this.error(`cannot execute widget: ${e.message}`);
+							catch (ex) {
+								return this.error(`cannot execute widget: ${ex.message}`);
 							}
 							finally {
 								// Teardown the `$args` variable, restoring the cached value if necessary.
@@ -2955,8 +2933,8 @@
 					);
 				}
 			}
-			catch (e) {
-				return this.error(`cannot create widget macro "${widgetName}": ${e.message}`);
+			catch (ex) {
+				return this.error(`cannot create widget macro "${widgetName}": ${ex.message}`);
 			}
 		}
 	});

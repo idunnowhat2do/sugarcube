@@ -20,7 +20,7 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 		[DEPRECATED] Returns the jQuery-wrapped target element(s) after making them accessible
 		clickables (ARIA compatibility).
 
-		n.b. Unused, included only for compatibility.
+		NOTE: Unused, included only for compatibility.
 	*/
 	function addAccessibleClickHandler(targets, selector, handler, one, namespace) {
 		if (arguments.length < 2) {
@@ -55,9 +55,9 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 	/*
 		[DEPRECATED] Returns a new DOM element, optionally appending it to the passed DOM element, if any.
 
-		n.b. Unused, included only for compatibility.
+		NOTE: Unused, included only for compatibility.
 	*/
-	function insertElement(place, type, id, classNames, text, title) {
+	function insertElement(place, type, id, classNames, text, title) { // eslint-disable-line max-params
 		const $el = jQuery(document.createElement(type));
 
 		// Add attributes/properties.
@@ -89,7 +89,7 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 	/*
 		[DEPRECATED] Creates a new text node and appends it to the passed DOM element.
 
-		n.b. Unused, included only for compatibility.
+		NOTE: Unused, included only for compatibility.
 	*/
 	function insertText(place, text) {
 		jQuery(place).append(document.createTextNode(text));
@@ -98,7 +98,7 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 	/*
 		[DEPRECATED] Removes all children from the passed DOM node.
 
-		n.b. Unused, included only for compatibility.
+		NOTE: Unused, included only for compatibility.
 	*/
 	function removeChildren(node) {
 		jQuery(node).empty();
@@ -107,7 +107,7 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 	/*
 		[DEPRECATED] Removes the passed DOM node.
 
-		n.b. Unused, included only for compatibility.
+		NOTE: Unused, included only for compatibility.
 	*/
 	function removeElement(node) {
 		jQuery(node).remove();
@@ -116,7 +116,7 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 	/*
 		[DEPRECATED] Fades a DOM element in or out.
 
-		n.b. Unused, included only for compatibility.
+		NOTE: Unused, included only for compatibility.
 	*/
 	function fade(el, options) {
 		/* eslint-disable no-param-reassign */
@@ -125,7 +125,7 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 		let
 			current,
 			proxy      = el.cloneNode(true),
-			intervalId;
+			intervalId; // eslint-disable-line prefer-const
 
 		function tick() {
 			current += 0.05 * direction;
@@ -170,7 +170,7 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 	/*
 		[DEPRECATED] Scrolls the browser window to ensure that a DOM element is in view.
 
-		n.b. Unused, included only for compatibility.
+		NOTE: Unused, included only for compatibility.
 	*/
 	function scrollWindowTo(el, incrementBy) {
 		/* eslint-disable no-param-reassign */
@@ -190,7 +190,7 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 			direction = start > end ? -1 : 1;
 		let
 			progress   = 0,
-			intervalId;
+			intervalId; // eslint-disable-line prefer-const
 
 		function tick() {
 			progress += increment;
@@ -376,8 +376,8 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 	/**
 		Returns a pseudo-random real number (floating-point) within the range of the given bounds.
 
-		n.b. Unlike with its sibling function `random()`, the `max` parameter is exclusive, not
-		     inclusive (i.e. the range goes to, but does not include, the given value).
+		NOTE: Unlike with its sibling function `random()`, the `max` parameter is exclusive,
+		      not inclusive (i.e. the range goes to, but does not include, the given value).
 	**/
 	function randomFloat(/* variadic(min:inclusive, max:exclusive) */) {
 		if (arguments.length === 0) {
@@ -430,10 +430,10 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 	/**
 		Returns the number of passages that the player has visited.
 
-		n.b. Passages which were visited but have been undone (e.g. via the Backward button or
-		     the `<<back>>` macro) are no longer part of the in-play story history and thus are
-		     not tallied.  Passages which were visited but have expired from the story history,
-		     on the other hand, are tallied.
+		NOTE: Passages which were visited but have been undone (e.g. via the Backward button
+		      or the `<<back>>` macro) are no longer part of the in-play story history and
+		      thus are not tallied.  Passages which were visited but have expired from the
+		      story history, on the other hand, are tallied.
 	**/
 	function turns() {
 		return State.turns;
@@ -607,8 +607,8 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 						If the token is `is`, check to see if it's followed by `not`, if so,
 						convert them into the `isnot` operator.
 
-						n.b. This is a safety feature, since `$a is not $b` probably sounds
-						     reasonable to most users.
+						NOTE: This is a safety feature, since `$a is not $b` probably sounds
+						      reasonable to most users.
 					*/
 					else if (token === 'is') {
 						const
@@ -625,9 +625,9 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 						If the finalized token has a mapping, replace it within the code string
 						with its counterpart.
 
-						n.b. We must use `parseMap.hasOwnProperty(token)` here, rather than simply
-						     using something like `parseMap[token]`, otherwise tokens which match
-						     properties from the prototype chain will cause shenanigans.
+						NOTE: We must use `parseMap.hasOwnProperty(token)` here, rather than simply
+						      using something like `parseMap[token]`, otherwise tokens which match
+						      properties from the prototype chain will cause shenanigans.
 					*/
 					if (parseMap.hasOwnProperty(token)) {
 						code = code.splice(
