@@ -805,7 +805,7 @@ function safeActiveElement() {
 
 				const args = arguments.length === 2 && Array.isArray(arguments[1])
 					? [...arguments[1]]
-					: Array.prototype.slice.call(arguments, 1); // Array.from(arguments).slice(1);
+					: Array.prototype.slice.call(arguments, 1);
 
 				if (args.length === 0) {
 					return format;
@@ -830,20 +830,11 @@ function safeActiveElement() {
 					}
 
 					switch (typeof retval) {
-					case 'string':
-						/* no-op */
-						break;
-
-					case 'object':
-						retval = JSON.stringify(retval);
-						break;
-
-					default:
-						retval = String(retval);
-						break;
+					case 'string': /* no-op */ break;
+					case 'object': retval = JSON.stringify(retval); break;
+					default:       retval = String(retval); break;
 					}
 
-					// FIXME: Do we really need `Number.parseInt(align, 10)` as opposed to simply `Number(align)`?
 					return padString(retval, !align ? 0 : Number.parseInt(align, 10), ' ');
 				});
 			}
