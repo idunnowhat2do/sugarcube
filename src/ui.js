@@ -119,10 +119,15 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 	function uiStart() {
 		if (DEBUG) { console.log('[UI/uiStart()]'); }
 
+		// Cache the jQuery-wrapped #ui-bar.
 		const $uiBar = jQuery('#ui-bar');
 
 		// Setup the #ui-bar's initial state.
-		if (Config.ui.stowBarInitially || jQuery(window).width() <= 800) {
+		if (
+			typeof Config.ui.stowBarInitially === 'boolean'
+				? Config.ui.stowBarInitially
+				: jQuery(window).width() <= Config.ui.stowBarInitially
+		) {
 			(() => {
 				const $uiBarStory = jQuery($uiBar).add('#story');
 				$uiBarStory.addClass('no-transition');

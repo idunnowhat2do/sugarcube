@@ -69,7 +69,7 @@ var Config = (() => { // eslint-disable-line no-unused-vars, no-var
 			UI properties.
 		*/
 		ui : Object.seal({
-			stowBarInitially    : false,
+			stowBarInitially    : 800,
 			updateStoryElements : true
 		}),
 
