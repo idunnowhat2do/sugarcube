@@ -97,58 +97,6 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 				}
 			});
 
-			// Sanity checks.
-			switch (this.title) {
-			case 'PassageDone':
-			case 'PassageReady':
-			case 'StoryInit':
-				if (this.tags.length > 0) {
-					throw new Error(`special passage "${this.title}" must not contain tags; invalid: ${this.tags.slice(0).sort().join(', ')}`);
-				}
-				break;
-
-			case 'PassageFooter':
-			case 'PassageHeader':
-			case 'StoryAuthor':
-			case 'StoryBanner':
-			case 'StoryCaption':
-			case 'StoryMenu':
-			case 'StoryShare':
-			case 'StorySubtitle':
-				if (this.tags.includesAny('script', 'stylesheet', 'widget')) {
-					throw new Error(`special passage "${this.title}" contains illegal tags; invalid: ${this.tags.filter(tag => ['script', 'stylesheet', 'widget'].includes(tag)).sort().join(', ')}`);
-				}
-				break;
-
-			case 'Start':
-			case 'StoryTitle':
-				if (TWINE1) {
-					if (this.tags.includesAny('script', 'stylesheet', 'widget')) {
-						throw new Error(`special passage "${this.title}" contains illegal tags; invalid: ${this.tags.filter(tag => ['script', 'stylesheet', 'widget'].includes(tag)).sort().join(', ')}`);
-					}
-				}
-				break;
-
-			default:
-				{
-					const
-						codeTags  = ['script', 'stylesheet', 'widget'],
-						foundTags = [];
-
-					this.tags.forEach(tag => {
-						if (codeTags.includes(tag)) {
-							foundTags.push(...codeTags.delete(tag));
-						}
-					});
-
-					if (foundTags.length > 1) {
-						foundTags.sort();
-						throw new Error(`passage "${this.title}" contains multiple code tags; invalid: ${foundTags.join(', ')}`);
-					}
-				}
-				break;
-			}
-
 			// Properties dependant upon the above set.
 			Object.defineProperties(this, {
 				// Passage DOM-compatible ID.
