@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global Scripting, clone, macros */
+/* global Patterns, Scripting, clone, macros */
 
 var Macro = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
@@ -16,7 +16,10 @@ var Macro = (() => { // eslint-disable-line no-unused-vars, no-var
 		_macros = {},
 
 		// Map of all macro tags and their parents (key: 'tag name' => value: ['list of parent names']).
-		_tags   = {};
+		_tags   = {},
+
+		// Valid macro name regular expression.
+		_validNameRe = new RegExp(`^(?:${Patterns.macroName})$`);
 
 
 	/*******************************************************************************************************************
@@ -28,12 +31,15 @@ var Macro = (() => { // eslint-disable-line no-unused-vars, no-var
 			return;
 		}
 
+		if (!_validNameRe.test(name)) {
+			throw new Error(`invalid macro name "${name}"`);
+		}
+
 		if (macrosHas(name)) {
 			throw new Error(`cannot clobber existing macro <<${name}>>`);
 		}
 		else if (tagsHas(name)) {
-			throw new Error(String.format('cannot clobber child tag <<{0}>> of parent macro{1} <<{2}>>',
-				name, _tags[name].length === 1 ? '' : 's', _tags[name].join('>>, <<')));
+			throw new Error(`cannot clobber child tag <<${name}>> of parent macro${_tags[name].length === 1 ? '' : 's'} <<${_tags[name].join('>>, <<')}>>`);
 		}
 
 		try {
@@ -50,6 +56,7 @@ var Macro = (() => { // eslint-disable-line no-unused-vars, no-var
 					throw new Error(`cannot create alias of nonexistent macro <<${def}>>`);
 				}
 			}
+
 			Object.defineProperty(_macros, name, { writable : false });
 
 			/* legacy */

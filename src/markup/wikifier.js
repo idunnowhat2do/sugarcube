@@ -845,7 +845,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			{
 				name        : 'macro',
 				match       : '<<',
-				lookahead   : /<<(\/?[A-Za-z][^>\s]*|[=-])(?:\s*)((?:(?:"(?:\\.|[^"\\])*")|(?:'(?:\\.|[^'\\])*')|(?:\[(?:[<>]?[Ii][Mm][Gg])?\[[^\r\n]*?\]\]+)|[^>]|(?:>(?!>)))*)>>/gm,
+				lookahead   : new RegExp(`<<(\\/?${Patterns.macroName})(?:\\s*)((?:(?:"(?:\\\\.|[^"\\\\])*")|(?:'(?:\\\\.|[^'\\\\])*')|(?:\\[(?:[<>]?[Ii][Mm][Gg])?\\[[^\\r\\n]*?\\]\\]+)|[^>]|(?:>(?!>)))*)>>`, 'gm'),
 				argsPattern : [
 					'(``)',                                             // 1=Empty backticks
 					'`((?:\\\\.|[^`\\\\])+)`',                          // 2=Backticked, non-empty
