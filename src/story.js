@@ -54,6 +54,7 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 					      as the Twine 1 pattern which matches it depends upon double quotes.
 				*/
 				const testPlay = "START_AT"; // eslint-disable-line quotes
+
 				if (testPlay !== '') {
 					if (DEBUG) { console.log(`\tTest play; starting passage: "${testPlay}"`); }
 
@@ -101,14 +102,11 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 				_storySetTitle(buf.textContent.trim());
 			}
 			else {
-				throw new Error('cannot find the StoryTitle special passage');
+				throw new Error('cannot find the "StoryTitle" special passage');
 			}
 
 			/*
 				Set the default saves ID (must be done after the call to `_storySetTitle()`).
-
-				NOTE: If not for the requirement to support Twine 1/Twee, we could use the
-				      story's IFID attribute here.
 			*/
 			Config.saves.id = Story.domId;
 		}
