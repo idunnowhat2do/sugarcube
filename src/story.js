@@ -373,6 +373,30 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 		return results;
 	}
 
+	function passagesLookupWith(filter, sortKey = 'title') {
+		if (typeof filter !== 'function') {
+			throw new Error('Story.lookupWith filter parameter must be a function');
+		}
+
+		const
+			pnames  = Object.keys(_passages),
+			results = [];
+
+		for (let i = 0; i < pnames.length; ++i) {
+			const passage = _passages[pnames[i]];
+
+			if (filter(passage)) {
+				results.push(passage);
+			}
+		}
+
+		/* eslint-disable eqeqeq, no-nested-ternary, max-len */
+		results.sort((a, b) => a[sortKey] == b[sortKey] ? 0 : a[sortKey] < b[sortKey] ? -1 : +1); // lazy equality for null
+		/* eslint-enable eqeqeq, no-nested-ternary, max-len */
+
+		return results;
+	}
+
 
 	/*******************************************************************************************************************
 	 * Module Exports.
@@ -400,8 +424,9 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Passage Functions.
 		*/
-		has    : { value : passagesHas },
-		get    : { value : passagesGet },
-		lookup : { value : passagesLookup }
+		has        : { value : passagesHas },
+		get        : { value : passagesGet },
+		lookup     : { value : passagesLookup },
+		lookupWith : { value : passagesLookupWith }
 	}));
 })();
