@@ -185,10 +185,7 @@
 */
 #ui-bar-toggle:before,
 #ui-bar-history [id|="history"],
-#menu-item-saves a:before,
-#menu-item-settings a:before,
-#menu-item-restart a:before,
-#menu-item-share a:before {
+#menu-core li[id|="menu-item"] a:before {
 	font-family: "tme-fa-icons";
 	font-style: normal;
 	font-weight: normal;
