@@ -64,15 +64,21 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 	 * Wikifier Class.
 	 ******************************************************************************************************************/
 	class Wikifier {
-		constructor(destination, source) {
+		constructor(destination, source, options) {
+			if (typeof _formatterCache !== 'object') {
+				Wikifier.compileFormatters();
+			}
+
 			Object.defineProperties(this, {
 				// General Wikifier properties.
-				formatter : {
-					value : _formatterCache || Wikifier.compileFormatters()
-				},
-
 				source : {
 					value : String(source)
+				},
+
+				options : {
+					value : Object.assign({
+						profile : 'all'
+					}, options)
 				},
 
 				nextMatch : {
@@ -114,6 +120,14 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			// Wikify the source into the output buffer element.
 			this.subWikify(this.output);
+		}
+
+		get formatter() {
+			if (!_formatterCache.hasOwnProperty(this.options.profile)) {
+				throw new Error(`nonexistent formatter profile "${this.options.profile}"`);
+			}
+
+			return _formatterCache[this.options.profile];
 		}
 
 		subWikify(output, terminator, terminatorIgnoreCase) {
@@ -229,16 +243,26 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		/*
-			Returns a compiled Wikifier formatter object.
+			Returns a compiled Wikifier formatter cache object.
 		*/
 		static compileFormatters() {
-			if (DEBUG) { console.log('[Wikifier.compileFormatters]'); }
+			if (DEBUG) { console.log('[Wikifier.compileFormatters()]'); }
 
-			const formatters = Wikifier.formatters;
+			const
+				all    = Wikifier.formatters,
+				inline = Wikifier.formatters.filter(fmt => !fmt.hasOwnProperty('profile') || fmt.profile !== 'block');
+
 			_formatterCache = {
-				formatters,
-				formatterRegExp : new RegExp(formatters.map(formatter => `(${formatter.match})`).join('|'), 'gm')
+				all : {
+					formatters      : all,
+					formatterRegExp : new RegExp(all.map(fmt => `(${fmt.match})`).join('|'), 'gm')
+				},
+				inline : {
+					formatters      : inline,
+					formatterRegExp : new RegExp(inline.map(fmt => `(${fmt.match})`).join('|'), 'gm')
+				}
 			};
+
 			return _formatterCache;
 		}
 
@@ -479,17 +503,6 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 	 * Helper Static Methods.
 	 ******************************************************************************************************************/
 	Object.defineProperties(Wikifier.helpers, {
-		/*
-		charFormat : {
-			value(w) {
-				w.subWikify(
-					jQuery(document.createElement(this.element)).appendTo(w.output).get(0),
-					this.terminator
-				);
-			}
-		},
-		*/
-
 		_inlineCssLookahead : {
 			value : new RegExp(Patterns.inlineCss, 'gm')
 		},
@@ -1520,7 +1533,8 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			},
 
 			{
-				name      : 'monospacedByLine',
+				name      : 'monospacedByBlock',
+				profile   : 'block',
 				match     : '^\\{\\{\\{\\n',
 				lookahead : /^\{\{\{\n((?:^[^\n]*\n)+?)(^\}\}\}$\n?)/gm,
 
@@ -1709,6 +1723,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			{
 				name       : 'heading',
+				profile    : 'block',
 				match      : '^!{1,6}',
 				terminator : '\\n',
 
@@ -1727,6 +1742,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			{
 				name           : 'table',
+				profile        : 'block',
 				match          : '^\\|(?:[^\\n]*)\\|(?:[fhck]?)$',
 				lookahead      : /^\|([^\n]*)\|([fhck]?)$/gm,
 				rowTerminator  : '\\|(?:[cfhk]?)$\\n?',
@@ -1897,6 +1913,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			{
 				name       : 'list',
+				profile    : 'block',
 				match      : '^(?:(?:\\*+)|(?:#+))',
 				lookahead  : /^(?:(\*+)|(#+))/gm,
 				terminator : '\\n',
@@ -1969,6 +1986,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			{
 				name       : 'quoteByBlock',
+				profile    : 'block',
 				match      : '^<<<\\n',
 				terminator : '^<<<\\n',
 
@@ -1989,10 +2007,10 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			{
 				name       : 'quoteByLine',
+				profile    : 'block',
 				match      : '^>+',
 				lookahead  : /^>+/gm,
 				terminator : '\\n',
-				element    : 'blockquote',
 
 				handler(w) {
 					if (!Wikifier.helpers.hasBlockContext(w.output.childNodes)) {
@@ -2012,7 +2030,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 						if (newLevel > curLevel) {
 							for (i = curLevel; i < newLevel; ++i) {
 								destStack.push(
-									jQuery(document.createElement(this.element))
+									jQuery(document.createElement('blockquote'))
 										.appendTo(destStack[destStack.length - 1])
 										.get(0)
 								);
