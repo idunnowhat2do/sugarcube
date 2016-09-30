@@ -32,19 +32,24 @@ class Header (header.Header):
 				# standard macros
 				'append',
 				'button',
-				'click',
+				'createplaylist',
 				'for',
 				'if',
+				'link',
+				'linkappend',
+				'linkprepend',
+				'linkreplace',
 				'nobr',
 				'prepend',
 				'repeat',
 				'replace',
 				'script',
+				'switch',
 				'silently',
 				'timed',
-				'widget'
+				'widget',
 				# deprecated macros
-				# (none, yay)
+				'click'
 			]
 
 	def passageTitleColor(self, passage):
@@ -57,9 +62,9 @@ class Header (header.Header):
 				'StoryCaption',
 				'StoryShare'
 			]
-		if passage.isStylesheet() or passage.title == 'StoryStylesheet':
+		if passage.isStylesheet():
 			return ((111, 49, 83), (234, 123, 184))
-		elif passage.isScript() or passage.title == 'StoryScript':
+		elif passage.isScript():
 			return ((89, 66, 28), (226, 170, 80))
 		elif ('widget' in passage.tags):
 			return ((80, 106, 26), (134, 178, 44))
@@ -70,4 +75,3 @@ class Header (header.Header):
 
 	def passageChecks(self):
 		return super(Header, self).passageChecks()
-
