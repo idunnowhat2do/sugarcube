@@ -1304,10 +1304,10 @@ function safeActiveElement() {
 		});
 	}
 
-	/*
-		Extend jQuery's chainable methods with an `ariaClick()` method.
-	*/
 	jQuery.fn.extend({
+		/*
+			Extend jQuery's chainable methods with an `ariaClick()` method.
+		*/
 		ariaClick(options, handler) {
 			// Bail out if there are no target element(s) or parameters.
 			if (this.length === 0 || arguments.length === 0) {
@@ -1395,32 +1395,45 @@ function safeActiveElement() {
 })();
 
 /*
-	`wiki(sources)` method plugin.
+	Wikifier methods plugin.
 
-	Wikifies the given content source(s) and appends the result to the target element(s).
+	`wikiWithOptions(options, sources…)`
+	    Wikifies the given content source(s) and appends the result to the target
+	    element(s), as directed by the given options.
+
+	`wiki(sources…)`
+	    Wikifies the given content source(s) and appends the result to the target
+	    element(s).
 */
 (() => {
 	'use strict';
 
-	/*
-		Extend jQuery's chainable methods with a `wiki()` method.
-	*/
 	jQuery.fn.extend({
-		wiki(/* variadic */) {
+		/*
+			Extend jQuery's chainable methods with a `wikiWithOptions()` method.
+		*/
+		wikiWithOptions(options, ...sources) {
 			// Bail out if there are no target element(s) or content sources.
-			if (this.length === 0 || arguments.length === 0) {
+			if (this.length === 0 || sources.length === 0) {
 				return this;
 			}
 
 			// Wikify the content sources into a fragment.
 			const frag = document.createDocumentFragment();
-			Array.from(arguments).forEach(content => new Wikifier(frag, content));
+			sources.forEach(content => new Wikifier(frag, content, options));
 
 			// Append the fragment to the target element(s).
 			this.append(frag);
 
 			// Return `this` for further chaining.
 			return this;
+		},
+
+		/*
+			Extend jQuery's chainable methods with a `wiki()` method.
+		*/
+		wiki(...sources) {
+			return this.wikiWithOptions(undefined, ...sources);
 		}
 	});
 })();
