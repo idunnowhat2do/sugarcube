@@ -213,16 +213,16 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		/*
-			Meant to be called by macros, this returns the raw, unprocessed text given to the
-			currently executing macro.
+			[DEPRECATED] Meant to be called by legacy macros, this returns the raw, unprocessed
+			text given to the currently executing macro.
 		*/
 		rawArgs() {
 			return this._rawArgs;
 		}
 
 		/*
-			Meant to be called by macros, this returns the text given to the currently executing
-			macro after doing TwineScript-to-JavaScript transformations.
+			[DEPRECATED] Meant to be called by legacy macros, this returns the text given to
+			the currently executing macro after doing TwineScript-to-JavaScript transformations.
 		*/
 		fullArgs() {
 			return Scripting.parse(this.rawArgs());
@@ -563,6 +563,84 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				}
 
 				return Wikifier.helpers.evalText(passage);
+			}
+		},
+
+		hasBlockContext : {
+			value(nodes) {
+				const hasGCS = typeof window.getComputedStyle === 'function';
+
+				for (let i = nodes.length - 1; i >= 0; --i) {
+					const node = nodes[i];
+
+					switch (node.nodeType) {
+					case Node.ELEMENT_NODE:
+						{
+							const tagName = node.nodeName.toUpperCase();
+
+							if (tagName === 'BR') {
+								return true;
+							}
+
+							const styles = hasGCS ? window.getComputedStyle(node, null) : node.currentStyle;
+
+							if (styles && styles.display) {
+								if (styles.display === 'none') {
+									continue;
+								}
+
+								return styles.display === 'block';
+							}
+
+							/*
+								WebKit/Blink-based browsers do not attach any computed style
+								information to elements until they're inserted into the DOM
+								(and probably visible), not even the default browser styles
+								and any user styles.  So, we make an assumption based on the
+								element.
+							*/
+							switch (tagName) {
+							case 'ADDRESS':
+							case 'ARTICLE':
+							case 'ASIDE':
+							case 'BLOCKQUOTE':
+							case 'CENTER':
+							case 'DIV':
+							case 'DL':
+							case 'FIGURE':
+							case 'FOOTER':
+							case 'FORM':
+							case 'H1':
+							case 'H2':
+							case 'H3':
+							case 'H4':
+							case 'H5':
+							case 'H6':
+							case 'HEADER':
+							case 'HR':
+							case 'MAIN':
+							case 'NAV':
+							case 'OL':
+							case 'P':
+							case 'PRE':
+							case 'SECTION':
+							case 'TABLE':
+							case 'UL':
+								return true;
+							}
+						}
+
+						return false;
+
+					case Node.COMMENT_NODE:
+						continue;
+
+					default:
+						return false;
+					}
+				}
+
+				return true;
 			}
 		},
 
@@ -1572,7 +1650,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			},
 
 			{
-				name  : 'rule',
+				name  : 'horizontalRule',
 				match : '^----+$\\n?|<hr\\s*/?>\\n?',
 
 				handler(w) {
@@ -1599,15 +1677,17 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			},
 
 			{
+				/*
+					Supported syntax:
+						$variable
+						$variable.property
+						$variable[numericIndex]
+						$variable["property"]
+						$variable['property']
+						$variable[$indexOrPropertyVariable]
+				*/
 				name  : 'nakedVariable',
-				match : [
-					Patterns.variable,
-					'(?:(?:\\.',
-					Patterns.identifier,
-					')|(?:\\[\\d+\\])|(?:\\["(?:\\\\.|[^"\\\\])+"\\])|(?:\\[\'(?:\\\\.|[^\'\\\\])+\'\\])|(?:\\[',
-					Patterns.variable,
-					'\\]))*'
-				].join(''),
+				match : `${Patterns.variable}(?:(?:\\.${Patterns.identifier})|(?:\\[\\d+\\])|(?:\\["(?:\\\\.|[^"\\\\])+"\\])|(?:\\[\'(?:\\\\.|[^\'\\\\])+\'\\])|(?:\\[${Patterns.variable}\\]))*`,
 
 				handler(w) {
 					const result = toStringOrDefault(Wikifier.getValue(w.matchText), null);
@@ -1633,91 +1713,15 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				terminator : '\\n',
 
 				handler(w) {
-					const isHeading = (nodes => {
-						const hasGCS = typeof window.getComputedStyle === 'function';
-
-						for (let i = nodes.length - 1; i >= 0; --i) {
-							const node = nodes[i];
-
-							switch (node.nodeType) {
-							case Node.ELEMENT_NODE:
-								{
-									const tagName = node.nodeName.toUpperCase();
-
-									if (tagName === 'BR') {
-										return true;
-									}
-
-									const styles = hasGCS ? window.getComputedStyle(node, null) : node.currentStyle;
-
-									if (styles && styles.display) {
-										if (styles.display === 'none') {
-											continue;
-										}
-
-										return styles.display === 'block';
-									}
-
-									/*
-										WebKit/Blink-based browsers do not attach any computed style
-										information to elements until they're inserted into the DOM
-										(and probably visible), not even the default browser styles
-										and any user styles.  So, we make an assumption based on the
-										element.
-									*/
-									switch (tagName) {
-									case 'ADDRESS':
-									case 'ARTICLE':
-									case 'ASIDE':
-									case 'BLOCKQUOTE':
-									case 'CENTER':
-									case 'DIV':
-									case 'DL':
-									case 'FIGURE':
-									case 'FOOTER':
-									case 'FORM':
-									case 'H1':
-									case 'H2':
-									case 'H3':
-									case 'H4':
-									case 'H5':
-									case 'H6':
-									case 'HEADER':
-									case 'HR':
-									case 'MAIN':
-									case 'NAV':
-									case 'OL':
-									case 'P':
-									case 'PRE':
-									case 'SECTION':
-									case 'TABLE':
-									case 'UL':
-										return true;
-									}
-								}
-
-								return false;
-
-							case Node.COMMENT_NODE:
-								continue;
-
-							default:
-								return false;
-							}
-						}
-
-						return true;
-					})(w.output.childNodes);
-
-					if (isHeading) {
-						w.subWikify(
-							jQuery(document.createElement(`h${w.matchLength}`)).appendTo(w.output).get(0),
-							this.terminator
-						);
-					}
-					else {
+					if (!Wikifier.helpers.hasBlockContext(w.output.childNodes)) {
 						jQuery(w.output).append(document.createTextNode(w.matchText));
+						return;
 					}
+
+					w.subWikify(
+						jQuery(document.createElement(`h${w.matchLength}`)).appendTo(w.output).get(0),
+						this.terminator
+					);
 				}
 			},
 
@@ -1731,6 +1735,11 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				rowTypes       : { c : 'caption', f : 'tfoot', h : 'thead', '' : 'tbody' }, // eslint-disable-line id-length
 
 				handler(w) {
+					if (!Wikifier.helpers.hasBlockContext(w.output.childNodes)) {
+						jQuery(w.output).append(document.createTextNode(w.matchText));
+						return;
+					}
+
 					const
 						table       = jQuery(document.createElement('table')).appendTo(w.output).get(0),
 						prevColumns = [];
@@ -1893,6 +1902,11 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				terminator : '\\n',
 
 				handler(w) {
+					if (!Wikifier.helpers.hasBlockContext(w.output.childNodes)) {
+						jQuery(w.output).append(document.createTextNode(w.matchText));
+						return;
+					}
+
 					w.nextMatch = w.matchStart;
 
 					const
@@ -1959,6 +1973,11 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				terminator : '^<<<\\n',
 
 				handler(w) {
+					if (!Wikifier.helpers.hasBlockContext(w.output.childNodes)) {
+						jQuery(w.output).append(document.createTextNode(w.matchText));
+						return;
+					}
+
 					w.subWikify(
 						jQuery(document.createElement('blockquote'))
 							.appendTo(w.output)
@@ -1976,6 +1995,11 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				element    : 'blockquote',
 
 				handler(w) {
+					if (!Wikifier.helpers.hasBlockContext(w.output.childNodes)) {
+						jQuery(w.output).append(document.createTextNode(w.matchText));
+						return;
+					}
+
 					const
 						destStack = [w.output];
 					let
@@ -1994,11 +2018,9 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 								);
 							}
 						}
-						else {
-							if (newLevel < curLevel) {
-								for (i = curLevel; i > newLevel; --i) {
-									destStack.pop();
-								}
+						else if (newLevel < curLevel) {
+							for (i = curLevel; i > newLevel; --i) {
+								destStack.pop();
 							}
 						}
 
