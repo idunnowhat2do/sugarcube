@@ -1,7 +1,7 @@
 # SugarCube #
 [SugarCube](http://www.motoslave.net/sugarcube/ "http://www.motoslave.net/sugarcube/") is a free (gratis and libre) story format for [Twine/Twee](http://twinery.org/ "http://twinery.org/"), based on [TiddlyWiki](http://tiddlywiki.com/ "http://tiddlywiki.com/").
 
-By: @tmedwards.  Contributions by: @hogart.
+By: @tmedwards.  Contributions by: @hogart and @klembot.
 
 Downloads and documentation can be found at [SugarCube's website](http://www.motoslave.net/sugarcube/ "http://www.motoslave.net/sugarcube/").
 
