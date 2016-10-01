@@ -785,7 +785,7 @@
 			}
 			else {
 				// Argument was simply the link text.
-				$link.wikiWithOptions({ profile : 'inline' }, this.args[0]);
+				$link.wikiWithOptions({ profile : 'core' }, this.args[0]);
 				passage = this.args.length > 1 ? this.args[1] : undefined;
 			}
 
@@ -915,7 +915,7 @@
 				})();
 
 			$link
-				.wikiWithOptions({ profile : 'inline' }, this.args[0])
+				.wikiWithOptions({ profile : 'core' }, this.args[0])
 				.addClass(`link-internal macro-${this.name}`)
 				.ariaClick({
 					namespace : '.macros',

@@ -249,17 +249,17 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			if (DEBUG) { console.log('[Wikifier.compileFormatters()]'); }
 
 			const
-				all    = Wikifier.formatters,
-				inline = Wikifier.formatters.filter(fmt => !fmt.hasOwnProperty('profile') || fmt.profile !== 'block');
+				all  = Wikifier.formatters,
+				core = all.filter(fmt => !Array.isArray(fmt.profiles) || fmt.profiles.includes('core'));
 
 			_formatterCache = {
 				all : {
 					formatters      : all,
 					formatterRegExp : new RegExp(all.map(fmt => `(${fmt.match})`).join('|'), 'gm')
 				},
-				inline : {
-					formatters      : inline,
-					formatterRegExp : new RegExp(inline.map(fmt => `(${fmt.match})`).join('|'), 'gm')
+				core : {
+					formatters      : core,
+					formatterRegExp : new RegExp(core.map(fmt => `(${fmt.match})`).join('|'), 'gm')
 				}
 			};
 
@@ -935,6 +935,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 		value : [
 			{
 				name        : 'macro',
+				profiles    : ['core'],
 				match       : '<<',
 				lookahead   : new RegExp(`<<(\\/?${Patterns.macroName})(?:\\s*)((?:(?:"(?:\\\\.|[^"\\\\])*")|(?:'(?:\\\\.|[^'\\\\])*')|(?:\\[(?:[<>]?[Ii][Mm][Gg])?\\[[^\\r\\n]*?\\]\\]+)|[^>]|(?:>(?!>)))*)>>`, 'gm'),
 				argsPattern : [
@@ -1411,8 +1412,9 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			},
 
 			{
-				name  : 'prettyLink',
-				match : '\\[\\[[^[]',
+				name     : 'prettyLink',
+				profiles : ['core'],
+				match    : '\\[\\[[^[]',
 
 				handler(w) {
 					const markup = Wikifier.helpers.parseSquareBracketedMarkup(w);
@@ -1448,8 +1450,9 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			},
 
 			{
-				name  : 'urlLink',
-				match : Patterns.url,
+				name     : 'urlLink',
+				profiles : ['core'],
+				match    : Patterns.url,
 
 				handler(w) {
 					w.outputText(Wikifier.createExternalLink(w.output, w.matchText), w.matchStart, w.nextMatch);
@@ -1457,8 +1460,9 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			},
 
 			{
-				name  : 'image',
-				match : '\\[[<>]?[Ii][Mm][Gg]\\[',
+				name     : 'image',
+				profiles : ['core'],
+				match    : '\\[[<>]?[Ii][Mm][Gg]\\[',
 
 				handler(w) {
 					const markup = Wikifier.helpers.parseSquareBracketedMarkup(w);
@@ -1534,7 +1538,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			{
 				name      : 'monospacedByBlock',
-				profile   : 'block',
+				profiles  : ['block'],
 				match     : '^\\{\\{\\{\\n',
 				lookahead : /^\{\{\{\n((?:^[^\n]*\n)+?)(^\}\}\}$\n?)/gm,
 
@@ -1553,8 +1557,9 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			},
 
 			{
-				name  : 'formatByChar',
-				match : "''|//|__|\\^\\^|~~|==|\\{\\{\\{",
+				name     : 'formatByChar',
+				profiles : ['core'],
+				match    : "''|//|__|\\^\\^|~~|==|\\{\\{\\{",
 
 				handler(w) {
 					switch (w.matchText) {
@@ -1604,6 +1609,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			{
 				name        : 'customStyle',
+				profiles    : ['core'],
 				match       : '@@',
 				terminator  : '@@',
 				blockRegExp : /\s*\n/gm,
@@ -1645,6 +1651,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			{
 				name      : 'verbatimText',
+				profiles  : ['core'],
 				match     : '"{3}|<nowiki>',
 				lookahead : /(?:"{3}((?:.|\n)*?)"{3})|(?:<nowiki>((?:.|\n)*?)<\/nowiki>)/gm,
 
@@ -1664,8 +1671,9 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			},
 
 			{
-				name  : 'horizontalRule',
-				match : '^----+$\\n?|<hr\\s*/?>\\n?',
+				name     : 'horizontalRule',
+				profiles : ['core'],
+				match    : '^----+$\\n?|<hr\\s*/?>\\n?',
 
 				handler(w) {
 					jQuery(document.createElement('hr')).appendTo(w.output);
@@ -1673,8 +1681,9 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			},
 
 			{
-				name  : 'emdash',
-				match : '--',
+				name     : 'emdash',
+				profiles : ['core'],
+				match    : '--',
 
 				handler(w) {
 					jQuery(document.createTextNode('\u2014')).appendTo(w.output);
@@ -1682,8 +1691,9 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			},
 
 			{
-				name  : 'doubleDollarSign',
-				match : '\\${2}', // eslint-disable-line no-template-curly-in-string
+				name     : 'doubleDollarSign',
+				profiles : ['core'],
+				match    : '\\${2}', // eslint-disable-line no-template-curly-in-string
 
 				handler(w) {
 					jQuery(document.createTextNode('$')).appendTo(w.output);
@@ -1700,8 +1710,9 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 						$variable['property']
 						$variable[$indexOrPropertyVariable]
 				*/
-				name  : 'nakedVariable',
-				match : `${Patterns.variable}(?:(?:\\.${Patterns.identifier})|(?:\\[\\d+\\])|(?:\\["(?:\\\\.|[^"\\\\])+"\\])|(?:\\[\'(?:\\\\.|[^\'\\\\])+\'\\])|(?:\\[${Patterns.variable}\\]))*`,
+				name     : 'nakedVariable',
+				profiles : ['core'],
+				match    : `${Patterns.variable}(?:(?:\\.${Patterns.identifier})|(?:\\[\\d+\\])|(?:\\["(?:\\\\.|[^"\\\\])+"\\])|(?:\\[\'(?:\\\\.|[^\'\\\\])+\'\\])|(?:\\[${Patterns.variable}\\]))*`,
 
 				handler(w) {
 					const result = toStringOrDefault(Wikifier.getValue(w.matchText), null);
@@ -1723,7 +1734,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			{
 				name       : 'heading',
-				profile    : 'block',
+				profiles   : ['block'],
 				match      : '^!{1,6}',
 				terminator : '\\n',
 
@@ -1742,7 +1753,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			{
 				name           : 'table',
-				profile        : 'block',
+				profiles       : ['block'],
 				match          : '^\\|(?:[^\\n]*)\\|(?:[fhck]?)$',
 				lookahead      : /^\|([^\n]*)\|([fhck]?)$/gm,
 				rowTerminator  : '\\|(?:[cfhk]?)$\\n?',
@@ -1913,7 +1924,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			{
 				name       : 'list',
-				profile    : 'block',
+				profiles   : ['block'],
 				match      : '^(?:(?:\\*+)|(?:#+))',
 				lookahead  : /^(?:(\*+)|(#+))/gm,
 				terminator : '\\n',
@@ -1986,7 +1997,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			{
 				name       : 'quoteByBlock',
-				profile    : 'block',
+				profiles   : ['block'],
 				match      : '^<<<\\n',
 				terminator : '^<<<\\n',
 
@@ -2007,7 +2018,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			{
 				name       : 'quoteByLine',
-				profile    : 'block',
+				profiles   : ['block'],
 				match      : '^>+',
 				lookahead  : /^>+/gm,
 				terminator : '\\n',
@@ -2062,6 +2073,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			{
 				name      : 'html',
+				profiles  : ['core'],
 				match     : '<[Hh][Tt][Mm][Ll]>',
 				lookahead : /<[Hh][Tt][Mm][Ll]>((?:.|\n)*?)<\/[Hh][Tt][Mm][Ll]>/gm,
 
@@ -2082,6 +2094,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			{
 				name      : 'commentByBlock',
+				profiles  : ['core'],
 				match     : '(?:/(?:%|\\*))|(?:<!--)',
 				lookahead : /(?:\/(%|\*)(?:(?:.|\n)*?)\1\/)|(?:<!--(?:(?:.|\n)*?)-->)/gm,
 
@@ -2097,7 +2110,8 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			},
 
 			{
-				name : 'lineContinuation',
+				name     : 'lineContinuation',
+				profiles : ['core'],
 
 				// NOTE: The end-of-line patter must come first.
 				match : `\\\\${Patterns.space}*?(?:\\n|$)|(?:^|\\n)${Patterns.space}*?\\\\`,
@@ -2108,8 +2122,9 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			},
 
 			{
-				name  : 'lineBreak',
-				match : '\\n|<br\\s*/?>',
+				name     : 'lineBreak',
+				profiles : ['core'],
+				match    : '\\n|<br\\s*/?>',
 
 				handler(w) {
 					if (w._nobr.length === 0 || !w._nobr[0]) {
@@ -2119,8 +2134,9 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			},
 
 			{
-				name  : 'htmlCharacterReference',
-				match : '(?:(?:&#?[0-9A-Za-z]{2,8};|.)(?:&#?(?:x0*(?:3[0-6][0-9A-Fa-f]|1D[C-Fc-f][0-9A-Fa-f]|20[D-Fd-f][0-9A-Fa-f]|FE2[0-9A-Fa-f])|0*(?:76[89]|7[7-9][0-9]|8[0-7][0-9]|761[6-9]|76[2-7][0-9]|84[0-3][0-9]|844[0-7]|6505[6-9]|6506[0-9]|6507[0-1]));)+|&#?[0-9A-Za-z]{2,8};)',
+				name     : 'htmlCharacterReference',
+				profiles : ['core'],
+				match    : '(?:(?:&#?[0-9A-Za-z]{2,8};|.)(?:&#?(?:x0*(?:3[0-6][0-9A-Fa-f]|1D[C-Fc-f][0-9A-Fa-f]|20[D-Fd-f][0-9A-Fa-f]|FE2[0-9A-Fa-f])|0*(?:76[89]|7[7-9][0-9]|8[0-7][0-9]|761[6-9]|76[2-7][0-9]|84[0-3][0-9]|844[0-7]|6505[6-9]|6506[0-9]|6507[0-1]));)+|&#?[0-9A-Za-z]{2,8};)',
 
 				handler(w) {
 					jQuery(document.createDocumentFragment())
@@ -2132,9 +2148,10 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			{
 				/*
 					NOTE: This formatter MUST come after any formatter which handles HTML tag-like
-					      constructs (e.g. html & rawText).
+					      constructs (e.g. 'verbatimText', 'horizontalRule', 'html', and 'lineBreak').
 				*/
 				name         : 'htmlTag',
+				profiles     : ['core'],
 				match        : '<\\w+(?:\\s+[^\\u0000-\\u001F\\u007F-\\u009F\\s"\'>\\/=]+(?:\\s*=\\s*(?:"[^"]*?"|\'[^\']*?\'|[^\\s"\'=<>`]+))?)*\\s*\\/?>',
 				tagPattern   : '<(\\w+)',
 				voidElements : ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'keygen', 'link', 'menuitem', 'meta', 'param', 'source', 'track', 'wbr'],
