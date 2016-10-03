@@ -85,7 +85,7 @@
 				Scripting.evalJavaScript(this.args.full);
 			}
 			catch (ex) {
-				return this.error(`bad evaluation: ${ex.message}`);
+				return this.error(`bad evaluation: ${typeof ex === 'object' ? ex.message : ex}`);
 			}
 
 			// Custom debug view setup.
@@ -144,7 +144,7 @@
 				Scripting.evalJavaScript(this.args.full);
 			}
 			catch (ex) {
-				return this.error(`bad evaluation: ${ex.message}`);
+				return this.error(`bad evaluation: ${typeof ex === 'object' ? ex.message : ex}`);
 			}
 
 			const
@@ -251,7 +251,7 @@
 			}
 			catch (ex) {
 				return this.error(
-					`bad evaluation: ${ex.message}`,
+					`bad evaluation: ${typeof ex === 'object' ? ex.message : ex}`,
 					`${this.source + this.payload[0].contents}<</${this.name}>>`
 				);
 			}
@@ -347,7 +347,7 @@
 				}
 			}
 			catch (ex) {
-				return this.error(`bad evaluation: ${ex.message}`);
+				return this.error(`bad evaluation: ${typeof ex === 'object' ? ex.message : ex}`);
 			}
 		}
 	});
@@ -482,7 +482,7 @@
 				}
 			}
 			catch (ex) {
-				return this.error(`bad conditional expression in <<${i === 0 ? 'if' : 'elseif'}>> clause${i > 0 ? ' (#' + i + ')' : ''}: ${ex.message}`); // eslint-disable-line prefer-template
+				return this.error(`bad conditional expression in <<${i === 0 ? 'if' : 'elseif'}>> clause${i > 0 ? ' (#' + i + ')' : ''}: ${typeof ex === 'object' ? ex.message : ex}`); // eslint-disable-line prefer-template
 			}
 		}
 	});
@@ -511,7 +511,7 @@
 				result = Scripting.evalJavaScript(this.args.full);
 			}
 			catch (ex) {
-				return this.error(`bad evaluation: ${ex.message}`);
+				return this.error(`bad evaluation: ${typeof ex === 'object' ? ex.message : ex}`);
 			}
 
 			const
@@ -651,7 +651,7 @@
 						evalJavaScript(init);
 					}
 					catch (ex) {
-						return this.error(`bad init expression: ${ex.message}`);
+						return this.error(`bad init expression: ${typeof ex === 'object' ? ex.message : ex}`);
 					}
 				}
 
@@ -681,13 +681,13 @@
 							evalJavaScript(post);
 						}
 						catch (ex) {
-							return this.error(`bad post expression: ${ex.message}`);
+							return this.error(`bad post expression: ${typeof ex === 'object' ? ex.message : ex}`);
 						}
 					}
 				}
 			}
 			catch (ex) {
-				return this.error(`bad conditional expression: ${ex.message}`);
+				return this.error(`bad conditional expression: ${typeof ex === 'object' ? ex.message : ex}`);
 			}
 			finally {
 				TempState.break = null;

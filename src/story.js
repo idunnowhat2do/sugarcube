@@ -216,7 +216,7 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 				Scripting.evalJavaScript(_scripts[i].text);
 			}
 			catch (ex) {
-				Alert.error(_scripts[i].title, ex.message);
+				Alert.error(_scripts[i].title, typeof ex === 'object' ? ex.message : ex);
 			}
 		}
 
@@ -228,7 +228,7 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 				Wikifier.wikifyEval(_widgets[i].processText());
 			}
 			catch (ex) {
-				Alert.error(_widgets[i].title, ex.message);
+				Alert.error(_widgets[i].title, typeof ex === 'object' ? ex.message : ex);
 			}
 		}
 	}
