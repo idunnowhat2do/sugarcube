@@ -500,7 +500,7 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 		random         : { value : Math.random },
 		entityEncode   : { value : utilEscape },
 		entityDecode   : { value : utilUnescape },
-		evalExpression : { value : (...args) => Scripting.evalJavaScript(...args) }, // See: `markup/scripting.js`.
-		evalStatements : { value : (...args) => Scripting.evalJavaScript(...args) }  // See: `markup/scripting.js`.
+		evalExpression : { value : (...args) => Scripting.evalJavaScript(...args) }, // SEE: `markup/scripting.js`.
+		evalStatements : { value : (...args) => Scripting.evalJavaScript(...args) }  // SEE: `markup/scripting.js`.
 	}));
 })();

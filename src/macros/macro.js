@@ -244,6 +244,6 @@ var Macro = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Legacy Aliases.
 		*/
-		evalStatements : { value : (...args) => Scripting.evalJavaScript(...args) } // See: `markup/scripting.js`.
+		evalStatements : { value : (...args) => Scripting.evalJavaScript(...args) } // SEE: `markup/scripting.js`.
 	}));
 })();

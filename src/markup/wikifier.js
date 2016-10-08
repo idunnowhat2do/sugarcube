@@ -493,9 +493,9 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			Legacy Aliases.
 		*/
 		parse          : { value : Scripting.parse },
-		evalExpression : { value : Scripting.evalTwineScript }, // See: `markup/scripting.js`.
-		evalStatements : { value : Scripting.evalTwineScript }, // See: `markup/scripting.js`.
-		textPrimitives : { value : Patterns }                   // See: `markup/patterns.js`.
+		evalExpression : { value : Scripting.evalTwineScript }, // SEE: `markup/scripting.js`.
+		evalStatements : { value : Scripting.evalTwineScript }, // SEE: `markup/scripting.js`.
+		textPrimitives : { value : Patterns }                   // SEE: `markup/patterns.js`.
 	});
 
 
