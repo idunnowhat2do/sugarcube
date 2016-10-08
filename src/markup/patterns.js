@@ -49,7 +49,7 @@ var Patterns = (() => { // eslint-disable-line no-unused-vars, no-var
 		variable      = variableSigil + identifier,
 
 		// Macro name pattern.
-		macroName = '[A-Za-z][^>\\s]*|[=-]',
+		macroName = '[A-Za-z][\\w-]*|[=-]',
 
 		// Inline CSS pattern.
 		_twStyle   = `(${anyLetter}+)\\(([^\\)\\|\\n]+)\\):`, // [1,2]=style(value):
