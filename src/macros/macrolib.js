@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global Config, DebugView, Engine, Has, L10n, LoadScreen, Macro, Scripting, SimpleAudio, State, Story, TempState,
-	       TempVariables, Util, Wikifier, postdisplay, prehistory, storage, toStringOrDefault
+	global Config, DebugView, Engine, Has, L10n, LoadScreen, Macro, Patterns, Scripting, SimpleAudio, State, Story,
+	       TempState, TempVariables, Util, Wikifier, postdisplay, prehistory, storage, toStringOrDefault
 */
 
 (() => {
@@ -107,7 +107,7 @@
 			}
 
 			const re = new RegExp(
-				`(?:(State\\.variables)|(TempVariables))\\.(${Wikifier.textPrimitives.identifier})`,
+				`(?:(State\\.variables)|(TempVariables))\\.(${Patterns.identifier})`,
 				'g'
 			);
 			let match;
@@ -149,7 +149,7 @@
 
 			const
 				remember = storage.get('remember') || {},
-				re       = new RegExp(`State\\.variables\\.(${Wikifier.textPrimitives.identifier})`, 'g');
+				re       = new RegExp(`State\\.variables\\.(${Patterns.identifier})`, 'g');
 			let
 				match;
 
@@ -190,7 +190,7 @@
 
 			const
 				remember = storage.get('remember'),
-				re       = new RegExp(`State\\.variables\\.(${Wikifier.textPrimitives.identifier})`, 'g');
+				re       = new RegExp(`State\\.variables\\.(${Patterns.identifier})`, 'g');
 			let
 				match,
 				needStore = false;
