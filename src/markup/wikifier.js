@@ -2128,7 +2128,9 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 				handler(w) {
 					if (w._nobr.length === 0 || !w._nobr[0]) {
-						jQuery(document.createElement('br')).appendTo(w.output);
+						jQuery(document.createElement('br'))
+							.attr('data-origin', this.name)
+							.appendTo(w.output);
 					}
 				}
 			},
