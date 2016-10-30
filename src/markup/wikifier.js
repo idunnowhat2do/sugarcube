@@ -44,7 +44,7 @@
  **********************************************************************************************************************/
 /*
 	global Config, DebugView, Engine, Macro, MacroContext, Patterns, Scripting, State, Story, TempState, TempVariables,
-	       Util, toStringOrDefault, throwError
+	       Util, convertBreaks, toStringOrDefault, throwError
 */
 /* eslint "no-param-reassign": [ 2, { "props" : false } ] */
 
@@ -57,7 +57,10 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 	let
 		// The Wikifier formatter object cache.
-		_formatterCache;
+		_formatterCache,
+
+		// Wikifier call depth.
+		_callDepth = 0;
 
 
 	/*******************************************************************************************************************
@@ -118,8 +121,27 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				this.output = destination;
 			}
 
-			// Wikify the source into the output buffer element.
-			this.subWikify(this.output);
+			/*
+				Wikify the source into the output buffer element, possibly converting line
+				breaks into paragraphs.
+
+				NOTE: There's no catch clause here because this try/finally exists solely
+				      to ensure that the call depth is properly restored in the event that
+				      an uncaught exception is thrown during the call to `subWikify()`.
+			*/
+			try {
+				++_callDepth;
+
+				this.subWikify(this.output);
+
+				// Limit line break conversion to non-recursive calls.
+				if (_callDepth === 1 && Config.cleanupWikifierOutput) {
+					convertBreaks(this.output);
+				}
+			}
+			finally {
+				--_callDepth;
+			}
 		}
 
 		get formatter() {
@@ -1012,7 +1034,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 										/*
 											Call the handler.
 
-											NOTE: There's no catch clause here because this try/finally exists simply
+											NOTE: There's no catch clause here because this try/finally exists solely
 											      to ensure that the execution context is properly restored in the
 											      event that an uncaught exception is thrown during the handler call.
 										*/

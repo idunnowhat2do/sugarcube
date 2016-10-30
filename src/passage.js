@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global Config, L10n, Story, Util, Wikifier, convertBreaks, postrender, prerender */
+/* global Config, L10n, Story, Util, Wikifier, postrender, prerender */
 
 var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
@@ -237,11 +237,6 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 			// Wikify the PassageFooter passage, if it exists, into the passage element.
 			if (Story.has('PassageFooter')) {
 				new Wikifier(passageEl, Story.get('PassageFooter').processText());
-			}
-
-			// Convert breaks to paragraphs within the output passage.
-			if (Config.cleanupWikifierOutput) {
-				convertBreaks(passageEl);
 			}
 
 			// Execute post-render tasks.
