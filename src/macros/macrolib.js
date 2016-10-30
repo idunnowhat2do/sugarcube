@@ -839,21 +839,25 @@
 		handler() {
 			if (this.args.length < 3) {
 				const errors = [];
-				if (this.args.length < 1) { errors.push('story variable name'); }
+				if (this.args.length < 1) { errors.push('variable name'); }
 				if (this.args.length < 2) { errors.push('unchecked value'); }
 				if (this.args.length < 3) { errors.push('checked value'); }
 				return this.error(`no ${errors.join(' or ')} specified`);
 			}
 
-			/*
-				Try to ensure that we receive the story variable's name (incl. sigil), not its value.
-			*/
-			if (typeof this.args[0] !== 'string' || this.args[0].trim()[0] !== '$') {
-				return this.error(`story variable name "${this.args[0]}" is missing its sigil ($)`);
+			// Ensure that the variable name argument is a string.
+			if (typeof this.args[0] !== 'string') {
+				return this.error('variable name argument is not a string');
+			}
+
+			const varName = this.args[0].trim();
+
+			// Try to ensure that we receive the variable's name (incl. sigil), not its value.
+			if (varName[0] !== '$' && varName[0] !== '_') {
+				return this.error(`variable name "${this.args[0]}" is missing its sigil ($ or _)`);
 			}
 
 			const
-				varName      = this.args[0].trim(),
 				varId        = Util.slugify(varName),
 				uncheckValue = this.args[1],
 				checkValue   = this.args[2],
@@ -978,20 +982,24 @@
 		handler() {
 			if (this.args.length < 2) {
 				const errors = [];
-				if (this.args.length < 1) { errors.push('story variable name'); }
+				if (this.args.length < 1) { errors.push('variable name'); }
 				if (this.args.length < 2) { errors.push('checked value'); }
 				return this.error(`no ${errors.join(' or ')} specified`);
 			}
 
-			/*
-				Try to ensure that we receive the story variable's name (incl. sigil), not its value.
-			*/
-			if (typeof this.args[0] !== 'string' || this.args[0].trim()[0] !== '$') {
-				return this.error(`story variable name "${this.args[0]}" is missing its sigil ($)`);
+			// Ensure that the variable name argument is a string.
+			if (typeof this.args[0] !== 'string') {
+				return this.error('variable name argument is not a string');
+			}
+
+			const varName = this.args[0].trim();
+
+			// Try to ensure that we receive the variable's name (incl. sigil), not its value.
+			if (varName[0] !== '$' && varName[0] !== '_') {
+				return this.error(`variable name "${this.args[0]}" is missing its sigil ($ or _)`);
 			}
 
 			const
-				varName    = this.args[0].trim(),
 				varId      = Util.slugify(varName),
 				checkValue = this.args[1],
 				el         = document.createElement('input');
@@ -1039,16 +1047,21 @@
 		handler() {
 			if (this.args.length < 2) {
 				const errors = [];
-				if (this.args.length < 1) { errors.push('story variable name'); }
+				if (this.args.length < 1) { errors.push('variable name'); }
 				if (this.args.length < 2) { errors.push('default value'); }
 				return this.error(`no ${errors.join(' or ')} specified`);
 			}
 
-			/*
-				Try to ensure that we receive the story variable's name (incl. sigil), not its value.
-			*/
-			if (typeof this.args[0] !== 'string' || this.args[0].trim()[0] !== '$') {
-				return this.error(`story variable name "${this.args[0]}" is missing its sigil ($)`);
+			// Ensure that the variable name argument is a string.
+			if (typeof this.args[0] !== 'string') {
+				return this.error('variable name argument is not a string');
+			}
+
+			const varName = this.args[0].trim();
+
+			// Try to ensure that we receive the variable's name (incl. sigil), not its value.
+			if (varName[0] !== '$' && varName[0] !== '_') {
+				return this.error(`variable name "${this.args[0]}" is missing its sigil ($ or _)`);
 			}
 
 			// Custom debug view setup.
@@ -1057,7 +1070,6 @@
 			}
 
 			const
-				varName      = this.args[0].trim(),
 				varId        = Util.slugify(varName),
 				defaultValue = this.args[1],
 				autofocus    = this.args[2] === 'autofocus',
@@ -1111,16 +1123,21 @@
 		handler() {
 			if (this.args.length < 2) {
 				const errors = [];
-				if (this.args.length < 1) { errors.push('story variable name'); }
+				if (this.args.length < 1) { errors.push('variable name'); }
 				if (this.args.length < 2) { errors.push('default value'); }
 				return this.error(`no ${errors.join(' or ')} specified`);
 			}
 
-			/*
-				Try to ensure that we receive the story variable's name (incl. sigil), not its value.
-			*/
-			if (typeof this.args[0] !== 'string' || this.args[0].trim()[0] !== '$') {
-				return this.error(`story variable name "${this.args[0]}" is missing its sigil ($)`);
+			// Ensure that the variable name argument is a string.
+			if (typeof this.args[0] !== 'string') {
+				return this.error('variable name argument is not a string');
+			}
+
+			const varName = this.args[0].trim();
+
+			// Try to ensure that we receive the variable's name (incl. sigil), not its value.
+			if (varName[0] !== '$' && varName[0] !== '_') {
+				return this.error(`variable name "${this.args[0]}" is missing its sigil ($ or _)`);
 			}
 
 			// Custom debug view setup.
@@ -1129,7 +1146,6 @@
 			}
 
 			const
-				varName      = this.args[0].trim(),
 				varId        = Util.slugify(varName),
 				defaultValue = this.args[1],
 				el           = document.createElement('input');
