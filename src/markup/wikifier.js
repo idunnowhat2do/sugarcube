@@ -79,7 +79,8 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				},
 
 				options : {
-					value : Object.assign({
+					writable : true,
+					value    : Object.assign({
 						profile : 'all'
 					}, options)
 				},
@@ -98,11 +99,6 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				_rawArgs : {
 					writable : true,
 					value    : ''
-				},
-
-				_nobr : {
-					writable : true,
-					value    : []
 				}
 			});
 
@@ -152,13 +148,22 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			return _formatterCache[this.options.profile];
 		}
 
-		subWikify(output, terminator, terminatorIgnoreCase) {
-			// Cache and temporarily replace the current output buffer.
+		subWikify(output, terminator, options) {
+			// Cache and temporarily replace the current output buffer and options.
 			const oldOutput = this.output;
+			let oldOptions;
+
 			this.output = output;
 
+			if (options != null && typeof options === 'object') { // lazy equality for null
+				oldOptions = this.options;
+				this.options = Object.assign({}, this.options, options);
+			}
+
 			const
-				terminatorRegExp = terminator ? new RegExp(`(?:${terminator})`, terminatorIgnoreCase ? 'gim' : 'gm') : null;
+				terminatorRegExp = terminator
+					? new RegExp(`(?:${terminator})`, this.options.ignoreTerminatorCase ? 'gim' : 'gm')
+					: null;
 			let
 				terminatorMatch,
 				formatterMatch;
@@ -188,8 +193,14 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 					this.matchText   = terminatorMatch[0];
 					this.nextMatch   = terminatorRegExp.lastIndex;
 
-					// Restore the output buffer and exit.
+					// Restore the original output buffer and options.
 					this.output = oldOutput;
+
+					if (oldOptions) {
+						this.options = oldOptions;
+					}
+
+					// Exit.
 					return;
 				}
 				else if (formatterMatch) {
@@ -240,8 +251,12 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				jQuery(this.output.lastChild).remove();
 			}
 
-			// Restore the output buffer.
+			// Restore the original output buffer and options.
 			this.output = oldOutput;
+
+			if (oldOptions) {
+				this.options = oldOptions;
+			}
 		}
 
 		outputText(destination, startPos, endPos) {
@@ -2149,7 +2164,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				match    : '\\n|<br\\s*/?>',
 
 				handler(w) {
-					if (w._nobr.length === 0 || !w._nobr[0]) {
+					if (!w.options.nobr) {
 						jQuery(document.createElement('br')).appendTo(w.output);
 					}
 				}
@@ -2234,29 +2249,18 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 							}
 
 							if (terminatorMatch) {
-								if (isNobr) {
-									w._nobr.unshift(true);
-								}
-								else if (w._nobr.length > 0) {
-									w._nobr.unshift(false);
-								}
+								w.subWikify(el, terminator, {
+									ignoreTerminatorCase : true,
+									nobr                 : isNobr
+								});
 
-								try {
-									w.subWikify(el, terminator, true); // ignore case during match
-
-									/*
-										Debug view modification.  If the current element has any debug
-										view descendants who have "block" mode set, then set its debug
-										view to the same.  It just makes things look a bit nicer.
-									*/
-									if (debugView && jQuery(el).find('.debug.block').length > 0) {
-										debugView.modes({ block : true });
-									}
-								}
-								finally {
-									if (w._nobr.length > 0) {
-										w._nobr.shift();
-									}
+								/*
+									Debug view modification.  If the current element has any debug
+									view descendants who have "block" mode set, then set its debug
+									view to the same.  It just makes things look a bit nicer.
+								*/
+								if (debugView && jQuery(el).find('.debug.block').length > 0) {
+									debugView.modes({ block : true });
 								}
 							}
 
