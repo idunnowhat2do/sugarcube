@@ -638,6 +638,16 @@
 				}
 			}
 
+			// Sanity checks.
+			if (typeof condition === 'string') {
+				if (/^\S+\s+in\s+\S+/i.test(condition)) {
+					return this.error('invalid syntax, for…in is not supported');
+				}
+				else if (/^\S+\s+of\s+\S+/i.test(condition)) {
+					return this.error('invalid syntax, for…of is not supported');
+				}
+			}
+
 			// Custom debug view setup.
 			if (Config.debug) {
 				this.debugView.modes({ block : true });
