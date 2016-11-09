@@ -1350,7 +1350,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 									}
 
 									return imgObj;
-								})(markup.source);
+								})(Wikifier.helpers.evalPassageId(markup.source));
 
 								if (markup.hasOwnProperty('align')) {
 									arg.align = markup.align;
