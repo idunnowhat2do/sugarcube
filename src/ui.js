@@ -224,6 +224,14 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 		jQuery(document.documentElement).focus();
 	}
 
+	function uiStow() {
+		jQuery('#ui-bar').addClass('stow');
+	}
+
+	function uiUnstow() {
+		jQuery('#ui-bar').removeClass('stow');
+	}
+
 	function uiSetStoryElements() {
 		if (DEBUG) { console.log('[UI/uiSetStoryElements()]'); }
 
@@ -879,6 +887,8 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 		*/
 		init             : { value : uiInit },
 		start            : { value : uiStart },
+		stow             : { value : uiStow },
+		unstow           : { value : uiUnstow },
 		setStoryElements : { value : uiSetStoryElements },
 		hideOutlines     : { value : uiHideOutlines },
 		showOutlines     : { value : uiShowOutlines },
