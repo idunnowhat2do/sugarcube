@@ -418,10 +418,6 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			return !(this.audio.ended || this.audio.paused || !this.hasSomeData());
 		}
 
-		isEnded() {
-			return this.audio.ended;
-		}
-
 		isPaused() {
 			/*
 				If the selected audio resource is a stream, `currentTime` may return a non-zero
@@ -435,6 +431,14 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			return this.audio.paused
 				&& (this.audio.duration === Infinity || this.audio.currentTime > 0)
 				&& !this.audio.ended;
+		}
+
+		isEnded() {
+			return this.audio.ended;
+		}
+
+		isFading() {
+			return this._faderId !== null;
 		}
 
 		isMuted() {
