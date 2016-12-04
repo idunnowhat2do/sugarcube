@@ -378,6 +378,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			return this._volume;
 		}
 		set volume(vol) {
+			this.fadeStop();
 			this._volume = Math.clamp(vol, 0, 1); // clamp to 0 (silent) & 1 (full loudness)
 			this._updateAudioVolume();
 		}
