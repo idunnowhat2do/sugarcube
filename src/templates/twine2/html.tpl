@@ -41,9 +41,9 @@ if(document.head&&document.addEventListener&&document.querySelector&&Object.crea
 </head>
 <body>
 	<div id="init-screen">
-		<p id="init-no-js"><noscript>Apologies! JavaScript is required. Please enable it to continue.</noscript></p>
-		<p id="init-lacking">Apologies! You are using an <strong>outdated</strong> browser which lacks required capabilities. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
-		<p id="init-loading">Initializing. Please wait&hellip;<br /><progress></progress></p>
+		<div id="init-no-js"><noscript>JavaScript is required. Please enable it to continue.</noscript></div>
+		<div id="init-lacking">Your browser lacks required capabilities. Please upgrade it or switch to another to continue.</div>
+		<div id="init-loading"><div>Loading&hellip;</div></div>
 	</div>
 	<div id="store-area" hidden>{{STORY_DATA}}</div>
 	<script id="script-sugarcube" type="text/javascript">

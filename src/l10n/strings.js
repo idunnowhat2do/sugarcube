@@ -53,7 +53,7 @@ var l10nStrings = { // eslint-disable-line no-unused-vars, no-var
 	/*
 		Warnings.
 	*/
-	_warningIntroLacking  : 'Apologies! Your browser either lacks or has disabled',
+	_warningIntroLacking  : 'Your browser either lacks or has disabled',
 	_warningOutroDegraded : ', so this {identity} is running in a degraded mode. You may be able to continue, however, some parts may not work properly.',
 	warningNoWebStorage   : '{_warningIntroLacking} the Web Storage API{_warningOutroDegraded}',
 	warningDegraded       : '{_warningIntroLacking} some of the capabilities required by this {identity}{_warningOutroDegraded}',

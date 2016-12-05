@@ -224,6 +224,14 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 		jQuery(document.documentElement).focus();
 	}
 
+	function uiStow() {
+		jQuery('#ui-bar').addClass('stow');
+	}
+
+	function uiUnstow() {
+		jQuery('#ui-bar').removeClass('stow');
+	}
+
 	function uiSetStoryElements() {
 		if (DEBUG) { console.log('[UI/uiSetStoryElements()]'); }
 
@@ -260,43 +268,46 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 		const debugState = Config.debug;
 		Config.debug = false;
 
-		if (list == null) { // lazy equality for null
-			list = document.createElement('ul');
-		}
+		try {
+			if (list == null) { // lazy equality for null
+				list = document.createElement('ul');
+			}
 
-		const temp = document.createDocumentFragment();
-		new Wikifier(temp, Story.get(passage).processText().trim());
+			const temp = document.createDocumentFragment();
+			new Wikifier(temp, Story.get(passage).processText().trim());
 
-		if (temp.hasChildNodes()) {
-			let li = null;
+			if (temp.hasChildNodes()) {
+				let li = null;
 
-			while (temp.hasChildNodes()) {
-				const node = temp.firstChild;
+				while (temp.hasChildNodes()) {
+					const node = temp.firstChild;
 
-				// Non-<a>-element nodes.
-				if (node.nodeType !== Node.ELEMENT_NODE || node.nodeName.toUpperCase() !== 'A') {
-					temp.removeChild(node);
+					// Non-<a>-element nodes.
+					if (node.nodeType !== Node.ELEMENT_NODE || node.nodeName.toUpperCase() !== 'A') {
+						temp.removeChild(node);
 
-					if (li !== null) {
-						// Forget the current list item.
-						li = null;
+						if (li !== null) {
+							// Forget the current list item.
+							li = null;
+						}
 					}
-				}
 
-				// <a>-element nodes.
-				else {
-					if (li === null) {
-						// Create a new list item.
-						li = document.createElement('li');
-						list.appendChild(li);
+					// <a>-element nodes.
+					else {
+						if (li === null) {
+							// Create a new list item.
+							li = document.createElement('li');
+							list.appendChild(li);
+						}
+						li.appendChild(node);
 					}
-					li.appendChild(node);
 				}
 			}
 		}
-
-		// Restore `Config.debug` to its original value.
-		Config.debug = debugState;
+		finally {
+			// Restore `Config.debug` to its original value.
+			Config.debug = debugState;
+		}
 
 		return list;
 	}
@@ -876,6 +887,8 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 		*/
 		init             : { value : uiInit },
 		start            : { value : uiStart },
+		stow             : { value : uiStow },
+		unstow           : { value : uiUnstow },
 		setStoryElements : { value : uiSetStoryElements },
 		hideOutlines     : { value : uiHideOutlines },
 		showOutlines     : { value : uiShowOutlines },

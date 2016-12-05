@@ -251,10 +251,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 				purging them as soon as we know that they're no longer needed is not a bad idea.
 			*/
 			// Stop and remove an in-progress fade.
-			if (this._faderId !== null) {
-				clearInterval(this._faderId);
-				this._faderId = null;
-			}
+			this.fadeStop();
 
 			// Stop playback.
 			this.stop();
@@ -420,10 +417,6 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			return !(this.audio.ended || this.audio.paused || !this.hasSomeData());
 		}
 
-		isEnded() {
-			return this.audio.ended;
-		}
-
 		isPaused() {
 			/*
 				If the selected audio resource is a stream, `currentTime` may return a non-zero
@@ -437,6 +430,14 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			return this.audio.paused
 				&& (this.audio.duration === Infinity || this.audio.currentTime > 0)
 				&& !this.audio.ended;
+		}
+
+		isEnded() {
+			return this.audio.ended;
+		}
+
+		isFading() {
+			return this._faderId !== null;
 		}
 
 		isMuted() {
@@ -476,10 +477,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		fadeWithDuration(fadeDuration, toVol, fromVol) {
-			if (this._faderId !== null) {
-				clearInterval(this._faderId);
-				this._faderId = null;
-			}
+			this.fadeStop();
 
 			const
 				from = Math.clamp(fromVol == null ? this.volume : fromVol, 0, 1), // lazy equality for null
@@ -513,15 +511,28 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 						max = from;
 					}
 
+					let duration = Number(fadeDuration);
+
+					if (duration < 1) {
+						duration = 1;
+					}
+					// else if (!this.isLooped() && duration > this.remaining) {
+					// 	duration = this.remaining;
+					// }
+
 					const
-						duration = Math.clamp(fadeDuration, 1, this.remaining),
 						interval = 25, // in milliseconds
 						delta    = (to - from) / (duration / (interval / 1000));
 
 					this._faderId = setInterval(() => {
 						if (!this.isPlaying()) {
-							clearInterval(this._faderId);
-							this._faderId = null;
+							/*
+								While it may seem like a good idea to also set the track volume
+								to the `to` value here, do not do so.  As we cannot know why the
+								track is no longer playing, nor if the volume has been modified
+								in the interim, doing so now may clobber an end-user set volume.
+							*/
+							this.fadeStop();
 							return;
 						}
 
@@ -532,8 +543,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 						}
 
 						if (this.volume === to) {
-							clearInterval(this._faderId);
-							this._faderId = null;
+							this.fadeStop();
 							this._trigger('aw:fade');
 						}
 					}, interval);
@@ -552,6 +562,13 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		fadeOut() {
 			this.fade(0);
+		}
+
+		fadeStop() {
+			if (this._faderId !== null) {
+				clearInterval(this._faderId);
+				this._faderId = null;
+			}
 		}
 
 		on(eventNames, listener) {
