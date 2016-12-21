@@ -459,10 +459,6 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		play() {
-			if (!this.hasData()) {
-				this.load();
-			}
-
 			this.audio.play();
 		}
 
