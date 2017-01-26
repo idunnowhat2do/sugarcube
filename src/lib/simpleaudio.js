@@ -222,6 +222,11 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 				to the master volume, mute, and rate, as well as a master stop command.
 			*/
 			SimpleAudio.subscribe(this, mesg => {
+				if (!this.audio) {
+					SimpleAudio.unsubscribe(this);
+					return;
+				}
+
 				switch (mesg) {
 				case 'mute':   this._updateAudioMute();   break;
 				case 'rate':   this._updateAudioRate();   break;
@@ -250,6 +255,9 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 				data buffers for the selected audio source, which may be quite large, manually
 				purging them as soon as we know that they're no longer needed is not a bad idea.
 			*/
+			// Unsubscribe from command messages.
+			SimpleAudio.unsubscribe(this);
+
 			// Stop and remove an in-progress fade.
 			this.fadeStop();
 
