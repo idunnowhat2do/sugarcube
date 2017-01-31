@@ -315,10 +315,11 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 					/*
 						All stored values are serialized and an empty string serializes to a non-empty
 						string.  Therefore, receiving an empty string here signifies a deleted value,
-						not a serialized empty string, so we should yield `null` for that case.
+						not a serialized empty string, so we should omit the pair for that case.
 					*/
-					// cookieObj[cookieKey] = value !== '' ? value : null;
-					cookieObj[cookieKey] = value || null;
+					if (value !== '') {
+						cookieObj[cookieKey.replace(this._prefixRe, '')] = value;
+					}
 				}
 			}
 
