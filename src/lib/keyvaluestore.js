@@ -172,8 +172,15 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 	 ******************************************************************************************************************/
 	class _CookieDriver {
 		constructor(persist, storageId) {
-			const
-				prefix = `${storageId}.`;
+			/* legacy */
+			// Attempt to update the cookie stores, if necessary, but only once per session.
+			if ('cookie' in document && _CookieDriver._updateCookieStores) {
+				_CookieDriver._updateCookieStores(storageId);
+				_CookieDriver._updateCookieStores = null;
+			}
+			/* /legacy */
+
+			const prefix = `${storageId}${persist ? '!' : '*'}.`;
 
 			Object.defineProperties(this, {
 				_ok : {
@@ -208,11 +215,34 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		keys() {
-			if (!this._ok) {
+			if (!this._ok || document.cookie === '') {
 				return [];
 			}
 
-			return Object.keys(this._getAllCookies());
+			const
+				cookies = document.cookie.split(/;\s*/),
+				keys    = [];
+
+			for (let i = 0; i < cookies.length; ++i) {
+				const
+					kvPair = cookies[i].split('='),
+					key    = decodeURIComponent(kvPair[0]);
+
+				if (this._prefixRe.test(key)) {
+					/*
+						All stored values are serialized and an empty string serializes to a non-empty
+						string.  Therefore, receiving an empty string here signifies a deleted value,
+						not a serialized empty string, so we should omit such pairs.
+					*/
+					const value = decodeURIComponent(kvPair[1]);
+
+					if (value !== '') {
+						keys.push(key.replace(this._prefixRe, ''));
+					}
+				}
+			}
+
+			return keys;
 		}
 
 		has(key) {
@@ -220,7 +250,7 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 				return false;
 			}
 
-			return this._getCookie(this._prefix + key) !== null;
+			return _CookieDriver._getCookie(this._prefix + key) !== null;
 		}
 
 		get(key) {
@@ -228,7 +258,7 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 				return null;
 			}
 
-			const value = this._getCookie(this._prefix + key);
+			const value = _CookieDriver._getCookie(this._prefix + key);
 
 			if (value === null) {
 				return null;
@@ -243,7 +273,7 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 
 			try {
-				this._setCookie(
+				_CookieDriver._setCookie(
 					this._prefix + key,
 					_CookieDriver._serialize(value),
 
@@ -273,7 +303,7 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 
 			try {
-				this._setCookie(
+				_CookieDriver._setCookie(
 					this._prefix + key,
 
 					// Use `undefined` as the value.
@@ -295,39 +325,8 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 			return true;
 		}
 
-		_getAllCookies() {
-			if (!this._ok || document.cookie === '') {
-				return {};
-			}
-
-			const
-				cookies   = document.cookie.split(/;\s*/),
-				cookieObj = {};
-
-			for (let i = 0; i < cookies.length; ++i) {
-				const
-					kvPair    = cookies[i].split('='),
-					cookieKey = decodeURIComponent(kvPair[0]);
-
-				if (this._prefixRe.test(cookieKey)) {
-					const value = decodeURIComponent(kvPair[1]);
-
-					/*
-						All stored values are serialized and an empty string serializes to a non-empty
-						string.  Therefore, receiving an empty string here signifies a deleted value,
-						not a serialized empty string, so we should omit the pair for that case.
-					*/
-					if (value !== '') {
-						cookieObj[cookieKey.replace(this._prefixRe, '')] = value;
-					}
-				}
-			}
-
-			return cookieObj;
-		}
-
-		_getCookie(prefixedKey) {
-			if (!prefixedKey || !this._ok || document.cookie === '') {
+		static _getCookie(prefixedKey) {
+			if (!prefixedKey || document.cookie === '') {
 				return null;
 			}
 
@@ -335,16 +334,16 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			for (let i = 0; i < cookies.length; ++i) {
 				const
-					kvPair    = cookies[i].split('='),
-					cookieKey = decodeURIComponent(kvPair[0]);
+					kvPair = cookies[i].split('='),
+					key    = decodeURIComponent(kvPair[0]);
 
-				if (prefixedKey === cookieKey) {
+				if (prefixedKey === key) {
 					const value = decodeURIComponent(kvPair[1]);
 
 					/*
 						All stored values are serialized and an empty string serializes to a non-empty
 						string.  Therefore, receiving an empty string here signifies a deleted value,
-						not a serialized empty string, so we should yield `null` for that case.
+						not a serialized empty string, so we should yield `null` for such pairs.
 					*/
 					// return value !== '' ? value : null;
 					return value || null;
@@ -354,8 +353,8 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 			return null;
 		}
 
-		_setCookie(prefixedKey, value, expiry) {
-			if (!prefixedKey || !this._ok) {
+		static _setCookie(prefixedKey, value, expiry) {
+			if (!prefixedKey) {
 				return;
 			}
 
@@ -380,6 +379,56 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 		static _deserialize(str) {
 			return JSON.parse(LZString.decompressFromBase64(str));
 		}
+
+		/* legacy */
+		// Updates old non-segmented cookie stores into segmented stores.
+		static _updateCookieStores(storageId) {
+			if (document.cookie === '') {
+				return;
+			}
+
+			const
+				oldPrefix     = `${storageId}.`,
+				oldPrefixRe   = new RegExp(`^${RegExp.escape(oldPrefix)}`),
+				persistPrefix = `${storageId}!.`,
+				sessionPrefix = `${storageId}*.`,
+				sessionTestRe = /\.(?:state|rcWarn)$/,
+				cookies       = document.cookie.split(/;\s*/);
+
+			for (let i = 0; i < cookies.length; ++i) {
+				const
+					kvPair = cookies[i].split('='),
+					key    = decodeURIComponent(kvPair[0]);
+
+				if (oldPrefixRe.test(key)) {
+					/*
+						All stored values are serialized and an empty string serializes to a non-empty
+						string.  Therefore, receiving an empty string here signifies a deleted value,
+						not a serialized empty string, so we should skip processing such pairs.
+					*/
+					const value = decodeURIComponent(kvPair[1]);
+
+					if (value !== '') {
+						const persist = !sessionTestRe.test(key);
+
+						// Delete the old k/v pair.
+						_CookieDriver._setCookie(
+							key,
+							undefined,
+							'Thu, 01 Jan 1970 00:00:00 GMT'
+						);
+
+						// Set the new k/v pair.
+						_CookieDriver._setCookie(
+							key.replace(oldPrefixRe, () => persist ? persistPrefix : sessionPrefix),
+							value,
+							persist ? 'Tue, 19 Jan 2038 03:14:07 GMT' : undefined
+						);
+					}
+				}
+			}
+		}
+		/* /legacy */
 	}
 
 
