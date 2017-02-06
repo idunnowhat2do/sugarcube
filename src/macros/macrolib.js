@@ -2666,7 +2666,7 @@
 			);
 		},
 
-		registerTimeout($output, items, transition) {
+		registerTimeout($baseOutput, items, transition) {
 			const
 				turnId   = State.turns,
 				timers   = this.timers;
@@ -2703,6 +2703,8 @@
 				/*
 					4. Output.
 				*/
+				let $output = $baseOutput;
+
 				// Custom debug view setup for `<<next>>`.
 				if (Config.debug && curItem.name === 'next') {
 					$output = jQuery((new DebugView( // eslint-disable-line no-param-reassign
@@ -2733,9 +2735,9 @@
 			// Setup a single-use `prehistory` task to remove pending timers.
 			if (!prehistory.hasOwnProperty('#timed-timers-cleanup')) {
 				prehistory['#timed-timers-cleanup'] = task => {
+					delete prehistory[task]; // single-use task
 					timers.forEach(timerId => clearTimeout(timerId)); // eslint-disable-line no-shadow
 					timers.clear();
-					delete prehistory[task]; // single-use task
 				};
 			}
 		}
@@ -2778,10 +2780,10 @@
 			);
 		},
 
-		registerInterval($output, content, delay, transition) {
+		registerInterval($baseOutput, content, delay, transition) {
 			const
-				turnId  = State.turns,
-				timers  = this.timers;
+				turnId = State.turns,
+				timers = this.timers;
 			let
 				timerId = null;
 
@@ -2813,6 +2815,8 @@
 					const frag = document.createDocumentFragment();
 					new Wikifier(frag, content);
 
+					let $output = $baseOutput;
+
 					if (transition) {
 						$output = jQuery(document.createElement('span')) // eslint-disable-line no-param-reassign
 							.addClass('macro-repeat-insert macro-repeat-in')
@@ -2842,9 +2846,9 @@
 			// Setup a single-use `prehistory` task to remove pending timers.
 			if (!prehistory.hasOwnProperty('#repeat-timers-cleanup')) {
 				prehistory['#repeat-timers-cleanup'] = task => {
+					delete prehistory[task]; // single-use task
 					timers.forEach(timerId => clearInterval(timerId));
 					timers.clear();
-					delete prehistory[task]; // single-use task
 				};
 			}
 		}

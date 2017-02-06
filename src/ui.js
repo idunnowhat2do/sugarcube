@@ -545,7 +545,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 					);
 				}
 				else {
-					// Add the load button.
+					// Add the disabled load button.
 					$tdLoad.append(
 						createButton('load', null, L10n.get('savesLabelLoad'), 'auto')
 					);
@@ -556,7 +556,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 						.appendTo($tdDesc);
 					$tdDesc.addClass('empty');
 
-					// Add the delete button.
+					// Add the disabled delete button.
 					$tdDele.append(
 						createButton('delete', null, L10n.get('savesLabelDelete'), 'auto')
 					);
@@ -611,7 +611,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 					);
 				}
 				else {
-					// Add the load button.
+					// Add the save button.
 					$tdLoad.append(
 						createButton('save', 'ui-close', L10n.get('savesLabelSave'), i, Save.slots.save)
 					);
@@ -622,7 +622,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 						.appendTo($tdDesc);
 					$tdDesc.addClass('empty');
 
-					// Add the delete button.
+					// Add the disabled delete button.
 					$tdDele.append(
 						createButton('delete', null, L10n.get('savesLabelDelete'), i)
 					);
