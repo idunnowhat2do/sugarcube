@@ -76,6 +76,39 @@ function safeActiveElement() {
 		}
 	}
 
+	/*
+		Generates a pad string based upon the given string and length.
+	*/
+	function _createPadString(length, padding) {
+		const targetLength = Number.parseInt(length, 10) || 0;
+
+		if (targetLength < 1) {
+			return '';
+		}
+
+		let padString = typeof padding === 'undefined' ? '' : String(padding);
+
+		if (padString === '') {
+			padString = ' ';
+		}
+
+		while (padString.length < targetLength) {
+			const
+				curPadLength    = padString.length,
+				remainingLength = targetLength - curPadLength;
+
+			padString += curPadLength > remainingLength
+				? padString.slice(0, remainingLength)
+				: padString;
+		}
+
+		if (padString.length > targetLength) {
+			padString = padString.slice(0, targetLength);
+		}
+
+		return padString;
+	}
+
 
 	/*******************************************************************************************************************
 	 * JavaScript Polyfills.
@@ -119,6 +152,66 @@ function safeActiveElement() {
 				}
 
 				return false;
+			}
+		});
+	}
+
+	/*
+		[ES2017] Returns a string based on concatenating the given padding, repeated as necessary,
+		to the start of the string so that the given length is reached.
+
+		NOTE: This pads based upon Unicode code units, rather than code points.
+	*/
+	if (!String.prototype.padStart) {
+		Object.defineProperty(String.prototype, 'padStart', {
+			configurable : true,
+			writable     : true,
+
+			value(length, padding) {
+				if (this == null) { // lazy equality for null
+					throw new TypeError('String.prototype.padStart called on null or undefined');
+				}
+
+				const
+					baseString   = String(this),
+					baseLength   = baseString.length,
+					targetLength = Number.parseInt(length, 10);
+
+				if (targetLength <= baseLength) {
+					return baseString;
+				}
+
+				return _createPadString(targetLength - baseLength, padding) + baseString;
+			}
+		});
+	}
+
+	/*
+		[ES2017] Returns a string based on concatenating the given padding, repeated as necessary,
+		to the end of the string so that the given length is reached.
+
+		NOTE: This pads based upon Unicode code units, rather than code points.
+	*/
+	if (!String.prototype.padEnd) {
+		Object.defineProperty(String.prototype, 'padEnd', {
+			configurable : true,
+			writable     : true,
+
+			value(length, padding) {
+				if (this == null) { // lazy equality for null
+					throw new TypeError('String.prototype.padEnd called on null or undefined');
+				}
+
+				const
+					baseString   = String(this),
+					baseLength   = baseString.length,
+					targetLength = Number.parseInt(length, 10);
+
+				if (targetLength <= baseLength) {
+					return baseString;
+				}
+
+				return baseString + _createPadString(targetLength - baseLength, padding);
 			}
 		});
 	}
