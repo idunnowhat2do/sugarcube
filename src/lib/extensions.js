@@ -89,23 +89,38 @@ function safeActiveElement() {
 		});
 	}
 
+	const
+		// Starting whitespace regular expressions.
+		_startingSpaceCharsRe = /^[\s\u00A0\uFEFF][\s\u00A0\uFEFF]*/, // include additional sequences for older browsers
+
+		// Ending whitespace regular expressions.
+		_endingSpaceCharsRe = /[\s\u00A0\uFEFF]*[\s\u00A0\uFEFF]$/; // include additional sequences for older browsers
+
 	/*
-		[ES7/Proposed] Returns a string with all whitespace removed from the start/left-side of the string.
+		Trims whitespace from either the start or end of the given string.
 	*/
-	if (!String.prototype.trimLeft) {
-		Object.defineProperty(String.prototype, 'trimLeft', {
-			configurable : true,
-			writable     : true,
+	function _trimFrom(str, where) {
+		const val = String(str);
 
-			value() {
-				if (this == null) { // lazy equality for null
-					throw new TypeError('String.prototype.trimLeft called on null or undefined');
-				}
+		switch (where) {
+		case 'start':
+			return val && _startingSpaceCharsRe.test(val)
+				? val.replace(_startingSpaceCharsRe, '')
+				: val;
 
-				return this.replace(/^[\s\uFEFF\u00A0]+/, ''); // include UTF BOM and NBSP
-			}
-		});
+		case 'end':
+			return val && _endingSpaceCharsRe.test(val)
+				? val.replace(_endingSpaceCharsRe, '')
+				: val;
+
+		default:
+			throw new Error(`_trimFrom called with incorrect where parameter value: "${where}"`);
+		}
 	}
+
+	/*
+		[ES Proposal] Returns a string with all whitespace removed from the start of the string.
+	*/
 	if (!String.prototype.trimStart) {
 		Object.defineProperty(String.prototype, 'trimStart', {
 			configurable : true,
@@ -116,28 +131,28 @@ function safeActiveElement() {
 					throw new TypeError('String.prototype.trimStart called on null or undefined');
 				}
 
-				return this.trimLeft();
+				return _trimFrom(this, 'start');
 			}
 		});
 	}
-
-	/*
-		[ES7/Proposed] Returns a string with all whitespace removed from the end/right-side of the string.
-	*/
-	if (!String.prototype.trimRight) {
-		Object.defineProperty(String.prototype, 'trimRight', {
+	if (!String.prototype.trimLeft) {
+		Object.defineProperty(String.prototype, 'trimLeft', {
 			configurable : true,
 			writable     : true,
 
 			value() {
 				if (this == null) { // lazy equality for null
-					throw new TypeError('String.prototype.trimRight called on null or undefined');
+					throw new TypeError('String.prototype.trimLeft called on null or undefined');
 				}
 
-				return this.replace(/[\s\uFEFF\u00A0]+$/, ''); // include UTF BOM and NBSP
+				return _trimFrom(this, 'start');
 			}
 		});
 	}
+
+	/*
+		[ES Proposal] Returns a string with all whitespace removed from the end of the string.
+	*/
 	if (!String.prototype.trimEnd) {
 		Object.defineProperty(String.prototype, 'trimEnd', {
 			configurable : true,
@@ -148,7 +163,21 @@ function safeActiveElement() {
 					throw new TypeError('String.prototype.trimEnd called on null or undefined');
 				}
 
-				return this.trimRight();
+				return _trimFrom(this, 'end');
+			}
+		});
+	}
+	if (!String.prototype.trimRight) {
+		Object.defineProperty(String.prototype, 'trimRight', {
+			configurable : true,
+			writable     : true,
+
+			value() {
+				if (this == null) { // lazy equality for null
+					throw new TypeError('String.prototype.trimRight called on null or undefined');
+				}
+
+				return _trimFrom(this, 'end');
 			}
 		});
 	}
