@@ -81,7 +81,7 @@ function safeActiveElement() {
 	 * JavaScript Polyfills.
 	 ******************************************************************************************************************/
 	/*
-		[ES7] Returns whether the given element was found within the array.
+		[ES2016] Returns whether the given element was found within the array.
 	*/
 	if (!Array.prototype.includes) {
 		Object.defineProperty(Array.prototype, 'includes', {
