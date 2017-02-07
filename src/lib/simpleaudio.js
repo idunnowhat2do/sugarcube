@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global Has, Util, clone */
+/* global Browser, Has, Util, clone */
 
 var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
@@ -140,6 +140,23 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			// 	audio.appendChild(sourceElems);
 			// }
 
+			// If no valid source elements exist, calls to `<HTMLMediaElement>.load()` in
+			// various browsers will block, so we provide workarounds.
+			if (!audio.hasChildNodes()) {
+				// For IE.
+				if (Browser.isIE) {
+					audio.src = undefined;
+				}
+				// All other browsers.
+				else {
+					const errorSource = document.createElement('source');
+					// We cannot use the empty string or Edge will block.
+					errorSource.src  = undefined;
+					errorSource.type = undefined;
+					audio.appendChild(errorSource);
+				}
+			}
+
 			this._finalize(audio, usedSources, clone(sourceList));
 		}
 
@@ -207,15 +224,27 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 				*/
 				.on('loadstart', () => this._error = false)
 				/*
-					Upon receiving an `error` event on the final source element (if any), set
-					`_error` to `true` and trigger an `error` event on the audio element—the
-					latter being necessary because the source `error` event does not bubble.
+					Upon receiving an `error` event on the audio element, set `_error` to
+					`true`.
+
+					Caveats by browser:
+						Edge violates the specification by triggering `error` events from source
+						elements on their parent media element, rather than the source element.
+						To enable error handling in all browsers, we set the error handler on the
+						audio element and have the final source element forward its `error` event.
+
+						IE does not trigger, at least some, `error` events from source elements at
+						all, not on the source element or its parent media element.  AFAIK, nothing
+						can be done about this lossage.
+				*/
+				.on('error', () => this._error = true)
+				/*
+					Upon receiving an `error` event on the final source element (if any), trigger
+					an `error` event on the audio element—that being necessary because the source
+					`error` event does not bubble.
 				*/
 				.find('source:last-of-type')
-					.on('error', () => {
-						this._error = true;
-						this._trigger('error');
-					});
+					.on('error', () => this._trigger('error'));
 
 			/*
 				Subscribe to `SimpleAudio` for command messages.  Currently, for signaling changes
