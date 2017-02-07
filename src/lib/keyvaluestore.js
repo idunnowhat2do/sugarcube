@@ -260,11 +260,7 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			const value = _CookieDriver._getCookie(this._prefix + key);
 
-			if (value === null) {
-				return null;
-			}
-
-			return _CookieDriver._deserialize(value);
+			return value === null ? null : _CookieDriver._deserialize(value);
 		}
 
 		set(key, value) {
@@ -282,7 +278,7 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 				);
 
 				if (!this.has(key)) {
-					throw new Error('unknown validation error');
+					throw new Error('unknown validation error during set');
 				}
 			}
 			catch (ex) {
@@ -314,7 +310,7 @@ var KeyValueStore = (() => { // eslint-disable-line no-unused-vars, no-var
 				);
 
 				if (this.has(key)) {
-					throw new Error('unknown validation error');
+					throw new Error('unknown validation error during delete');
 				}
 			}
 			catch (ex) {
