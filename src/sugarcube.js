@@ -7,7 +7,7 @@
  *
  **********************************************************************************************************************/
 /*
-	global Alert, Browser, Config, Dialog, DebugView, Engine, Has, KeyValueStore, L10n, Macro, Passage, Save,
+	global Alert, Browser, Config, Dialog, DebugView, Engine, Has, SimpleStore, L10n, Macro, Passage, Save,
 	       Scripting, Setting, SimpleAudio, State, Story, UI, Util, Wikifier
 */
 /* eslint-disable no-var */
@@ -132,9 +132,9 @@ jQuery(() => {
 		Story.load();
 
 		// Instantiate the storage and session objects.
-		// NOTE: `KeyValueStore()` params: driverType, persist, storageId
-		storage = new KeyValueStore('webStorage', true, Story.domId);
-		session = new KeyValueStore('webStorage', false, Story.domId);
+		// NOTE: `SimpleStore.create(storageId, persistent)`
+		storage = SimpleStore.create(Story.domId, true);
+		session = SimpleStore.create(Story.domId, false);
 
 		// Initialize the user interface (must be done before story initialization, specifically before scripts).
 		Dialog.init();
