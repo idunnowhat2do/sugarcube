@@ -96,7 +96,7 @@ SimpleStore.adapters.push((() => {
 		has(key) {
 			if (DEBUG) { console.log(`[<SimpleStore:${this.name}>.has(key: "${key}") : Boolean]`); }
 
-			if (!key) {
+			if (typeof key !== 'string' || !key) {
 				return false;
 			}
 
@@ -106,7 +106,7 @@ SimpleStore.adapters.push((() => {
 		get(key) {
 			if (DEBUG) { console.log(`[<SimpleStore:${this.name}>.get(key: "${key}") : Any]`); }
 
-			if (!key) {
+			if (typeof key !== 'string' || !key) {
 				return null;
 			}
 
@@ -118,7 +118,7 @@ SimpleStore.adapters.push((() => {
 		set(key, value) {
 			if (DEBUG) { console.log(`[<SimpleStore:${this.name}>.set(key: "${key}", value: \u2026) : Boolean]`); }
 
-			if (!key) {
+			if (typeof key !== 'string' || !key) {
 				return false;
 			}
 
@@ -150,7 +150,7 @@ SimpleStore.adapters.push((() => {
 				Attempting to delete a cookie implies setting it, so we test for its existence
 				beforehand, to avoid creating it in the event that it does not already exist.
 			*/
-			if (!key || !this.has(key)) {
+			if (typeof key !== 'string' || !key || !this.has(key)) {
 				return false;
 			}
 

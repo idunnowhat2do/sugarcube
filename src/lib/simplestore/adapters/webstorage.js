@@ -104,7 +104,7 @@ SimpleStore.adapters.push((() => {
 		has(key) {
 			if (DEBUG) { console.log(`[<SimpleStore:${this.name}>.has(key: "${key}") : Boolean]`); }
 
-			if (!key) {
+			if (typeof key !== 'string' || !key) {
 				return false;
 			}
 
@@ -117,7 +117,7 @@ SimpleStore.adapters.push((() => {
 		get(key) {
 			if (DEBUG) { console.log(`[<SimpleStore:${this.name}>.get(key: "${key}") : Any]`); }
 
-			if (!key) {
+			if (typeof key !== 'string' || !key) {
 				return null;
 			}
 
@@ -129,7 +129,7 @@ SimpleStore.adapters.push((() => {
 		set(key, value) {
 			if (DEBUG) { console.log(`[<SimpleStore:${this.name}>.set(key: "${key}", value: \u2026) : Boolean]`); }
 
-			if (!key) {
+			if (typeof key !== 'string' || !key) {
 				return false;
 			}
 
@@ -163,7 +163,7 @@ SimpleStore.adapters.push((() => {
 		delete(key) {
 			if (DEBUG) { console.log(`[<SimpleStore:${this.name}>.delete(key: "${key}") : Boolean]`); }
 
-			if (!key) {
+			if (typeof key !== 'string' || !key) {
 				return false;
 			}
 
