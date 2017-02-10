@@ -140,8 +140,9 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			// 	audio.appendChild(sourceElems);
 			// }
 
-			// If no valid source elements exist, calls to `<HTMLMediaElement>.load()` in
-			// various browsers will block, so we provide workarounds.
+			// If no valid source elements exist, calls to `<HTMLAudioElement>.load()` in
+			// various browsers will fail to generate an `error` event, so we provide
+			// dummy sources as a workaround.
 			if (!audio.hasChildNodes()) {
 				// For IE.
 				if (Browser.isIE) {
