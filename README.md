@@ -32,7 +32,7 @@ SugarCube uses Node.js as the core of its build system, so the first thing you n
 
 - [Node.js website: `http://nodejs.org/`](http://nodejs.org/ "http://nodejs.org/")
 
-After downloading and installing a recent version of Node.js (≥ `v6.x`), change to the root of the `sugarcube` project directory.  You'll now need to download and install dependencies required by the build script, `build.js`, which you do by running the following command:
+After downloading and installing a recent version of Node.js (≥ `v6`), change to the root of the `sugarcube` project directory.  You'll now need to download and install dependencies required by the build script, `build.js`, which you do by running the following command:
 
 >     npm install
 
@@ -40,11 +40,11 @@ Dependencies will be installed to the root of the `sugarcube` project directory,
 
 >     node build.js
 
-**n.b.** If you're running this from a UNIX-style shell, simply running `build.js` should also work as it's shebanged.
+If you're running this from a UNIX-style shell, simply running `build.js` should also work as it's shebanged.
 
 If there were no errors, the story format, in both Twine 1 and Twine 2 flavors, will be output to the `dist` directory.  Congratulations!
 
-**n.b.** SugarCube's dependencies are occasionally updated, so if you do get errors when attempting to build, then you'll probably need to update your cached dependencies.  You may do this via the `npm update` command or, in extreme cases, by deleting the local `node_modules` directory and rerunning `npm install`.
+**NOTE:** SugarCube's development dependencies are occasionally updated (last updated on: Feb 12, 2017).  If you receive errors when attempting to build, then you probably need to update your cached dependencies.  You may do this via the `npm update` command or, in extreme cases, by deleting the local `node_modules` directory and rerunning `npm install`.
 
 ----
 
