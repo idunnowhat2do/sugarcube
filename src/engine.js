@@ -339,8 +339,10 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 							});
 						}
 						else {
-							setTimeout(() => $outgoing.remove(),
-								Math.max(minDomActionDelay, Config.passages.transitionOut));
+							setTimeout(
+								() => $outgoing.remove(),
+								Math.max(minDomActionDelay, Config.passages.transitionOut)
+							);
 						}
 					}
 					else {

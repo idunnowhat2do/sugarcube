@@ -501,7 +501,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 
 			const urlRegExp = new RegExp(`^${Patterns.url}`, 'gim');
-			return urlRegExp.test(link) || /[\/\.\?#]/.test(link);
+			return urlRegExp.test(link) || /[/.?#]/.test(link);
 		}
 	}
 
@@ -1015,8 +1015,11 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 									if (!payload) {
 										w.nextMatch = nextMatch; // we must reset `w.nextMatch` here, as `parseBody()` modifies it
-										return throwError(w.output, `cannot find a closing tag for macro <<${name}>>`,
-											`${w.source.slice(matchStart, w.nextMatch)}\u2026`);
+										return throwError(
+											w.output,
+											`cannot find a closing tag for macro <<${name}>>`,
+											`${w.source.slice(matchStart, w.nextMatch)}\u2026`
+										);
 									}
 								}
 
@@ -1381,7 +1384,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 							}
 
 							// Property access on the settings or setup objects, so try to evaluate it.
-							else if (/^(?:settings|setup)[\.\[]/.test(arg)) {
+							else if (/^(?:settings|setup)[.[]/.test(arg)) {
 								try {
 									arg = Scripting.evalTwineScript(arg);
 								}
@@ -1749,7 +1752,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				*/
 				name     : 'nakedVariable',
 				profiles : ['core'],
-				match    : `${Patterns.variable}(?:(?:\\.${Patterns.identifier})|(?:\\[\\d+\\])|(?:\\["(?:\\\\.|[^"\\\\])+"\\])|(?:\\[\'(?:\\\\.|[^\'\\\\])+\'\\])|(?:\\[${Patterns.variable}\\]))*`,
+				match    : `${Patterns.variable}(?:(?:\\.${Patterns.identifier})|(?:\\[\\d+\\])|(?:\\["(?:\\\\.|[^"\\\\])+"\\])|(?:\\['(?:\\\\.|[^'\\\\])+'\\])|(?:\\[${Patterns.variable}\\]))*`,
 
 				handler(w) {
 					const result = toStringOrDefault(Wikifier.getValue(w.matchText), null);

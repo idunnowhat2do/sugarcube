@@ -424,8 +424,6 @@ function safeActiveElement() {
 			else if (array.hasOwnProperty('length')) {
 				return [...array].random(lower, upper);
 			}
-
-			return;
 		}
 	});
 
@@ -560,8 +558,11 @@ function safeActiveElement() {
 				throw new TypeError('Array.prototype.flatten called on null or undefined');
 			}
 
-			return Array.prototype.reduce.call(this,
-				(prev, cur) => prev.concat(Array.isArray(cur) ? cur.flatten() : cur), []);
+			return Array.prototype.reduce.call(
+				this,
+				(prev, cur) => prev.concat(Array.isArray(cur) ? cur.flatten() : cur),
+				[]
+			);
 		}
 	});
 
@@ -581,23 +582,21 @@ function safeActiveElement() {
 				if (Array.isArray(arguments[0])) {
 					return Array.prototype.includesAll.apply(this, arguments[0]);
 				}
-				else {
-					return Array.prototype.includes.apply(this, arguments);
-				}
-			}
-			else {
-				for (let i = 0, iend = arguments.length; i < iend; ++i) {
-					if (
-						!Array.prototype.some.call(this, function (val) {
-							return val === this.val || val !== val && this.val !== this.val;
-						}, { val : arguments[i] })
-					) {
-						return false;
-					}
-				}
 
-				return true;
+				return Array.prototype.includes.apply(this, arguments);
 			}
+
+			for (let i = 0, iend = arguments.length; i < iend; ++i) {
+				if (
+					!Array.prototype.some.call(this, function (val) {
+						return val === this.val || val !== val && this.val !== this.val;
+					}, { val : arguments[i] })
+				) {
+					return false;
+				}
+			}
+
+			return true;
 		}
 	});
 
@@ -617,23 +616,21 @@ function safeActiveElement() {
 				if (Array.isArray(arguments[0])) {
 					return Array.prototype.includesAny.apply(this, arguments[0]);
 				}
-				else {
-					return Array.prototype.includes.apply(this, arguments);
-				}
-			}
-			else {
-				for (let i = 0, iend = arguments.length; i < iend; ++i) {
-					if (
-						Array.prototype.some.call(this, function (val) {
-							return val === this.val || val !== val && this.val !== this.val;
-						}, { val : arguments[i] })
-					) {
-						return true;
-					}
-				}
 
-				return false;
+				return Array.prototype.includes.apply(this, arguments);
 			}
+
+			for (let i = 0, iend = arguments.length; i < iend; ++i) {
+				if (
+					Array.prototype.some.call(this, function (val) {
+						return val === this.val || val !== val && this.val !== this.val;
+					}, { val : arguments[i] })
+				) {
+					return true;
+				}
+			}
+
+			return false;
 		}
 	});
 

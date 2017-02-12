@@ -137,7 +137,7 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 				return _twine1Unescape(this.element.textContent);
 			}
 			// For Twine 2
-			else {
+			else { // eslint-disable-line no-else-return
 				return this.element.textContent.replace(/\r/g, '');
 			}
 		}

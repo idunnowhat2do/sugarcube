@@ -220,22 +220,9 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 				winHeight = window.innerHeight ? window.innerHeight : document.body.clientHeight,
 				winBottom = winTop + winHeight;
 
-			if (posTop < winTop) {
-				return posTop;
-			}
-			else {
-				if (posBottom > winBottom) {
-					if (el.offsetHeight < winHeight) {
-						return posTop - (winHeight - el.offsetHeight) + 20;
-					}
-					else {
-						return posTop;
-					}
-				}
-				else {
-					return posTop;
-				}
-			}
+			return posTop >= winTop && posBottom > winBottom && el.offsetHeight < winHeight
+				? posTop - (winHeight - el.offsetHeight) + 20
+				: posTop;
 		}
 
 		intervalId = window.setInterval(tick, 25);

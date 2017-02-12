@@ -50,7 +50,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 
 			const
 				dataUrlRe   = /^data:\s*audio\/([^;,]+)\s*[;,]/i,
-				extRe       = /\.([^\.\/\\]+)$/,
+				extRe       = /\.([^./\\]+)$/,
 				getType     = AudioWrapper.getType,
 				usedSources = [],
 				// sourceElems = document.createDocumentFragment(),
@@ -681,9 +681,8 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 
 							return `${nameAndNS.replace(name, awEvents[name])}.AudioWrapperEvent`;
 						}
-						else {
-							return `${nameAndNS}.AudioWrapperEvent`;
-						}
+
+						return `${nameAndNS}.AudioWrapperEvent`;
 					})
 					.join(' ');
 

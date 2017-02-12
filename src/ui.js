@@ -659,10 +659,18 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 				.appendTo($dialogBody);
 
 			if (Has.fileAPI) {
-				$btnBar.append(createActionItem('export', 'ui-close', L10n.get('savesLabelExport'),
-					() => Save.export()));
-				$btnBar.append(createActionItem('import', null, L10n.get('savesLabelImport'),
-					() => $dialogBody.find('#saves-import-file').trigger('click')));
+				$btnBar.append(createActionItem(
+					'export',
+					'ui-close',
+					L10n.get('savesLabelExport'),
+					() => Save.export()
+				));
+				$btnBar.append(createActionItem(
+					'import',
+					null,
+					L10n.get('savesLabelImport'),
+					() => $dialogBody.find('#saves-import-file').trigger('click')
+				));
 
 				// Add the hidden `input[type=file]` element which will be triggered by the `#saves-import` button.
 				jQuery(document.createElement('input'))
@@ -689,8 +697,10 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 
 			if (savesOk) {
-				$btnBar.append(
-					createActionItem('clear', null, L10n.get('savesLabelClear'),
+				$btnBar.append(createActionItem(
+						'clear',
+						null,
+						L10n.get('savesLabelClear'),
 						Save.autosave.has() || !Save.slots.isEmpty()
 							? () => {
 								Save.clear();
@@ -698,16 +708,14 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 								Dialog.resize();
 							}
 							: null
-					)
-				);
+				));
 			}
 
 			return true;
 		}
-		else {
-			uiOpenAlert(L10n.get('savesIncapable'));
-			return false;
-		}
+
+		uiOpenAlert(L10n.get('savesIncapable'));
+		return false;
 	}
 
 	function uiBuildSettings() {
