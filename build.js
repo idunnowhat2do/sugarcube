@@ -4,7 +4,7 @@
 	  - Description : Node.js-hosted build script for SugarCube
 	  - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
 	  - Copyright   : Copyright © 2014–2017 Thomas Michael Edwards. All rights reserved.
-	  - Version     : 1.3.5, 2017-02-07
+	  - Version     : 1.3.6, 2017-02-12
 */
 /* eslint-env node, es6 */
 /* eslint-disable camelcase, object-shorthand, prefer-template, strict */
@@ -227,7 +227,7 @@ if (_opt.options.build) {
 				// Merge data into the output format.
 				output = Object.assign(output, {
 					description : output.description.replace(
-						/([\'\"\`])\{\{BUILD_VERSION_MAJOR\}\}\1/g,
+						/(['"`])\{\{BUILD_VERSION_MAJOR\}\}\1/g,
 						() => this.version.major
 					),
 					version : this.version.toString(),
@@ -297,15 +297,15 @@ function copyFile(srcFilename, destFilename) {
 	try {
 		buf = _fs.readFileSync(srcPath);
 	}
-	catch (e) {
-		die('cannot open file "' + srcPath + '" for reading (reason: ' + e.message + ')');
+	catch (ex) {
+		die('cannot open file "' + srcPath + '" for reading (reason: ' + ex.message + ')');
 	}
 
 	try {
 		_fs.writeFileSync(destPath, buf);
 	}
-	catch (e) {
-		die('cannot open file "' + destPath + '" for writing (reason: ' + e.message + ')');
+	catch (ex) {
+		die('cannot open file "' + destPath + '" for writing (reason: ' + ex.message + ')');
 	}
 
 	return true;
@@ -321,8 +321,8 @@ function readFileContents(filename) {
 		// line termination all over it
 		return _fs.readFileSync(filepath, { encoding : 'utf8' }).replace(/\r\n/g, '\n');
 	}
-	catch (e) {
-		die('cannot open file "' + filepath + '" for reading (reason: ' + e.message + ')');
+	catch (ex) {
+		die('cannot open file "' + filepath + '" for reading (reason: ' + ex.message + ')');
 	}
 }
 
@@ -332,8 +332,8 @@ function writeFileContents(filename, data) {
 	try {
 		_fs.writeFileSync(filepath, data, { encoding : 'utf8' });
 	}
-	catch (e) {
-		die('cannot open file "' + filepath + '" for writing (reason: ' + e.message + ')');
+	catch (ex) {
+		die('cannot open file "' + filepath + '" for writing (reason: ' + ex.message + ')');
 	}
 }
 
@@ -377,40 +377,39 @@ function compileJavaScript(filenameObj, options) {
 			'window.DEBUG=' + String(_opt.options.debug || false)
 		].join(';\n') + ';\n' + jsSource;
 	}
-	else {
-		try {
+
+	try {
+		const
+			uglifyjs = require('uglify-js'),
+			uglified = uglifyjs.minify(jsSource, {
+				fromString : true,
+				compress   : {
+					global_defs : {
+						TWINE1 : !!options.twine1,
+						DEBUG  : _opt.options.debug || false
+					},
+					screw_ie8 : true
+				},
+				mangle : {
+					screw_ie8 : true
+				},
+				output : {
+					screw_ie8 : true
+				}
+			});
+		return uglified.code;
+	}
+	catch (ex) {
+		let mesg = 'uglification error';
+
+		if (ex.line > 0) {
 			const
-				uglifyjs = require('uglify-js'),
-				uglified = uglifyjs.minify(jsSource, {
-					fromString : true,
-					compress   : {
-						global_defs : {
-							TWINE1 : !!options.twine1,
-							DEBUG  : _opt.options.debug || false
-						},
-						screw_ie8 : true
-					},
-					mangle : {
-						screw_ie8 : true
-					},
-					output : {
-						screw_ie8 : true
-					}
-				});
-			return uglified.code;
+				begin = ex.line > 4 ? ex.line - 4 : 0,
+				end   = ex.line + 3 < jsSource.length ? ex.line + 3 : jsSource.length;
+			mesg += ':\n >> ' + jsSource.split(/\n/).slice(begin, end).join('\n >> ');
 		}
-		catch (e) {
-			let mesg = 'uglification error';
 
-			if (e.line > 0) {
-				const
-					begin = e.line > 4 ? e.line - 4 : 0,
-					end   = e.line + 3 < jsSource.length ? e.line + 3 : jsSource.length;
-				mesg += ':\n >> ' + jsSource.split(/\n/).slice(begin, end).join('\n >> ');
-			}
-
-			die(mesg, e);
-		}
+		die(mesg, ex);
 	}
 }
 
@@ -435,7 +434,12 @@ function compileStyles(filenames) {
 		}
 
 		if (!_opt.options.unminified) {
-			css = new CleanCss({ advanced : false }).minify(css).styles;
+			css = new CleanCss({
+				level         : 1,    // [clean-css v4] `1` is the default, but let's be specific
+				compatibility : 'ie9' // [clean-css v4] 'ie10' is the default, so restore IE9 support
+			})
+				.minify(css)
+				.styles;
 		}
 
 		return '<style id="style-' + _path.basename(filename, '.css').toLowerCase().replace(/[^0-9a-z]+/g, '-')
@@ -453,21 +457,21 @@ function projectBuild(project) {
 	let output  = readFileContents(infile); // load the story format template
 
 	// Process the source replacement tokens. (First!)
-	output = output.replace(/([\'\"\`])\{\{BUILD_LIB_SOURCE\}\}\1/, () => project.libSource);
-	output = output.replace(/([\'\"\`])\{\{BUILD_APP_SOURCE\}\}\1/, () => project.appSource);
-	output = output.replace(/([\'\"\`])\{\{BUILD_CSS_SOURCE\}\}\1/, () => project.cssSource);
+	output = output.replace(/(['"`])\{\{BUILD_LIB_SOURCE\}\}\1/, () => project.libSource);
+	output = output.replace(/(['"`])\{\{BUILD_APP_SOURCE\}\}\1/, () => project.appSource);
+	output = output.replace(/(['"`])\{\{BUILD_CSS_SOURCE\}\}\1/, () => project.cssSource);
 
 	// Process the build replacement tokens.
 	const
 		prerelease = JSON.stringify(project.version.prerelease),
 		date       = JSON.stringify(project.version.date);
-	output = output.replace(/([\'\"\`])\{\{BUILD_VERSION_MAJOR\}\}\1/g, () => project.version.major);
-	output = output.replace(/([\'\"\`])\{\{BUILD_VERSION_MINOR\}\}\1/g, () => project.version.minor);
-	output = output.replace(/([\'\"\`])\{\{BUILD_VERSION_PATCH\}\}\1/g, () => project.version.patch);
-	output = output.replace(/([\'\"\`])\{\{BUILD_VERSION_PRERELEASE\}\}\1/g, () => prerelease);
-	output = output.replace(/([\'\"\`])\{\{BUILD_VERSION_BUILD\}\}\1/g, () => project.version.build);
-	output = output.replace(/([\'\"\`])\{\{BUILD_VERSION_DATE\}\}\1/g, () => date);
-	output = output.replace(/([\'\"\`])\{\{BUILD_VERSION_VERSION\}\}\1/g, () => project.version);
+	output = output.replace(/(['"`])\{\{BUILD_VERSION_MAJOR\}\}\1/g, () => project.version.major);
+	output = output.replace(/(['"`])\{\{BUILD_VERSION_MINOR\}\}\1/g, () => project.version.minor);
+	output = output.replace(/(['"`])\{\{BUILD_VERSION_PATCH\}\}\1/g, () => project.version.patch);
+	output = output.replace(/(['"`])\{\{BUILD_VERSION_PRERELEASE\}\}\1/g, () => prerelease);
+	output = output.replace(/(['"`])\{\{BUILD_VERSION_BUILD\}\}\1/g, () => project.version.build);
+	output = output.replace(/(['"`])\{\{BUILD_VERSION_DATE\}\}\1/g, () => date);
+	output = output.replace(/(['"`])\{\{BUILD_VERSION_VERSION\}\}\1/g, () => project.version);
 
 	// Post-process hook.
 	if (typeof project.postProcess === 'function') {
