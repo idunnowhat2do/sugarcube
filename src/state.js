@@ -25,7 +25,10 @@ var State = (() => { // eslint-disable-line no-unused-vars, no-var
 		_expired = [],
 
 		// (optional) Seedable PRNG object.
-		_prng = null;
+		_prng = null,
+
+		// Temporary variables object.
+		_tempVariables = {};
 
 
 	/*******************************************************************************************************************
@@ -571,6 +574,30 @@ var State = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
+	 * Temporary Variables Functions.
+	 ******************************************************************************************************************/
+	/**
+		Clear the temporary variables.
+	**/
+	function tempVariablesClear() {
+		if (DEBUG) { console.log('[State/tempVariablesReset()]'); }
+
+		_tempVariables = {};
+
+		/* legacy */
+		TempVariables = _tempVariables; // eslint-disable-line no-undef
+		/* /legacy */
+	}
+
+	/**
+		Returns the current temporary variables.
+	**/
+	function tempVariables() {
+		return _tempVariables;
+	}
+
+
+	/*******************************************************************************************************************
 	 * Module Exports.
 	 ******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
@@ -618,6 +645,12 @@ var State = (() => { // eslint-disable-line no-unused-vars, no-var
 		*/
 		initPRNG : { value : prngInit },
 		random   : { value : prngRandom },
+
+		/*
+			Temporary Variables Functions.
+		*/
+		clearTemporary : { value : tempVariablesClear },
+		temporary      : { get : tempVariables },
 
 		/*
 			Legacy Aliases.

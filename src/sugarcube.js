@@ -56,9 +56,6 @@ var
 	// Temporary state object.
 	TempState = {},
 
-	// Temporary _variables object.
-	TempVariables = {},
-
 	// Legacy macros object.
 	macros = {},
 
@@ -93,12 +90,13 @@ var
 	Legacy aliases.
 */
 var
-	browser = Browser,
-	config  = Config,
-	has     = Has,
-	History = State,
-	state   = State,
-	tale    = Story;
+	browser       = Browser,
+	config        = Config,
+	has           = Has,
+	History       = State,
+	state         = State,
+	tale          = Story,
+	TempVariables = State.temporary;
 /* eslint-enable no-unused-vars */
 
 /*
@@ -186,7 +184,6 @@ jQuery(() => {
 			SimpleAudio,
 			State,
 			Story,
-			TempVariables,
 			UI,
 			Util,
 			Wikifier,

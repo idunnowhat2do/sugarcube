@@ -7,8 +7,7 @@
  *
  **********************************************************************************************************************/
 /*
-	global Alert, Config, DebugView, LoadScreen, Save, State, Story, TempVariables:true, UI, Wikifier, postdisplay,
-	       predisplay, prehistory
+	global Alert, Config, DebugView, LoadScreen, Save, State, Story, UI, Wikifier, postdisplay, predisplay, prehistory
 */
 
 var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
@@ -237,11 +236,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 			Reset the temporary state and variables objects.
 		*/
 		TempState = {}; // eslint-disable-line no-undef
-		TempVariables = {};
-
-		// We must also update the `window.SugarCube` debugging references.
-		// window.SugarCube.TempState = TempState;
-		window.SugarCube.TempVariables = TempVariables;
+		State.clearTemporary();
 
 		/*
 			Debug view setup.

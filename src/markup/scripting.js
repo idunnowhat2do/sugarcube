@@ -525,7 +525,7 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 				// Story $variable sigil-prefix.
 				'$'     : 'State.variables.',
 				// Temporary _variable sigil-prefix.
-				'_'     : 'TempVariables.',
+				'_'     : 'State.temporary.',
 				// Assignment operators.
 				'to'    : '=',
 				// Equality operators.

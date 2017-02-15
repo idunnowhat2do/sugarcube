@@ -8,7 +8,7 @@
  **********************************************************************************************************************/
 /*
 	global Config, DebugView, Engine, Has, L10n, LoadScreen, Macro, Patterns, Scripting, SimpleAudio, State, Story,
-	       TempState, TempVariables, Util, Wikifier, postdisplay, prehistory, storage, toStringOrDefault
+	       TempState, Util, Wikifier, postdisplay, prehistory, storage, toStringOrDefault
 */
 
 (() => {
@@ -107,15 +107,15 @@
 			}
 
 			const re = new RegExp(
-				`(?:(State\\.variables)|(TempVariables))\\.(${Patterns.identifier})`,
+				`State\\.(variables|temporary)\\.(${Patterns.identifier})`,
 				'g'
 			);
 			let match;
 
 			while ((match = re.exec(this.args.full)) !== null) {
 				const
-					store = match[1] ? State.variables : TempVariables,
-					name  = match[3];
+					store = State[match[1]],
+					name  = match[2];
 
 				if (store.hasOwnProperty(name)) {
 					delete store[name];

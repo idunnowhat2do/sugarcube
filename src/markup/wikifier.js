@@ -43,8 +43,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global Config, DebugView, Engine, Macro, MacroContext, Patterns, Scripting, State, Story, TempState, TempVariables,
-	       Util, convertBreaks, toStringOrDefault, throwError
+	global Config, DebugView, Engine, Macro, MacroContext, Patterns, Scripting, State, Story, TempState, Util,
+	       convertBreaks, toStringOrDefault, throwError
 */
 /* eslint "no-param-reassign": [ 2, { "props" : false } ] */
 
@@ -368,7 +368,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 		static parseStoryVariable(varText) {
 			const
 				retVal = {
-					store : varText[0] === '$' ? State.variables : TempVariables,
+					store : varText[0] === '$' ? State.variables : State.temporary,
 					names : []
 				};
 			let
