@@ -227,6 +227,8 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 	function enginePlay(title, noHistory) {
 		if (DEBUG) { console.log(`[Engine/enginePlay(title: "${title}", noHistory: ${noHistory})]`); }
 
+		let passageTitle = title;
+
 		/*
 			Update the engine state.
 		*/
@@ -244,14 +246,28 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		let passageReadyOutput, passageDoneOutput;
 
 		/*
+			Execute the navigation override callback.
+		*/
+		if (typeof Config.navigation.override === 'function') {
+			try {
+				const overrideTitle = Config.navigation.override(passageTitle);
+
+				if (overrideTitle) {
+					passageTitle = overrideTitle;
+				}
+			}
+			catch (ex) { /* no-op */ }
+		}
+
+		/*
 			Retrieve the passage by the given title.
 
-			NOTE: The `title` parameter may be empty, a string, or a number (though using a
-			      number as reference to a numeric title should be discouraged), so after
-			      loading the passage, always refer to `passage.title` and never the `title`
-			      parameter.
+			NOTE: The values of the `title` parameter and `passageTitle` variable may be empty,
+			      strings, or numbers (though using a number as reference to a numeric title
+			      should be discouraged), so after loading the passage, always refer to
+			      `passage.title` and never to the others.
 		*/
-		const passage = Story.get(title);
+		const passage = Story.get(passageTitle);
 
 		/*
 			Execute the pre-history tasks.

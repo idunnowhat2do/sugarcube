@@ -42,6 +42,13 @@ var Config = (() => { // eslint-disable-line no-unused-vars, no-var
 		}),
 
 		/*
+			Navigation properties.
+		*/
+		navigation : Object.seal({
+			override : undefined
+		}),
+
+		/*
 			Passages properties.
 		*/
 		passages : Object.seal({
