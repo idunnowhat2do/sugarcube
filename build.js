@@ -4,7 +4,7 @@
 	  - Description : Node.js-hosted build script for SugarCube
 	  - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
 	  - Copyright   : Copyright © 2014–2017 Thomas Michael Edwards. All rights reserved.
-	  - Version     : 1.3.6, 2017-02-12
+	  - Version     : 1.3.7, 2017-02-15
 */
 /* eslint-env node, es6 */
 /* eslint-disable camelcase, object-shorthand, prefer-template, strict */
@@ -126,30 +126,27 @@ const CONFIG = {
 	the replacement strings (e.g. '$&' within the application source).
 */
 
-const
-	_fs   = require('fs'),
-	_path = require('path');
+const _fs   = require('fs');
+const _path = require('path');
 
-const
-	_indent = ' -> ',
-	_opt    = require('node-getopt').create([
-		['b', 'build=VERSION', 'Build only for Twine major version: 1 or 2; default: build for all.'],
-		['d', 'debug',         'Keep debugging code; gated by DEBUG symbol.'],
-		['u', 'unminified',    'Suppress minification stages.'],
-		['6', 'es6',           'Suppress JavaScript transpilation stages.'],
-		['h', 'help',          'Print this help, then exit.']
-	])
-		.bindHelp()     // bind option 'help' to default action
-		.parseSystem(); // parse command line
+const _indent = ' -> ';
+const _opt    = require('node-getopt').create([
+	['b', 'build=VERSION', 'Build only for Twine major version: 1 or 2; default: build for all.'],
+	['d', 'debug',         'Keep debugging code; gated by DEBUG symbol.'],
+	['u', 'unminified',    'Suppress minification stages.'],
+	['6', 'es6',           'Suppress JavaScript transpilation stages.'],
+	['h', 'help',          'Print this help, then exit.']
+])
+	.bindHelp()     // bind option 'help' to default action
+	.parseSystem(); // parse command line
 
 // uglify-js (v2) does not currently support ES6, so force `unminified` when `es6` is enabled.
 if (_opt.options.es6 && !_opt.options.unminified) {
 	_opt.options.unminified = true;
 }
 
-let
-	_buildForTwine1 = true,
-	_buildForTwine2 = true;
+let _buildForTwine1 = true;
+let _buildForTwine2 = true;
 
 // build selection
 if (_opt.options.build) {
@@ -288,11 +285,9 @@ function makePath(pathname) {
 }
 
 function copyFile(srcFilename, destFilename) {
-	const
-		srcPath  = _path.normalize(srcFilename),
-		destPath = _path.normalize(destFilename);
-	let
-		buf;
+	const srcPath  = _path.normalize(srcFilename);
+	const destPath = _path.normalize(destFilename);
+	let buf;
 
 	try {
 		buf = _fs.readFileSync(srcPath);
@@ -354,22 +349,21 @@ function assembleLibraries(filenames) {
 function compileJavaScript(filenameObj, options) {
 	log('compiling JavaScript...');
 
-	const
-		babelCore = require('babel-core'),
-		babelOpts = {
-			code     : true,
-			compact  : false,
-			presets  : ['es2015'],
-			filename : 'sugarcube.js'
-		};
+	const babelCore = require('babel-core');
+	const babelOpts = {
+		code     : true,
+		compact  : false,
+		presets  : ['es2015'],
+		filename : 'sugarcube.js'
+	};
 
 	// Join the files and transpile (ES6 → ES5) with Babel.
 	let	jsSource = concatFiles(filenameObj.main);
 	jsSource = readFileContents(filenameObj.wrap.intro)
-			+ '\n'
-			+ (_opt.options.es6 ? jsSource : babelCore.transform(jsSource, babelOpts).code)
-			+ '\n'
-			+ readFileContents(filenameObj.wrap.outro);
+		+ '\n'
+		+ (_opt.options.es6 ? jsSource : babelCore.transform(jsSource, babelOpts).code)
+		+ '\n'
+		+ readFileContents(filenameObj.wrap.outro);
 
 	if (_opt.options.unminified) {
 		return [
@@ -379,33 +373,31 @@ function compileJavaScript(filenameObj, options) {
 	}
 
 	try {
-		const
-			uglifyjs = require('uglify-js'),
-			uglified = uglifyjs.minify(jsSource, {
-				fromString : true,
-				compress   : {
-					global_defs : {
-						TWINE1 : !!options.twine1,
-						DEBUG  : _opt.options.debug || false
-					},
-					screw_ie8 : true
+		const uglifyjs = require('uglify-js');
+		const uglified = uglifyjs.minify(jsSource, {
+			fromString : true,
+			compress   : {
+				global_defs : {
+					TWINE1 : !!options.twine1,
+					DEBUG  : _opt.options.debug || false
 				},
-				mangle : {
-					screw_ie8 : true
-				},
-				output : {
-					screw_ie8 : true
-				}
-			});
+				screw_ie8 : true
+			},
+			mangle : {
+				screw_ie8 : true
+			},
+			output : {
+				screw_ie8 : true
+			}
+		});
 		return uglified.code;
 	}
 	catch (ex) {
 		let mesg = 'uglification error';
 
 		if (ex.line > 0) {
-			const
-				begin = ex.line > 4 ? ex.line - 4 : 0,
-				end   = ex.line + 3 < jsSource.length ? ex.line + 3 : jsSource.length;
+			const begin = ex.line > 4 ? ex.line - 4 : 0;
+			const end   = ex.line + 3 < jsSource.length ? ex.line + 3 : jsSource.length;
 			mesg += ':\n >> ' + jsSource.split(/\n/).slice(begin, end).join('\n >> ');
 		}
 
@@ -416,10 +408,9 @@ function compileJavaScript(filenameObj, options) {
 function compileStyles(filenames) {
 	log('compiling CSS...');
 
-	const
-		postcss         = require('postcss'),
-		CleanCss        = require('clean-css'),
-		normalizeRegExp = /normalize\.css$/;
+	const postcss         = require('postcss');
+	const CleanCss        = require('clean-css');
+	const normalizeRegExp = /normalize\.css$/;
 
 	return concatFiles(filenames, (contents, filename) => {
 		let css = contents;
@@ -448,9 +439,8 @@ function compileStyles(filenames) {
 }
 
 function projectBuild(project) {
-	const
-		infile  = _path.normalize(project.build.src),
-		outfile = _path.normalize(project.build.dest);
+	const infile  = _path.normalize(project.build.src);
+	const outfile = _path.normalize(project.build.dest);
 
 	log('building: "' + outfile + '"');
 
@@ -462,9 +452,8 @@ function projectBuild(project) {
 	output = output.replace(/(['"`])\{\{BUILD_CSS_SOURCE\}\}\1/, () => project.cssSource);
 
 	// Process the build replacement tokens.
-	const
-		prerelease = JSON.stringify(project.version.prerelease),
-		date       = JSON.stringify(project.version.date);
+	const prerelease = JSON.stringify(project.version.prerelease);
+	const date       = JSON.stringify(project.version.date);
 	output = output.replace(/(['"`])\{\{BUILD_VERSION_MAJOR\}\}\1/g, () => project.version.major);
 	output = output.replace(/(['"`])\{\{BUILD_VERSION_MINOR\}\}\1/g, () => project.version.minor);
 	output = output.replace(/(['"`])\{\{BUILD_VERSION_PATCH\}\}\1/g, () => project.version.patch);
@@ -485,9 +474,8 @@ function projectBuild(project) {
 
 function projectCopy(fileObjs) {
 	fileObjs.forEach(file => {
-		const
-			infile  = _path.normalize(file.src),
-			outfile = _path.normalize(file.dest);
+		const infile  = _path.normalize(file.src);
+		const outfile = _path.normalize(file.dest);
 
 		log('copying : "' + outfile + '"');
 
