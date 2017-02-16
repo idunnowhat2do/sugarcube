@@ -10,13 +10,11 @@
 var SimpleStore = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
-	const
-		// In-order list of database adapters.
-		_adapters = [];
+	// In-order list of database adapters.
+	const _adapters = [];
 
-	let
-		// The initialized adapter.
-		_initialized = null;
+	// The initialized adapter.
+	let _initialized = null;
 
 
 	/*******************************************************************************************************************

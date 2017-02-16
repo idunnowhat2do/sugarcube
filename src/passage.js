@@ -11,9 +11,8 @@
 var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
-	let
-		_tagsToSkip,
-		_twine1Unescape;
+	let _tagsToSkip;
+	let _twine1Unescape;
 
 	/*
 		Tags which should not be transformed into classes:
@@ -39,16 +38,15 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Returns a decoded version of the passed Twine 1 passage store encoded string.
 		*/
-		const
-			_twine1EscapesRe    = /(?:\\n|\\t|\\s|\\|\r)/g,
-			_hasTwine1EscapesRe = new RegExp(_twine1EscapesRe.source), // to drop the global flag
-			_twine1EscapesMap   = Object.freeze({
-				'\\n' : '\n',
-				'\\t' : '\t',
-				'\\s' : '\\',
-				'\\'  : '\\',
-				'\r'  : ''
-			});
+		const _twine1EscapesRe    = /(?:\\n|\\t|\\s|\\|\r)/g;
+		const _hasTwine1EscapesRe = new RegExp(_twine1EscapesRe.source); // to drop the global flag
+		const _twine1EscapesMap   = Object.freeze({
+			'\\n' : '\n',
+			'\\t' : '\t',
+			'\\s' : '\\',
+			'\\'  : '\\',
+			'\r'  : ''
+		});
 
 		_twine1Unescape = function (str) {
 			if (str == null) { // lazy equality for null
@@ -276,31 +274,30 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 				return '';
 			}
 
-			const
-				excerptRe = new RegExp(`(\\S+(?:\\s+\\S+){0,${count > 0 ? count - 1 : 7}})`),
-				excerpt   = text
-					// Strip macro tags (replace with a space).
-					.replace(/<<.*?>>/g, ' ')
-					// Strip html tags (replace with a space).
-					.replace(/<.*?>/g, ' ')
-					// The above might have left problematic whitespace, so trim.
-					.trim()
-					// Strip wiki tables.
-					.replace(/^\s*\|.*\|.*?$/gm, '')
-					// Strip wiki images.
-					.replace(/\[[<>]?img\[[^\]]*\]\]/g, '')
-					// Clean wiki links, i.e. remove all but the link text.
-					.replace(/\[\[([^|\]]*)(?:|[^\]]*)?\]\]/g, '$1')
-					// Clean wiki !headings.
-					.replace(/^\s*!+(.*?)$/gm, '$1')
-					// Clean wiki bold/italic/underline/highlight formatting.
-					.replace(/'{2}|\/{2}|_{2}|@{2}/g, '')
-					// A final trim.
-					.trim()
-					// Compact whitespace.
-					.replace(/\s+/g, ' ')
-					// Attempt to match the excerpt regexp.
-					.match(excerptRe);
+			const excerptRe = new RegExp(`(\\S+(?:\\s+\\S+){0,${count > 0 ? count - 1 : 7}})`);
+			const excerpt   = text
+				// Strip macro tags (replace with a space).
+				.replace(/<<.*?>>/g, ' ')
+				// Strip html tags (replace with a space).
+				.replace(/<.*?>/g, ' ')
+				// The above might have left problematic whitespace, so trim.
+				.trim()
+				// Strip wiki tables.
+				.replace(/^\s*\|.*\|.*?$/gm, '')
+				// Strip wiki images.
+				.replace(/\[[<>]?img\[[^\]]*\]\]/g, '')
+				// Clean wiki links, i.e. remove all but the link text.
+				.replace(/\[\[([^|\]]*)(?:|[^\]]*)?\]\]/g, '$1')
+				// Clean wiki !headings.
+				.replace(/^\s*!+(.*?)$/gm, '$1')
+				// Clean wiki bold/italic/underline/highlight formatting.
+				.replace(/'{2}|\/{2}|_{2}|@{2}/g, '')
+				// A final trim.
+				.trim()
+				// Compact whitespace.
+				.replace(/\s+/g, ' ')
+				// Attempt to match the excerpt regexp.
+				.match(excerptRe);
 			return excerpt ? `${excerpt[1]}\u2026` : '\u2026'; // horizontal ellipsis
 		}
 	}

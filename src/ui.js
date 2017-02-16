@@ -45,12 +45,11 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 			Generate the UI bar elements and insert them into the page before the store area.
 		*/
 		(() => {
-			const
-				$uiTree       = jQuery(document.createDocumentFragment()),
-				toggleLabel   = L10n.get('uiBarToggle'),
-				backwardLabel = L10n.get('uiBarBackward'),
-				jumptoLabel   = L10n.get('uiBarJumpto'),
-				forwardLabel  = L10n.get('uiBarForward');
+			const $uiTree       = jQuery(document.createDocumentFragment());
+			const toggleLabel   = L10n.get('uiBarToggle');
+			const backwardLabel = L10n.get('uiBarBackward');
+			const jumptoLabel   = L10n.get('uiBarJumpto');
+			const forwardLabel  = L10n.get('uiBarForward');
 
 			$uiTree
 				.append(
@@ -494,16 +493,14 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 				return $btn;
 			}
 
-			const
-				saves  = Save.get(),
-				$tbody = jQuery(document.createElement('tbody'));
+			const saves  = Save.get();
+			const $tbody = jQuery(document.createElement('tbody'));
 
 			if (Save.autosave.ok()) {
-				const
-					$tdSlot = jQuery(document.createElement('td')),
-					$tdLoad = jQuery(document.createElement('td')),
-					$tdDesc = jQuery(document.createElement('td')),
-					$tdDele = jQuery(document.createElement('td'));
+				const $tdSlot = jQuery(document.createElement('td'));
+				const $tdLoad = jQuery(document.createElement('td'));
+				const $tdDesc = jQuery(document.createElement('td'));
+				const $tdDele = jQuery(document.createElement('td'));
 
 				// Add the slot ID.
 				jQuery(document.createElement('b'))
@@ -571,11 +568,10 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 
 			for (let i = 0, iend = saves.slots.length; i < iend; ++i) {
-				const
-					$tdSlot = jQuery(document.createElement('td')),
-					$tdLoad = jQuery(document.createElement('td')),
-					$tdDesc = jQuery(document.createElement('td')),
-					$tdDele = jQuery(document.createElement('td'));
+				const $tdSlot = jQuery(document.createElement('td'));
+				const $tdLoad = jQuery(document.createElement('td'));
+				const $tdDesc = jQuery(document.createElement('td'));
+				const $tdDele = jQuery(document.createElement('td'));
 
 				// Add the slot ID.
 				$tdSlot.append(document.createTextNode(i + 1));
@@ -643,9 +639,8 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		if (DEBUG) { console.log('[UI/uiBuildSaves()]'); }
 
-		const
-			$dialogBody = jQuery(Dialog.setup(L10n.get('savesTitle'), 'saves')),
-			savesOk     = Save.ok();
+		const $dialogBody = jQuery(Dialog.setup(L10n.get('savesTitle'), 'saves'));
+		const savesOk     = Save.ok();
 
 		// Add saves list.
 		if (savesOk) {
@@ -725,12 +720,11 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		Setting.forEach(control => {
 			if (control.type === Setting.Types.Header) {
-				const
-					name       = control.name,
-					id         = Util.slugify(name),
-					$elHeader  = jQuery(document.createElement('div')),
-					$elHeading = jQuery(document.createElement('h2')),
-					$elLabel   = jQuery(document.createElement('p'));
+				const name       = control.name;
+				const id         = Util.slugify(name);
+				const $elHeader  = jQuery(document.createElement('div'));
+				const $elHeading = jQuery(document.createElement('h2'));
+				const $elLabel   = jQuery(document.createElement('p'));
 
 				$elHeader
 					.attr('id', `header-body-${id}`)
@@ -747,14 +741,12 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 				return;
 			}
 
-			const
-				name       = control.name,
-				id         = Util.slugify(name),
-				$elSetting = jQuery(document.createElement('div')),
-				$elLabel   = jQuery(document.createElement('label')),
-				$elWrapper = jQuery(document.createElement('div'));
-			let
-				$elControl;
+			const name       = control.name;
+			const id         = Util.slugify(name);
+			const $elSetting = jQuery(document.createElement('div'));
+			const $elLabel   = jQuery(document.createElement('label'));
+			const $elWrapper = jQuery(document.createElement('div'));
+			let $elControl;
 
 			$elSetting
 				.attr('id', `setting-body-${id}`)

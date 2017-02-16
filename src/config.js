@@ -84,15 +84,14 @@ var Config = (() => { // eslint-disable-line no-unused-vars, no-var
 			Transition properties.
 		*/
 		transitionEndEventName : (() => {
-			const
-				teMap  = new Map([
-					['transition',       'transitionend'],
-					['MSTransition',     'msTransitionEnd'],
-					['WebkitTransition', 'webkitTransitionEnd'],
-					['MozTransition',    'transitionend']
-				]),
-				teKeys = [...teMap.keys()],
-				el     = document.createElement('div');
+			const teMap = new Map([
+				['transition',       'transitionend'],
+				['MSTransition',     'msTransitionEnd'],
+				['WebkitTransition', 'webkitTransitionEnd'],
+				['MozTransition',    'transitionend']
+			]);
+			const teKeys = [...teMap.keys()];
+			const el     = document.createElement('div');
 
 			for (let i = 0; i < teKeys.length; ++i) {
 				if (el.style[teKeys[i]] !== undefined) {

@@ -11,15 +11,14 @@
 var Macro = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
-	const
-		// Macro definitions.
-		_macros = {},
+	// Macro definitions.
+	const _macros = {};
 
-		// Map of all macro tags and their parents (key: 'tag name' => value: ['list of parent names']).
-		_tags   = {},
+	// Map of all macro tags and their parents (key: 'tag name' => value: ['list of parent names']).
+	const _tags = {};
 
-		// Valid macro name regular expression.
-		_validNameRe = new RegExp(`^(?:${Patterns.macroName})$`);
+	// Valid macro name regular expression.
+	const _validNameRe = new RegExp(`^(?:${Patterns.macroName})$`);
 
 
 	/*******************************************************************************************************************
@@ -164,9 +163,8 @@ var Macro = (() => { // eslint-disable-line no-unused-vars, no-var
 			throw new Error('no parent specified');
 		}
 
-		const
-			endTags = [`/${parent}`, `end${parent}`], // automatically create the closing tags
-			allTags = [].concat(endTags, Array.isArray(bodyTags) ? bodyTags : []);
+		const endTags = [`/${parent}`, `end${parent}`]; // automatically create the closing tags
+		const allTags = [].concat(endTags, Array.isArray(bodyTags) ? bodyTags : []);
 
 		for (let i = 0; i < allTags.length; ++i) {
 			const tag = allTags[i];

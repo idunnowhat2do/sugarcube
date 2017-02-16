@@ -11,8 +11,8 @@
 var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
-	let
-		_slotsUBound = -1; // The upper bound of the saves slots.
+	// The upper bound of the saves slots.
+	let _slotsUBound = -1;
 
 
 	/*******************************************************************************************************************
@@ -37,9 +37,8 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 			Config.saves.slots = 8;
 		}
 
-		let
-			saves = savesObjGet(),
-			updated = false;
+		let saves   = savesObjGet();
+		let updated = false;
 
 		/* legacy */
 		// Convert an ancient saves array into a new saves object.
@@ -166,12 +165,11 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 			return false;
 		}
 
-		const
-			saves        = savesObjGet(),
-			supplemental = {
-				title : title || Story.get(State.passage).description(),
-				date  : Date.now()
-			};
+		const saves        = savesObjGet();
+		const supplemental = {
+			title : title || Story.get(State.passage).description(),
+			date  : Date.now()
+		};
 
 		if (metadata != null) { // lazy equality for null
 			supplemental.metadata = metadata;
@@ -317,14 +315,12 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		function datestamp() {
-			const
-				now = new Date();
-			let
-				MM = now.getMonth() + 1,
-				DD = now.getDate(),
-				hh = now.getHours(),
-				mm = now.getMinutes(),
-				ss = now.getSeconds();
+			const now = new Date();
+			let MM = now.getMonth() + 1;
+			let DD = now.getDate();
+			let hh = now.getHours();
+			let mm = now.getMinutes();
+			let ss = now.getSeconds();
 
 			if (MM < 10) {
 				MM = `0${MM}`;
@@ -345,18 +341,16 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 			return `${now.getFullYear()}${MM}${DD}-${hh}${mm}${ss}`;
 		}
 
-		const
-			baseName     = filename == null ? Story.domId : Util.slugify(filename), // lazy equality for null
-			saveName     = `${baseName}-${datestamp()}.save`,
-			supplemental = metadata == null ? {} : { metadata }, // lazy equality for null
-			saveObj      = LZString.compressToBase64(JSON.stringify(_marshal(supplemental)));
+		const baseName     = filename == null ? Story.domId : Util.slugify(filename); // lazy equality for null
+		const saveName     = `${baseName}-${datestamp()}.save`;
+		const supplemental = metadata == null ? {} : { metadata }; // lazy equality for null
+		const saveObj      = LZString.compressToBase64(JSON.stringify(_marshal(supplemental)));
 		saveAs(new Blob([saveObj], { type : 'text/plain;charset=UTF-8' }), saveName);
 	}
 
 	function importSave(event) {
-		const
-			file   = event.target.files[0],
-			reader = new FileReader();
+		const file   = event.target.files[0];
+		const reader = new FileReader();
 
 		// Add the handler that will capture the file information once the load is finished.
 		jQuery(reader).on('load', ev => {

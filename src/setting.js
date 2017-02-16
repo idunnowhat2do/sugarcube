@@ -11,16 +11,15 @@
 var Setting = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
-	const
-		// Setting definition array.
-		_definitions = [],
+	// Setting definition array.
+	const _definitions = [];
 
-		// Setting control types object (pseudo-enumeration).
-		Types = Object.freeze({
-			Header : 0,
-			Toggle : 1,
-			List   : 2
-		});
+	// Setting control types object (pseudo-enumeration).
+	const Types = Object.freeze({
+		Header : 0,
+		Toggle : 1,
+		List   : 2
+	});
 
 
 	/*******************************************************************************************************************
@@ -86,9 +85,8 @@ var Setting = (() => { // eslint-disable-line no-unused-vars, no-var
 	}
 
 	function settingsLoad() {
-		const
-			defaultSettings = settingsCreate(),
-			loadedSettings  = storage.get('settings') || settingsCreate();
+		const defaultSettings = settingsCreate();
+		const loadedSettings  = storage.get('settings') || settingsCreate();
 
 		// Load the defaults.
 		_definitions

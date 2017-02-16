@@ -21,6 +21,7 @@
 		return function () {
 			if (content || typeof callback === 'function') {
 				let argsCache;
+
 				/*
 					There's no catch clause because this try/finally is here simply to ensure that
 					proper cleanup is done in the event that an exception is thrown during the
@@ -113,9 +114,8 @@
 			let match;
 
 			while ((match = re.exec(this.args.full)) !== null) {
-				const
-					store = State[match[1]],
-					name  = match[2];
+				const store = State[match[1]];
+				const name  = match[2];
 
 				if (store.hasOwnProperty(name)) {
 					delete store[name];
@@ -147,11 +147,9 @@
 				return this.error(`bad evaluation: ${typeof ex === 'object' ? ex.message : ex}`);
 			}
 
-			const
-				remember = storage.get('remember') || {},
-				re       = new RegExp(`State\\.variables\\.(${Patterns.identifier})`, 'g');
-			let
-				match;
+			const remember = storage.get('remember') || {};
+			const re       = new RegExp(`State\\.variables\\.(${Patterns.identifier})`, 'g');
+			let match;
 
 			while ((match = re.exec(this.args.full)) !== null) {
 				const name = match[1];
@@ -188,12 +186,10 @@
 				return this.error('no story variable list specified');
 			}
 
-			const
-				remember = storage.get('remember'),
-				re       = new RegExp(`State\\.variables\\.(${Patterns.identifier})`, 'g');
-			let
-				match,
-				needStore = false;
+			const remember = storage.get('remember');
+			const re       = new RegExp(`State\\.variables\\.(${Patterns.identifier})`, 'g');
+			let match;
+			let needStore = false;
 
 			while ((match = re.exec(this.args.full)) !== null) {
 				const name = match[1];
@@ -397,11 +393,9 @@
 			let i = 0;
 
 			try {
-				const
-					evalJavaScript = Scripting.evalJavaScript,
-					len            = this.payload.length;
-				let
-					success = false;
+				const evalJavaScript = Scripting.evalJavaScript;
+				const len            = this.payload.length;
+				let success = false;
 
 				for (/* empty */; i < len; ++i) {
 					// Sanity checks.
@@ -514,11 +508,9 @@
 				return this.error(`bad evaluation: ${typeof ex === 'object' ? ex.message : ex}`);
 			}
 
-			const
-				debugView = this.debugView; // cache it now, to be modified later
-			let
-				i       = 1,
-				success = false;
+			const debugView = this.debugView; // cache it now, to be modified later
+			let i       = 1;
+			let success = false;
 
 			// Initial debug view setup for `<<switch>>`.
 			if (Config.debug) {
@@ -612,15 +604,13 @@
 		tags     : null,
 
 		handler() {
-			const
-				evalJavaScript = Scripting.evalJavaScript,
-				payload        = this.payload[0].contents.replace(/\n$/, '');
-			let
-				init,
-				condition = this.args.full.trim(),
-				post,
-				first     = true,
-				safety    = Config.macros.maxLoopIterations;
+			const evalJavaScript = Scripting.evalJavaScript;
+			const payload        = this.payload[0].contents.replace(/\n$/, '');
+			let init;
+			let condition = this.args.full.trim();
+			let post;
+			let first  = true;
+			let safety = Config.macros.maxLoopIterations;
 
 			if (condition.length === 0) {
 				condition = true;
@@ -745,22 +735,20 @@
 				);
 			}
 
-			const
-				$link      = jQuery(document.createElement(this.name === 'button' ? 'button' : 'a')),
-				widgetArgs = (() => {
-					let wargs;
+			const $link      = jQuery(document.createElement(this.name === 'button' ? 'button' : 'a'));
+			const widgetArgs = (() => {
+				let wargs;
 
-					if (
-						   State.variables.hasOwnProperty('args')
-						&& this.contextHas(ctx => ctx.self.isWidget)
-					) {
-						wargs = State.variables.args;
-					}
+				if (
+					   State.variables.hasOwnProperty('args')
+					&& this.contextHas(ctx => ctx.self.isWidget)
+				) {
+					wargs = State.variables.args;
+				}
 
-					return wargs;
-				})();
-			let
-				passage;
+				return wargs;
+			})();
+			let passage;
 
 			if (typeof this.args[0] === 'object') {
 				if (this.args[0].isImage) {
@@ -857,11 +845,10 @@
 				return this.error(`variable name "${this.args[0]}" is missing its sigil ($ or _)`);
 			}
 
-			const
-				varId        = Util.slugify(varName),
-				uncheckValue = this.args[1],
-				checkValue   = this.args[2],
-				el           = document.createElement('input');
+			const varId        = Util.slugify(varName);
+			const uncheckValue = this.args[1];
+			const checkValue   = this.args[2];
+			const el           = document.createElement('input');
 
 			/*
 				Setup and append the input element to the output buffer.
@@ -911,22 +898,21 @@
 				);
 			}
 
-			const
-				$link      = jQuery(document.createElement('a')),
-				$insert    = jQuery(document.createElement('span')),
-				transition = this.args.length > 1 && /^(?:transition|t8n)$/.test(this.args[1]),
-				widgetArgs = (() => {
-					let wargs;
+			const $link      = jQuery(document.createElement('a'));
+			const $insert    = jQuery(document.createElement('span'));
+			const transition = this.args.length > 1 && /^(?:transition|t8n)$/.test(this.args[1]);
+			const widgetArgs = (() => {
+				let wargs;
 
-					if (
-						   State.variables.hasOwnProperty('args')
-						&& this.contextHas(ctx => ctx.self.isWidget)
-					) {
-						wargs = State.variables.args;
-					}
+				if (
+					   State.variables.hasOwnProperty('args')
+					&& this.contextHas(ctx => ctx.self.isWidget)
+				) {
+					wargs = State.variables.args;
+				}
 
-					return wargs;
-				})();
+				return wargs;
+			})();
 
 			$link
 				.wikiWithOptions({ profile : 'core' }, this.args[0])
@@ -999,10 +985,9 @@
 				return this.error(`variable name "${this.args[0]}" is missing its sigil ($ or _)`);
 			}
 
-			const
-				varId      = Util.slugify(varName),
-				checkValue = this.args[1],
-				el         = document.createElement('input');
+			const varId      = Util.slugify(varName);
+			const checkValue = this.args[1];
+			const el         = document.createElement('input');
 
 			/*
 				Setup and initialize the group counter.
@@ -1069,11 +1054,10 @@
 				this.debugView.modes({ block : true });
 			}
 
-			const
-				varId        = Util.slugify(varName),
-				defaultValue = this.args[1],
-				autofocus    = this.args[2] === 'autofocus',
-				el           = document.createElement('textarea');
+			const varId        = Util.slugify(varName);
+			const defaultValue = this.args[1];
+			const autofocus    = this.args[2] === 'autofocus';
+			const el           = document.createElement('textarea');
 
 			/*
 				Setup and append the textarea element to the output buffer.
@@ -1145,13 +1129,11 @@
 				this.debugView.modes({ block : true });
 			}
 
-			const
-				varId        = Util.slugify(varName),
-				defaultValue = this.args[1],
-				el           = document.createElement('input');
-			let
-				autofocus = false,
-				passage;
+			const varId        = Util.slugify(varName);
+			const defaultValue = this.args[1];
+			const el           = document.createElement('input');
+			let autofocus = false;
+			let passage;
 
 			if (this.args.length > 3) {
 				passage   = this.args[2];
@@ -1208,8 +1190,8 @@
 
 				// Setup a single-use post-display task to autofocus the element.
 				postdisplay[`#autofocus:${el.id}`] = task => {
-					setTimeout(() => el.focus(), Engine.minDomActionDelay);
 					delete postdisplay[task]; // single-use task
+					setTimeout(() => el.focus(), Engine.minDomActionDelay);
 				};
 			}
 		}
@@ -1240,11 +1222,10 @@
 			}
 
 			for (let i = 0; i < this.args.length; ++i) {
-				let
-					passage,
-					text,
-					$image,
-					setFn;
+				let passage;
+				let text;
+				let $image;
+				let setFn;
 
 				if (typeof this.args[i] === 'object') {
 					if (this.args[i].isImage) {
@@ -1315,11 +1296,10 @@
 			}
 			/* /legacy */
 
-			let
-				momentIndex = -1,
-				passage,
-				text,
-				$image;
+			let momentIndex = -1;
+			let passage;
+			let text;
+			let $image;
 
 			if (this.args.length === 1) {
 				if (typeof this.args[0] === 'object') {
@@ -1423,9 +1403,12 @@
 			if (this.name !== 'back' || momentIndex !== -1) {
 				$el = jQuery(document.createElement('a'))
 					.addClass('link-internal')
-					.ariaClick({ one : true }, this.name === 'return'
-						? () => Engine.play(passage)
-						: () => Engine.goTo(momentIndex));
+					.ariaClick(
+						{ one : true },
+						this.name === 'return'
+							? () => Engine.play(passage)
+							: () => Engine.goTo(momentIndex)
+					);
 			}
 			else {
 				$el = jQuery(document.createElement('span'))
@@ -1448,13 +1431,11 @@
 				return this.error('no passage specified');
 			}
 
-			const
-				choiceId = State.passage;
-			let
-				passage,
-				text,
-				$image,
-				setFn;
+			const choiceId = State.passage;
+			let passage;
+			let text;
+			let $image;
+			let setFn;
 
 			if (this.args.length === 1) {
 				if (typeof this.args[0] === 'object') {
@@ -1676,27 +1657,24 @@
 					return this.error(`no ${errors.join(' or ')} specified`);
 				}
 
-				const
-					tracks   = Macro.get('cacheaudio').tracks,
-					groupIds = [':all', ':looped', ':muted', ':paused', ':playing'],
-					id       = String(this.args[0]).trim();
+				const tracks   = Macro.get('cacheaudio').tracks;
+				const groupIds = [':all', ':looped', ':muted', ':paused', ':playing'];
+				const id       = String(this.args[0]).trim();
 
 				if (!groupIds.includes(id) && !tracks.hasOwnProperty(id)) {
 					return this.error(`track "${id}" does not exist`);
 				}
 
-				const
-					args  = this.args.slice(1);
-				let
-					action,
-					volume,
-					mute,
-					time,
-					loop,
-					fadeTo,
-					fadeOver = 5,
-					passage,
-					raw;
+				const args  = this.args.slice(1);
+				let action;
+				let volume;
+				let mute;
+				let time;
+				let loop;
+				let fadeTo;
+				let fadeOver = 5;
+				let passage;
+				let raw;
 
 				// Process arguments.
 				while (args.length > 0) {
@@ -1898,9 +1876,8 @@
 					return this.error(`no ${errors.join(' or ')} specified`);
 				}
 
-				const
-					id      = String(this.args[0]).trim(),
-					badIdRe = /^:|\s/; // cannot start with a colon or contain whitespace
+				const id      = String(this.args[0]).trim();
+				const badIdRe = /^:|\s/; // cannot start with a colon or contain whitespace
 
 				if (badIdRe.test(id)) {
 					return this.error(`invalid track ID "${id}": track IDs may not start with a colon or contain whitespace`);
@@ -1969,10 +1946,9 @@
 					return this.error('a playlist has already been defined with <<setplaylist>>');
 				}
 
-				const
-					tracks  = Macro.get('cacheaudio').tracks,
-					listId  = String(this.args[0]).trim(),
-					badIdRe = /^:|\s/; // cannot start with a colon or contain whitespace
+				const tracks  = Macro.get('cacheaudio').tracks;
+				const listId  = String(this.args[0]).trim();
+				const badIdRe = /^:|\s/; // cannot start with a colon or contain whitespace
 
 				if (badIdRe.test(listId)) {
 					return this.error(`invalid list ID "${listId}": list IDs may not start with a colon or contain whitespace`);
@@ -2007,12 +1983,10 @@
 						return this.error(`track "${id}" does not exist`);
 					}
 
-					const
-						args = this.payload[i].args.slice(1);
-					let
-						copy   = false,
-						// rate,
-						volume;
+					const args = this.payload[i].args.slice(1);
+					let copy = false;
+					// let rate;
+					let volume;
 
 					// Process arguments.
 					while (args.length > 0) {
@@ -2113,12 +2087,10 @@
 					return this.error('no actions specified');
 				}
 
-				const
-					args = this.args.slice(0);
-				let
-					stop   = false,
-					mute,
-					volume;
+				const args = this.args.slice(0);
+				let stop = false;
+				let mute;
+				let volume;
 
 				// Process arguments.
 				while (args.length > 0) {
@@ -2191,7 +2163,8 @@
 					return this.error('no playlists have been created');
 				}
 
-				let list, args;
+				let list;
+				let args;
 
 				if (from === 'createplaylist') {
 					if (this.args.length < 2) {
@@ -2201,9 +2174,8 @@
 						return this.error(`no ${errors.join(' or ')} specified`);
 					}
 
-					const
-						lists = Macro.get('createplaylist').lists,
-						id    = String(this.args[0]).trim();
+					const lists = Macro.get('createplaylist').lists;
+					const id    = String(this.args[0]).trim();
 
 					if (!lists.hasOwnProperty(id)) {
 						return this.error(`playlist "${id}" does not exist`);
@@ -2221,15 +2193,14 @@
 					args = this.args.slice(0);
 				}
 
-				let
-					action,
-					volume,
-					mute,
-					loop,
-					shuffle,
-					fadeTo,
-					fadeOver = 5,
-					raw;
+				let action;
+				let volume;
+				let mute;
+				let loop;
+				let shuffle;
+				let fadeTo;
+				let fadeOver = 5;
+				let raw;
 
 				// Process arguments.
 				while (args.length > 0) {
@@ -2383,9 +2354,8 @@
 					return this.error('no list ID specified');
 				}
 
-				const
-					lists = Macro.get('createplaylist').lists,
-					id    = String(this.args[0]).trim();
+				const lists = Macro.get('createplaylist').lists;
+				const id    = String(this.args[0]).trim();
 
 				if (!lists.hasOwnProperty(id)) {
 					return this.error(`playlist "${id}" does not exist`);
@@ -2489,9 +2459,8 @@
 					return this.error('playlists have already been defined with <<createplaylist>>');
 				}
 
-				const
-					self   = this.self,
-					tracks = Macro.get('cacheaudio').tracks;
+				const self   = this.self;
+				const tracks = Macro.get('cacheaudio').tracks;
 
 				// If a playlist already exists, destroy it.
 				if (self.list !== null) {
@@ -2667,12 +2636,10 @@
 		},
 
 		registerTimeout($baseOutput, items, transition) {
-			const
-				turnId   = State.turns,
-				timers   = this.timers;
-			let
-				timerId  = null,
-				nextItem = items.shift();
+			const turnId = State.turns;
+			const timers = this.timers;
+			let timerId  = null;
+			let nextItem = items.shift();
 
 			const worker = function () {
 				/*
@@ -2781,11 +2748,9 @@
 		},
 
 		registerInterval($baseOutput, content, delay, transition) {
-			const
-				turnId = State.turns,
-				timers = this.timers;
-			let
-				timerId = null;
+			const turnId = State.turns;
+			const timers = this.timers;
+			let timerId = null;
 
 			// Setup the interval.
 			timerId = setInterval(() => {
@@ -2861,9 +2826,8 @@
 				return this.error('must only be used in conjunction with its parent macro <<repeat>>');
 			}
 
-			const
-				timers  = Macro.get('repeat').timers,
-				timerId = TempState.repeatTimerId;
+			const timers  = Macro.get('repeat').timers;
+			const timerId = TempState.repeatTimerId;
 			clearInterval(timerId);
 			timers.delete(timerId);
 			TempState.break = 2;
@@ -2920,9 +2884,8 @@
 								State.variables.args.full = this.args.full;
 
 								// Setup the error trapping variables.
-								const
-									resFrag = document.createDocumentFragment(),
-									errList = [];
+								const resFrag = document.createDocumentFragment();
+								const errList = [];
 
 								// Wikify the widget contents.
 								new Wikifier(resFrag, contents);

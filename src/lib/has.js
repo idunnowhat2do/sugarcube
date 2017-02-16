@@ -14,9 +14,8 @@ var Has = (() => { // eslint-disable-line no-unused-vars, no-var
 	function webStorageIsOK(store) {
 		try {
 			if (store != null && store.length >= 0) { // lazy equality for null
-				const
-					tkey = 'SugarCube.WebStorage.test',
-					tval = '1701 Guilty Scott';
+				const tkey = 'SugarCube.WebStorage.Test';
+				const tval = '1701 Guilty Scott';
 
 				store.setItem(tkey, tval);
 

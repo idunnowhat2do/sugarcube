@@ -11,9 +11,8 @@
 var StyleWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
-	const
-		_imageMarkupRe    = /\[[<>]?[Ii][Mm][Gg]\[(?:\s|\S)*?\]\]+/g,
-		_hasImageMarkupRe = new RegExp(_imageMarkupRe.source); // to drop the global flag
+	const _imageMarkupRe    = /\[[<>]?[Ii][Mm][Gg]\[(?:\s|\S)*?\]\]+/g;
+	const _hasImageMarkupRe = new RegExp(_imageMarkupRe.source); // to drop the global flag
 
 
 	/*******************************************************************************************************************

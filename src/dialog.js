@@ -11,13 +11,12 @@
 var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
-	let
-		_$overlay       = null,
-		_$dialog        = null,
-		_$dialogTitle   = null,
-		_$dialogBody    = null,
-		_lastActive     = null,
-		_scrollbarWidth = 0;
+	let _$overlay       = null;
+	let _$dialog        = null;
+	let _$dialogTitle   = null;
+	let _$dialogBody    = null;
+	let _lastActive     = null;
+	let _scrollbarWidth = 0;
 
 
 	/*******************************************************************************************************************
@@ -33,9 +32,8 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 			let scrollbarWidth;
 
 			try {
-				const
-					inner = document.createElement('p'),
-					outer = document.createElement('div');
+				const inner = document.createElement('p');
+				const outer = document.createElement('div');
 
 				inner.style.width      = '100%';
 				inner.style.height     = '200px';
@@ -292,17 +290,15 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 	}
 
 	function dialogCalcPosition(topPos) {
-		const
-			top       = topPos != null ? topPos : 50, // lazy equality for null
-			$parent   = jQuery(window),
-			dialogPos = { left : '', right : '', top : '', bottom : '' };
+		const top       = topPos != null ? topPos : 50; // lazy equality for null
+		const $parent   = jQuery(window);
+		const dialogPos = { left : '', right : '', top : '', bottom : '' };
 
 		// Unset the dialog's positional properties before checking its dimensions.
 		_$dialog.css(dialogPos);
 
-		let
-			horzSpace = $parent.width() - _$dialog.outerWidth(true) - 1,   // -1 to address a Firefox issue
-			vertSpace = $parent.height() - _$dialog.outerHeight(true) - 1; // -1 to address a Firefox issue
+		let horzSpace = $parent.width() - _$dialog.outerWidth(true) - 1;   // -1 to address a Firefox issue
+		let vertSpace = $parent.height() - _$dialog.outerHeight(true) - 1; // -1 to address a Firefox issue
 
 		if (horzSpace <= 32 + _scrollbarWidth) {
 			vertSpace -= _scrollbarWidth;

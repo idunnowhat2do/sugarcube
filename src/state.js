@@ -11,24 +11,23 @@
 var State = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
-	let
-		// History moment stack.
-		_history = [],
+	// History moment stack.
+	let _history = [];
 
-		// Currently active/played moment.
-		_active = momentCreate(),
+	// Currently active/played moment.
+	let _active = momentCreate();
 
-		// Currently active/played moment index.
-		_activeIndex = -1,
+	// Currently active/played moment index.
+	let _activeIndex = -1;
 
-		// Titles of all moments which have expired (i.e. fallen off the bottom of the stack).
-		_expired = [],
+	// Titles of all moments which have expired (i.e. fallen off the bottom of the stack).
+	let _expired = [];
 
-		// (optional) Seedable PRNG object.
-		_prng = null,
+	// (optional) Seedable PRNG object.
+	let _prng = null;
 
-		// Temporary variables object.
-		_tempVariables = {};
+	// Temporary variables object.
+	let _tempVariables = {};
 
 
 	/*******************************************************************************************************************

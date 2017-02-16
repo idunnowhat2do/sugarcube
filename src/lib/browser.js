@@ -27,9 +27,8 @@ var Browser = (() => { // eslint-disable-line no-unused-vars, no-var
 	// opera >= 15: "mozilla/5.0 (windows nt 6.1; wow64) applewebkit/537.36 (khtml, like gecko) chrome/28.0.1500.52 safari/537.36 opr/15.0.1147.130"
 	ua.isOpera      = ua.userAgent.includes('opera') || ua.userAgent.includes(' opr/');
 	ua.operaVersion = (() => {
-		const
-			re  = new RegExp(`${/applewebkit|chrome/.test(ua.userAgent) ? 'opr' : 'version'}\\/(\\d{1,2}\\.\\d+)`),
-			ver = re.exec(ua.userAgent);
+		const re  = new RegExp(`${/applewebkit|chrome/.test(ua.userAgent) ? 'opr' : 'version'}\\/(\\d{1,2}\\.\\d+)`);
+		const ver = re.exec(ua.userAgent);
 		return ver ? Number(ver[1]) : 0;
 	})();
 

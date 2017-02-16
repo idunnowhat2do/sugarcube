@@ -11,9 +11,8 @@
 SimpleStore.adapters.push((() => {
 	'use strict';
 
-	let
-		// Adapter readiness state.
-		_ok = false;
+	// Adapter readiness state.
+	let _ok = false;
 
 
 	/*******************************************************************************************************************
@@ -21,11 +20,9 @@ SimpleStore.adapters.push((() => {
 	 ******************************************************************************************************************/
 	class _WebStorageAdapter {
 		constructor(storageId, persistent) {
-			const
-				prefix = `${storageId}.`;
-			let
-				engine = null,
-				name   = null;
+			const prefix = `${storageId}.`;
+			let engine = null;
+			let name   = null;
 
 			if (persistent) {
 				engine = window.localStorage;

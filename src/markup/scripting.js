@@ -27,7 +27,8 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 			throw new Error('addAccessibleClickHandler insufficient number of parameters');
 		}
 
-		let fn, opts;
+		let fn;
+		let opts;
 
 		if (typeof selector === 'function') {
 			fn = selector;
@@ -120,12 +121,10 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 	*/
 	function fade(el, options) {
 		/* eslint-disable no-param-reassign */
-		const
-			direction = options.fade === 'in' ? 1 : -1;
-		let
-			current,
-			proxy      = el.cloneNode(true),
-			intervalId; // eslint-disable-line prefer-const
+		const direction = options.fade === 'in' ? 1 : -1;
+		let current;
+		let proxy      = el.cloneNode(true);
+		let intervalId; // eslint-disable-line prefer-const
 
 		function tick() {
 			current += 0.05 * direction;
@@ -183,14 +182,12 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 			increment = 1;
 		}
 
-		const
-			start     = window.scrollY ? window.scrollY : document.body.scrollTop,
-			end       = ensureVisible(el),
-			distance  = Math.abs(start - end),
-			direction = start > end ? -1 : 1;
-		let
-			progress   = 0,
-			intervalId; // eslint-disable-line prefer-const
+		const start     = window.scrollY ? window.scrollY : document.body.scrollTop;
+		const end       = ensureVisible(el);
+		const distance  = Math.abs(start - end);
+		const direction = start > end ? -1 : 1;
+		let progress   = 0;
+		let intervalId; // eslint-disable-line prefer-const
 
 		function tick() {
 			progress += increment;
@@ -213,12 +210,11 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		function ensureVisible(el) { // eslint-disable-line no-shadow
-			const
-				posTop    = findPosY(el),
-				posBottom = posTop + el.offsetHeight,
-				winTop    = window.scrollY ? window.scrollY : document.body.scrollTop,
-				winHeight = window.innerHeight ? window.innerHeight : document.body.clientHeight,
-				winBottom = winTop + winHeight;
+			const posTop    = findPosY(el);
+			const posBottom = posTop + el.offsetHeight;
+			const winTop    = window.scrollY ? window.scrollY : document.body.scrollTop;
+			const winHeight = window.innerHeight ? window.innerHeight : document.body.clientHeight;
+			const winBottom = winTop + winHeight;
 
 			return posTop >= winTop && posBottom > winBottom && el.offsetHeight < winHeight
 				? posTop - (winHeight - el.offsetHeight) + 20
@@ -257,9 +253,8 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 			return false;
 		}
 
-		const
-			needles = Array.prototype.concat.apply([], arguments),
-			played  = State.passages;
+		const needles = Array.prototype.concat.apply([], arguments);
+		const played  = State.passages;
 
 		for (let i = 0, iend = needles.length; i < iend; ++i) {
 			if (!played.includes(needles[i])) {
@@ -283,12 +278,10 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 			return -1;
 		}
 
-		const
-			needles = Array.prototype.concat.apply([], arguments),
-			played  = State.passages,
-			uBound  = played.length - 1;
-		let
-			turns = State.turns;
+		const needles = Array.prototype.concat.apply([], arguments);
+		const played  = State.passages;
+		const uBound  = played.length - 1;
+		let turns = State.turns;
 
 		for (let i = 0, iend = needles.length; i < iend && turns > -1; ++i) {
 			const lastIndex = played.lastIndexOf(needles[i]);
@@ -342,7 +335,8 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 			throw new Error('random called with insufficient parameters');
 		}
 
-		let min, max;
+		let min;
+		let max;
 
 		if (arguments.length === 1) {
 			min = 0;
@@ -371,7 +365,8 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 			throw new Error('randomFloat called with insufficient parameters');
 		}
 
-		let min, max;
+		let min;
+		let max;
 
 		if (arguments.length === 1) {
 			min = 0.0;
@@ -442,11 +437,9 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 			return 0;
 		}
 
-		const
-			needles = Array.prototype.concat.apply([], arguments.length === 0 ? [State.passage] : arguments),
-			played  = State.passages;
-		let
-			count = State.turns;
+		const needles = Array.prototype.concat.apply([], arguments.length === 0 ? [State.passage] : arguments);
+		const played  = State.passages;
+		let count = State.turns;
 
 		for (let i = 0, iend = needles.length; i < iend && count > 0; ++i) {
 			count = Math.min(count, played.count(needles[i]));
@@ -466,13 +459,11 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 			return 0;
 		}
 
-		const
-			needles = Array.prototype.concat.apply([], arguments),
-			nLength = needles.length,
-			played  = State.passages,
-			seen    = new Map();
-		let
-			count = 0;
+		const needles = Array.prototype.concat.apply([], arguments);
+		const nLength = needles.length;
+		const played  = State.passages;
+		const seen    = new Map();
+		let count = 0;
 
 		for (let i = 0, iend = played.length; i < iend; ++i) {
 			const title = played[i];
@@ -519,51 +510,49 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 		their native JavaScript counterparts.
 	*/
 	const parse = (() => {
-		const
-			parseMap = Object.freeze({
-				/* eslint-disable quote-props */
-				// Story $variable sigil-prefix.
-				'$'     : 'State.variables.',
-				// Temporary _variable sigil-prefix.
-				'_'     : 'State.temporary.',
-				// Assignment operators.
-				'to'    : '=',
-				// Equality operators.
-				'eq'    : '==',
-				'neq'   : '!=',
-				'is'    : '===',
-				'isnot' : '!==',
-				// Relational operators.
-				'gt'    : '>',
-				'gte'   : '>=',
-				'lt'    : '<',
-				'lte'   : '<=',
-				// Logical operators.
-				'and'   : '&&',
-				'or'    : '||',
-				// Unary operators.
-				'not'   : '!',
-				'def'   : '"undefined" !== typeof',
-				'ndef'  : '"undefined" === typeof'
-				/* eslint-enable quote-props */
-			}),
-			parseRe  = new RegExp([
-				'(""|\'\')',                                          // 1=Empty quotes
-				'("(?:\\\\.|[^"\\\\])+")',                            // 2=Double quoted, non-empty
-				"('(?:\\\\.|[^'\\\\])+')",                            // 3=Single quoted, non-empty
-				'([=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}]+)',       // 4=Operator delimiters
-				'([^"\'=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}\\s]+)' // 5=Barewords
-			].join('|'), 'g'),
-			varTest  = new RegExp(`^${Patterns.variable}`);
+		const parseMap = Object.freeze({
+			/* eslint-disable quote-props */
+			// Story $variable sigil-prefix.
+			'$'     : 'State.variables.',
+			// Temporary _variable sigil-prefix.
+			'_'     : 'State.temporary.',
+			// Assignment operators.
+			'to'    : '=',
+			// Equality operators.
+			'eq'    : '==',
+			'neq'   : '!=',
+			'is'    : '===',
+			'isnot' : '!==',
+			// Relational operators.
+			'gt'    : '>',
+			'gte'   : '>=',
+			'lt'    : '<',
+			'lte'   : '<=',
+			// Logical operators.
+			'and'   : '&&',
+			'or'    : '||',
+			// Unary operators.
+			'not'   : '!',
+			'def'   : '"undefined" !== typeof',
+			'ndef'  : '"undefined" === typeof'
+			/* eslint-enable quote-props */
+		});
+		const parseRe = new RegExp([
+			'(""|\'\')',                                          // 1=Empty quotes
+			'("(?:\\\\.|[^"\\\\])+")',                            // 2=Double quoted, non-empty
+			"('(?:\\\\.|[^'\\\\])+')",                            // 3=Single quoted, non-empty
+			'([=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}]+)',       // 4=Operator delimiters
+			'([^"\'=+\\-*\\/%<>&\\|\\^~!?:,;\\(\\)\\[\\]{}\\s]+)' // 5=Barewords
+		].join('|'), 'g');
+		const varTest = new RegExp(`^${Patterns.variable}`);
 
 		function parse(rawCodeString) {
 			if (parseRe.lastIndex !== 0) {
 				throw new RangeError('Scripting.parse last index is non-zero at start');
 			}
 
-			let
-				code  = rawCodeString,
-				match;
+			let code  = rawCodeString;
+			let match;
 
 			while ((match = parseRe.exec(code)) !== null) {
 				// no-op: Empty quotes | Double quoted | Single quoted | Operator delimiters
@@ -598,9 +587,8 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 						      reasonable to most users.
 					*/
 					else if (token === 'is') {
-						const
-							start = parseRe.lastIndex,
-							part  = code.slice(start);
+						const start = parseRe.lastIndex;
+						const part  = code.slice(start);
 
 						if (/^\s+not\b/.test(part)) {
 							code = code.splice(start, part.search(/\S/));

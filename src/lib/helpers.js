@@ -121,11 +121,9 @@ var { // eslint-disable-line no-var
 		Converts <br> elements to <p> elements within the given node tree.
 	*/
 	function convertBreaks(source) {
-		const
-			output = document.createDocumentFragment();
-		let
-			para = document.createElement('p'),
-			node;
+		const output = document.createDocumentFragment();
+		let para = document.createElement('p');
+		let node;
 
 		while ((node = source.firstChild) !== null) {
 			if (node.nodeType === Node.ELEMENT_NODE) {
@@ -262,11 +260,10 @@ var { // eslint-disable-line no-var
 				return [...value].map(val => toStringOrDefault(val, defValue)).join(', ');
 			}
 			else if (value instanceof Map) {
-				const
-					tSOD = toStringOrDefault,
-					str  = [...value]
-						.map(kv => `${tSOD(kv[0], defValue)} \u21D2 ${tSOD(kv[1], defValue)}`)
-						.join('; ');
+				const tSOD = toStringOrDefault;
+				const str  = [...value]
+					.map(kv => `${tSOD(kv[0], defValue)} \u21D2 ${tSOD(kv[1], defValue)}`)
+					.join('; ');
 				return `(\u202F${str}\u202F)`;
 			}
 			else if (value instanceof Date) {

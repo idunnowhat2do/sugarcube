@@ -13,19 +13,17 @@
 var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
-	const
-		// Minimum delay for DOM actions (in milliseconds).
-		minDomActionDelay = 40;
+	// Minimum delay for DOM actions (in milliseconds).
+	const minDomActionDelay = 40;
 
-	let
-		// Current state of the engine (values: 'idle', 'playing', 'rendering').
-		_state = 'idle',
+	// Current state of the engine (values: 'idle', 'playing', 'rendering').
+	let _state = 'idle';
 
-		// Last time `enginePlay()` was called (in milliseconds).
-		_lastPlay = null,
+	// Last time `enginePlay()` was called (in milliseconds).
+	let _lastPlay = null;
 
-		// Cache of the debug view for the StoryInit special passage.
-		_storyInitDebugView = null;
+	// Cache of the debug view for the StoryInit special passage.
+	let _storyInitDebugView = null;
 
 
 	/*******************************************************************************************************************
@@ -243,7 +241,8 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Debug view setup.
 		*/
-		let passageReadyOutput, passageDoneOutput;
+		let passageReadyOutput;
+		let passageDoneOutput;
 
 		/*
 			Execute the navigation override callback.
@@ -315,9 +314,8 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Render the incoming passage and add it to the page.
 		*/
-		const
-			$incoming = jQuery(passage.render()),
-			passages  = document.getElementById('passages');
+		const $incoming = jQuery(passage.render());
+		const passages  = document.getElementById('passages');
 
 		if (passages.hasChildNodes()) {
 			if (

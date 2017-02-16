@@ -11,28 +11,26 @@
 var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
-	const
-		// Map of normal passages.
-		_passages = {},
+	// Map of normal passages.
+	const _passages = {};
 
-		// List of style passages.
-		_styles = [],
+	// List of style passages.
+	const _styles = [];
 
-		// List of script passages.
-		_scripts = [],
+	// List of script passages.
+	const _scripts = [];
 
-		// List of widget passages.
-		_widgets = [];
+	// List of widget passages.
+	const _widgets = [];
 
-	let
-		// Story title.
-		_title = '',
+	// Story title.
+	let _title = '';
 
-		// Story IFID.
-		_ifId = '',
+	// Story IFID.
+	let _ifId = '';
 
-		// DOM-compatible ID.
-		_domId = '';
+	// DOM-compatible ID.
+	let _domId = '';
 
 
 	/*******************************************************************************************************************
@@ -72,9 +70,8 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 			jQuery('#store-area')
 				.children(':not([tags~="Twine.private"],[tags~="annotation"])')
 				.each(function () {
-					const
-						$this   = jQuery(this),
-						passage = new Passage($this.attr('tiddler'), this);
+					const $this   = jQuery(this);
+					const passage = new Passage($this.attr('tiddler'), this);
 
 					// Special cases.
 					if (passage.tags.includes('stylesheet')) {
@@ -115,9 +112,8 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 		else {
 			if (DEBUG) { console.log('[Story/storyLoad()]'); }
 
-			const
-				$storydata = jQuery('#store-area>tw-storydata'),
-				startNode  = $storydata.attr('startnode') || '';
+			const $storydata = jQuery('#store-area>tw-storydata');
+			const startNode  = $storydata.attr('startnode') || '';
 
 			/*
 				Set the default starting passage.
@@ -156,10 +152,9 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 			$storydata
 				.children('tw-passagedata:not([tags~="Twine.private"],[tags~="annotation"])')
 				.each(function () {
-					const
-						$this   = jQuery(this),
-						pid     = $this.attr('pid') || '',
-						passage = new Passage($this.attr('name'), this);
+					const $this   = jQuery(this);
+					const pid     = $this.attr('pid') || '';
+					const passage = new Passage($this.attr('name'), this);
 
 					if (pid === startNode && startNode !== '') {
 						Config.passages.start = passage.title;
@@ -329,9 +324,8 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 	}
 
 	function passagesLookup(key, value, sortKey = 'title') {
-		const
-			pnames  = Object.keys(_passages),
-			results = [];
+		const pnames  = Object.keys(_passages);
+		const results = [];
 
 		for (let i = 0; i < pnames.length; ++i) {
 			const passage = _passages[pnames[i]];
@@ -378,9 +372,8 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 			throw new Error('Story.lookupWith filter parameter must be a function');
 		}
 
-		const
-			pnames  = Object.keys(_passages),
-			results = [];
+		const pnames  = Object.keys(_passages);
+		const results = [];
 
 		for (let i = 0; i < pnames.length; ++i) {
 			const passage = _passages[pnames[i]];

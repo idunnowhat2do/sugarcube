@@ -55,12 +55,11 @@
 var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
-	let
-		// The Wikifier formatter object cache.
-		_formatterCache,
+	// The Wikifier formatter object cache.
+	let _formatterCache;
 
-		// Wikifier call depth.
-		_callDepth = 0;
+	// Wikifier call depth.
+	let _callDepth = 0;
 
 
 	/*******************************************************************************************************************
@@ -160,13 +159,11 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				this.options = Object.assign({}, this.options, options);
 			}
 
-			const
-				terminatorRegExp = terminator
-					? new RegExp(`(?:${terminator})`, this.options.ignoreTerminatorCase ? 'gim' : 'gm')
-					: null;
-			let
-				terminatorMatch,
-				formatterMatch;
+			const terminatorRegExp = terminator
+				? new RegExp(`(?:${terminator})`, this.options.ignoreTerminatorCase ? 'gim' : 'gm')
+				: null;
+			let terminatorMatch;
+			let formatterMatch;
 
 			do {
 				// Prepare the RegExp match positions.
@@ -285,9 +282,8 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 		static compileFormatters() {
 			if (DEBUG) { console.log('[Wikifier.compileFormatters()]'); }
 
-			const
-				all  = Wikifier.formatters,
-				core = all.filter(fmt => !Array.isArray(fmt.profiles) || fmt.profiles.includes('core'));
+			const all  = Wikifier.formatters;
+			const core = all.filter(fmt => !Array.isArray(fmt.profiles) || fmt.profiles.includes('core'));
 
 			_formatterCache = {
 				all : {
@@ -336,11 +332,9 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			const varData = Wikifier.parseStoryVariable(storyVar);
 
 			if (varData !== null) {
-				const
-					pNames  = varData.names,
-					varName = pNames.pop();
-				let
-					baseObj = varData.store;
+				const pNames  = varData.names;
+				const varName = pNames.pop();
+				let baseObj = varData.store;
 
 				for (let i = 0, iend = pNames.length; i < iend; ++i) {
 					if (typeof baseObj[pNames[i]] !== 'undefined') {
@@ -366,14 +360,12 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			of arbitrary complexity.
 		*/
 		static parseStoryVariable(varText) {
-			const
-				retVal = {
-					store : varText[0] === '$' ? State.variables : State.temporary,
-					names : []
-				};
-			let
-				text  = varText,
-				match;
+			const retVal = {
+				store : varText[0] === '$' ? State.variables : State.temporary,
+				names : []
+			};
+			let text  = varText;
+			let match;
 
 			while ((match = Wikifier._parseVarRegExp.exec(text)) !== null) {
 				// Remove full match from text.
@@ -545,11 +537,9 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 		},
 		inlineCss : {
 			value(w) {
-				const
-					css       = { classes : [], id : '', styles : {} },
-					lookahead = this._inlineCssLookahead;
-				let
-					matched;
+				const css       = { classes : [], id : '', styles : {} };
+				const lookahead = this._inlineCssLookahead;
+				let matched;
 
 				do {
 					lookahead.lastIndex = w.nextMatch;
@@ -779,16 +769,14 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 					return pos;
 				}
 
-				const
-					EOF  = -1, // end of file (string, really)
-					item = {}; // scanned item object
-				let
-					start  = w.matchStart, // start position of a component
-					pos    = start + 1,    // current position in w.source
-					depth,                 // current square bracket nesting depth
-					cid,                   // current component ID
-					isLink,                // markup is a link, else image
-					ch;
+				const EOF  = -1; // end of file (string, really)
+				const item = {}; // scanned item object
+				let start  = w.matchStart; // start position of a component
+				let pos    = start + 1;    // current position in w.source
+				let depth;                 // current square bracket nesting depth
+				let cid;                   // current component ID
+				let isLink;                // markup is a link, else image
+				let ch;
 
 				// [[text|~link][setter]]
 				// [<>img[title|source][~link][setter]]
@@ -996,13 +984,11 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 							If `parseBody()` is called below, it will modify the current working
 							values, so we must cache them now.
 						*/
-						const
-							nextMatch = w.nextMatch,
-							source    = this.working.source,
-							name      = this.working.name,
-							rawArgs   = this.working.arguments;
-						let
-							macro;
+						const nextMatch = w.nextMatch;
+						const source    = this.working.source;
+						const name      = this.working.name;
+						const rawArgs   = this.working.arguments;
+						let macro;
 
 						try {
 							macro = Macro.get(name);
@@ -1131,21 +1117,19 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				},
 
 				parseBody(w, macro) {
-					const
-						openTag      = this.working.name,
-						closeTag     = `/${openTag}`,
-						closeAlt     = `end${openTag}`,
-						bodyTags     = Array.isArray(macro.tags) ? macro.tags : false,
-						payload      = [],
-						skipArgs     = macro.hasOwnProperty('skipArgs') && macro.skipArgs,
-						skipArg0     = macro.hasOwnProperty('skipArg0') && macro.skipArg0;
-					let
-						end          = -1,
-						opened       = 1,
-						curSource    = this.working.source,
-						curTag       = this.working.name,
-						curArgument  = this.working.arguments,
-						contentStart = w.nextMatch;
+					const openTag  = this.working.name;
+					const closeTag = `/${openTag}`;
+					const closeAlt = `end${openTag}`;
+					const bodyTags = Array.isArray(macro.tags) ? macro.tags : false;
+					const payload  = [];
+					const skipArgs = macro.hasOwnProperty('skipArgs') && macro.skipArgs;
+					const skipArg0 = macro.hasOwnProperty('skipArg0') && macro.skipArg0;
+					let end          = -1;
+					let opened       = 1;
+					let curSource    = this.working.source;
+					let curTag       = this.working.name;
+					let curArgument  = this.working.arguments;
+					let contentStart = w.nextMatch;
 
 					while ((w.matchStart = w.source.indexOf(this.match, w.nextMatch)) !== -1) {
 						if (!this.parseTag(w)) {
@@ -1153,12 +1137,11 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 							continue;
 						}
 
-						const
-							tagSource = this.working.source,
-							tagName   = this.working.name,
-							tagArgs   = this.working.arguments,
-							tagBegin  = this.working.index,
-							tagEnd    = w.nextMatch;
+						const tagSource = this.working.source;
+						const tagName   = this.working.name;
+						const tagArgs   = this.working.arguments;
+						const tagBegin  = this.working.index;
+						const tagEnd    = w.nextMatch;
 
 						switch (tagName) {
 						case openTag:
@@ -1246,12 +1229,10 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 							7=Barewords
 							8=Unterminated backticks and quotes
 					*/
-					const
-						argsRe  = new RegExp(this.argsPattern, 'gm'),
-						args    = [],
-						varTest = new RegExp(`^${Patterns.variable}`);
-					let
-						match;
+					const argsRe  = new RegExp(this.argsPattern, 'gm');
+					const args    = [];
+					const varTest = new RegExp(`^${Patterns.variable}`);
+					let match;
 
 					while ((match = argsRe.exec(rawArgsString)) !== null) {
 						let arg;
@@ -1467,12 +1448,11 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 					w.nextMatch = markup.pos;
 
 					// text=(text), forceInternal=(~), link=link, setter=(setter)
-					const
-						link  = Wikifier.helpers.evalPassageId(markup.link),
-						text  = markup.hasOwnProperty('text') ? Wikifier.helpers.evalText(markup.text) : link,
-						setFn = markup.hasOwnProperty('setter')
-							? (ex => () => Scripting.evalJavaScript(ex))(Scripting.parse(markup.setter))
-							: null;
+					const link  = Wikifier.helpers.evalPassageId(markup.link);
+					const text  = markup.hasOwnProperty('text') ? Wikifier.helpers.evalText(markup.text) : link;
+					const setFn = markup.hasOwnProperty('setter')
+						? (ex => () => Scripting.evalJavaScript(ex))(Scripting.parse(markup.setter))
+						: null;
 
 					// Debug view setup.
 					const output = (Config.debug
@@ -1528,13 +1508,11 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 					}
 
 					// align=(left|right), title=(title), source=source, forceInternal=(~), link=(link), setter=(setter)
-					const
-						setFn = markup.hasOwnProperty('setter')
-							? (ex => () => Scripting.evalJavaScript(ex))(Scripting.parse(markup.setter))
-							: null;
-					let
-						el     = (Config.debug ? debugView : w).output,
-						source;
+					const setFn = markup.hasOwnProperty('setter')
+						? (ex => () => Scripting.evalJavaScript(ex))(Scripting.parse(markup.setter))
+						: null;
+					let el     = (Config.debug ? debugView : w).output;
+					let source;
 
 					if (markup.hasOwnProperty('link')) {
 						const link = Wikifier.helpers.evalPassageId(markup.link);
@@ -1659,11 +1637,10 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 					this.blockRegExp.lastIndex = w.nextMatch; // must follow the call to `inlineCss()`
 
-					const
-						blockMatch = this.blockRegExp.exec(w.source),
-						blockLevel = blockMatch && blockMatch.index === w.nextMatch,
-						$el        = jQuery(document.createElement(blockLevel ? 'div' : 'span'))
-							.appendTo(w.output);
+					const blockMatch = this.blockRegExp.exec(w.source);
+					const blockLevel = blockMatch && blockMatch.index === w.nextMatch;
+					const $el        = jQuery(document.createElement(blockLevel ? 'div' : 'span'))
+						.appendTo(w.output);
 
 					if (css.classes.length === 0 && css.id === '' && Object.keys(css.styles).length === 0) {
 						$el.addClass('marked');
@@ -1807,14 +1784,12 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 						return;
 					}
 
-					const
-						table       = jQuery(document.createElement('table')).appendTo(w.output).get(0),
-						prevColumns = [];
-					let
-						curRowType    = null,
-						$rowContainer = null,
-						rowCount      = 0,
-						matched;
+					const table       = jQuery(document.createElement('table')).appendTo(w.output).get(0);
+					const prevColumns = [];
+					let curRowType    = null;
+					let $rowContainer = null;
+					let rowCount      = 0;
+					let matched;
 
 					w.nextMatch = w.matchStart;
 
@@ -1861,12 +1836,10 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				},
 
 				rowHandler(w, rowEl, prevColumns) {
-					const
-						cellRegExp = new RegExp(this.cellPattern, 'gm');
-					let
-						col         = 0,
-						curColCount = 1,
-						matched;
+					const cellRegExp = new RegExp(this.cellPattern, 'gm');
+					let col         = 0;
+					let curColCount = 1;
+					let matched;
 
 					do {
 						cellRegExp.lastIndex = w.nextMatch;
@@ -1899,12 +1872,10 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 							else {
 								++w.nextMatch;
 
-								const
-									css = Wikifier.helpers.inlineCss(w);
-								let
-									spaceLeft  = false,
-									spaceRight = false,
-									$cell;
+								const css = Wikifier.helpers.inlineCss(w);
+								let spaceLeft  = false;
+								let spaceRight = false;
+								let $cell;
 
 								while (w.source.substr(w.nextMatch, 1) === ' ') {
 									spaceLeft = true;
@@ -1977,13 +1948,11 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 					w.nextMatch = w.matchStart;
 
-					const
-						destStack = [w.output];
-					let
-						curType  = null,
-						curLevel = 0,
-						matched,
-						i;
+					const destStack = [w.output];
+					let curType  = null;
+					let curLevel = 0;
+					let matched;
+					let i;
 
 					do {
 						this.lookahead.lastIndex = w.nextMatch;
@@ -1993,9 +1962,8 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 						matched = match && match.index === w.nextMatch;
 
 						if (matched) {
-							const
-								newType  = match[2] ? 'ol' : 'ul',
-								newLevel = match[0].length;
+							const newType  = match[2] ? 'ol' : 'ul';
+							const newLevel = match[0].length;
 
 							w.nextMatch += match[0].length;
 
@@ -2069,13 +2037,11 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 						return;
 					}
 
-					const
-						destStack = [w.output];
-					let
-						curLevel = 0,
-						newLevel = w.matchLength,
-						matched,
-						i;
+					const destStack = [w.output];
+					let curLevel = 0;
+					let newLevel = w.matchLength;
+					let matched;
+					let i;
 
 					do {
 						if (newLevel > curLevel) {
@@ -2198,18 +2164,15 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				nobrElements : ['colgroup', 'datalist', 'dl', 'figure', 'ol', 'optgroup', 'select', 'table', 'tbody', 'tfoot', 'thead', 'tr', 'ul'],
 
 				handler(w) {
-					const
-						tagMatch = new RegExp(this.tagPattern).exec(w.matchText),
-						tag      = tagMatch && tagMatch[1],
-						tagName  = tag && tag.toLowerCase();
+					const tagMatch = new RegExp(this.tagPattern).exec(w.matchText);
+					const tag      = tagMatch && tagMatch[1];
+					const tagName  = tag && tag.toLowerCase();
 
 					if (tagName) {
-						const
-							isVoid = this.voidElements.includes(tagName),
-							isNobr = this.nobrElements.includes(tagName);
-						let
-							terminator,
-							terminatorMatch;
+						const isVoid = this.voidElements.includes(tagName);
+						const isNobr = this.nobrElements.includes(tagName);
+						let terminator;
+						let terminatorMatch;
 
 						if (!isVoid) {
 							terminator = `<\\/${tagName}\\s*>`;
@@ -2221,10 +2184,9 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 						}
 
 						if (isVoid || terminatorMatch) {
-							let
-								output    = w.output,
-								el        = document.createElement(w.output.tagName),
-								debugView;
+							let output    = w.output;
+							let el        = document.createElement(w.output.tagName);
+							let debugView;
 
 							el.innerHTML = w.matchText;
 
@@ -2300,9 +2262,8 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 							}
 						}
 						else {
-							let
-								setter = el.getAttribute('data-setter'),
-								setFn;
+							let setter = el.getAttribute('data-setter');
+							let setFn;
 
 							if (setter != null) { // lazy equality for null
 								setter = String(setter).trim();

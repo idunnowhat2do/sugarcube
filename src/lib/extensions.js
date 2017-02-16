@@ -43,12 +43,11 @@ function safeActiveElement() {
 (() => {
 	'use strict';
 
-	const
-		// Starting whitespace regular expressions.
-		_startingSpaceCharsRe = /^[\s\u00A0\uFEFF][\s\u00A0\uFEFF]*/, // include additional sequences for older browsers
+	// Starting whitespace regular expressions.
+	const _startingSpaceCharsRe = /^[\s\u00A0\uFEFF][\s\u00A0\uFEFF]*/; // include additional sequences for older browsers
 
-		// Ending whitespace regular expressions.
-		_endingSpaceCharsRe = /[\s\u00A0\uFEFF][\s\u00A0\uFEFF]*$/; // include additional sequences for older browsers
+	// Ending whitespace regular expressions.
+	const _endingSpaceCharsRe = /[\s\u00A0\uFEFF][\s\u00A0\uFEFF]*$/; // include additional sequences for older browsers
 
 
 	/*******************************************************************************************************************
@@ -93,9 +92,8 @@ function safeActiveElement() {
 		}
 
 		while (padString.length < targetLength) {
-			const
-				curPadLength    = padString.length,
-				remainingLength = targetLength - curPadLength;
+			const curPadLength    = padString.length;
+			const remainingLength = targetLength - curPadLength;
 
 			padString += curPadLength > remainingLength
 				? padString.slice(0, remainingLength)
@@ -172,10 +170,9 @@ function safeActiveElement() {
 					throw new TypeError('String.prototype.padStart called on null or undefined');
 				}
 
-				const
-					baseString   = String(this),
-					baseLength   = baseString.length,
-					targetLength = Number.parseInt(length, 10);
+				const baseString   = String(this);
+				const baseLength   = baseString.length;
+				const targetLength = Number.parseInt(length, 10);
 
 				if (targetLength <= baseLength) {
 					return baseString;
@@ -202,10 +199,9 @@ function safeActiveElement() {
 					throw new TypeError('String.prototype.padEnd called on null or undefined');
 				}
 
-				const
-					baseString   = String(this),
-					baseLength   = baseString.length,
-					targetLength = Number.parseInt(length, 10);
+				const baseString   = String(this);
+				const baseLength   = baseString.length;
+				const targetLength = Number.parseInt(length, 10);
 
 				if (targetLength <= baseLength) {
 					return baseString;
@@ -302,7 +298,8 @@ function safeActiveElement() {
 			throw new Error('_random called with insufficient parameters');
 		}
 
-		let min, max;
+		let min;
+		let max;
 
 		if (arguments.length === 1) {
 			min = 0;
@@ -380,9 +377,8 @@ function safeActiveElement() {
 			throw new Error('low surrogate without leading high surrogate');
 		}
 
-		const
-			prevPos  = pos - 1,
-			prevCode = str.charCodeAt(prevPos);
+		const prevPos  = pos - 1;
+		const prevCode = str.charCodeAt(prevPos);
 
 		// Previous code unit is not a high surrogate (D800–DBFF).
 		if (prevCode < 0xD800 || prevCode > 0xDBFF) {
@@ -409,9 +405,8 @@ function safeActiveElement() {
 		writable     : true,
 
 		value(array, lowerBound, upperBound) {
-			let
-				lower = lowerBound,
-				upper = upperBound;
+			let lower = lowerBound;
+			let upper = upperBound;
 
 			if (arguments.length === 2) {
 				upper = lower;
@@ -439,12 +434,10 @@ function safeActiveElement() {
 				throw new TypeError('Array.prototype.count called on null or undefined');
 			}
 
-			const
-				indexOf = Array.prototype.indexOf,
-				needle  = arguments[0];
-			let
-				pos   = Number(arguments[1]) || 0,
-				count = 0;
+			const indexOf = Array.prototype.indexOf;
+			const needle  = arguments[0];
+			let pos   = Number(arguments[1]) || 0;
+			let count = 0;
 
 			while ((pos = indexOf.call(this, needle, pos)) !== -1) {
 				++count;
@@ -477,12 +470,11 @@ function safeActiveElement() {
 				return [];
 			}
 
-			const
-				indexOf = Array.prototype.indexOf,
-				push    = Array.prototype.push,
-				splice  = Array.prototype.splice,
-				needles = Array.prototype.concat.apply([], arguments),
-				result  = [];
+			const indexOf = Array.prototype.indexOf;
+			const push    = Array.prototype.push;
+			const splice  = Array.prototype.splice;
+			const needles = Array.prototype.concat.apply([], arguments);
+			const result  = [];
 
 			for (let i = 0, iend = needles.length; i < iend; ++i) {
 				const needle = needles[i];
@@ -519,18 +511,17 @@ function safeActiveElement() {
 				return [];
 			}
 
-			const
-				splice     = Array.prototype.splice,
-				cpyIndices = [
-					...(new Set(
-						Array.prototype.concat.apply([], arguments)
-							// Map negative indices to their positive counterparts,
-							// so the Set can properly filter out duplicates.
-							.map(x => x < 0 ? Math.max(0, length + x) : x)
-					)).values()
-				],
-				delIndices = [...cpyIndices].sort((a, b) => b - a),
-				result     = [];
+			const splice     = Array.prototype.splice;
+			const cpyIndices = [
+				...(new Set(
+					Array.prototype.concat.apply([], arguments)
+						// Map negative indices to their positive counterparts,
+						// so the Set can properly filter out duplicates.
+						.map(x => x < 0 ? Math.max(0, length + x) : x)
+				)).values()
+			];
+			const delIndices = [...cpyIndices].sort((a, b) => b - a);
+			const result     = [];
 
 			// Copy the elements (in original indices order).
 			for (let i = 0, iend = cpyIndices.length; i < iend; ++i) {
@@ -653,9 +644,8 @@ function safeActiveElement() {
 				return;
 			}
 
-			let
-				lower = lowerBound,
-				upper = upperBound;
+			let lower = lowerBound;
+			let upper = upperBound;
 
 			if (arguments.length === 1) {
 				upper = lower;
@@ -713,9 +703,8 @@ function safeActiveElement() {
 				return;
 			}
 
-			let
-				lower = lowerBound,
-				upper = upperBound;
+			let lower = lowerBound;
+			let upper = upperBound;
 
 			if (arguments.length === 1) {
 				upper = lower;
@@ -773,11 +762,11 @@ function safeActiveElement() {
 			}
 
 			for (let i = length - 1; i > 0; --i) {
-				const
-					j    = Math.floor(_nativeMathRandom() * (i + 1)),
-					swap = this[i];
-				this[i] = this[j];
-				this[j] = swap;
+				const j    = Math.floor(_nativeMathRandom() * (i + 1));
+				// const swap = this[i];
+				// this[i] = this[j];
+				// this[j] = swap;
+				[this[i], this[j]] = [this[j], this[i]];
 			}
 
 			return this;
@@ -797,10 +786,9 @@ function safeActiveElement() {
 				throw new TypeError('Function.prototype.partial called on null or undefined');
 			}
 
-			const
-				slice = Array.prototype.slice,
-				fn    = this,
-				bound = slice.call(arguments, 0);
+			const slice = Array.prototype.slice;
+			const fn    = this;
+			const bound = slice.call(arguments, 0);
 
 			return function () {
 				const applied = [];
@@ -858,9 +846,8 @@ function safeActiveElement() {
 				throw new Error('Number.prototype.clamp called with an incorrect number of parameters');
 			}
 
-			let
-				min = Number(arguments[0]),
-				max = Number(arguments[1]);
+			let min = Number(arguments[0]);
+			let max = Number(arguments[1]);
 
 			if (min > max) {
 				[min, max] = [max, min];
@@ -875,9 +862,8 @@ function safeActiveElement() {
 	*/
 	if (!RegExp.escape) {
 		(() => {
-			const
-				_regExpMetaCharsRe    = /[\\^$*+?.()|[\]{}]/g,
-				_hasRegExpMetaCharsRe = new RegExp(_regExpMetaCharsRe.source); // to drop the global flag
+			const _regExpMetaCharsRe    = /[\\^$*+?.()|[\]{}]/g;
+			const _hasRegExpMetaCharsRe = new RegExp(_regExpMetaCharsRe.source); // to drop the global flag
 
 			Object.defineProperty(RegExp, 'escape', {
 				configurable : true,
@@ -898,9 +884,8 @@ function safeActiveElement() {
 		with the text equivalent of the corresponding argument's value.
 	*/
 	(() => {
-		const
-			_formatRegExp    = /{(\d+)(?:,([+-]?\d+))?}/g,
-			_hasFormatRegExp = new RegExp(_formatRegExp.source); // to drop the global flag
+		const _formatRegExp    = /{(\d+)(?:,([+-]?\d+))?}/g;
+		const _hasFormatRegExp = new RegExp(_formatRegExp.source); // to drop the global flag
 
 		Object.defineProperty(String, 'format', {
 			configurable : true,
@@ -999,17 +984,16 @@ function safeActiveElement() {
 				return 0;
 			}
 
-			const
-				indexOf = String.prototype.indexOf,
-				step    = needle.length;
-			let
-				pos     = Number(arguments[1]) || 0,
-				count   = 0;
+			const indexOf = String.prototype.indexOf;
+			const step    = needle.length;
+			let pos     = Number(arguments[1]) || 0;
+			let count   = 0;
 
 			while ((pos = indexOf.call(this, needle, pos)) !== -1) {
 				++count;
 				pos += step;
 			}
+
 			return count;
 		}
 	});
@@ -1103,12 +1087,11 @@ function safeActiveElement() {
 				throw new TypeError('String.prototype.toLocaleUpperFirst called on null or undefined');
 			}
 
-			const
-				// Required as `this` could be a `String` object or come from a `call()` or `apply()`.
-				str = String(this),
+			// Required as `this` could be a `String` object or come from a `call()` or `apply()`.
+			const str = String(this);
 
-				// Get the first code point—may be one or two code units—and its end position.
-				{ char, end } = _getCodePointStartAndEnd(str, 0); // eslint-disable-line no-unused-vars
+			// Get the first code point—may be one or two code units—and its end position.
+			const { char, end } = _getCodePointStartAndEnd(str, 0);
 
 			return end === -1 ? '' : char.toLocaleUpperCase() + str.slice(end + 1);
 		}
@@ -1126,12 +1109,11 @@ function safeActiveElement() {
 				throw new TypeError('String.prototype.toUpperFirst called on null or undefined');
 			}
 
-			const
-				// Required as `this` could be a `String` object or come from a `call()` or `apply()`.
-				str = String(this),
+			// Required as `this` could be a `String` object or come from a `call()` or `apply()`.
+			const str = String(this);
 
-				// Get the first code point—may be one or two code units—and its end position.
-				{ char, end } = _getCodePointStartAndEnd(str, 0); // eslint-disable-line no-unused-vars
+			// Get the first code point—may be one or two code units—and its end position.
+			const { char, end } = _getCodePointStartAndEnd(str, 0);
 
 			return end === -1 ? '' : char.toUpperCase() + str.slice(end + 1);
 		}
@@ -1347,11 +1329,9 @@ function safeActiveElement() {
 			}
 
 			// RegExp groups: Double-square-bracket quoted | Unquoted.
-			const
-				re    = new RegExp('(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^"\'\\s]\\S*)', 'gm'),
-				names = [];
-			let
-				match;
+			const re    = new RegExp('(?:\\[\\[((?:\\s|\\S)*?)\\]\\])|([^"\'\\s]\\S*)', 'gm');
+			const names = [];
+			let match;
 
 			while ((match = re.exec(this)) !== null) {
 				if (match[1]) { // double-square-bracket quoted
@@ -1438,9 +1418,8 @@ function safeActiveElement() {
 				return this;
 			}
 
-			let
-				opts = options,
-				fn   = handler;
+			let opts = options;
+			let fn   = handler;
 
 			if (fn == null) { // lazy equality for null
 				fn   = opts;

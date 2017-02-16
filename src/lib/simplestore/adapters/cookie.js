@@ -11,9 +11,8 @@
 SimpleStore.adapters.push((() => {
 	'use strict';
 
-	let
-		// Adapter readiness state.
-		_ok = false;
+	// Adapter readiness state.
+	let _ok = false;
 
 
 	/*******************************************************************************************************************
@@ -67,14 +66,12 @@ SimpleStore.adapters.push((() => {
 				return [];
 			}
 
-			const
-				cookies = document.cookie.split(/;\s*/),
-				keys    = [];
+			const cookies = document.cookie.split(/;\s*/);
+			const keys    = [];
 
 			for (let i = 0; i < cookies.length; ++i) {
-				const
-					kvPair = cookies[i].split('='),
-					key    = decodeURIComponent(kvPair[0]);
+				const kvPair = cookies[i].split('=');
+				const key    = decodeURIComponent(kvPair[0]);
 
 				if (this._prefixRe.test(key)) {
 					/*
@@ -205,9 +202,8 @@ SimpleStore.adapters.push((() => {
 			const cookies = document.cookie.split(/;\s*/);
 
 			for (let i = 0; i < cookies.length; ++i) {
-				const
-					kvPair = cookies[i].split('='),
-					key    = decodeURIComponent(kvPair[0]);
+				const kvPair = cookies[i].split('=');
+				const key    = decodeURIComponent(kvPair[0]);
 
 				if (prefixedKey === key) {
 					const value = decodeURIComponent(kvPair[1]);
@@ -288,18 +284,16 @@ SimpleStore.adapters.push((() => {
 			return;
 		}
 
-		const
-			oldPrefix     = `${storageId}.`,
-			oldPrefixRe   = new RegExp(`^${RegExp.escape(oldPrefix)}`),
-			persistPrefix = `${storageId}!.`,
-			sessionPrefix = `${storageId}*.`,
-			sessionTestRe = /\.(?:state|rcWarn)$/,
-			cookies       = document.cookie.split(/;\s*/);
+		const oldPrefix     = `${storageId}.`;
+		const oldPrefixRe   = new RegExp(`^${RegExp.escape(oldPrefix)}`);
+		const persistPrefix = `${storageId}!.`;
+		const sessionPrefix = `${storageId}*.`;
+		const sessionTestRe = /\.(?:state|rcWarn)$/;
+		const cookies       = document.cookie.split(/;\s*/);
 
 		for (let i = 0; i < cookies.length; ++i) {
-			const
-				kvPair = cookies[i].split('='),
-				key    = decodeURIComponent(kvPair[0]);
+			const kvPair = cookies[i].split('=');
+			const key    = decodeURIComponent(kvPair[0]);
 
 			if (oldPrefixRe.test(key)) {
 				/*

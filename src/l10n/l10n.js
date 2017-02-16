@@ -11,10 +11,9 @@
 var L10n = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
-	const
-		// Replacement pattern regular expressions.
-		_patternRe    = /\{\w+\}/g,
-		_hasPatternRe = new RegExp(_patternRe.source); // to drop the global flag
+	// Replacement pattern regular expressions.
+	const _patternRe    = /\{\w+\}/g;
+	const _hasPatternRe = new RegExp(_patternRe.source); // to drop the global flag
 
 
 	/*******************************************************************************************************************
@@ -51,11 +50,9 @@ var L10n = (() => { // eslint-disable-line no-unused-vars, no-var
 			return '';
 		}
 
-		const
-			maxIterations = 50;
-		let
-			processed = l10nStrings[id],
-			iteration = 0;
+		const maxIterations = 50;
+		let processed = l10nStrings[id];
+		let iteration = 0;
 
 		while (_hasPatternRe.test(processed)) {
 			if (++iteration > maxIterations) {

@@ -62,17 +62,16 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 	/**
 		Returns an entity encoded version of the passed string.
 	**/
-	const
-		_htmlCharsRe    = /[&<>"'`]/g,
-		_hasHtmlCharsRe = new RegExp(_htmlCharsRe.source), // to drop the global flag
-		_htmlCharsMap   = Object.freeze({
-			'&' : '&amp;',
-			'<' : '&lt;',
-			'>' : '&gt;',
-			'"' : '&quot;',
-			"'" : '&#39;',
-			'`' : '&#96;'
-		});
+	const _htmlCharsRe    = /[&<>"'`]/g;
+	const _hasHtmlCharsRe = new RegExp(_htmlCharsRe.source); // to drop the global flag
+	const _htmlCharsMap   = Object.freeze({
+		'&' : '&amp;',
+		'<' : '&lt;',
+		'>' : '&gt;',
+		'"' : '&quot;',
+		"'" : '&#39;',
+		'`' : '&#96;'
+	});
 
 	function utilEscape(str) {
 		if (str == null) { // lazy equality for null
@@ -88,20 +87,19 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 	/**
 		Returns a decoded version of the passed entity encoded string.
 	**/
-	const
-		_escapedHtmlRe    = /&(?:amp|lt|gt|quot|apos|#39|#x27|#96|#x60);/g,
-		_hasEscapedHtmlRe = new RegExp(_escapedHtmlRe.source), // to drop the global flag
-		_escapedHtmlMap   = Object.freeze({
-			'&amp;'  : '&',
-			'&lt;'   : '<',
-			'&gt;'   : '>',
-			'&quot;' : '"',
-			'&apos;' : "'", // apostrophe from XML shenanigans
-			'&#39;'  : "'", // apostrophe from decimal NCR
-			'&#x27;' : "'", // apostrophe from hexadecimal NCR (fuck you, Underscorejs)
-			'&#96;'  : '`', // backtick from decimal NCR
-			'&#x60;' : '`'  // backtick from hexadecimal NCR (fuck you, Underscorejs)
-		});
+	const _escapedHtmlRe    = /&(?:amp|lt|gt|quot|apos|#39|#x27|#96|#x60);/g;
+	const _hasEscapedHtmlRe = new RegExp(_escapedHtmlRe.source); // to drop the global flag
+	const _escapedHtmlMap   = Object.freeze({
+		'&amp;'  : '&',
+		'&lt;'   : '<',
+		'&gt;'   : '>',
+		'&quot;' : '"',
+		'&apos;' : "'", // apostrophe from XML shenanigans
+		'&#39;'  : "'", // apostrophe from decimal NCR
+		'&#x27;' : "'", // apostrophe from hexadecimal NCR (fuck you, Underscorejs)
+		'&#96;'  : '`', // backtick from decimal NCR
+		'&#x60;' : '`'  // backtick from hexadecimal NCR (fuck you, Underscorejs)
+	});
 
 	function utilUnescape(str) {
 		if (str == null) { // lazy equality for null
@@ -122,9 +120,8 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 		Returns the number of miliseconds represented by the passed CSS time string.
 	**/
 	function utilFromCssTime(cssTime) {
-		const
-			re    = /^([+-]?(?:\d*\.)?\d+)([Mm]?[Ss])$/,
-			match = re.exec(String(cssTime));
+		const re    = /^([+-]?(?:\d*\.)?\d+)([Mm]?[Ss])$/;
+		const match = re.exec(String(cssTime));
 
 		if (match === null) {
 			throw new SyntaxError(`invalid time value syntax: "${cssTime}"`);
@@ -195,9 +192,8 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 		Returns an object containing the component properties parsed from the passed URL.
 	**/
 	function utilParseUrl(url) {
-		const
-			el       = document.createElement('a'),
-			queryObj = Object.create(null);
+		const el       = document.createElement('a');
+		const queryObj = Object.create(null);
 
 		// Let the `<a>` element parse the URL.
 		el.href = url;
@@ -297,24 +293,21 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 	**/
 	function utilDiff(orig, dest) /* diff object */ {
 		/* eslint-disable id-length, max-depth */
-		const
-			objToString = Object.prototype.toString,
-			origIsArray = Array.isArray(orig),
-			keys        = []
-				.concat(Object.keys(orig), Object.keys(dest))
-				.sort()
-				.filter((v, i, a) => i === 0 || a[i - 1] !== v),
-			diff        = {};
-		let
-			aOpRef;
+		const objToString = Object.prototype.toString;
+		const origIsArray = Array.isArray(orig);
+		const keys        = []
+			.concat(Object.keys(orig), Object.keys(dest))
+			.sort()
+			.filter((v, i, a) => i === 0 || a[i - 1] !== v);
+		const diff        = {};
+		let aOpRef;
 
 		const keyIsAOpRef = key => key === aOpRef;
 
 		for (let i = 0, klen = keys.length; i < klen; ++i) {
-			const
-				key   = keys[i],
-				origP = orig[key],
-				destP = dest[key];
+			const key   = keys[i];
+			const origP = orig[key];
+			const destP = dest[key];
 
 			if (orig.hasOwnProperty(key)) {
 				// Key exists in both.
@@ -339,9 +332,8 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 						}
 						// Values are objects.
 						else {
-							const
-								origPType = objToString.call(origP),
-								destPType = objToString.call(destP);
+							const origPType = objToString.call(origP);
+							const destPType = objToString.call(destP);
 
 							// Values are objects of the same prototype.
 							if (origPType === destPType) {
@@ -426,14 +418,12 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 		Returns an object resulting from updating the orig object with the diff object.
 	**/
 	function utilPatch(orig, diff) /* patched object */ {
-		const
-			keys    = Object.keys(diff || {}),
-			patched = clone(orig);
+		const keys    = Object.keys(diff || {});
+		const patched = clone(orig);
 
 		for (let i = 0, klen = keys.length; i < klen; ++i) {
-			const
-				key   = keys[i],
-				diffP = diff[key];
+			const key   = keys[i];
+			const diffP = diff[key];
 
 			if (diffP === DiffOp.Delete) {
 				delete patched[key];

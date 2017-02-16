@@ -52,51 +52,49 @@ var version = Object.freeze({
 /*
 	Internal variables.
 */
-var
-	// Temporary state object.
-	TempState = {},
+// Temporary state object.
+var TempState = {};
 
-	// Legacy macros object.
-	macros = {},
+// Legacy macros object.
+var macros = {};
 
-	// Post-display task callbacks object.
-	postdisplay = {},
+// Post-display task callbacks object.
+var postdisplay = {};
 
-	// Post-render task callbacks object.
-	postrender = {},
+// Post-render task callbacks object.
+var postrender = {};
 
-	// Pre-display task callbacks object.
-	predisplay = {},
+// Pre-display task callbacks object.
+var predisplay = {};
 
-	// Pre-history task callbacks object.
-	prehistory = {},
+// Pre-history task callbacks object.
+var prehistory = {};
 
-	// Pre-render task callbacks object.
-	prerender = {},
+// Pre-render task callbacks object.
+var prerender = {};
 
-	// Session storage manager object.
-	session = null,
+// Session storage manager object.
+var session = null;
 
-	// Settings object.
-	settings = {},
+// Settings object.
+var settings = {};
 
-	// Setup object.
-	setup = {},
+// Setup object.
+var setup = {};
 
-	// Persistant storage manager object.
-	storage = null;
+// Persistant storage manager object.
+var storage = null;
 
 /*
 	Legacy aliases.
 */
-var
-	browser       = Browser,
-	config        = Config,
-	has           = Has,
-	History       = State,
-	state         = State,
-	tale          = Story,
-	TempVariables = State.temporary;
+var browser       = Browser;
+var config        = Config;
+var has           = Has;
+var History       = State;
+var state         = State;
+var tale          = Story;
+var TempVariables = State.temporary;
 /* eslint-enable no-unused-vars */
 
 /*

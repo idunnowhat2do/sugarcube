@@ -11,9 +11,8 @@
 var LoadScreen = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
-	let
-		// Loading screen lock state.
-		_locked = false;
+	// Loading screen lock state.
+	let _locked = false;
 
 
 	/*******************************************************************************************************************

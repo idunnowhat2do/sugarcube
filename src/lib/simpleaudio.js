@@ -11,19 +11,17 @@
 var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
-	const
-		// Mapping of subscriber -> callback pairs.
-		_subscribers = new Map();
+	// Mapping of subscriber -> callback pairs.
+	const _subscribers = new Map();
 
-	let
-		// Master playback rate.
-		_masterRate = 1,
+	// Master playback rate.
+	let _masterRate = 1;
 
-		// Master playback volume.
-		_masterVolume = 1,
+	// Master playback volume.
+	let _masterVolume = 1;
 
-		// Master mute state.
-		_masterMute = false;
+	// Master mute state.
+	let _masterMute = false;
 
 
 	/*******************************************************************************************************************
@@ -48,27 +46,26 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 				throw new Error('sources parameter must be an array of either URLs or source objects');
 			}
 
-			const
-				dataUrlRe   = /^data:\s*audio\/([^;,]+)\s*[;,]/i,
-				extRe       = /\.([^./\\]+)$/,
-				getType     = AudioWrapper.getType,
-				usedSources = [],
-				// sourceElems = document.createDocumentFragment(),
-				/*
-					HTMLAudioElement: DOM factory method vs. constructor
+			const dataUrlRe   = /^data:\s*audio\/([^;,]+)\s*[;,]/i;
+			const extRe       = /\.([^./\\]+)$/;
+			const getType     = AudioWrapper.getType;
+			const usedSources = [];
+			// const sourceElems = document.createDocumentFragment();
+			/*
+				HTMLAudioElement: DOM factory method vs. constructor
 
-					Use of the DOM factory method, `document.createElement('audio')`, should be
-					preferred over use of the constructor, `new Audio()`.  The reason being that
-					objects created by the latter are, erroneously, treated differently, often
-					unfavorably, by certain browser engines—e.g. within some versions of the iOS
-					browser core.
+				Use of the DOM factory method, `document.createElement('audio')`, should be
+				preferred over use of the constructor, `new Audio()`.  The reason being that
+				objects created by the latter are, erroneously, treated differently, often
+				unfavorably, by certain browser engines—e.g. within some versions of the iOS
+				browser core.
 
-					Notably, the only difference between the two, per the specification, is that
-					objects created via the constructor should have their `preload` property
-					automatically set to 'auto'.  Thus, there's no technical reason to prefer
-					usage of the constructor, even discounting buggy browser implementations.
-				*/
-				audio = document.createElement('audio');
+				Notably, the only difference between the two, per the specification, is that
+				objects created via the constructor should have their `preload` property
+				automatically set to 'auto'.  Thus, there's no technical reason to prefer
+				usage of the constructor, even discounting buggy browser implementations.
+			*/
+			const audio = document.createElement('audio');
 
 			// Process the array of sources.
 			sourceList.forEach(src => {
@@ -513,9 +510,8 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 		fadeWithDuration(fadeDuration, toVol, fromVol) {
 			this.fadeStop();
 
-			const
-				from = Math.clamp(fromVol == null ? this.volume : fromVol, 0, 1), // lazy equality for null
-				to   = Math.clamp(toVol, 0, 1);
+			const from = Math.clamp(fromVol == null ? this.volume : fromVol, 0, 1); // lazy equality for null
+			const to   = Math.clamp(toVol, 0, 1);
 
 			if (from === to) {
 				return;
@@ -532,7 +528,8 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 			jQuery(this.audio)
 				.off('timeupdate.AudioWrapper:fadeWithDuration')
 				.one('timeupdate.AudioWrapper:fadeWithDuration', () => {
-					let min, max;
+					let min;
+					let max;
 
 					if (from < to) {
 						// Fade in.
@@ -554,9 +551,8 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 					// 	duration = this.remaining;
 					// }
 
-					const
-						interval = 25, // in milliseconds
-						delta    = (to - from) / (duration / (interval / 1000));
+					const interval = 25; // in milliseconds
+					const delta    = (to - from) / (duration / (interval / 1000));
 
 					this._faderId = setInterval(() => {
 						if (!this.isPlaying()) {
@@ -610,19 +606,18 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 				throw new Error('listener parameter must be a function');
 			}
 
-			const
-				awEvents = AudioWrapper._events,
-				events   = eventNames.trim().splitOrEmpty(/\s+/)
-					.map(nameAndNS => {
-						const name = nameAndNS.split('.', 1)[0];
+			const awEvents = AudioWrapper._events;
+			const events   = eventNames.trim().splitOrEmpty(/\s+/)
+				.map(nameAndNS => {
+					const name = nameAndNS.split('.', 1)[0];
 
-						if (!awEvents.hasOwnProperty(name)) {
-							throw new Error(`unknown event "${name}"; valid: ${Object.keys(awEvents).join(', ')}`);
-						}
+					if (!awEvents.hasOwnProperty(name)) {
+						throw new Error(`unknown event "${name}"; valid: ${Object.keys(awEvents).join(', ')}`);
+					}
 
-						return `${nameAndNS.replace(name, awEvents[name])}.AudioWrapperEvent`;
-					})
-					.join(' ');
+					return `${nameAndNS.replace(name, awEvents[name])}.AudioWrapperEvent`;
+				})
+				.join(' ');
 
 			if (events === '') {
 				throw new Error(`invalid eventNames parameter "${eventNames}"`);
@@ -637,19 +632,18 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 				throw new Error('listener parameter must be a function');
 			}
 
-			const
-				awEvents = AudioWrapper._events,
-				events   = eventNames.trim().splitOrEmpty(/\s+/)
-					.map(nameAndNS => {
-						const name = nameAndNS.split('.', 1)[0];
+			const awEvents = AudioWrapper._events;
+			const events   = eventNames.trim().splitOrEmpty(/\s+/)
+				.map(nameAndNS => {
+					const name = nameAndNS.split('.', 1)[0];
 
-						if (!awEvents.hasOwnProperty(name)) {
-							throw new Error(`unknown event "${name}"; valid: ${Object.keys(awEvents).join(', ')}`);
-						}
+					if (!awEvents.hasOwnProperty(name)) {
+						throw new Error(`unknown event "${name}"; valid: ${Object.keys(awEvents).join(', ')}`);
+					}
 
-						return `${nameAndNS.replace(name, awEvents[name])}.AudioWrapperEvent`;
-					})
-					.join(' ');
+					return `${nameAndNS.replace(name, awEvents[name])}.AudioWrapperEvent`;
+				})
+				.join(' ');
 
 			if (events === '') {
 				throw new Error(`invalid eventNames parameter "${eventNames}"`);
@@ -668,23 +662,22 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 				return jQuery(this.audio).off('.AudioWrapperEvent', listener);
 			}
 
-			const
-				awEvents = AudioWrapper._events,
-				events   = eventNames.trim().splitOrEmpty(/\s+/)
-					.map(nameAndNS => {
-						const name = nameAndNS.split('.', 1)[0];
+			const awEvents = AudioWrapper._events;
+			const events   = eventNames.trim().splitOrEmpty(/\s+/)
+				.map(nameAndNS => {
+					const name = nameAndNS.split('.', 1)[0];
 
-						if (name) {
-							if (!awEvents.hasOwnProperty(name)) {
-								throw new Error(`unknown event "${name}"; valid: ${Object.keys(awEvents).join(', ')}`);
-							}
-
-							return `${nameAndNS.replace(name, awEvents[name])}.AudioWrapperEvent`;
+					if (name) {
+						if (!awEvents.hasOwnProperty(name)) {
+							throw new Error(`unknown event "${name}"; valid: ${Object.keys(awEvents).join(', ')}`);
 						}
 
-						return `${nameAndNS}.AudioWrapperEvent`;
-					})
-					.join(' ');
+						return `${nameAndNS.replace(name, awEvents[name])}.AudioWrapperEvent`;
+					}
+
+					return `${nameAndNS}.AudioWrapperEvent`;
+				})
+				.join(' ');
 
 			if (events === '') {
 				throw new Error(`invalid eventNames parameter "${eventNames}"`);
@@ -724,10 +717,9 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 				return null;
 			}
 
-			const
-				known = AudioWrapper.formats,
-				id    = format.toLowerCase(),
-				type  = known.hasOwnProperty(id) ? known[id] : `audio/${id}`;
+			const known = AudioWrapper.formats;
+			const id    = format.toLowerCase();
+			const type  = known.hasOwnProperty(id) ? known[id] : `audio/${id}`;
 
 			return AudioWrapper._verifyType(type);
 		}
@@ -890,7 +882,10 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 				throw new Error('track parameter must be an object');
 			}
 
-			let copy, track, volume, rate;
+			let copy;
+			let track;
+			let volume;
+			let rate;
 
 			if (trackObj instanceof AudioWrapper) {
 				copy   = true;
