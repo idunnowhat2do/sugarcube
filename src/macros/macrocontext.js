@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global Config, DebugView, throwError */
+/* global Config, DebugView, Engine, State, Wikifier, throwError */
 
 var MacroContext = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
@@ -63,6 +63,11 @@ var MacroContext = (() => { // eslint-disable-line no-unused-vars, no-var
 					value : context.parser.output
 				},
 
+				_shadow : {
+					writable : true,
+					value    : null
+				},
+
 				_debugView : {
 					writable : true,
 					value    : null
@@ -77,6 +82,15 @@ var MacroContext = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		get output() {
 			return this._debugViewEnabled ? this.debugView.output : this._output;
+		}
+
+		get shadows() {
+			const shadows = {};
+			this.contextSelectAll(ctx => ctx._shadow)
+				.reverse()
+				.forEach(ctx => Object.assign(shadows, ctx._shadow));
+
+			return shadows;
 		}
 
 		get debugView() {
@@ -122,6 +136,107 @@ var MacroContext = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 
 			return result;
+		}
+
+		createShadow(keyOrObj, value) {
+			const varCheckRe  = /^[$_]/;
+			let assignObj;
+
+			switch (typeof keyOrObj) {
+			case 'string':
+				if (!varCheckRe.test(keyOrObj)) {
+					throw new TypeError(`keyOrObj parameter string "${keyOrObj}" does not start with a variable sigil`);
+				}
+
+				assignObj = { [keyOrObj] : value };
+				break;
+
+			case 'object':
+				Object.keys(keyOrObj).forEach(key => {
+					if (!varCheckRe.test(key)) {
+						throw new TypeError(`keyOrObj parameter object key "${key}" does not start with a variable sigil`);
+					}
+				});
+
+				assignObj = keyOrObj;
+				break;
+
+			default:
+				throw new TypeError(`keyOrObj parameter must be a string or object; type: ${typeof keyOrObj}`);
+			}
+
+			if (!this._shadow) {
+				this._shadow = {};
+			}
+
+			Object.assign(this._shadow, assignObj);
+		}
+
+		createShadowWrapperHandler(content, callback, passage) {
+			const self = this;
+			return function () {
+				if (content || typeof callback === 'function') {
+					const shadows     = self.shadows;
+					const shadowNames = Object.keys(shadows);
+					const valueCache  = shadowNames.length > 0 ? {} : null;
+					const storyVarRe  = /^\$/;
+
+					/*
+						There's no catch clause because this try/finally is here simply to ensure that
+						proper cleanup is done in the event that an exception is thrown during the
+						`Wikifier.wikifyEval()` call.
+					*/
+					try {
+						/*
+							Cache the existing values of the variables to be shadowed and assign the
+							shadow values.
+						*/
+						if (shadowNames.length > 0) {
+							shadowNames.forEach(varName => {
+								const store  = storyVarRe.test(varName) ? State.variables : State.temporary;
+								const varKey = varName.slice(1);
+
+								if (store.hasOwnProperty(varKey)) {
+									valueCache[varKey] = store[varKey];
+								}
+
+								store[varKey] = shadows[varName];
+							});
+						}
+
+						// Wikify the content, if any, and discard any output.
+						if (content) {
+							Wikifier.wikifyEval(content);
+						}
+
+						// Call the callback function, if any.
+						if (typeof callback === 'function') {
+							callback.call(this);
+						}
+					}
+					finally {
+						// Revert the variable shadowing.
+						if (shadowNames.length > 0) {
+							shadowNames.forEach(varName => {
+								const store  = storyVarRe.test(varName) ? State.variables : State.temporary;
+								const varKey = varName.slice(1);
+
+								if (valueCache.hasOwnProperty(varKey)) {
+									store[varKey] = valueCache[varKey];
+								}
+								else {
+									delete store[varKey];
+								}
+							});
+						}
+					}
+				}
+
+				// Play the given passage, if any.
+				if (passage != null) { // lazy equality for null
+					Engine.play(passage);
+				}
+			};
 		}
 
 		createDebugView(name, title) {

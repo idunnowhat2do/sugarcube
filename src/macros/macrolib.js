@@ -17,60 +17,35 @@
 	/*******************************************************************************************************************
 	 * Utility Functions.
 	 ******************************************************************************************************************/
-	function _createWidgetArgsWrapperHandler(widgetArgs, content, callback, passage) {
-		return function () {
-			if (content || typeof callback === 'function') {
-				let argsCache;
-
-				/*
-					There's no catch clause because this try/finally is here simply to ensure that
-					proper cleanup is done in the event that an exception is thrown during the
-					`Wikifier.wikifyEval()` call.
-				*/
-				try {
-					// Setup the `$args` variable, caching the existing value if necessary.
-					if (typeof widgetArgs !== 'undefined') {
-						if (State.variables.hasOwnProperty('args')) {
-							argsCache = State.variables.args;
-						}
-
-						State.variables.args = widgetArgs;
-					}
-
-					// Wikify the content, if any, and discard any output.
-					if (content) {
-						Wikifier.wikifyEval(content);
-					}
-
-					// Call the callback function, if any.
-					if (typeof callback === 'function') {
-						callback.call(this);
-					}
-				}
-				finally {
-					// Teardown the `$args` variable, restoring the cached value if necessary.
-					if (typeof widgetArgs !== 'undefined') {
-						if (typeof argsCache !== 'undefined') {
-							State.variables.args = argsCache;
-						}
-						else {
-							delete State.variables.args;
-						}
-					}
-				}
-			}
-
-			// Play the given passage, if any.
-			if (passage != null) { // lazy equality for null
-				Engine.play(passage);
-			}
-		};
-	}
-
 
 	/*******************************************************************************************************************
 	 * Variables Macros.
 	 ******************************************************************************************************************/
+	/*
+		<<capture>>
+	*/
+	Macro.add('capture', {
+		skipArgs : true,
+		tags     : null,
+
+		handler() {
+			if (this.args.full.length === 0) {
+				return this.error('no story/temporary variable list specified');
+			}
+
+			const re = new RegExp(`State\\.(variables|temporary)\\.(${Patterns.identifier})`,'g');
+			let match;
+
+			while ((match = re.exec(this.args.full)) !== null) {
+				const store  = State[match[1]];
+				const varKey = match[2];
+				this.createShadow(`${match[1] === 'variables' ? '$' : '_'}${varKey}`, store[varKey]);
+			}
+
+			jQuery(this.output).wiki(this.payload[0].contents);
+		}
+	});
+
 	/*
 		<<set>>
 	*/
@@ -735,19 +710,7 @@
 				);
 			}
 
-			const $link      = jQuery(document.createElement(this.name === 'button' ? 'button' : 'a'));
-			const widgetArgs = (() => {
-				let wargs;
-
-				if (
-					   State.variables.hasOwnProperty('args')
-					&& this.contextHas(ctx => ctx.self.isWidget)
-				) {
-					wargs = State.variables.args;
-				}
-
-				return wargs;
-			})();
+			const $link = jQuery(document.createElement(this.name === 'button' ? 'button' : 'a'));
 			let passage;
 
 			if (typeof this.args[0] === 'object') {
@@ -810,8 +773,7 @@
 				.ariaClick({
 					namespace : '.macros',
 					one       : passage != null // lazy equality for null
-				}, _createWidgetArgsWrapperHandler(
-					widgetArgs,
+				}, this.createShadowWrapperHandler(
 					this.payload[0].contents.trim(),
 					null,
 					passage
@@ -901,18 +863,6 @@
 			const $link      = jQuery(document.createElement('a'));
 			const $insert    = jQuery(document.createElement('span'));
 			const transition = this.args.length > 1 && /^(?:transition|t8n)$/.test(this.args[1]);
-			const widgetArgs = (() => {
-				let wargs;
-
-				if (
-					   State.variables.hasOwnProperty('args')
-					&& this.contextHas(ctx => ctx.self.isWidget)
-				) {
-					wargs = State.variables.args;
-				}
-
-				return wargs;
-			})();
 
 			$link
 				.wikiWithOptions({ profile : 'core' }, this.args[0])
@@ -920,8 +870,7 @@
 				.ariaClick({
 					namespace : '.macros',
 					one       : true
-				}, _createWidgetArgsWrapperHandler(
-					widgetArgs,
+				}, this.createShadowWrapperHandler(
 					null,
 					() => {
 						if (this.name === 'linkreplace') {
@@ -2869,11 +2818,12 @@
 							let argsCache;
 
 							try {
-								// Setup the `$args` variable, caching the existing value if necessary.
+								// Cache the existing value of the `$args` variable, if necessary.
 								if (State.variables.hasOwnProperty('args')) {
 									argsCache = State.variables.args;
 								}
 
+								// Setup our `$args` variable and assign its shadow value.
 								State.variables.args = [];
 
 								for (let i = 0, len = this.args.length; i < len; ++i) {
@@ -2882,6 +2832,7 @@
 
 								State.variables.args.raw = this.args.raw;
 								State.variables.args.full = this.args.full;
+								this.createShadow('$args', State.variables.args);
 
 								// Setup the error trapping variables.
 								const resFrag = document.createDocumentFragment();
@@ -2906,7 +2857,7 @@
 								return this.error(`cannot execute widget: ${ex.message}`);
 							}
 							finally {
-								// Teardown the `$args` variable, restoring the cached value if necessary.
+								// Revert the `$args` variable shadowing.
 								if (typeof argsCache !== 'undefined') {
 									State.variables.args = argsCache;
 								}
