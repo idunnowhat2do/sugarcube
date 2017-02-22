@@ -15,10 +15,6 @@
 	'use strict';
 
 	/*******************************************************************************************************************
-	 * Utility Functions.
-	 ******************************************************************************************************************/
-
-	/*******************************************************************************************************************
 	 * Variables Macros.
 	 ******************************************************************************************************************/
 	/*
@@ -29,20 +25,52 @@
 		tags     : null,
 
 		handler() {
-			if (this.args.full.length === 0) {
+			if (this.args.raw.length === 0) {
 				return this.error('no story/temporary variable list specified');
 			}
 
-			const re = new RegExp(`State\\.(variables|temporary)\\.(${Patterns.identifier})`,'g');
-			let match;
+			const valueCache = {};
 
-			while ((match = re.exec(this.args.full)) !== null) {
-				const store  = State[match[1]];
-				const varKey = match[2];
-				this.createShadow(`${match[1] === 'variables' ? '$' : '_'}${varKey}`, store[varKey]);
+			/*
+				There's no catch clause because this try/finally is here simply to ensure that
+				proper cleanup is done in the event that an exception is thrown during the
+				`Wikifier` call.
+			*/
+			try {
+				const varRe = new RegExp(`(${Patterns.variable})`,'g');
+				let match;
+
+				/*
+					Cache the existing values of the variables and add a shadow.
+				*/
+				while ((match = varRe.exec(this.args.raw)) !== null) {
+					const varName = match[1];
+					const varKey  = varName.slice(1);
+					const store   = varName[0] === '$' ? State.variables : State.temporary;
+
+					if (store.hasOwnProperty(varKey)) {
+						valueCache[varKey] = store[varKey];
+					}
+
+					this.addShadow(varName);
+				}
+
+				new Wikifier(this.output, this.payload[0].contents);
 			}
+			finally {
+				// Revert the variable shadowing.
+				this.shadows.forEach(varName => {
+					const varKey = varName.slice(1);
+					const store  = varName[0] === '$' ? State.variables : State.temporary;
 
-			jQuery(this.output).wiki(this.payload[0].contents);
+					if (valueCache.hasOwnProperty(varKey)) {
+						store[varKey] = valueCache[varKey];
+					}
+					else {
+						delete store[varKey];
+					}
+				});
+			}
 		}
 	});
 
@@ -695,7 +723,8 @@
 		<<button>> & <<link>>
 	*/
 	Macro.add(['button', 'link'], {
-		tags : null,
+		isAsync : true,
+		tags    : null,
 
 		handler() {
 			if (this.args.length === 0) {
@@ -773,10 +802,13 @@
 				.ariaClick({
 					namespace : '.macros',
 					one       : passage != null // lazy equality for null
-				}, this.createShadowWrapperHandler(
-					this.payload[0].contents.trim(),
-					null,
-					passage
+				}, this.createShadowWrapper(
+					this.payload[0].contents !== ''
+						? () => Wikifier.wikifyEval(this.payload[0].contents.trim())
+						: null,
+					passage != null // lazy equality for null
+						? () => Engine.play(passage)
+						: null
 				))
 				.appendTo(this.output);
 		}
@@ -845,7 +877,8 @@
 		<<linkappend>>, <<linkprepend>>, & <<linkreplace>>
 	*/
 	Macro.add(['linkappend', 'linkprepend', 'linkreplace'], {
-		tags : null,
+		isAsync : true,
+		tags    : null,
 
 		handler() {
 			if (this.args.length === 0) {
@@ -870,8 +903,7 @@
 				.ariaClick({
 					namespace : '.macros',
 					one       : true
-				}, this.createShadowWrapperHandler(
-					null,
+				}, this.createShadowWrapper(
 					() => {
 						if (this.name === 'linkreplace') {
 							$link.remove();
@@ -2525,8 +2557,9 @@
 		<<timed>> & <<next>>
 	*/
 	Macro.add('timed', {
-		tags   : ['next'],
-		timers : new Set(),
+		isAsync : true,
+		tags    : ['next'],
+		timers  : new Set(),
 
 		handler() {
 			if (this.args.length === 0) {
@@ -2574,65 +2607,31 @@
 				this.debugView.modes({ block : true });
 			}
 
-			// Register the timer and, possibly, a cleanup task.
-			this.self.registerTimeout(
-				jQuery(document.createElement('span'))
-					.addClass(`macro-${this.name}`)
-					.appendTo(this.output),
-				items,
-				this.args.length > 1 && /^(?:transition|t8n)$/.test(this.args[1])
-			);
-		},
+			const transition = this.args.length > 1 && /^(?:transition|t8n)$/.test(this.args[1]);
+			const $wrapper   = jQuery(document.createElement('span'))
+				.addClass(`macro-${this.name}`)
+				.appendTo(this.output);
 
-		registerTimeout($baseOutput, items, transition) {
-			const turnId = State.turns;
-			const timers = this.timers;
-			let timerId  = null;
-			let nextItem = items.shift();
-
-			const worker = function () {
-				/*
-					1. Bookkeeping.
-				*/
-				timers.delete(timerId);
-
-				if (turnId !== State.turns) {
-					return;
-				}
-
-				/*
-					2. Set the current item and setup the next worker, if any.
-				*/
-				const curItem = nextItem;
-
-				if ((nextItem = items.shift()) != null) { // lazy equality for null
-					timerId = setTimeout(worker, nextItem.delay);
-					timers.add(timerId);
-				}
-
-				/*
-					3. Wikify the content last to reduce temporal drift.
-				*/
+			// Register the timer.
+			this.self.registerTimeout(this.createShadowWrapper(item => {
 				const frag = document.createDocumentFragment();
-				new Wikifier(frag, curItem.content);
+				new Wikifier(frag, item.content);
 
-				/*
-					4. Output.
-				*/
-				let $output = $baseOutput;
+				// Output.
+				let $output = $wrapper;
 
 				// Custom debug view setup for `<<next>>`.
-				if (Config.debug && curItem.name === 'next') {
+				if (Config.debug && item.name === 'next') {
 					$output = jQuery((new DebugView( // eslint-disable-line no-param-reassign
 						$output[0],
 						'macro',
-						curItem.name,
-						curItem.source
+						item.name,
+						item.source
 					)).output);
 				}
 
 				if (transition) {
-					$output = jQuery(document.createElement('span')) // eslint-disable-line no-param-reassign
+					$output = jQuery(document.createElement('span'))
 						.addClass('macro-timed-insert macro-timed-in')
 						.appendTo($output);
 				}
@@ -2642,6 +2641,37 @@
 				if (transition) {
 					setTimeout(() => $output.removeClass('macro-timed-in'), Engine.minDomActionDelay);
 				}
+			}), items);
+		},
+
+		registerTimeout(callback, items) {
+			if (typeof callback !== 'function') {
+				throw new TypeError('callback parameter must be a function');
+			}
+
+			const turnId = State.turns;
+			const timers = this.timers;
+			let timerId  = null;
+			let nextItem = items.shift();
+
+			const worker = function () {
+				// Bookkeeping.
+				timers.delete(timerId);
+
+				if (turnId !== State.turns) {
+					return;
+				}
+
+				// Set the current item and setup the next worker, if any.
+				const curItem = nextItem;
+
+				if ((nextItem = items.shift()) != null) { // lazy equality for null
+					timerId = setTimeout(worker, nextItem.delay);
+					timers.add(timerId);
+				}
+
+				// Execute the callback.
+				callback.call(this, curItem);
 			};
 
 			// Setup the timeout.
@@ -2663,8 +2693,9 @@
 		<<repeat>> & <<stop>>
 	*/
 	Macro.add('repeat', {
-		tags   : null,
-		timers : new Set(),
+		isAsync : true,
+		tags    : null,
+		timers  : new Set(),
 
 		handler() {
 			if (this.args.length === 0) {
@@ -2685,18 +2716,37 @@
 				this.debugView.modes({ block : true });
 			}
 
-			// Register the timer and, possibly, a cleanup task.
-			this.self.registerInterval(
-				jQuery(document.createElement('span'))
-					.addClass(`macro-${this.name}`)
-					.appendTo(this.output),
-				this.payload[0].contents,
-				delay,
-				this.args.length > 1 && /^(?:transition|t8n)$/.test(this.args[1])
-			);
+			const transition = this.args.length > 1 && /^(?:transition|t8n)$/.test(this.args[1]);
+			const $wrapper   = jQuery(document.createElement('span'))
+				.addClass(`macro-${this.name}`)
+				.appendTo(this.output);
+
+			// Register the timer.
+			this.self.registerInterval(this.createShadowWrapper(() => {
+				const frag = document.createDocumentFragment();
+				new Wikifier(frag, this.payload[0].contents);
+
+				let $output = $wrapper;
+
+				if (transition) {
+					$output = jQuery(document.createElement('span'))
+						.addClass('macro-repeat-insert macro-repeat-in')
+						.appendTo($output);
+				}
+
+				$output.append(frag);
+
+				if (transition) {
+					setTimeout(() => $output.removeClass('macro-repeat-in'), Engine.minDomActionDelay);
+				}
+			}), delay);
 		},
 
-		registerInterval($baseOutput, content, delay, transition) {
+		registerInterval(callback, delay) {
+			if (typeof callback !== 'function') {
+				throw new TypeError('callback parameter must be a function');
+			}
+
 			const turnId = State.turns;
 			const timers = this.timers;
 			let timerId = null;
@@ -2725,23 +2775,8 @@
 					}
 					TempState.repeatTimerId = timerId;
 
-					// Wikify the content.
-					const frag = document.createDocumentFragment();
-					new Wikifier(frag, content);
-
-					let $output = $baseOutput;
-
-					if (transition) {
-						$output = jQuery(document.createElement('span')) // eslint-disable-line no-param-reassign
-							.addClass('macro-repeat-insert macro-repeat-in')
-							.appendTo($output);
-					}
-
-					$output.append(frag);
-
-					if (transition) {
-						setTimeout(() => $output.removeClass('macro-repeat-in'), Engine.minDomActionDelay);
-					}
+					// Execute the callback.
+					callback.call(this);
 				}
 				finally {
 					// Teardown the `repeatTimerId` property, restoring the cached value, if necessary.
@@ -2823,16 +2858,11 @@
 									argsCache = State.variables.args;
 								}
 
-								// Setup our `$args` variable and assign its shadow value.
-								State.variables.args = [];
-
-								for (let i = 0, len = this.args.length; i < len; ++i) {
-									State.variables.args[i] = this.args[i];
-								}
-
+								// Setup the widget `$args` variable and add a shadow.
+								State.variables.args = [...this.args];
 								State.variables.args.raw = this.args.raw;
 								State.variables.args.full = this.args.full;
-								this.createShadow('$args', State.variables.args);
+								this.addShadow('$args');
 
 								// Setup the error trapping variables.
 								const resFrag = document.createDocumentFragment();
