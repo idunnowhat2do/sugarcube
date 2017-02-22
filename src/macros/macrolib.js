@@ -975,6 +975,8 @@
 			*/
 			if (!TempState.hasOwnProperty(this.name)) {
 				TempState[this.name] = {};
+			}
+			if (!TempState[this.name].hasOwnProperty(varId)) {
 				TempState[this.name][varId] = 0;
 			}
 
