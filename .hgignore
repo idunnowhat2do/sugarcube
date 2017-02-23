@@ -1,0 +1,14 @@
+syntax: glob
+.build
+.eslint*
+.hgignore
+.jshint*
+.tern-project
+_*
+add-ons
+browserlist
+changelog*
+dist
+node_modules
+TODO*
+*.sh
