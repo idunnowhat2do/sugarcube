@@ -13,6 +13,7 @@ var { // eslint-disable-line no-var
 	addStyle,
 	clone,
 	convertBreaks,
+	safeActiveElement,
 	setPageElement,
 	throwError,
 	toStringOrDefault
@@ -195,6 +196,28 @@ var { // eslint-disable-line no-var
 	}
 
 	/*
+		Returns `document.activeElement` or `null`.
+	*/
+	function safeActiveElement() {
+		/*
+			IE9 contains a bug where trying to access the active element of an iframe's
+			parent document (i.e. `window.parent.document.activeElement`) will throw an
+			exception, so we must allow for an exception to be thrown.
+
+			We could simply return `undefined` here, but since the API's default behavior
+			should be to return `document.body` or `null` when there is no selection, we
+			choose to return `null` in all non-element cases (i.e. whether it returns
+			`null` or throws an exception).  Just a bit of normalization.
+		*/
+		try {
+			return document.activeElement || null;
+		}
+		catch (ex) {
+			return null;
+		}
+	}
+
+	/*
 		Wikifies a passage into a DOM element corresponding to the passed ID and returns the element.
 	*/
 	function setPageElement(idOrElement, titles, defaultText) {
@@ -291,6 +314,7 @@ var { // eslint-disable-line no-var
 		addStyle          : { value : addStyle },
 		clone             : { value : clone },
 		convertBreaks     : { value : convertBreaks },
+		safeActiveElement : { value : safeActiveElement },
 		setPageElement    : { value : setPageElement },
 		throwError        : { value : throwError },
 		toStringOrDefault : { value : toStringOrDefault }
