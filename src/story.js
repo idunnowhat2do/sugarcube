@@ -37,9 +37,59 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 	 * Story Functions.
 	 ******************************************************************************************************************/
 	function storyLoad() {
+		if (DEBUG) { console.log('[Story/storyLoad()]'); }
+
+		const validationCodeTags = [
+			'widget'
+		];
+		const validationNoCodeTagPassages = [
+			'PassageDone',
+			'PassageFooter',
+			'PassageHeader',
+			'PassageReady',
+			'StoryAuthor',
+			'StoryBanner',
+			'StoryCaption',
+			'StoryInit',
+			'StoryMenu',
+			'StoryShare',
+			'StorySubtitle'
+		];
+
+		function validateStartingPassage(passage) {
+			if (passage.tags.includesAny(validationCodeTags)) {
+				throw new Error(`starting passage "${passage.title}" contains illegal tags; invalid: "${passage.tags.filter(tag => validationCodeTags.includes(tag)).sort().join('", "')}"`);
+			}
+		}
+
+		function validateSpecialPassages(passage) {
+			if (validationNoCodeTagPassages.includes(passage.title) && passage.tags.includesAny(validationCodeTags)) {
+				throw new Error(`special passage "${passage.title}" contains illegal tags; invalid: "${passage.tags.filter(tag => validationCodeTags.includes(tag)).sort().join('", "')}"`);
+			}
+		}
+
 		// For Twine 1.
 		if (TWINE1) {
-			if (DEBUG) { console.log('[Story/storyLoad()]'); }
+			/*
+				Additional Twine 1 validation setup.
+			*/
+			validationCodeTags.unshift('script', 'stylesheet');
+			validationNoCodeTagPassages.push('StoryTitle');
+
+			function validateTwine1CodePassages(passage) {
+				const codeTags  = [...validationCodeTags];
+				const foundTags = [];
+
+				passage.tags.forEach(tag => {
+					if (codeTags.includes(tag)) {
+						foundTags.push(...codeTags.delete(tag));
+					}
+				});
+
+				if (foundTags.length > 1) {
+					throw new Error(`code passage "${passage.title}" contains multiple code tags; invalid: "${foundTags.sort().join('", "')}"`);
+				}
+			}
 
 			/*
 				Set the default starting passage.
@@ -74,18 +124,26 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 					const passage = new Passage($this.attr('tiddler'), this);
 
 					// Special cases.
-					if (passage.tags.includes('stylesheet')) {
+					if (passage.title === Config.passages.start) {
+						validateStartingPassage(passage);
+						_passages[passage.title] = passage;
+					}
+					else if (passage.tags.includes('stylesheet')) {
+						validateTwine1CodePassages(passage);
 						_styles.push(passage);
 					}
 					else if (passage.tags.includes('script')) {
+						validateTwine1CodePassages(passage);
 						_scripts.push(passage);
 					}
 					else if (passage.tags.includes('widget')) {
+						validateTwine1CodePassages(passage);
 						_widgets.push(passage);
 					}
 
-					// Normal passages.
+					// All other passages.
 					else {
+						validateSpecialPassages(passage);
 						_passages[passage.title] = passage;
 					}
 				});
@@ -110,8 +168,6 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		// For Twine 2.
 		else {
-			if (DEBUG) { console.log('[Story/storyLoad()]'); }
-
 			const $storydata = jQuery('#store-area>tw-storydata');
 			const startNode  = $storydata.attr('startnode') || '';
 
@@ -156,17 +212,19 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 					const pid     = $this.attr('pid') || '';
 					const passage = new Passage($this.attr('name'), this);
 
+					// Special cases.
 					if (pid === startNode && startNode !== '') {
 						Config.passages.start = passage.title;
+						validateStartingPassage(passage);
+						_passages[passage.title] = passage;
 					}
-
-					// Special cases.
-					if (passage.tags.includes('widget')) {
+					else if (passage.tags.includes('widget')) {
 						_widgets.push(passage);
 					}
 
-					// Normal passages.
+					// All other passages.
 					else {
+						validateSpecialPassages(passage);
 						_passages[passage.title] = passage;
 					}
 				});
