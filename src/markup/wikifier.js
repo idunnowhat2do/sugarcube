@@ -532,42 +532,44 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 	 * Helper Static Methods.
 	 ******************************************************************************************************************/
 	Object.defineProperties(Wikifier.helpers, {
-		_inlineCssLookahead : {
-			value : new RegExp(Patterns.inlineCss, 'gm')
-		},
 		inlineCss : {
-			value(w) {
-				const css       = { classes : [], id : '', styles : {} };
-				const lookahead = this._inlineCssLookahead;
-				let matched;
+			value : (function () {
+				const lookahead = new RegExp(Patterns.inlineCss, 'gm');
 
-				do {
-					lookahead.lastIndex = w.nextMatch;
+				function helperInlineCss(w) {
+					const css = { classes : [], id : '', styles : {} };
+					let matched;
 
-					const match = lookahead.exec(w.source);
+					do {
+						lookahead.lastIndex = w.nextMatch;
 
-					matched = match && match.index === w.nextMatch;
+						const match = lookahead.exec(w.source);
 
-					if (matched) {
-						if (match[1]) {
-							css.styles[Util.fromCssProperty(match[1])] = match[2].trim();
+						matched = match && match.index === w.nextMatch;
+
+						if (matched) {
+							if (match[1]) {
+								css.styles[Util.fromCssProperty(match[1])] = match[2].trim();
+							}
+							else if (match[3]) {
+								css.styles[Util.fromCssProperty(match[3])] = match[4].trim();
+							}
+							else if (match[5]) {
+								css.classes = css.classes.concat(match[5].slice(1).split(/\./));
+							}
+							else if (match[6]) {
+								css.id = match[6].slice(1).split(/#/).pop();
+							}
+
+							w.nextMatch = lookahead.lastIndex;
 						}
-						else if (match[3]) {
-							css.styles[Util.fromCssProperty(match[3])] = match[4].trim();
-						}
-						else if (match[5]) {
-							css.classes = css.classes.concat(match[5].slice(1).split(/\./));
-						}
-						else if (match[6]) {
-							css.id = match[6].slice(1).split(/#/).pop();
-						}
+					} while (matched);
 
-						w.nextMatch = lookahead.lastIndex;
-					}
-				} while (matched);
+					return css;
+				}
 
-				return css;
-			}
+				return helperInlineCss;
+			})()
 		},
 
 		evalText : {
