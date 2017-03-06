@@ -686,6 +686,99 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 		},
 
+		createShadowSetterCallback : {
+			value : (function () {
+				let macroFormatter = null;
+
+				function cacheMacroFormatter() {
+					if (!macroFormatter) {
+						macroFormatter = Wikifier.formatters.find(fmt => fmt.name === 'macro');
+
+						if (!macroFormatter) {
+							throw new Error('cannot find "macro" formatter');
+						}
+					}
+
+					return macroFormatter;
+				}
+
+				function getMacroContextShadowView() {
+					const macro = macroFormatter || cacheMacroFormatter();
+					const view  = new Set();
+
+					for (let context = macro.context; context !== null; context = context.parent) {
+						if (context._shadows) {
+							context._shadows.forEach(name => view.add(name));
+						}
+					}
+
+					return [...view];
+				}
+
+				function helperCreateShadowSetterCallback(code) {
+					const shadowStore = {};
+
+					getMacroContextShadowView().forEach(varName => {
+						const varKey = varName.slice(1);
+						const store  = varName[0] === '$' ? State.variables : State.temporary;
+						shadowStore[varName] = store[varKey];
+					});
+
+					return function () {
+						const shadowNames = Object.keys(shadowStore);
+						const valueCache  = shadowNames.length > 0 ? {} : null;
+
+						/*
+							There's no catch clause because this try/finally is here simply to ensure that
+							proper cleanup is done in the event that an exception is thrown during the
+							evaluation.
+						*/
+						try {
+							/*
+								Cache the existing values of the variables to be shadowed and assign the
+								shadow values.
+							*/
+							shadowNames.forEach(varName => {
+								const varKey = varName.slice(1);
+								const store  = varName[0] === '$' ? State.variables : State.temporary;
+
+								if (store.hasOwnProperty(varKey)) {
+									valueCache[varKey] = store[varKey];
+								}
+
+								store[varKey] = shadowStore[varName];
+							});
+
+							// Evaluate the JavaScript.
+							return Scripting.evalJavaScript(code);
+						}
+						finally {
+							// Revert the variable shadowing.
+							shadowNames.forEach(varName => {
+								const varKey = varName.slice(1);
+								const store  = varName[0] === '$' ? State.variables : State.temporary;
+
+								/*
+									Update the shadow store with the variable's current value, in case it
+									was modified during the callback.
+								*/
+								shadowStore[varName] = store[varKey];
+
+								if (valueCache.hasOwnProperty(varKey)) {
+									store[varKey] = valueCache[varKey];
+								}
+								else {
+									delete store[varKey];
+								}
+							});
+						}
+					};
+				}
+
+				return helperCreateShadowSetterCallback;
+			})()
+		},
+
 		parseSquareBracketedMarkup : {
 			/* eslint-disable no-use-before-define, no-labels */
 			value(w) {
@@ -1314,7 +1407,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 								arg.text     = markup.hasOwnProperty('text') ? Wikifier.helpers.evalText(markup.text) : arg.link;
 								arg.external = !markup.forceInternal && Wikifier.isExternalLink(arg.link);
 								arg.setFn    = markup.hasOwnProperty('setter')
-									? (ex => () => Scripting.evalJavaScript(ex))(Scripting.parse(markup.setter))
+									? Wikifier.helpers.createShadowSetterCallback(Scripting.parse(markup.setter))
 									: null;
 							}
 							else if (markup.isImage) {
@@ -1352,7 +1445,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 								}
 
 								arg.setFn = markup.hasOwnProperty('setter')
-									? (ex => () => Scripting.evalJavaScript(ex))(Scripting.parse(markup.setter))
+									? Wikifier.helpers.createShadowSetterCallback(Scripting.parse(markup.setter))
 									: null;
 							}
 						}
@@ -1453,7 +1546,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 					const link  = Wikifier.helpers.evalPassageId(markup.link);
 					const text  = markup.hasOwnProperty('text') ? Wikifier.helpers.evalText(markup.text) : link;
 					const setFn = markup.hasOwnProperty('setter')
-						? (ex => () => Scripting.evalJavaScript(ex))(Scripting.parse(markup.setter))
+						? Wikifier.helpers.createShadowSetterCallback(Scripting.parse(markup.setter))
 						: null;
 
 					// Debug view setup.
@@ -1511,7 +1604,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 					// align=(left|right), title=(title), source=source, forceInternal=(~), link=(link), setter=(setter)
 					const setFn = markup.hasOwnProperty('setter')
-						? (ex => () => Scripting.evalJavaScript(ex))(Scripting.parse(markup.setter))
+						? Wikifier.helpers.createShadowSetterCallback(Scripting.parse(markup.setter))
 						: null;
 					let el     = (Config.debug ? debugView : w).output;
 					let source;
@@ -2272,7 +2365,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 								setter = String(setter).trim();
 
 								if (setter !== '') {
-									setFn = (ex => () => Scripting.evalJavaScript(ex))(Scripting.parse(setter));
+									setFn = Wikifier.helpers.createShadowSetterCallback(Scripting.parse(setter));
 								}
 							}
 
