@@ -249,6 +249,7 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 		if (arguments.length === 0) {
 			throw new Error('hasVisited called with insufficient parameters');
 		}
+
 		if (State.isEmpty()) {
 			return false;
 		}
@@ -274,6 +275,7 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 		if (arguments.length === 0) {
 			throw new Error('lastVisited called with insufficient parameters');
 		}
+
 		if (State.isEmpty()) {
 			return -1;
 		}
@@ -455,6 +457,7 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 		if (arguments.length === 0) {
 			throw new Error('visitedTags called with insufficient parameters');
 		}
+
 		if (State.isEmpty()) {
 			return 0;
 		}

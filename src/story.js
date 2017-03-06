@@ -237,15 +237,13 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 			/*
 				Set the story title.
 
-				TODO: Maybe `$storydata.attr('name')` should be used instead of `'{{STORY_NAME}}'`?
+				FIXME: Maybe `$storydata.attr('name')` should be used instead of `'{{STORY_NAME}}'`?
 			*/
+			// _storySetTitle($storydata.attr('name'));
 			_storySetTitle(Util.unescape('{{STORY_NAME}}'));
 
 			/*
 				Set the default saves ID (must be done after the call to `_storySetTitle()`).
-
-				NOTE: If not for the requirement to support Twine 1/Twee, we could use the
-				      story's IFID attribute here.
 			*/
 			Config.saves.id = Story.domId;
 		}

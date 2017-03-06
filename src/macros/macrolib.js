@@ -408,6 +408,7 @@
 						if (i + 1 !== len) {
 							return this.error('<<else>> must be the final clause');
 						}
+
 						if (this.payload[i].args.raw.length > 0) {
 							if (/^\s*if\b/i.test(this.payload[i].args.raw)) {
 								return this.error(`whitespace is not allowed between the "else" and "if" in <<elseif>> clause${i > 0 ? ' (#' + i + ')' : ''}`);
@@ -531,6 +532,7 @@
 					if (i + 1 !== len) {
 						return this.error('<<default>> must be the final case');
 					}
+
 					if (this.payload[i].args.length > 0) {
 						return this.error(`<<default>> does not accept values, invalid: ${this.payload[i].args.raw}`);
 					}
@@ -976,6 +978,7 @@
 			if (!TempState.hasOwnProperty(this.name)) {
 				TempState[this.name] = {};
 			}
+
 			if (!TempState[this.name].hasOwnProperty(varId)) {
 				TempState[this.name][varId] = 0;
 			}
@@ -1455,9 +1458,9 @@
 				}
 			}
 			else {
-				// Yes, the arguments are backwards.
-				passage  = this.args[0];
-				text = this.args[1];
+				// NOTE: The arguments here are backwards.
+				passage = this.args[0];
+				text    = this.args[1];
 			}
 
 			if (!State.variables.hasOwnProperty('#choice')) {
@@ -1477,6 +1480,7 @@
 
 			jQuery(Wikifier.createInternalLink(this.output, passage, null, () => {
 				State.variables['#choice'][choiceId] = true;
+
 				if (typeof setFn === 'function') {
 					setFn();
 				}

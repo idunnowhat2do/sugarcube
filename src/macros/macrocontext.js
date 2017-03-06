@@ -153,6 +153,7 @@ var MacroContext = (() => { // eslint-disable-line no-unused-vars, no-var
 					if (typeof name !== 'string') {
 						throw new TypeError(`variable name must be a string; type: ${typeof name}`);
 					}
+
 					if (!varRe.test(name)) {
 						throw new Error(`invalid variable name "${name}"`);
 					}

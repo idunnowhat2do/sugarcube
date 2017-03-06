@@ -201,6 +201,7 @@
 			}
 		});
 	}
+
 	if (!String.prototype.trimLeft) {
 		Object.defineProperty(String.prototype, 'trimLeft', {
 			configurable : true,
@@ -233,6 +234,7 @@
 			}
 		});
 	}
+
 	if (!String.prototype.trimRight) {
 		Object.defineProperty(String.prototype, 'trimRight', {
 			configurable : true,

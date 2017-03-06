@@ -303,6 +303,7 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 		if (horzSpace <= 32 + _scrollbarWidth) {
 			vertSpace -= _scrollbarWidth;
 		}
+
 		if (vertSpace <= 32 + _scrollbarWidth) {
 			horzSpace -= _scrollbarWidth;
 		}

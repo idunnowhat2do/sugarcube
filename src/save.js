@@ -271,6 +271,7 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		const saves = savesObjGet();
+
 		if (slot >= saves.slots.length) {
 			return false;
 		}
@@ -322,21 +323,11 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 			let mm = now.getMinutes();
 			let ss = now.getSeconds();
 
-			if (MM < 10) {
-				MM = `0${MM}`;
-			}
-			if (DD < 10) {
-				DD = `0${DD}`;
-			}
-			if (hh < 10) {
-				hh = `0${hh}`;
-			}
-			if (mm < 10) {
-				mm = `0${mm}`;
-			}
-			if (ss < 10) {
-				ss = `0${ss}`;
-			}
+			if (MM < 10) { MM = `0${MM}`; }
+			if (DD < 10) { DD = `0${DD}`; }
+			if (hh < 10) { hh = `0${hh}`; }
+			if (mm < 10) { mm = `0${mm}`; }
+			if (ss < 10) { ss = `0${ss}`; }
 
 			return `${now.getFullYear()}${MM}${DD}-${hh}${mm}${ss}`;
 		}

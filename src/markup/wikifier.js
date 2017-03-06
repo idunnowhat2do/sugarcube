@@ -2256,6 +2256,7 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 							// Handle image passage transclusion.
 							if (passage.slice(0, 5) !== 'data:' && Story.has(passage)) {
 								passage = Story.get(passage);
+
 								if (passage.tags.includes('Twine.image')) {
 									el.src = passage.text.trim();
 								}
