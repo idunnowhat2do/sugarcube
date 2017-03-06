@@ -1203,10 +1203,6 @@
 				.addClass(this.name)
 				.appendTo(this.output);
 
-			if (!State.variables['#actions']) {
-				State.variables['#actions'] = {};
-			}
-
 			for (let i = 0; i < this.args.length; ++i) {
 				let passage;
 				let text;
@@ -1247,7 +1243,8 @@
 				}
 
 				if (
-					   State.variables['#actions'].hasOwnProperty(passage)
+					   State.variables.hasOwnProperty('#actions')
+					&& State.variables['#actions'].hasOwnProperty(passage)
 					&& State.variables['#actions'][passage]
 				) {
 					continue;
@@ -1258,6 +1255,10 @@
 					passage,
 					null,
 					((passage, fn) => () => {
+						if (!State.variables.hasOwnProperty('#actions')) {
+							State.variables['#actions'] = {};
+						}
+
 						State.variables['#actions'][passage] = true;
 
 						if (typeof fn === 'function') {
@@ -1463,11 +1464,9 @@
 				text    = this.args[1];
 			}
 
-			if (!State.variables.hasOwnProperty('#choice')) {
-				State.variables['#choice'] = {};
-			}
-			else if (
-				   State.variables['#choice'].hasOwnProperty(choiceId)
+			if (
+				   State.variables.hasOwnProperty('#choice')
+				&& State.variables['#choice'].hasOwnProperty(choiceId)
 				&& State.variables['#choice'][choiceId]
 			) {
 				jQuery(document.createElement('span'))
@@ -1479,6 +1478,10 @@
 			}
 
 			jQuery(Wikifier.createInternalLink(this.output, passage, null, () => {
+				if (!State.variables.hasOwnProperty('#choice')) {
+					State.variables['#choice'] = {};
+				}
+
 				State.variables['#choice'][choiceId] = true;
 
 				if (typeof setFn === 'function') {
