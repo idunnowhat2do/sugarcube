@@ -128,7 +128,7 @@ var MacroContext = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		contextSelectAll(filter) {
-			const result  = [];
+			const result = [];
 			let context = this;
 
 			while ((context = context.parent) !== null) {
