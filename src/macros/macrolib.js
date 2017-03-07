@@ -1066,8 +1066,8 @@
 				Set the story variable and textarea element to the default value.
 			*/
 			Wikifier.setValue(varName, defaultValue);
-			// Ideally, we should be setting the `.defaultValue` property here, but IE doesn't support
-			// it, so we have to use `.textContent`, which is equivalent to `.defaultValue` anyway.
+			// Ideally, we should be setting `.defaultValue` here, but IE doesn't support it,
+			// so we have to use `.textContent`, which is equivalent.
 			el.textContent = defaultValue;
 
 			/*
@@ -1079,8 +1079,8 @@
 
 				// Setup a single-use post-display task to autofocus the element.
 				postdisplay[`#autofocus:${el.id}`] = task => {
-					setTimeout(() => el.focus(), Engine.minDomActionDelay);
 					delete postdisplay[task]; // single-use task
+					setTimeout(() => el.focus(), Engine.minDomActionDelay);
 				};
 			}
 		}
@@ -2782,6 +2782,7 @@
 					if (TempState.hasOwnProperty('repeatTimerId')) {
 						timerIdCache = TempState.repeatTimerId;
 					}
+
 					TempState.repeatTimerId = timerId;
 
 					// Execute the callback.
