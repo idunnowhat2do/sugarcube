@@ -266,9 +266,9 @@
 	 * Display Macros.
 	 ******************************************************************************************************************/
 	/*
-		<<display>>
+		<<include>>
 	*/
-	Macro.add('display', {
+	Macro.add('include', {
 		handler() {
 			if (this.args.length === 0) {
 				return this.error('no passage specified');
@@ -380,6 +380,13 @@
 			}
 		}
 	});
+
+	/*
+		NOTE: This macro is deprecated.
+
+		<<display>>
+	*/
+	Macro.add('display', 'include'); // add <<display>> as an alias of <<include>>
 
 
 	/*******************************************************************************************************************
