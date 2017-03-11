@@ -6,11 +6,10 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global L10n, Story, StyleWrapper, Wikifier */
+/* global L10n, Story, Wikifier */
 
 var { // eslint-disable-line no-var
 	/* eslint-disable no-unused-vars */
-	addStyle,
 	clone,
 	convertBreaks,
 	safeActiveElement,
@@ -20,23 +19,6 @@ var { // eslint-disable-line no-var
 	/* eslint-enable no-unused-vars */
 } = (() => {
 	'use strict';
-
-	/*
-		Adds the given styles to the story's <style> element, creating it if necessary.
-	*/
-	function addStyle(css) {
-		let style = document.getElementById('style-story');
-
-		if (style === null) {
-			style      = document.createElement('style');
-			style.id   = 'style-story';
-			style.type = 'text/css';
-			document.head.appendChild(style);
-		}
-
-		style = new StyleWrapper(style);
-		style.add(css);
-	}
 
 	/*
 		Returns a deep copy of the given object.
@@ -311,7 +293,6 @@ var { // eslint-disable-line no-var
 	 * Module Exports.
 	 ******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
-		addStyle          : { value : addStyle },
 		clone             : { value : clone },
 		convertBreaks     : { value : convertBreaks },
 		safeActiveElement : { value : safeActiveElement },
