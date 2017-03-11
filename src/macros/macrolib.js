@@ -2377,6 +2377,7 @@
 
 			handler() {
 				const queue = this.self.queue;
+				let lockId;
 
 				if (queue.length > 0) {
 					return;
@@ -2384,7 +2385,7 @@
 
 				function processQueue() {
 					if (queue.length === 0) {
-						return LoadScreen.unlock();
+						return LoadScreen.unlock(lockId);
 					}
 
 					const nextTrack = queue.shift();
@@ -2404,7 +2405,7 @@
 				this.self.fillQueue(queue);
 
 				if (queue.length > 0) {
-					LoadScreen.lock();
+					lockId = LoadScreen.lock();
 					processQueue();
 				}
 			},

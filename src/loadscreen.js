@@ -11,8 +11,11 @@
 var LoadScreen = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
-	// Loading screen lock state.
-	let _locked = false;
+	// Locks collection.
+	const _locks = new Set();
+
+	// Auto-incrementing lock ID.
+	let _autoId = 0;
 
 
 	/*******************************************************************************************************************
@@ -24,7 +27,7 @@ var LoadScreen = (() => { // eslint-disable-line no-unused-vars, no-var
 	jQuery(document).on('readystatechange.SugarCube', () => {
 		if (DEBUG) { console.log(`[SugarCube/readystatechange()] document.readyState: "${document.readyState}"`); }
 
-		if (_locked) {
+		if (_locks.size > 0) {
 			return;
 		}
 
@@ -37,7 +40,7 @@ var LoadScreen = (() => { // eslint-disable-line no-unused-vars, no-var
 		if (document.readyState === 'complete') {
 			if ($html.hasClass('init-loading')) {
 				if (Config.loadDelay > 0) {
-					// TODO: Maybe check `_locked` before removing the load screen in the callback?
+					// TODO: Maybe check `_locks.size` before removing the load screen in the callback?
 					setTimeout(
 						() => $html.removeClass('init-loading'),
 						Math.max(Engine.minDomActionDelay, Config.loadDelay)
@@ -72,19 +75,31 @@ var LoadScreen = (() => { // eslint-disable-line no-unused-vars, no-var
 	}
 
 	/**
-		Lock and show the loading screen.
+		Returns a new lock ID after locking and showing the loading screen.
 	**/
 	function loadScreenLock() {
-		_locked = true;
+		++_autoId;
+		_locks.add(_autoId);
 		loadScreenShow();
+		return _autoId;
 	}
 
 	/**
-		Unlock the loading screen and trigger a `readystatechange` event.
+		Remove the lock associated with the given lock ID and, if no locks remain,
+		trigger a `readystatechange` event.
 	**/
-	function loadScreenUnlock() {
-		_locked = false;
-		jQuery(document).trigger('readystatechange');
+	function loadScreenUnlock(id) {
+		if (id == null) { // lazy equality for null
+			throw new Error('LoadScreen.unlock called with a null or undefined ID');
+		}
+
+		if (_locks.has(id)) {
+			_locks.delete(id);
+		}
+
+		if (_locks.size === 0) {
+			jQuery(document).trigger('readystatechange');
+		}
 	}
 
 
