@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global Alert, Browser, Config, Dialog, DebugView, Engine, Has, SimpleStore, L10n, Macro, Passage, Save,
-	       Scripting, Setting, SimpleAudio, State, Story, UI, Util, Wikifier
+	global Alert, Browser, Config, Dialog, DebugView, Engine, Has, LoadScreen, SimpleStore, L10n, Macro, Passage,
+	       Save, Scripting, Setting, SimpleAudio, State, Story, UI, Util, Wikifier
 */
 /* eslint-disable no-var */
 
@@ -116,8 +116,13 @@ jQuery(() => {
 		/*
 			WARNING!
 
-			The ordering of the code in this function is important, so be careful when mucking around with it.
+			The ordering of the code within this function is critically important,
+			so be careful when mucking around with it.
 		*/
+
+		// Acquire an initial lock for and initialize the loading screen.
+		const lockId = LoadScreen.lock();
+		LoadScreen.init();
 
 		// Normalize the document.
 		if (document.normalize) {
@@ -193,10 +198,13 @@ jQuery(() => {
 			version
 		};
 
+		// Release the loading screen lock.
+		LoadScreen.unlock(lockId);
+
 		if (DEBUG) { console.log('[SugarCube/main()] Startup complete; story ready.'); }
 	}
 	catch (ex) {
-		jQuery(document).off('readystatechange.SugarCube');
+		LoadScreen.clear();
 		return Alert.fatal(null, ex.message, ex);
 	}
 });

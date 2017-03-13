@@ -19,47 +19,64 @@ var LoadScreen = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * readystatechange Event.
-	 ******************************************************************************************************************/
-	/*
-		Setup a `readystatechange` handler for hiding/showing the loading screen.
-	*/
-	jQuery(document).on('readystatechange.SugarCube', () => {
-		if (DEBUG) { console.log(`[SugarCube/readystatechange()] document.readyState: "${document.readyState}"`); }
-
-		if (_locks.size > 0) {
-			return;
-		}
-
-		const $html = jQuery(document.documentElement);
-
-		/*
-			The value of `document.readyState` may be: 'loading' -> 'interactive' -> 'complete'.
-			Though, to reach this point, it must already be in, at least, the 'interactive' state.
-		*/
-		if (document.readyState === 'complete') {
-			if ($html.hasClass('init-loading')) {
-				if (Config.loadDelay > 0) {
-					// TODO: Maybe check `_locks.size` before removing the load screen in the callback?
-					setTimeout(
-						() => $html.removeClass('init-loading'),
-						Math.max(Engine.minDomActionDelay, Config.loadDelay)
-					);
-				}
-				else {
-					$html.removeClass('init-loading');
-				}
-			}
-		}
-		else {
-			$html.addClass('init-loading');
-		}
-	});
-
-
-	/*******************************************************************************************************************
 	 * LoadScreen Functions.
 	 ******************************************************************************************************************/
+	/**
+		Initialize management of the loading screen.
+	**/
+	function loadScreenInit() {
+		if (DEBUG) { console.log('[LoadScreen/loadScreenInit()]'); }
+
+		// Add a `readystatechange` listener for hiding/showing the loading screen.
+		jQuery(document).on('readystatechange.SugarCube', () => {
+			if (DEBUG) { console.log(`[LoadScreen/<readystatechange>] document.readyState: "${document.readyState}"; locks:`, _locks); }
+
+			if (_locks.size > 0) {
+				return;
+			}
+
+			const $html = jQuery(document.documentElement);
+
+			/*
+				The value of `document.readyState` may be: 'loading' -> 'interactive' -> 'complete'.
+				Though, to reach this point, it must already be in, at least, the 'interactive' state.
+			*/
+			if (document.readyState === 'complete') {
+				if ($html.hasClass('init-loading')) {
+					if (Config.loadDelay > 0) {
+						// TODO: Maybe check `_locks.size` before removing the load screen in the callback?
+						setTimeout(
+							() => $html.removeClass('init-loading'),
+							Math.max(Engine.minDomActionDelay, Config.loadDelay)
+						);
+					}
+					else {
+						$html.removeClass('init-loading');
+					}
+				}
+			}
+			else {
+				$html.addClass('init-loading');
+			}
+		});
+	}
+
+	/**
+		Clear the loading screen.
+	**/
+	function loadScreenClear() {
+		if (DEBUG) { console.log('[LoadScreen/loadScreenClear()]'); }
+
+		// Remove the event listener.
+		jQuery(document).off('readystatechange.SugarCube');
+
+		// Clear all locks.
+		_locks.clear();
+
+		// Hide the loading screen.
+		loadScreenHide();
+	}
+
 	/**
 		Hide the loading screen.
 	**/
@@ -78,8 +95,13 @@ var LoadScreen = (() => { // eslint-disable-line no-unused-vars, no-var
 		Returns a new lock ID after locking and showing the loading screen.
 	**/
 	function loadScreenLock() {
+		if (DEBUG) { console.log('[LoadScreen/loadScreenLock()]'); }
+
 		++_autoId;
 		_locks.add(_autoId);
+
+		if (DEBUG) { console.log(`\tacquired loading screen lock; id: ${_autoId}`); }
+
 		loadScreenShow();
 		return _autoId;
 	}
@@ -89,12 +111,16 @@ var LoadScreen = (() => { // eslint-disable-line no-unused-vars, no-var
 		trigger a `readystatechange` event.
 	**/
 	function loadScreenUnlock(id) {
+		if (DEBUG) { console.log(`[LoadScreen/loadScreenUnlock(id: ${id})]`); }
+
 		if (id == null) { // lazy equality for null
 			throw new Error('LoadScreen.unlock called with a null or undefined ID');
 		}
 
 		if (_locks.has(id)) {
 			_locks.delete(id);
+
+			if (DEBUG) { console.log(`\treleased loading screen lock; id: ${id}`); }
 		}
 
 		if (_locks.size === 0) {
@@ -107,6 +133,8 @@ var LoadScreen = (() => { // eslint-disable-line no-unused-vars, no-var
 	 * Module Exports.
 	 ******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
+		init   : { value : loadScreenInit },
+		clear  : { value : loadScreenClear },
 		hide   : { value : loadScreenHide },
 		show   : { value : loadScreenShow },
 		lock   : { value : loadScreenLock },
