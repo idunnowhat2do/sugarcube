@@ -171,6 +171,27 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 	}
 
 	/**
+		Returns whether the engine is idle.
+	**/
+	function engineIsIdle() {
+		return _state === States.Idle;
+	}
+
+	/**
+		Returns whether the engine is playing.
+	**/
+	function engineIsPlaying() {
+		return _state !== States.Idle;
+	}
+
+	/**
+		Returns whether the engine is rendering.
+	**/
+	function engineIsRendering() {
+		return _state === States.Rendering;
+	}
+
+	/**
 		Returns the last time `enginePlay()` was called (in milliseconds).
 	**/
 	function engineLastPlay() {
@@ -551,16 +572,19 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Core Functions.
 		*/
-		start    : { value : engineStart },
-		restart  : { value : engineRestart },
-		state    : { get : engineState },
-		lastPlay : { get : engineLastPlay },
-		goTo     : { value : engineGoTo },
-		go       : { value : engineGo },
-		backward : { value : engineBackward },
-		forward  : { value : engineForward },
-		show     : { value : engineShow },
-		play     : { value : enginePlay },
+		start       : { value : engineStart },
+		restart     : { value : engineRestart },
+		state       : { get : engineState },
+		isIdle      : { value : engineIsIdle },
+		isPlaying   : { value : engineIsPlaying },
+		isRendering : { value : engineIsRendering },
+		lastPlay    : { get : engineLastPlay },
+		goTo        : { value : engineGoTo },
+		go          : { value : engineGo },
+		backward    : { value : engineBackward },
+		forward     : { value : engineForward },
+		show        : { value : engineShow },
+		play        : { value : enginePlay },
 
 		/*
 			Legacy Functions.
