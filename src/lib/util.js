@@ -15,6 +15,13 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 	 * Type Functions.
 	 ******************************************************************************************************************/
 	/**
+ 		Returns a pseudo-enumeration created from the given object.
+ 	**/
+ 	function utilToEnum(obj) {
+ 		return Object.freeze(Object.assign(Object.create(null), obj));
+ 	}
+
+	/**
 		Returns whether the passed value is a finite number or a numeric string which yields
 		a finite number when parsed.
 	**/
@@ -279,9 +286,9 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 	 * Diff Functions.
 	 ******************************************************************************************************************/
 	/*
-		Diff operations enumeration.
+		Diff operations object (pseudo-enumeration).
 	*/
-	const DiffOp = Object.freeze({
+	const DiffOp = utilToEnum({
 		Delete      : 0,
 		SpliceArray : 1,
 		Copy        : 2,
@@ -459,6 +466,7 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Type Functions.
 		*/
+		toEnum    : { value : utilToEnum },
 		isNumeric : { value : utilIsNumeric },
 		isBoolean : { value : utilIsBoolean },
 
