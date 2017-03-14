@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global Engine, Patterns, State, Story */
+/* global Engine, Patterns, State, Story, Util */
 
 var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
@@ -503,6 +503,114 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 	}
 
 	/* eslint-enable no-unused-vars */
+
+
+	/*******************************************************************************************************************
+	 * Import Functions.
+	 ******************************************************************************************************************/
+	var { // eslint-disable-line no-var
+		/* eslint-disable no-unused-vars */
+		importScripts,
+		importStyles
+		/* eslint-enable no-unused-vars */
+	} = (() => {
+		// Turn a list of callbacks into a sequential chain of Promises.
+		function sequence(callbacks) {
+			return callbacks.reduce((seq, fn) => seq = seq.then(fn), Promise.resolve()); // eslint-disable-line no-param-reassign
+		}
+
+		// Slugify the URL.
+		function slugifyUrl(url) {
+			return Util.parseUrl(url).path
+				.replace(/^[^\w]+|[^\w]+$/g, '')
+				.replace(/[^\w]+/g, '-')
+				.toLocaleLowerCase();
+		}
+
+		/**
+			Import scripts over the network.
+		**/
+		function importScripts(...urls) {
+			function addScript(url) {
+				return new Promise((resolve, reject) => {
+					/*
+						WARNING!
+
+						The ordering of the code within this function is critically important,
+						so be careful when mucking around with it.
+
+						The order of operations must be: events → DOM append → attributes.
+					*/
+					jQuery(document.createElement('script'))
+						.one('load abort error', ev => {
+							jQuery(ev.target).off();
+							ev.type === 'load' ? resolve(ev.target) : reject(ev.target);
+						})
+						.appendTo(document.head)
+						.attr({
+							id   : `script-imported-${slugifyUrl(url)}`,
+							type : 'text/javascript',
+							src  : url
+						});
+				});
+			}
+
+			return Promise.all(urls.map(oneOrSeries => {
+				// Array of URLs to be imported in sequence.
+				if (Array.isArray(oneOrSeries)) {
+					return sequence(oneOrSeries.map(url => () => addScript(url)));
+				}
+
+				// Single URL to be imported.
+				return addScript(oneOrSeries);
+			}));
+		}
+
+		/**
+			Import stylesheets over the network.
+		**/
+		function importStyles(...urls) {
+			function addStyle(url) {
+				return new Promise((resolve, reject) => {
+					/*
+						WARNING!
+
+						The ordering of the code within this function is critically important,
+						so be careful when mucking around with it.
+
+						The order of operations must be: events → DOM append → attributes.
+					*/
+					jQuery(document.createElement('link'))
+						.one('load abort error', ev => {
+							jQuery(ev.target).off();
+							ev.type === 'load' ? resolve(ev.target) : reject(ev.target);
+						})
+						.appendTo(document.head)
+						.attr({
+							id   : `style-imported-${slugifyUrl(url)}`,
+							rel  : 'stylesheet',
+							href : url
+						});
+				});
+			}
+
+			return Promise.all(urls.map(oneOrSeries => {
+				// Array of URLs to be imported in sequence.
+				if (Array.isArray(oneOrSeries)) {
+					return sequence(oneOrSeries.map(url => () => addStyle(url)));
+				}
+
+				// Single URL to be imported.
+				return addStyle(oneOrSeries);
+			}));
+		}
+
+		// Exports.
+		return {
+			importScripts,
+			importStyles
+		};
+	})();
 
 
 	/*******************************************************************************************************************
