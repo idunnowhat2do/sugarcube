@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <!--
 
-SugarCube (v'{{BUILD_VERSION_VERSION}}'): A free (gratis and libre) story format, based on TiddlyWiki.
+SugarCube (v'{{BUILD_VERSION_VERSION}}'): A free (gratis and libre) story format.
 
 Copyright © 2013–2017 Thomas Michael Edwards <tmedwards@motoslave.net>.
 All rights reserved.
