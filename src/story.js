@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global Alert, Config, LoadScreen, Passage, Scripting, StyleWrapper, Util, Wikifier */
+/* global Alert, Config, Passage, Scripting, StyleWrapper, Util, Wikifier */
 
 var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
@@ -256,24 +256,17 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 			Add the story styles.
 		*/
 		(() => {
-			const lockId     = LoadScreen.lock();
 			const storyStyle = document.createElement('style');
 
-			jQuery(storyStyle)
-				.attr({
-					id   : 'style-story',
-					type : 'text/css'
-				})
-				.one('load', () => LoadScreen.unlock(lockId));
 			(new StyleWrapper(storyStyle))
 				.add(_styles.map(style => style.text.trim()).join('\n'));
 
-			/*
-				Due to browser differences in regards to how many load events are fired,
-				the injection of the <style> element into the document head must be the
-				final step.
-			*/
-			document.head.appendChild(storyStyle);
+			jQuery(storyStyle)
+				.appendTo(document.head)
+				.attr({
+					id   : 'style-story',
+					type : 'text/css'
+				});
 		})();
 
 		/*
