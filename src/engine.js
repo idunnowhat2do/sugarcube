@@ -7,17 +7,25 @@
  *
  **********************************************************************************************************************/
 /*
-	global Alert, Config, DebugView, LoadScreen, Save, State, Story, UI, Wikifier, postdisplay, predisplay, prehistory
+	global Alert, Config, DebugView, LoadScreen, Save, State, Story, UI, Util, Wikifier, postdisplay, predisplay,
+	       prehistory
 */
 
 var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
+	// Engine state types object (pseudo-enumeration).
+	const States = Util.toEnum({
+		Idle      : 'idle',
+		Playing   : 'playing',
+		Rendering : 'rendering'
+	});
+
 	// Minimum delay for DOM actions (in milliseconds).
 	const minDomActionDelay = 40;
 
-	// Current state of the engine (values: 'idle', 'playing', 'rendering').
-	let _state = 'idle';
+	// Current state of the engine (default: `Engine.States.Idle`).
+	let _state = States.Idle;
 
 	// Last time `enginePlay()` was called (in milliseconds).
 	let _lastPlay = null;
@@ -163,6 +171,27 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 	}
 
 	/**
+		Returns whether the engine is idle.
+	**/
+	function engineIsIdle() {
+		return _state === States.Idle;
+	}
+
+	/**
+		Returns whether the engine is playing.
+	**/
+	function engineIsPlaying() {
+		return _state !== States.Idle;
+	}
+
+	/**
+		Returns whether the engine is rendering.
+	**/
+	function engineIsRendering() {
+		return _state === States.Rendering;
+	}
+
+	/**
 		Returns the last time `enginePlay()` was called (in milliseconds).
 	**/
 	function engineLastPlay() {
@@ -230,7 +259,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Update the engine state.
 		*/
-		_state = 'playing';
+		_state = States.Playing;
 
 		/*
 			Reset the temporary state and variables objects.
@@ -309,7 +338,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Update the engine state.
 		*/
-		_state = 'rendering';
+		_state = States.Rendering;
 
 		/*
 			Render the incoming passage and add it to the page.
@@ -383,7 +412,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Update the engine state.
 		*/
-		_state = 'playing';
+		_state = States.Playing;
 
 		/*
 			Execute the `PassageDone` passage and `postdisplay` tasks, then update the non-passage
@@ -493,7 +522,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Reset the engine state.
 		*/
-		_state = 'idle';
+		_state = States.Idle;
 
 		// TODO: Let this return the jQuery wrapped element, rather than just the element.
 		return $incoming[0];
@@ -537,21 +566,25 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Constants.
 		*/
+		States            : { value : States },
 		minDomActionDelay : { value : minDomActionDelay },
 
 		/*
 			Core Functions.
 		*/
-		start    : { value : engineStart },
-		restart  : { value : engineRestart },
-		state    : { get : engineState },
-		lastPlay : { get : engineLastPlay },
-		goTo     : { value : engineGoTo },
-		go       : { value : engineGo },
-		backward : { value : engineBackward },
-		forward  : { value : engineForward },
-		show     : { value : engineShow },
-		play     : { value : enginePlay },
+		start       : { value : engineStart },
+		restart     : { value : engineRestart },
+		state       : { get : engineState },
+		isIdle      : { value : engineIsIdle },
+		isPlaying   : { value : engineIsPlaying },
+		isRendering : { value : engineIsRendering },
+		lastPlay    : { get : engineLastPlay },
+		goTo        : { value : engineGoTo },
+		go          : { value : engineGo },
+		backward    : { value : engineBackward },
+		forward     : { value : engineForward },
+		show        : { value : engineShow },
+		play        : { value : enginePlay },
 
 		/*
 			Legacy Functions.

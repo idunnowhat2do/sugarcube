@@ -6,7 +6,7 @@
  * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
  *
  **********************************************************************************************************************/
-/* global settings:true, storage */
+/* global Util, settings:true, storage */
 
 var Setting = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
@@ -15,7 +15,7 @@ var Setting = (() => { // eslint-disable-line no-unused-vars, no-var
 	const _definitions = [];
 
 	// Setting control types object (pseudo-enumeration).
-	const Types = Object.freeze({
+	const Types = Util.toEnum({
 		Header : 0,
 		Toggle : 1,
 		List   : 2
