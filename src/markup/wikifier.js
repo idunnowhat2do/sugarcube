@@ -2214,8 +2214,8 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 				name     : 'lineContinuation',
 				profiles : ['core'],
 
-				// NOTE: The end-of-line patter must come first.
-				match : `\\\\${Patterns.space}*?(?:\\n|$)|(?:^|\\n)${Patterns.space}*?\\\\`,
+				// NOTE: The end-of-line pattern must come first.
+				match : `\\\\${Patterns.spaceNoTerminator}*(?:\\n|$)|(?:^|\\n)${Patterns.spaceNoTerminator}*\\\\`,
 
 				handler(w) {
 					w.nextMatch = w.matchStart + w.matchLength;
