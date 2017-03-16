@@ -20,8 +20,63 @@ var Patterns = (() => { // eslint-disable-line no-unused-vars, no-var
 	/*******************************************************************************************************************
 	 * Patterns.
 	 ******************************************************************************************************************/
-	// whitespace patterns.
-	const space = '[\\s\\u00A0\\u2028\\u2029]'; // Unicode space-character escapes required for IE < 11 (maybe < 10?)
+	/*
+		Whitespace patterns.
+
+		Space class:
+			\s === [\u0020\f\n\r\t\v\u00a0\u1680\u180e\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]
+		Space class, sans line terminators:
+			[\u0020\f\t\v\u00a0\u1680\u180e\u2000-\u200a\u202f\u205f\u3000\ufeff]
+		Line Terminator class:
+			[\n\r\u2028\u2029]
+	*/
+	const space = (() => {
+		/*
+			Some browsers still supported by SugarCube have faulty space classes (`\s`).
+			We check for that lossage here and, if necessary, build our own space class
+			from the component pieces.
+		*/
+		const reSpaceMap = new Map([
+			['\u0020', '\\u0020'],
+			['\f', '\\f'],
+			['\n', '\\n'],
+			['\r', '\\r'],
+			['\t', '\\t'],
+			['\v', '\\v'],
+			['\u00a0', '\\u00a0'],
+			['\u1680', '\\u1680'],
+			['\u180e', '\\u180e'],
+			['\u2000', '\\u2000'],
+			['\u2001', '\\u2001'],
+			['\u2002', '\\u2002'],
+			['\u2003', '\\u2003'],
+			['\u2004', '\\u2004'],
+			['\u2005', '\\u2005'],
+			['\u2006', '\\u2006'],
+			['\u2007', '\\u2007'],
+			['\u2008', '\\u2008'],
+			['\u2009', '\\u2009'],
+			['\u200a', '\\u200a'],
+			['\u2028', '\\u2028'],
+			['\u2029', '\\u2029'],
+			['\u202f', '\\u202f'],
+			['\u205f', '\\u205f'],
+			['\u3000', '\\u3000'],
+			['\ufeff', '\\ufeff']
+		]);
+		const spaceRe = /\s/;
+		let missing = '';
+
+		reSpaceMap.forEach((pat, char) => {
+			if (!spaceRe.test(char)) {
+				missing += pat;
+			}
+		});
+
+		return missing ? `[\\s${missing}]` : '\\s';
+	})();
+	const spaceNoTerminator = '[\\u0020\\f\\t\\v\\u00a0\\u1680\\u180e\\u2000-\\u200a\\u202f\\u205f\\u3000\\ufeff]';
+	const lineTerminator    = '[\\n\\r\\u2028\\u2029]';
 
 	// Character patterns.
 	// FIXME: Should we include surrogate pairs ('\\uD800-\\uDFFF') within `anyLetter`?
@@ -71,6 +126,8 @@ var Patterns = (() => { // eslint-disable-line no-unused-vars, no-var
 	 ******************************************************************************************************************/
 	return Object.freeze({
 		space,
+		spaceNoTerminator,
+		lineTerminator,
 		anyLetter,
 		anyLetterStrict,
 		identifierFirstChar,
