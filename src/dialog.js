@@ -173,9 +173,9 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 			_lastActive = safeActiveElement();
 		}
 
-		// Add the <html> level class (mostly used to style <body>).
+		// Add the `data-dialog` attribute to <html> (mostly used to style <body>).
 		jQuery(document.documentElement)
-			.addClass('ui-dialog-open');
+			.attr('data-dialog', 'open');
 
 		// Display the overlay.
 		_$overlay
@@ -258,7 +258,7 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 		_$overlay
 			.removeClass('open');
 		jQuery(document.documentElement)
-			.removeClass('ui-dialog-open');
+			.removeAttr('data-dialog');
 
 		// Attempt to restore focus to whichever element had it prior to opening the dialog.
 		if (_lastActive !== null) {

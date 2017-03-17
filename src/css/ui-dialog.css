@@ -10,7 +10,7 @@
 /*
 	Patches to the core styles.
 */
-html.ui-dialog-open body {
+html[data-dialog] body {
 	overflow: hidden;
 }
 
