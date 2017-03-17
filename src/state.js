@@ -310,12 +310,12 @@ var State = (() => { // eslint-disable-line no-unused-vars, no-var
 		session.set('state', stateMarshal());
 
 		/*
-			Trigger a global `tw:historyupdate` event.
+			Trigger a global `:historyupdate` event.
 
 			NOTE: We do this here because setting a new active moment is a core component of,
 			      virtually, all history updates.
 		*/
-		jQuery.event.trigger('tw:historyupdate');
+		jQuery.event.trigger(':historyupdate');
 
 		return _active;
 	}

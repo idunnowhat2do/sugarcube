@@ -226,8 +226,8 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 				}
 			});
 
-		// Trigger a global `tw:dialogopened` event.
-		setTimeout(() => jQuery.event.trigger('tw:dialogopened'), Engine.minDomActionDelay);
+		// Trigger a global `:dialogopen` event.
+		setTimeout(() => jQuery.event.trigger(':dialogopen'), Engine.minDomActionDelay);
 
 		return Dialog;
 	}
@@ -271,8 +271,8 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 			ev.data.closeFn(ev);
 		}
 
-		// Trigger a global `tw:dialogclosed` event.
-		setTimeout(() => jQuery.event.trigger('tw:dialogclosed'), Engine.minDomActionDelay);
+		// Trigger a global `:dialogclose` event.
+		setTimeout(() => jQuery.event.trigger(':dialogclose'), Engine.minDomActionDelay);
 
 		return Dialog;
 	}

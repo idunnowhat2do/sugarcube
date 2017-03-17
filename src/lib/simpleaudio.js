@@ -504,7 +504,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 		stop() {
 			this.audio.pause();
 			this.time = 0;
-			this._trigger('aw:stop');
+			this._trigger(':stop');
 		}
 
 		fadeWithDuration(fadeDuration, toVol, fromVol) {
@@ -574,7 +574,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 
 						if (this.volume === to) {
 							this.fadeStop();
-							this._trigger('aw:fade');
+							this._trigger(':fade');
 						}
 					}, interval);
 				});
@@ -808,12 +808,12 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 				canplay : 'canplaythrough',
 				end     : 'ended',
 				error   : 'error',
-				fade    : 'aw:fade',
+				fade    : ':fade',
 				pause   : 'pause',
 				play    : 'playing',
 				rate    : 'ratechange',
 				seek    : 'seeked',
-				stop    : 'aw:stop',
+				stop    : ':stop',
 				volume  : 'volumechange'
 			})
 		}

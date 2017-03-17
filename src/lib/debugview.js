@@ -126,12 +126,12 @@ var DebugView = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		static enable() {
 			jQuery(document.documentElement).attr('data-debug-view', 'enabled');
-			jQuery.event.trigger('tw:debugviewupdate');
+			jQuery.event.trigger(':debugviewupdate');
 		}
 
 		static disable() {
 			jQuery(document.documentElement).removeAttr('data-debug-view');
-			jQuery.event.trigger('tw:debugviewupdate');
+			jQuery.event.trigger(':debugviewupdate');
 		}
 
 		static toggle() {

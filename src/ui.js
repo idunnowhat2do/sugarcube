@@ -96,7 +96,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 		*/
 		jQuery(document)
 			// Setup a handler for the history-backward/-forward buttons.
-			.on('tw:historyupdate', (($backward, $forward) => () => {
+			.on(':historyupdate', (($backward, $forward) => () => {
 				$backward.prop('disabled', State.length < 2);
 				$forward.prop('disabled', State.length === State.size);
 			})(jQuery('#history-backward'), jQuery('#history-forward')))
@@ -366,7 +366,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 		// Add an additional delegated click handler for the `.ui-close` elements to handle autoloading.
 		jQuery(document).one('click.autoload', '.ui-close', ev => {
 			const isAutoloadOk = ev.target.id === 'autoload-ok';
-			jQuery(document).one('tw:dialogclosed', () => {
+			jQuery(document).one(':dialogclose', () => {
 				if (DEBUG) { console.log(`\tattempting autoload: "${Save.autosave.get().title}"`); }
 
 				if (!isAutoloadOk || !Save.autosave.load()) {
@@ -400,7 +400,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 					.append(
 						jQuery(document.createElement('a'))
 							.ariaClick({ one : true }, (function (idx) {
-								return () => jQuery(document).one('tw:dialogclosed', () => Engine.goTo(idx));
+								return () => jQuery(document).one(':dialogclose', () => Engine.goTo(idx));
 							})(i))
 							.addClass('ui-close')
 							.text(`${L10n.get('jumptoTurn')} ${expired + i + 1}: ${passage.description()}`)
@@ -435,7 +435,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 					shenanigans.
 				*/
 				.ariaClick({ one : true }, () => {
-					jQuery(document).one('tw:dialogclosed', () => Engine.restart());
+					jQuery(document).one(':dialogclose', () => Engine.restart());
 					Dialog.close();
 				});
 
@@ -515,7 +515,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 					// Add the load button.
 					$tdLoad.append(
 						createButton('load', 'ui-close', L10n.get('savesLabelLoad'), 'auto', () => {
-							jQuery(document).one('tw:dialogclosed', () => Save.autosave.load());
+							jQuery(document).one(':dialogclose', () => Save.autosave.load());
 						})
 					);
 
@@ -580,7 +580,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 					// Add the load button.
 					$tdLoad.append(
 						createButton('load', 'ui-close', L10n.get('savesLabelLoad'), i, slot => {
-							jQuery(document).one('tw:dialogclosed', () => Save.slots.load(slot));
+							jQuery(document).one(':dialogclose', () => Save.slots.load(slot));
 						})
 					);
 
@@ -685,7 +685,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 						'aria-hidden' : true
 					})
 					.on('change', ev => {
-						jQuery(document).one('tw:dialogclosed', () => Save.import(ev));
+						jQuery(document).one(':dialogclose', () => Save.import(ev));
 						Dialog.close();
 					})
 					.appendTo($dialogBody);
@@ -858,7 +858,7 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 					display shenanigans.
 				*/
 				.ariaClick({ one : true }, () => {
-					jQuery(document).one('tw:dialogclosed', () => {
+					jQuery(document).one(':dialogclose', () => {
 						Setting.reset();
 						window.location.reload();
 					});
