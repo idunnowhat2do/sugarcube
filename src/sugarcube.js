@@ -8,7 +8,7 @@
  **********************************************************************************************************************/
 /*
 	global Alert, Browser, Config, Dialog, DebugView, Engine, Has, LoadScreen, SimpleStore, L10n, Macro, Passage,
-	       Save, Scripting, Setting, SimpleAudio, State, Story, UI, Util, Wikifier
+	       Save, Scripting, Setting, SimpleAudio, State, Story, UI, UIBar, Util, Wikifier
 */
 /* eslint-disable no-var */
 
@@ -140,6 +140,7 @@ jQuery(() => {
 		// Initialize the user interface (must be done before story initialization, specifically before scripts).
 		Dialog.init();
 		UI.init();
+		UIBar.init();
 
 		// Initialize the story (largely load the user styles, scripts, and widgets).
 		Story.init();
@@ -169,6 +170,7 @@ jQuery(() => {
 
 		// Start the user interface.
 		UI.start();
+		UIBar.start();
 
 		// Finally, export identifiers for debugging purposes.
 		window.SugarCube = {
@@ -188,6 +190,7 @@ jQuery(() => {
 			State,
 			Story,
 			UI,
+			UIBar,
 			Util,
 			Wikifier,
 			macros,
