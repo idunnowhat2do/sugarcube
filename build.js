@@ -65,8 +65,9 @@ const CONFIG = {
 		'src/css/init-screen.css',
 		'src/css/fonts.css',
 		'src/css/core.css',
-		'src/css/ui-bar.css',
 		'src/css/ui-dialog.css',
+		'src/css/ui.css',
+		'src/css/ui-bar.css',
 		'src/css/debugview.css'
 	],
 	libs : [
