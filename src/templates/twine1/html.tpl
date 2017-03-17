@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="init-no-js">
+<html data-init="no-js">
 <head>
 <meta charset="UTF-8" />
 <title>SugarCube</title>
@@ -40,11 +40,11 @@ Build Info:
 
 -->
 <script id="script-libraries" type="text/javascript">
-if(document.head&&document.addEventListener&&document.querySelector&&Object.create&&Object.freeze&&JSON){document.documentElement.className="init-loading";
+if(document.head&&document.addEventListener&&document.querySelector&&Object.create&&Object.freeze&&JSON){document.documentElement.setAttribute("data-init", "loading");
 '{{BUILD_LIB_SOURCE}}'
 /* User Lib */
 "USER_LIB"
-}else{document.documentElement.className="init-lacking"}
+}else{document.documentElement.setAttribute("data-init", "lacking");}
 </script>
 '{{BUILD_CSS_SOURCE}}'
 </head>
@@ -57,7 +57,7 @@ if(document.head&&document.addEventListener&&document.querySelector&&Object.crea
 	<div id="store-area" data-size="STORY_SIZE" hidden>"STORY"</div>
 	<script id="script-sugarcube" type="text/javascript">
 	/*! SugarCube JS */
-	if(document.documentElement.classList.contains("init-loading")){'{{BUILD_APP_SOURCE}}'}
+	if(document.documentElement.getAttribute("data-init")==="loading"){'{{BUILD_APP_SOURCE}}'}
 	</script>
 </body>
 </html>

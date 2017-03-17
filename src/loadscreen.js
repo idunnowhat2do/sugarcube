@@ -35,28 +35,26 @@ var LoadScreen = (() => { // eslint-disable-line no-unused-vars, no-var
 				return;
 			}
 
-			const $html = jQuery(document.documentElement);
-
 			/*
 				The value of `document.readyState` may be: 'loading' -> 'interactive' -> 'complete'.
 				Though, to reach this point, it must already be in, at least, the 'interactive' state.
 			*/
 			if (document.readyState === 'complete') {
-				if ($html.hasClass('init-loading')) {
+				if (jQuery(document.documentElement).attr('data-init') === 'loading') {
 					if (Config.loadDelay > 0) {
-						// TODO: Maybe check `_locks.size` before removing the load screen in the callback?
-						setTimeout(
-							() => $html.removeClass('init-loading'),
-							Math.max(Engine.minDomActionDelay, Config.loadDelay)
-						);
+						setTimeout(() => {
+							if (_locks.size === 0) {
+								loadScreenHide();
+							}
+						}, Math.max(Engine.minDomActionDelay, Config.loadDelay));
 					}
 					else {
-						$html.removeClass('init-loading');
+						loadScreenHide();
 					}
 				}
 			}
 			else {
-				$html.addClass('init-loading');
+				loadScreenShow();
 			}
 		});
 	}
@@ -81,14 +79,14 @@ var LoadScreen = (() => { // eslint-disable-line no-unused-vars, no-var
 		Hide the loading screen.
 	**/
 	function loadScreenHide() {
-		jQuery(document.documentElement).removeClass('init-loading');
+		jQuery(document.documentElement).removeAttr('data-init');
 	}
 
 	/**
 		Show the loading screen.
 	**/
 	function loadScreenShow() {
-		jQuery(document.documentElement).addClass('init-loading');
+		jQuery(document.documentElement).attr('data-init', 'loading');
 	}
 
 	/**
