@@ -37,28 +37,28 @@
 #debug-view-toggle:before {
 	content: "\e838\00a0";
 }
-html:not(.debug-view) #debug-view-toggle {
+html:not([data-debug-view]) #debug-view-toggle {
 	color: #eee;
 	background-color: transparent;
 	border: 1px solid #444;
 	padding: 0.4em;
 }
-html:not(.debug-view) #debug-view-toggle:hover {
+html:not([data-debug-view]) #debug-view-toggle:hover {
 	background-color: #333;
 	border-color: #eee;
 }
-html:not(.debug-view) #debug-view-toggle:after {
+html:not([data-debug-view]) #debug-view-toggle:after {
 	content: "\00a0\00a0\e830";
 }
-html.debug-view #debug-view-toggle {
+html[data-debug-view] #debug-view-toggle {
 	background-color: #282;
 	border-color: #4a4;
 }
-html.debug-view #debug-view-toggle:hover {
+html[data-debug-view] #debug-view-toggle:hover {
 	background-color: #4a4;
 	border-color: #6c6;
 }
-html.debug-view #debug-view-toggle:after {
+html[data-debug-view] #debug-view-toggle:after {
 	content: "\00a0\00a0\e831";
 }
 
@@ -66,56 +66,56 @@ html.debug-view #debug-view-toggle:after {
 /*
 	Default debug view styles.
 */
-html.debug-view .debug {
+html[data-debug-view] .debug {
 	padding: 0.25em;
 	background-color: #234; /* #541, #151 */
 }
-html.debug-view .debug[title] {
+html[data-debug-view] .debug[title] {
 	cursor: help;
 }
-html.debug-view .debug.block {
+html[data-debug-view] .debug.block {
 	display: inline-block;
 	vertical-align: middle;
 }
-html.debug-view .debug.invalid {
+html[data-debug-view] .debug.invalid {
 	text-decoration: line-through;
 }
-html.debug-view .debug.hidden,
-html.debug-view .debug.hidden .debug {
+html[data-debug-view] .debug.hidden,
+html[data-debug-view] .debug.hidden .debug {
 	background-color: #555;
 }
-html:not(.debug-view) .debug.hidden {
+html:not([data-debug-view]) .debug.hidden {
 	display: none;
 }
 
-html.debug-view .debug[data-name][data-type]:before,
-html.debug-view .debug[data-name][data-type].nonvoid:after {
+html[data-debug-view] .debug[data-name][data-type]:before,
+html[data-debug-view] .debug[data-name][data-type].nonvoid:after {
 	background-color: rgba(0,0,0,0.25);
 	font-family: monospace, monospace;
 	white-space: pre;
 }
-html.debug-view .debug[data-name][data-type]:before {
+html[data-debug-view] .debug[data-name][data-type]:before {
 	content: attr(data-name);
 }
-html.debug-view .debug[data-name][data-type|="macro"]:before {
+html[data-debug-view] .debug[data-name][data-type|="macro"]:before {
 	content: "<<" attr(data-name) ">>";
 }
-html.debug-view .debug[data-name][data-type|="macro"].nonvoid:after {
+html[data-debug-view] .debug[data-name][data-type|="macro"].nonvoid:after {
 	content: "<</" attr(data-name) ">>";
 }
-html.debug-view .debug[data-name][data-type|="html"]:before {
+html[data-debug-view] .debug[data-name][data-type|="html"]:before {
 	content: "<" attr(data-name) ">";
 }
-html.debug-view .debug[data-name][data-type|="html"].nonvoid:after {
+html[data-debug-view] .debug[data-name][data-type|="html"].nonvoid:after {
 	content: "</" attr(data-name) ">";
 }
-html.debug-view .debug[data-name][data-type]:not(:empty):before {
+html[data-debug-view] .debug[data-name][data-type]:not(:empty):before {
 	margin-right: 0.25em;
 }
-html.debug-view .debug[data-name][data-type].nonvoid:not(:empty):after {
+html[data-debug-view] .debug[data-name][data-type].nonvoid:not(:empty):after {
 	margin-left: 0.25em;
 }
-html.debug-view .debug[data-name][data-type|="special"],
-html.debug-view .debug[data-name][data-type|="special"]:before {
+html[data-debug-view] .debug[data-name][data-type|="special"],
+html[data-debug-view] .debug[data-name][data-type|="special"]:before {
 	display: block;
 }

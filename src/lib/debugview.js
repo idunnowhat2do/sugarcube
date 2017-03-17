@@ -125,18 +125,19 @@ var DebugView = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		static enable() {
-			jQuery(document.documentElement).addClass('debug-view');
+			jQuery(document.documentElement).attr('data-debug-view', 'enabled');
 			jQuery.event.trigger('tw:debugviewupdate');
 		}
 
 		static disable() {
-			jQuery(document.documentElement).removeClass('debug-view');
+			jQuery(document.documentElement).removeAttr('data-debug-view');
 			jQuery.event.trigger('tw:debugviewupdate');
 		}
 
 		static toggle() {
-			jQuery(document.documentElement).toggleClass('debug-view');
-			jQuery.event.trigger('tw:debugviewupdate');
+			jQuery(document.documentElement).attr('data-debug-view') === 'enabled'
+				? DebugView.disable()
+				: DebugView.enable();
 		}
 	}
 
