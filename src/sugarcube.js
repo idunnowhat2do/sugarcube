@@ -139,8 +139,8 @@ jQuery(() => {
 
 		// Initialize the user interface (must be done before story initialization, specifically before scripts).
 		Dialog.init();
-		UI.init();
 		UIBar.init();
+		Engine.init();
 
 		// Initialize the story (largely load the user styles, scripts, and widgets).
 		Story.init();
@@ -165,11 +165,10 @@ jQuery(() => {
 		// Initialize the macros.
 		Macro.init();
 
-		// Start the engine (should be done as late as possible, but before UI startup).
+		// Start the engine (should be done as late as possible, but before UI bar startup).
 		Engine.start();
 
-		// Start the user interface.
-		UI.start();
+		// Start the UI bar interface.
 		UIBar.start();
 
 		// Finally, export identifiers for debugging purposes.

@@ -7,74 +7,15 @@
  *
  **********************************************************************************************************************/
 /*
-	global Dialog, Engine, Has, L10n, Save, Setting, State, Story, StyleWrapper, UIBar, Util, Wikifier, Config,
-	       settings
+	global Dialog, Engine, Has, L10n, Save, Setting, State, Story, Util, Wikifier, Config, settings
 */
 
 var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
-	let _outlinePatch = null;
-
-
 	/*******************************************************************************************************************
 	 * UI Functions, Core.
 	 ******************************************************************************************************************/
-	function uiInit() {
-		if (DEBUG) { console.log('[UI/uiInit()]'); }
-
-		/*
-			Remove #init-no-js & #init-lacking from #init-screen.
-		*/
-		jQuery('#init-no-js,#init-lacking').remove();
-
-		/*
-			Generate and cache the outline patching <style> element (`StyleWrapper`-wrapped).
-		*/
-		_outlinePatch = new StyleWrapper((
-			() => jQuery(document.createElement('style'))
-				.attr({
-					id   : 'style-outline-patch',
-					type : 'text/css'
-				})
-				.appendTo(document.head)
-				.get(0) // return the <style> element itself
-		)());
-
-		/*
-			Setup the UI's global event handlers.
-		*/
-		jQuery(document)
-			// Setup accessible outline handling.
-			// IDEA: http://www.paciellogroup.com/blog/2012/04/how-to-remove-css-outlines-in-an-accessible-manner/
-			.on('mousedown.outline-handler keydown.outline-handler', ev => {
-				switch (ev.type) {
-				case 'mousedown':
-					uiHideOutlines();
-					break;
-
-				case 'keydown':
-					uiShowOutlines();
-					break;
-				}
-			});
-	}
-
-	function uiStart() {
-		if (DEBUG) { console.log('[UI/uiStart()]'); }
-
-		// Focus the document element initially.
-		jQuery(document.documentElement).focus();
-	}
-
-	function uiHideOutlines() {
-		_outlinePatch.set('*:focus{outline:none}');
-	}
-
-	function uiShowOutlines() {
-		_outlinePatch.clear();
-	}
-
 	function uiAssembleLinkList(passage, listEl) {
 		let list = listEl;
 
@@ -700,10 +641,6 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			UI Functions, Core.
 		*/
-		init             : { value : uiInit },
-		start            : { value : uiStart },
-		hideOutlines     : { value : uiHideOutlines },
-		showOutlines     : { value : uiShowOutlines },
 		assembleLinkList : { value : uiAssembleLinkList },
 
 		/*
@@ -725,11 +662,12 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Legacy Aliases.
 		*/
-		// UIBar methods.
+		// `UIBar` methods.
+		/* global UIBar */
 		stow                     : { value : () => UIBar.stow() },
 		unstow                   : { value : () => UIBar.unstow() },
 		setStoryElements         : { value : () => UIBar.setStoryElements() },
-		// Dialog methods.
+		// `Dialog` methods.
 		isOpen                   : { value : (...args) => Dialog.isOpen(...args) },
 		body                     : { value : () => Dialog.body() },
 		setup                    : { value : (...args) => Dialog.setup(...args) },

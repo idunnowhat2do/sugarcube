@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global Alert, Config, DebugView, LoadScreen, Save, State, Story, UI, Util, Wikifier, postdisplay, predisplay,
-	       prehistory
+	global Alert, Config, DebugView, LoadScreen, Save, State, Story, StyleWrapper, UI, Util, Wikifier, postdisplay,
+	       predisplay, prehistory
 */
 
 var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
@@ -33,10 +33,44 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 	// Cache of the debug view for the StoryInit special passage.
 	let _storyInitDebugView = null;
 
+	// Cache of the outline patching <style> element (`StyleWrapper`-wrapped).
+	let _outlinePatch = null;
+
 
 	/*******************************************************************************************************************
 	 * Engine Functions.
 	 ******************************************************************************************************************/
+	function engineInit() {
+		if (DEBUG) { console.log('[Engine/engineInit()]'); }
+
+		/*
+			Remove #init-no-js & #init-lacking from #init-screen.
+		*/
+		jQuery('#init-no-js,#init-lacking').remove();
+
+		/*
+			Generate and cache the ARIA outlines <style> element (`StyleWrapper`-wrapped)
+			and set up the handler to manipulate the outlines.
+
+			IDEA: http://www.paciellogroup.com/blog/2012/04/how-to-remove-css-outlines-in-an-accessible-manner/
+		*/
+		_outlinePatch = new StyleWrapper((
+			() => jQuery(document.createElement('style'))
+				.attr({
+					id   : 'style-aria-outlines',
+					type : 'text/css'
+				})
+				.appendTo(document.head)
+				.get(0) // return the <style> element itself
+		)());
+		jQuery(document).on('mousedown.aria-outlines keydown.aria-outlines', ev => {
+			switch (ev.type) {
+			case 'mousedown': _hideOutlines(); break;
+			case 'keydown':   _showOutlines(); break;
+			}
+		});
+	}
+
 	function engineStart() {
 		if (DEBUG) { console.log('[Engine/engineStart()]'); }
 
@@ -95,6 +129,9 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		if (!Story.has(Config.passages.start)) {
 			throw new Error(`starting passage ("${Config.passages.start}") not found`);
 		}
+
+		// Focus the document element initially.
+		jQuery(document.documentElement).focus();
 
 		if (State.restore()) {
 			engineShow();
@@ -484,7 +521,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Last second post-processing for accessibility and other things.
 		*/
-		UI.hideOutlines(); // initially hide outlines
+		_hideOutlines(); // initially hide outlines
 		jQuery('#story')
 			// Add `link-external` to all `href` bearing `<a>` elements which don't have it.
 			.find('a[href]:not(.link-external)')
@@ -560,6 +597,18 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
+	 * Utility Functions.
+	 ******************************************************************************************************************/
+	function _hideOutlines() {
+		_outlinePatch.set('*:focus{outline:none}');
+	}
+
+	function _showOutlines() {
+		_outlinePatch.clear();
+	}
+
+
+	/*******************************************************************************************************************
 	 * Module Exports.
 	 ******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
@@ -572,6 +621,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Core Functions.
 		*/
+		init        : { value : engineInit },
 		start       : { value : engineStart },
 		restart     : { value : engineRestart },
 		state       : { get : engineState },
