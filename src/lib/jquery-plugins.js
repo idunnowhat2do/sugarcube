@@ -9,7 +9,9 @@
 /* global Wikifier, safeActiveElement */
 
 /*
-	`ariaClick([options,] handler)` method plugin.
+	WAI-ARIA methods plugin.
+
+	`<jQuery>.ariaClick([options,] handler)`
 	    Makes the target element(s) WAI-ARIA compatible clickables.
 */
 (() => {
@@ -154,16 +156,45 @@
 /*
 	Wikifier methods plugin.
 
-	`wikiWithOptions(options, sources…)`
+	`jQuery.wikiWithOptions(options, sources…)`
+	    Wikifies the given content source(s), as directed by the given options.
+
+	`jQuery.wiki(sources…)`
+	    Wikifies the given content source(s).
+
+	`<jQuery>.wikiWithOptions(options, sources…)`
 	    Wikifies the given content source(s) and appends the result to the target
 	    element(s), as directed by the given options.
 
-	`wiki(sources…)`
+	`<jQuery>.wiki(sources…)`
 	    Wikifies the given content source(s) and appends the result to the target
 	    element(s).
 */
 (() => {
 	'use strict';
+
+	jQuery.extend({
+		/*
+			Extend jQuery's static methods with a `wikiWithOptions()` method.
+		*/
+		wikiWithOptions(options, ...sources) {
+			// Bail out if there are no content sources.
+			if (sources.length === 0) {
+				return;
+			}
+
+			// Wikify the content sources into a fragment.
+			const frag = document.createDocumentFragment();
+			sources.forEach(content => new Wikifier(frag, content, options));
+		},
+
+		/*
+			Extend jQuery's static methods with a `wiki()` method.
+		*/
+		wiki(...sources) {
+			this.wikiWithOptions(undefined, ...sources);
+		}
+	});
 
 	jQuery.fn.extend({
 		/*
