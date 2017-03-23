@@ -178,7 +178,7 @@
 			Extend jQuery's static methods with a `wikiWithOptions()` method.
 		*/
 		wikiWithOptions(options, ...sources) {
-			// Bail out if there are no content sources.
+			// Bail out, if there are no content sources.
 			if (sources.length === 0) {
 				return;
 			}
@@ -186,6 +186,15 @@
 			// Wikify the content sources into a fragment.
 			const frag = document.createDocumentFragment();
 			sources.forEach(content => new Wikifier(frag, content, options));
+
+			// Gather the text of any error elements within the fragment…
+			const errors = [...frag.querySelectorAll('.error')]
+				.map(errEl => errEl.textContent.replace(/^(?:(?:Uncaught\s+)?Error:\s+)+/, ''));
+
+			// …and throw an exception, if there were any errors.
+			if (errors.length > 0) {
+				throw new Error(errors.join('; '));
+			}
 		},
 
 		/*
