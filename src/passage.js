@@ -204,18 +204,25 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 		render() {
 			if (DEBUG) { console.log(`[<Passage: "${this.title}">.render()]`); }
 
+			const dataTags = this.tags.length > 0 ? this.tags.join(' ') : null;
+
 			// Create and setup the new passage element.
 			const passageEl = document.createElement('div');
 			jQuery(passageEl)
 				.attr({
 					id             : this.domId,
 					'data-passage' : this.title,
-					'data-tags'    : this.tags.join(' ')
+					'data-tags'    : dataTags
 				})
 				.addClass(`passage ${this.className}`);
 
-			// Add the passage's classes to the <body>.
-			jQuery(document.body).addClass(this.className);
+			// Add the passage's classes and tags to <body>.
+			jQuery(document.body)
+				.attr('data-tags', dataTags)
+				.addClass(this.className);
+
+			// Add the passage's tags to <html>.
+			jQuery(document.documentElement).attr('data-tags', dataTags);
 
 			// Execute pre-render tasks.
 			Object.keys(prerender).forEach(task => {
