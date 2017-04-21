@@ -4,10 +4,10 @@
 	  - Description : Node.js-hosted build script for SugarCube
 	  - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
 	  - Copyright   : Copyright © 2014–2017 Thomas Michael Edwards. All rights reserved.
-	  - Version     : 1.3.10, 2017-03-17
+	  - Version     : 1.4.0, 2017-04-21
 */
 /* eslint-env node, es6 */
-/* eslint-disable camelcase, object-shorthand, prefer-template, strict */
+/* eslint-disable strict */
 'use strict';
 
 /*******************************************************************************
@@ -164,7 +164,7 @@ if (_opt.options.build) {
 		break;
 
 	default:
-		die('unknown Twine major version: ' + _opt.options.build + '; valid values: 1 or 2');
+		die(`unknown Twine major version: ${_opt.options.build}; valid values: 1 or 2`);
 		break;
 	}
 }
@@ -180,14 +180,25 @@ if (_opt.options.build) {
 
 	// Get the base version info and set build metadata.
 	const version = Object.assign(
-		require('./src/sugarcube.json'), // relative path must be prefixed ('./')
+		(() => {
+			const semver = require('semver');
+			const { name, version } = require('./package.json'); // relative path must be prefixed ('./')
+
+			return {
+				title      : name,
+				major      : semver.major(version),
+				minor      : semver.minor(version),
+				patch      : semver.patch(version),
+				prerelease : (semver.prerelease(version) || []).join('.') || null
+			};
+		})(),
 		{
 			build : Number(readFileContents('.build')) + 1,
 			date  : (new Date()).toISOString(),
 
 			toString() {
-				return this.major + '.' + this.minor + '.' + this.patch
-					+ (this.prerelease ? '-' + this.prerelease : '');
+				const prerelease = this.prerelease ? `-${this.prerelease}` : '';
+				return `${this.major}.${this.minor}.${this.patch}${prerelease}`;
 			}
 		}
 	);
@@ -199,7 +210,7 @@ if (_opt.options.build) {
 		// Process the header templates and write the outfiles.
 		projectBuild({
 			build     : CONFIG.twine1.build,
-			version   : version,
+			version   : version, // eslint-disable-line object-shorthand
 			libSource : assembleLibraries(CONFIG.libs),                  // combine the libraries
 			appSource : compileJavaScript(CONFIG.js, { twine1 : true }), // combine and minify the app JS
 			cssSource : compileStyles(CONFIG.css)                        // combine and minify the app CSS
@@ -216,14 +227,14 @@ if (_opt.options.build) {
 		// Process the story format templates and write the outfiles.
 		projectBuild({
 			build     : CONFIG.twine2.build,
-			version   : version,
+			version   : version, // eslint-disable-line object-shorthand
 			libSource : assembleLibraries(CONFIG.libs),                   // combine the libraries
 			appSource : compileJavaScript(CONFIG.js, { twine1 : false }), // combine and minify the app JS
 			cssSource : compileStyles(CONFIG.css),                        // combine and minify the app CSS
 
 			postProcess(sourceString) {
 				// Load the output format.
-				let output = require('./' + _path.normalize(this.build.json)); // relative path must be prefixed ('./')
+				let output = require(`./${_path.normalize(this.build.json)}`); // relative path must be prefixed ('./')
 
 				// Merge data into the output format.
 				output = Object.assign(output, {
@@ -236,7 +247,7 @@ if (_opt.options.build) {
 				});
 
 				// Wrap the output in the `storyFormat()` function.
-				output = 'window.storyFormat(' + JSON.stringify(output) + ');';
+				output = `window.storyFormat(${JSON.stringify(output)});`;
 
 				return output;
 			}
@@ -297,14 +308,14 @@ function copyFile(srcFilename, destFilename) {
 		buf = _fs.readFileSync(srcPath);
 	}
 	catch (ex) {
-		die('cannot open file "' + srcPath + '" for reading (reason: ' + ex.message + ')');
+		die(`cannot open file "${srcPath}" for reading (reason: ${ex.message})`);
 	}
 
 	try {
 		_fs.writeFileSync(destPath, buf);
 	}
 	catch (ex) {
-		die('cannot open file "' + destPath + '" for writing (reason: ' + ex.message + ')');
+		die(`cannot open file "${destPath}" for writing (reason: ${ex.message})`);
 	}
 
 	return true;
@@ -321,7 +332,7 @@ function readFileContents(filename) {
 		return _fs.readFileSync(filepath, { encoding : 'utf8' }).replace(/\r\n/g, '\n');
 	}
 	catch (ex) {
-		die('cannot open file "' + filepath + '" for reading (reason: ' + ex.message + ')');
+		die(`cannot open file "${filepath}" for reading (reason: ${ex.message})`);
 	}
 }
 
@@ -332,7 +343,7 @@ function writeFileContents(filename, data) {
 		_fs.writeFileSync(filepath, data, { encoding : 'utf8' });
 	}
 	catch (ex) {
-		die('cannot open file "' + filepath + '" for writing (reason: ' + ex.message + ')');
+		die(`cannot open file "${filepath}" for writing (reason: ${ex.message})`);
 	}
 }
 
@@ -351,6 +362,7 @@ function assembleLibraries(filenames) {
 }
 
 function compileJavaScript(filenameObj, options) {
+	/* eslint-disable camelcase, prefer-template */
 	log('compiling JavaScript...');
 
 	const babelCore = require('babel-core');
@@ -407,9 +419,11 @@ function compileJavaScript(filenameObj, options) {
 
 		die(mesg, ex);
 	}
+	/* eslint-enable camelcase, prefer-template */
 }
 
 function compileStyles(filenames) {
+	/* eslint-disable prefer-template */
 	log('compiling CSS...');
 
 	const postcss         = require('postcss');
@@ -440,13 +454,14 @@ function compileStyles(filenames) {
 		return '<style id="style-' + _path.basename(filename, '.css').toLowerCase().replace(/[^0-9a-z]+/g, '-')
 			+ '" type="text/css">' + css + '</style>';
 	});
+	/* eslint-enable prefer-template */
 }
 
 function projectBuild(project) {
 	const infile  = _path.normalize(project.build.src);
 	const outfile = _path.normalize(project.build.dest);
 
-	log('building: "' + outfile + '"');
+	log(`building: "${outfile}"`);
 
 	let output  = readFileContents(infile); // load the story format template
 
@@ -481,7 +496,7 @@ function projectCopy(fileObjs) {
 		const infile  = _path.normalize(file.src);
 		const outfile = _path.normalize(file.dest);
 
-		log('copying : "' + outfile + '"');
+		log(`copying : "${outfile}"`);
 
 		makePath(_path.dirname(outfile));
 		copyFile(infile, outfile);
