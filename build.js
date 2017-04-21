@@ -4,7 +4,7 @@
 	  - Description : Node.js-hosted build script for SugarCube
 	  - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
 	  - Copyright   : Copyright © 2014–2017 Thomas Michael Edwards. All rights reserved.
-	  - Version     : 1.4.0, 2017-04-21
+	  - Version     : 1.4.1, 2017-04-21
 */
 /* eslint-env node, es6 */
 /* eslint-disable strict */
@@ -178,30 +178,27 @@ if (_opt.options.build) {
 		writeFileContents('.build', 0);
 	}
 
-	// Get the base version info and set build metadata.
-	const version = Object.assign(
-		(() => {
-			const semver = require('semver');
-			const { name, version } = require('./package.json'); // relative path must be prefixed ('./')
+	// Get the version info and build metadata.
+	const version = (() => {
+		const semver = require('semver');
+		const { name, version } = require('./package.json'); // relative path must be prefixed ('./')
+		const prerelease = semver.prerelease(version);
 
-			return {
-				title      : name,
-				major      : semver.major(version),
-				minor      : semver.minor(version),
-				patch      : semver.patch(version),
-				prerelease : (semver.prerelease(version) || []).join('.') || null
-			};
-		})(),
-		{
-			build : Number(readFileContents('.build')) + 1,
-			date  : (new Date()).toISOString(),
+		return {
+			title      : name,
+			major      : semver.major(version),
+			minor      : semver.minor(version),
+			patch      : semver.patch(version),
+			prerelease : prerelease && prerelease.length > 0 ? prerelease.join('.') : null,
+			build      : Number(readFileContents('.build')) + 1,
+			date       : (new Date()).toISOString(),
 
 			toString() {
 				const prerelease = this.prerelease ? `-${this.prerelease}` : '';
 				return `${this.major}.${this.minor}.${this.patch}${prerelease}`;
 			}
-		}
-	);
+		};
+	})();
 
 	// Build for Twine 1.x.
 	if (_buildForTwine1 && CONFIG.twine1) {
