@@ -63,12 +63,12 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 				.appendTo(document.head)
 				.get(0) // return the <style> element itself
 		)());
-		jQuery(document).on('mousedown.aria-outlines keydown.aria-outlines', ev => {
-			switch (ev.type) {
-			case 'mousedown': _hideOutlines(); break;
-			case 'keydown':   _showOutlines(); break;
-			}
-		});
+		jQuery(document).on(
+			'mousedown.aria-outlines keydown.aria-outlines',
+			ev => ev.type === 'keydown'
+				? _showOutlines()
+				: _hideOutlines()
+		);
 	}
 
 	function engineStart() {
