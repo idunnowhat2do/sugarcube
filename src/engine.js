@@ -7,8 +7,8 @@
  *
  **********************************************************************************************************************/
 /*
-	global Alert, Config, DebugView, LoadScreen, Save, State, Story, StyleWrapper, UI, Util, Wikifier, postdisplay,
-	       predisplay, prehistory
+	global Alert, Config, DebugView, LoadScreen, Save, State, Story, StyleWrapper, UI, UIBar, Util, Wikifier,
+	       postdisplay, predisplay, prehistory
 */
 
 var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
@@ -47,6 +47,33 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 			Remove #init-no-js & #init-lacking from #init-screen.
 		*/
 		jQuery('#init-no-js,#init-lacking').remove();
+
+		/*
+			Generate the core story elements and insert them into the page before the store area.
+		*/
+		(() => {
+			const $storyTree  = jQuery(document.createDocumentFragment());
+			const storyMarkup = Story.has('StoryInterface') && Story.get('StoryInterface').text.trim();
+
+			if (storyMarkup) {
+				// Remove the UI bar and its styles.
+				UIBar.destroy();
+
+				// Remove the core display area styles.
+				jQuery(document.head).find('#style-core-display').remove();
+
+				$storyTree.append(storyMarkup);
+
+				if ($storyTree.find('#passages').length === 0) {
+					throw new Error('no element with ID "passages" found within "StoryInterface" special passage');
+				}
+			}
+			else {
+				$storyTree.append('<div id="story" role="main"><div id="passages"></div></div>');
+			}
+
+			$storyTree.insertBefore('#store-area');
+		})();
 
 		/*
 			Generate and cache the ARIA outlines <style> element (`StyleWrapper`-wrapped)

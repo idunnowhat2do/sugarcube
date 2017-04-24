@@ -61,9 +61,6 @@ var UIBar = (() => { // eslint-disable-line no-unused-vars, no-var
 					+         '</nav>'
 					+     '</div>'
 					+ '</div>'
-					+ '<div id="story" role="main">'
-					+     '<div id="passages"></div>'
-					+ '</div>'
 					/* eslint-enable max-len */
 				)
 				.insertBefore('#store-area');
