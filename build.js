@@ -4,7 +4,7 @@
 	  - Description : Node.js-hosted build script for SugarCube
 	  - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
 	  - Copyright   : Copyright © 2014–2017 Thomas Michael Edwards. All rights reserved.
-	  - Version     : 1.4.1, 2017-04-21
+	  - Version     : 1.4.2, 2017-04-23
 */
 /* eslint-env node, es6 */
 /* eslint-disable strict */
@@ -63,8 +63,11 @@ const CONFIG = {
 		// The ordering herein is significant.
 		'src/css/normalize.css',
 		'src/css/init-screen.css',
-		'src/css/fonts.css',
+		'src/css/font.css',
 		'src/css/core.css',
+		'src/css/core-display.css',
+		'src/css/core-passage.css',
+		'src/css/core-macro.css',
 		'src/css/ui-dialog.css',
 		'src/css/ui.css',
 		'src/css/ui-bar.css',

@@ -1,0 +1,26 @@
+/***********************************************************************************************************************
+ *
+ * core-macro.css
+ *
+ * Copyright © 2014–2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
+ *
+ **********************************************************************************************************************/
+
+/*
+	Default appearance styles.
+*/
+.macro-linkappend-insert,
+.macro-linkprepend-insert,
+.macro-linkreplace-insert,
+.macro-repeat-insert,
+.macro-timed-insert {
+	transition: opacity 400ms ease-in;
+}
+.macro-linkappend-in,
+.macro-linkprepend-in,
+.macro-linkreplace-in,
+.macro-repeat-in,
+.macro-timed-in {
+	opacity: 0;
+}

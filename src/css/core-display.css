@@ -1,0 +1,26 @@
+/***********************************************************************************************************************
+ *
+ * core-display.css
+ *
+ * Copyright © 2014–2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
+ * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
+ *
+ **********************************************************************************************************************/
+
+/*
+	Default structural styles.
+*/
+#story {
+	z-index: 10;
+	margin: 2.5em;
+	transition: margin-left 200ms ease-in;
+}
+@media screen and (max-width: 1136px) {
+	#story {
+		margin-right: 1.5em;
+	}
+}
+#passages {
+	max-width: 54em;
+	margin: 0 auto;
+}
