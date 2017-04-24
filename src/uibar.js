@@ -13,11 +13,19 @@
 var UIBar = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
+	// Whether `UIBar.destroy()` has been called.
+	let _destroyed = false;
+
+
 	/*******************************************************************************************************************
 	 * UI Bar Functions.
 	 ******************************************************************************************************************/
 	function uiBarInit() {
 		if (DEBUG) { console.log('[UIBar/uiBarInit()]'); }
+
+		if (_destroyed || document.getElementById('ui-bar')) {
+			return;
+		}
 
 		/*
 			Generate the UI bar elements and insert them into the page before the store area.
@@ -79,6 +87,10 @@ var UIBar = (() => { // eslint-disable-line no-unused-vars, no-var
 
 	function uiBarStart() {
 		if (DEBUG) { console.log('[UIBar/uiBarStart()]'); }
+
+		if (_destroyed) {
+			return;
+		}
 
 		// Cache the jQuery-wrapped #ui-bar.
 		const $uiBar = jQuery('#ui-bar');
@@ -185,24 +197,42 @@ var UIBar = (() => { // eslint-disable-line no-unused-vars, no-var
 	function uiBarDestroy() {
 		if (DEBUG) { console.log('[UIBar/uiBarDestroy()]'); }
 
+		if (_destroyed) {
+			return;
+		}
+
 		// Remove all namespaced events.
 		jQuery(document).off('.ui-bar');
 
 		// Remove the UI bar itself and its styles.
 		jQuery('#ui-bar').remove();
 		jQuery(document.head).find('#style-ui-bar').remove();
+
+		_destroyed = true;
 	}
 
 	function uiBarStow() {
+		if (_destroyed) {
+			return;
+		}
+
 		jQuery('#ui-bar').addClass('stowed');
 	}
 
 	function uiBarUnstow() {
+		if (_destroyed) {
+			return;
+		}
+
 		jQuery('#ui-bar').removeClass('stowed');
 	}
 
 	function uiBarSetStoryElements() {
 		if (DEBUG) { console.log('[UIBar/uiBarSetStoryElements()]'); }
+
+		if (_destroyed) {
+			return;
+		}
 
 		// Setup the (non-navigation) dynamic page elements.
 		setPageElement('story-banner', 'StoryBanner');
