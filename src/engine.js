@@ -498,7 +498,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		}, passage);
 
 		if (Config.ui.updateStoryElements) {
-			UI.setStoryElements();
+			UIBar.setStoryElements();
 		}
 
 		/*
