@@ -207,6 +207,9 @@ var UIBar = (() => { // eslint-disable-line no-unused-vars, no-var
 		jQuery('#ui-bar').remove();
 		jQuery(document.head).find('#style-ui-bar').remove();
 
+		// Disable calls to `UIBar.setStoryElements()`.
+		Config.ui.updateStoryElements = false;
+
 		_destroyed = true;
 	}
 
