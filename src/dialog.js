@@ -73,7 +73,7 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Generate the dialog elements.
 		*/
-		const $uiTree = jQuery(document.createDocumentFragment())
+		const $elems = jQuery(document.createDocumentFragment())
 			.append(
 				/* eslint-disable max-len */
 				  '<div id="ui-overlay" class="ui-close"></div>'
@@ -94,15 +94,15 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 			      of `find()`, so that we cache uncluttered jQuery-wrappers (i.e. `context`
 			      refers to the elements and there is no `prevObject`).
 		*/
-		_$overlay     = jQuery($uiTree.find('#ui-overlay').get(0));
-		_$dialog      = jQuery($uiTree.find('#ui-dialog').get(0));
-		_$dialogTitle = jQuery($uiTree.find('#ui-dialog-title').get(0));
-		_$dialogBody  = jQuery($uiTree.find('#ui-dialog-body').get(0));
+		_$overlay     = jQuery($elems.find('#ui-overlay').get(0));
+		_$dialog      = jQuery($elems.find('#ui-dialog').get(0));
+		_$dialogTitle = jQuery($elems.find('#ui-dialog-title').get(0));
+		_$dialogBody  = jQuery($elems.find('#ui-dialog-body').get(0));
 
 		/*
 			Insert the dialog elements into the page before the store area.
 		*/
-		$uiTree.insertBefore('#store-area');
+		$elems.insertBefore('#store-area');
 	}
 
 

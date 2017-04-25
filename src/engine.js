@@ -52,27 +52,27 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 			Generate the core story elements and insert them into the page before the store area.
 		*/
 		(() => {
-			const $storyTree  = jQuery(document.createDocumentFragment());
-			const storyMarkup = Story.has('StoryInterface') && Story.get('StoryInterface').text.trim();
+			const $elems = jQuery(document.createDocumentFragment());
+			const markup = Story.has('StoryInterface') && Story.get('StoryInterface').text.trim();
 
-			if (storyMarkup) {
+			if (markup) {
 				// Remove the UI bar and its styles.
 				UIBar.destroy();
 
 				// Remove the core display area styles.
 				jQuery(document.head).find('#style-core-display').remove();
 
-				$storyTree.append(storyMarkup);
+				$elems.append(markup);
 
-				if ($storyTree.find('#passages').length === 0) {
+				if ($elems.find('#passages').length === 0) {
 					throw new Error('no element with ID "passages" found within "StoryInterface" special passage');
 				}
 			}
 			else {
-				$storyTree.append('<div id="story" role="main"><div id="passages"></div></div>');
+				$elems.append('<div id="story" role="main"><div id="passages"></div></div>');
 			}
 
-			$storyTree.insertBefore('#store-area');
+			$elems.insertBefore('#store-area');
 		})();
 
 		/*

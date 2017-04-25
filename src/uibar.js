@@ -31,13 +31,12 @@ var UIBar = (() => { // eslint-disable-line no-unused-vars, no-var
 			Generate the UI bar elements and insert them into the page before the store area.
 		*/
 		(() => {
-			const $uiBarTree    = jQuery(document.createDocumentFragment());
 			const toggleLabel   = L10n.get('uiBarToggle');
 			const backwardLabel = L10n.get('uiBarBackward');
 			const jumptoLabel   = L10n.get('uiBarJumpto');
 			const forwardLabel  = L10n.get('uiBarForward');
 
-			$uiBarTree
+			jQuery(document.createDocumentFragment())
 				.append(
 					/* eslint-disable max-len */
 					  '<div id="ui-bar">'
