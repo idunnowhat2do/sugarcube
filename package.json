@@ -1,7 +1,9 @@
 {
-  "author": "Thomas Michael Edwards <tmedwards@motoslave.net>",
-  "description": "Dependency install configuaration for SugarCube's Node.js-hosted build script, build.js.",
-  "license": "Simplified BSD License",
+  "name": "SugarCube",
+  "version": "2.18.0",
+  "author": "Thomas Michael Edwards <thomasmedwards@gmail.com>",
+  "description": "Dependency install configuration for SugarCube's Node.js-hosted build script, build.js.",
+  "license": "BSD-2-Clause",
   "repository": {
     "type": "hg",
     "url": "https://bitbucket.org/tmedwards/sugarcube"
@@ -13,6 +15,7 @@
     "clean-css": "^4.0.6",
     "eslint": "^3.17.0",
     "node-getopt": "^0.2.3",
+    "semver": "^5.3.0",
     "uglify-js": "^2.7.5"
   },
   "engine": {

@@ -1,11 +1,11 @@
 /***********************************************************************************************************************
- *
- * sugarcube.js
- *
- * Copyright © 2013–2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
- * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
- *
- **********************************************************************************************************************/
+
+	sugarcube.js
+
+	Copyright © 2013–2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
+	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
+
+***********************************************************************************************************************/
 /*
 	global Alert, Browser, Config, Dialog, DebugView, Engine, Has, LoadScreen, SimpleStore, L10n, Macro, Passage,
 	       Save, Scripting, Setting, SimpleAudio, State, Story, UI, UIBar, Util, Wikifier

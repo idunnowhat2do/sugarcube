@@ -1,19 +1,19 @@
 /***********************************************************************************************************************
- *
- * macros/macrocontext.js
- *
- * Copyright © 2013–2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
- * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
- *
- **********************************************************************************************************************/
+
+	macros/macrocontext.js
+
+	Copyright © 2013–2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
+	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
+
+***********************************************************************************************************************/
 /* global Config, DebugView, Patterns, State, throwError */
 
 var MacroContext = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
 	/*******************************************************************************************************************
-	 * MacroContext Class.
-	 ******************************************************************************************************************/
+		MacroContext Class.
+	*******************************************************************************************************************/
 	class MacroContext {
 		constructor(contextData) {
 			const context = Object.assign({
@@ -267,7 +267,7 @@ var MacroContext = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Module Exports.
-	 ******************************************************************************************************************/
+		Module Exports.
+	*******************************************************************************************************************/
 	return MacroContext;
 })();

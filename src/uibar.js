@@ -1,11 +1,11 @@
 /***********************************************************************************************************************
- *
- * uibar.js
- *
- * Copyright © 2013–2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
- * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
- *
- **********************************************************************************************************************/
+
+	uibar.js
+
+	Copyright © 2013–2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
+	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
+
+***********************************************************************************************************************/
 /*
 	global Dialog, Engine, L10n, Setting, State, Story, UI, Config, setPageElement
 */
@@ -13,23 +13,30 @@
 var UIBar = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
+	// Whether `UIBar.destroy()` has been called.
+	let _destroyed = false;
+
+
 	/*******************************************************************************************************************
-	 * UI Bar Functions.
-	 ******************************************************************************************************************/
+		UI Bar Functions.
+	*******************************************************************************************************************/
 	function uiBarInit() {
 		if (DEBUG) { console.log('[UIBar/uiBarInit()]'); }
+
+		if (_destroyed || document.getElementById('ui-bar')) {
+			return;
+		}
 
 		/*
 			Generate the UI bar elements and insert them into the page before the store area.
 		*/
 		(() => {
-			const $uiBarTree    = jQuery(document.createDocumentFragment());
 			const toggleLabel   = L10n.get('uiBarToggle');
 			const backwardLabel = L10n.get('uiBarBackward');
 			const jumptoLabel   = L10n.get('uiBarJumpto');
 			const forwardLabel  = L10n.get('uiBarForward');
 
-			$uiBarTree
+			jQuery(document.createDocumentFragment())
 				.append(
 					/* eslint-disable max-len */
 					  '<div id="ui-bar">'
@@ -61,9 +68,6 @@ var UIBar = (() => { // eslint-disable-line no-unused-vars, no-var
 					+         '</nav>'
 					+     '</div>'
 					+ '</div>'
-					+ '<div id="story" role="main">'
-					+     '<div id="passages"></div>'
-					+ '</div>'
 					/* eslint-enable max-len */
 				)
 				.insertBefore('#store-area');
@@ -82,6 +86,10 @@ var UIBar = (() => { // eslint-disable-line no-unused-vars, no-var
 
 	function uiBarStart() {
 		if (DEBUG) { console.log('[UIBar/uiBarStart()]'); }
+
+		if (_destroyed) {
+			return;
+		}
 
 		// Cache the jQuery-wrapped #ui-bar.
 		const $uiBar = jQuery('#ui-bar');
@@ -188,24 +196,45 @@ var UIBar = (() => { // eslint-disable-line no-unused-vars, no-var
 	function uiBarDestroy() {
 		if (DEBUG) { console.log('[UIBar/uiBarDestroy()]'); }
 
+		if (_destroyed) {
+			return;
+		}
+
 		// Remove all namespaced events.
 		jQuery(document).off('.ui-bar');
 
 		// Remove the UI bar itself and its styles.
 		jQuery('#ui-bar').remove();
 		jQuery(document.head).find('#style-ui-bar').remove();
+
+		// Disable calls to `UIBar.setStoryElements()`.
+		Config.ui.updateStoryElements = false;
+
+		_destroyed = true;
 	}
 
 	function uiBarStow() {
+		if (_destroyed) {
+			return;
+		}
+
 		jQuery('#ui-bar').addClass('stowed');
 	}
 
 	function uiBarUnstow() {
+		if (_destroyed) {
+			return;
+		}
+
 		jQuery('#ui-bar').removeClass('stowed');
 	}
 
 	function uiBarSetStoryElements() {
 		if (DEBUG) { console.log('[UIBar/uiBarSetStoryElements()]'); }
+
+		if (_destroyed) {
+			return;
+		}
 
 		// Setup the (non-navigation) dynamic page elements.
 		setPageElement('story-banner', 'StoryBanner');
@@ -227,8 +256,8 @@ var UIBar = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Module Exports.
-	 ******************************************************************************************************************/
+		Module Exports.
+	*******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
 		init             : { value : uiBarInit },
 		start            : { value : uiBarStart },

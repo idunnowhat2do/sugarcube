@@ -5,6 +5,6 @@
 	"author"      : "Thomas Michael Edwards",
 	"image"       : "icon.svg",
 	"url"         : "http://www.motoslave.net/sugarcube/",
-	"license"     : "Simplified BSD License",
+	"license"     : "BSD-2-Clause",
 	"proofing"    : false
 }

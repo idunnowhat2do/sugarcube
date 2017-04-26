@@ -1,11 +1,11 @@
 /***********************************************************************************************************************
- *
- * l10n/strings.js
- *
- * Copyright © 2016–2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
- * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
- *
- **********************************************************************************************************************/
+
+	l10n/strings.js
+
+	Copyright © 2013–2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
+	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
+
+***********************************************************************************************************************/
 /* eslint-disable max-len, prefer-template */
 
 /*

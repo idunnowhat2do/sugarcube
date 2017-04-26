@@ -1,11 +1,11 @@
 /***********************************************************************************************************************
- *
- * core.css
- *
- * Copyright © 2014–2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
- * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
- *
- **********************************************************************************************************************/
+
+	css/core.css
+
+	Copyright © 2013–2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
+	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
+
+***********************************************************************************************************************/
 
 /*
 	Default structural styles.
@@ -22,22 +22,6 @@ html {
 #store-area, tw-storydata {
 	display: none !important;
 	z-index: 0;
-}
-
-/* Story display area styling. */
-#story {
-	z-index: 10;
-	margin: 2.5em;
-	transition: margin-left 200ms ease-in;
-}
-@media screen and (max-width: 1136px) {
-	#story {
-		margin-right: 1.5em;
-	}
-}
-#passages {
-	max-width: 54em;
-	margin: 0 auto;
 }
 
 /* Special no transition styling. */
@@ -157,7 +141,7 @@ audio, canvas, progress, video {
 [data-icon-before]:before,
 [data-icon-after]:after,
 .error:before,
-#story a.link-external:after {
+a.link-external:after {
 	font-family: "tme-fa-icons";
 	font-style: normal;
 	font-weight: normal;
@@ -178,47 +162,6 @@ audio, canvas, progress, video {
 .error:before {
 	content: "\00a0\e80d\00a0\00a0";
 }
-#story a.link-external:after {
+a.link-external:after {
 	content: "\00a0\e80e";
-}
-
-/* Passage styling. */
-.passage {
-	line-height: 1.75;
-	text-align: left;
-	transition: opacity 400ms ease-in;
-}
-.passage-in {
-	opacity: 0;
-}
-.passage ul, .passage ol {
-	margin-left: 0.5em;
-	padding-left: 1.5em;
-}
-.passage table {
-	margin: 1em 0;
-	border-collapse: collapse;
-	font-size: 100%;
-}
-.passage tr, .passage th, .passage td, .passage caption {
-	padding: 3px;
-}
-.passage .error {
-	white-space: nowrap;
-}
-
-/* Macro styling. */
-.macro-linkappend-insert,
-.macro-linkprepend-insert,
-.macro-linkreplace-insert,
-.macro-repeat-insert,
-.macro-timed-insert {
-	transition: opacity 400ms ease-in;
-}
-.macro-linkappend-in,
-.macro-linkprepend-in,
-.macro-linkreplace-in,
-.macro-repeat-in,
-.macro-timed-in {
-	opacity: 0;
 }

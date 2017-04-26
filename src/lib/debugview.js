@@ -1,11 +1,11 @@
 /***********************************************************************************************************************
- *
- * lib/debugview.js
- *
- * Copyright © 2016–2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
- * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
- *
- **********************************************************************************************************************/
+
+	lib/debugview.js
+
+	Copyright © 2013–2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
+	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
+
+***********************************************************************************************************************/
 /* global L10n */
 
 /*
@@ -15,8 +15,8 @@ var DebugView = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
 	/*******************************************************************************************************************
-	 * DebugView Class.
-	 ******************************************************************************************************************/
+		DebugView Class.
+	*******************************************************************************************************************/
 	class DebugView {
 		constructor(parent, type, name, title) {
 			Object.defineProperties(this, {
@@ -143,7 +143,7 @@ var DebugView = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Module Exports.
-	 ******************************************************************************************************************/
+		Module Exports.
+	*******************************************************************************************************************/
 	return DebugView;
 })();

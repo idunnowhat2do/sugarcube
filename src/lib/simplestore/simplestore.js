@@ -1,11 +1,11 @@
 /***********************************************************************************************************************
- *
- * lib/simplestore/simplestore.js
- *
- * Copyright © 2013–2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
- * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
- *
- **********************************************************************************************************************/
+
+	lib/simplestore/simplestore.js
+
+	Copyright © 2013–2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
+	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
+
+***********************************************************************************************************************/
 
 var SimpleStore = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
@@ -18,8 +18,8 @@ var SimpleStore = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * SimpleStore Functions.
-	 ******************************************************************************************************************/
+		SimpleStore Functions.
+	*******************************************************************************************************************/
 	function storeCreate(storageId, persistent) {
 		if (_initialized) {
 			return _initialized.create(storageId, persistent);
@@ -38,8 +38,8 @@ var SimpleStore = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Module Exports.
-	 ******************************************************************************************************************/
+		Module Exports.
+	*******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
 		/*
 			Adapters List.

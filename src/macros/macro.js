@@ -1,11 +1,11 @@
 /***********************************************************************************************************************
- *
- * macros/macro.js
- *
- * Copyright © 2013–2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
- * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
- *
- **********************************************************************************************************************/
+
+	macros/macro.js
+
+	Copyright © 2013–2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
+	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
+
+***********************************************************************************************************************/
 /* global Patterns, Scripting, clone, macros */
 
 var Macro = (() => { // eslint-disable-line no-unused-vars, no-var
@@ -22,8 +22,8 @@ var Macro = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Macros Functions.
-	 ******************************************************************************************************************/
+		Macros Functions.
+	*******************************************************************************************************************/
 	function macrosAdd(name, def, deep) {
 		if (Array.isArray(name)) {
 			name.forEach(name => macrosAdd(name, def, deep));
@@ -156,8 +156,8 @@ var Macro = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Tags Functions.
-	 ******************************************************************************************************************/
+		Tags Functions.
+	*******************************************************************************************************************/
 	function tagsRegister(parent, bodyTags) {
 		if (!parent) {
 			throw new Error('no parent specified');
@@ -214,8 +214,8 @@ var Macro = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Module Exports.
-	 ******************************************************************************************************************/
+		Module Exports.
+	*******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
 		/*
 			Macro Functions.

@@ -1,11 +1,11 @@
 /***********************************************************************************************************************
- *
- * ui.js
- *
- * Copyright © 2013–2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
- * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
- *
- **********************************************************************************************************************/
+
+	ui.js
+
+	Copyright © 2013–2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
+	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
+
+***********************************************************************************************************************/
 /*
 	global Dialog, Engine, Has, L10n, Save, Setting, State, Story, Util, Wikifier, Config, settings
 */
@@ -14,8 +14,8 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
 	/*******************************************************************************************************************
-	 * UI Functions, Core.
-	 ******************************************************************************************************************/
+		UI Functions, Core.
+	*******************************************************************************************************************/
 	function uiAssembleLinkList(passage, listEl) {
 		let list = listEl;
 
@@ -69,8 +69,8 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * UI Functions, Built-ins.
-	 ******************************************************************************************************************/
+		UI Functions, Built-ins.
+	*******************************************************************************************************************/
 	function uiOpenAlert(message, /* options, closeFn */ ...args) {
 		jQuery(Dialog.setup('Alert', 'alert'))
 			.append(
@@ -635,8 +635,8 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Module Exports.
-	 ******************************************************************************************************************/
+		Module Exports.
+	*******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
 		/*
 			UI Functions, Core.

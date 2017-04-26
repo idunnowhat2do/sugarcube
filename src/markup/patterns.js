@@ -1,11 +1,11 @@
 /***********************************************************************************************************************
- *
- * markup/patterns.js
- *
- * Copyright © 2013–2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
- * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
- *
- **********************************************************************************************************************/
+
+	markup/patterns.js
+
+	Copyright © 2013–2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
+	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
+
+***********************************************************************************************************************/
 /*
 	TODO: Move all markup patterns into here.
 */
@@ -18,8 +18,8 @@ var Patterns = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Patterns.
-	 ******************************************************************************************************************/
+		Patterns.
+	*******************************************************************************************************************/
 	/*
 		Whitespace patterns.
 
@@ -122,8 +122,8 @@ var Patterns = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Module Exports.
-	 ******************************************************************************************************************/
+		Module Exports.
+	*******************************************************************************************************************/
 	return Object.freeze({
 		space,
 		spaceNoTerminator,

@@ -1,11 +1,11 @@
 /***********************************************************************************************************************
- *
- * dialog.js
- *
- * Copyright © 2013–2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
- * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
- *
- **********************************************************************************************************************/
+
+	dialog.js
+
+	Copyright © 2013–2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
+	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
+
+***********************************************************************************************************************/
 /* global Engine, L10n, safeActiveElement */
 
 var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
@@ -20,8 +20,8 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Core Functions.
-	 ******************************************************************************************************************/
+		Core Functions.
+	*******************************************************************************************************************/
 	function dialogInit() {
 		if (DEBUG) { console.log('[Dialog/dialogInit()]'); }
 
@@ -73,7 +73,7 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Generate the dialog elements.
 		*/
-		const $uiTree = jQuery(document.createDocumentFragment())
+		const $elems = jQuery(document.createDocumentFragment())
 			.append(
 				/* eslint-disable max-len */
 				  '<div id="ui-overlay" class="ui-close"></div>'
@@ -94,21 +94,21 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 			      of `find()`, so that we cache uncluttered jQuery-wrappers (i.e. `context`
 			      refers to the elements and there is no `prevObject`).
 		*/
-		_$overlay     = jQuery($uiTree.find('#ui-overlay').get(0));
-		_$dialog      = jQuery($uiTree.find('#ui-dialog').get(0));
-		_$dialogTitle = jQuery($uiTree.find('#ui-dialog-title').get(0));
-		_$dialogBody  = jQuery($uiTree.find('#ui-dialog-body').get(0));
+		_$overlay     = jQuery($elems.find('#ui-overlay').get(0));
+		_$dialog      = jQuery($elems.find('#ui-dialog').get(0));
+		_$dialogTitle = jQuery($elems.find('#ui-dialog-title').get(0));
+		_$dialogBody  = jQuery($elems.find('#ui-dialog-body').get(0));
 
 		/*
 			Insert the dialog elements into the page before the store area.
 		*/
-		$uiTree.insertBefore('#store-area');
+		$elems.insertBefore('#store-area');
 	}
 
 
 	/*******************************************************************************************************************
-	 * Dialog Functions.
-	 ******************************************************************************************************************/
+		Dialog Functions.
+	*******************************************************************************************************************/
 	function dialogIsOpen(classNames) {
 		return _$dialog.hasClass('open')
 			&& (classNames ? classNames.splitOrEmpty(/\s+/).every(cn => _$dialogBody.hasClass(cn)) : true);
@@ -338,8 +338,8 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Module Exports.
-	 ******************************************************************************************************************/
+		Module Exports.
+	*******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
 		init            : { value : dialogInit },
 		isOpen          : { value : dialogIsOpen },

@@ -1,11 +1,11 @@
 /***********************************************************************************************************************
- *
- * lib/simplestore/adapters/cookie.js
- *
- * Copyright © 2013–2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
- * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
- *
- **********************************************************************************************************************/
+
+	lib/simplestore/adapters/cookie.js
+
+	Copyright © 2013–2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
+	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
+
+***********************************************************************************************************************/
 /* global SimpleStore */
 
 SimpleStore.adapters.push((() => {
@@ -16,8 +16,8 @@ SimpleStore.adapters.push((() => {
 
 
 	/*******************************************************************************************************************
-	 * _CookieAdapter Class.
-	 ******************************************************************************************************************/
+		_CookieAdapter Class.
+	*******************************************************************************************************************/
 	class _CookieAdapter {
 		constructor(storageId, persistent) {
 			const prefix = `${storageId}${persistent ? '!' : '*'}.`;
@@ -250,8 +250,8 @@ SimpleStore.adapters.push((() => {
 
 
 	/*******************************************************************************************************************
-	 * Adapter Utility Functions.
-	 ******************************************************************************************************************/
+		Adapter Utility Functions.
+	*******************************************************************************************************************/
 	function adapterInit(
 		// Only used for stores updates.
 		storageId
@@ -327,8 +327,8 @@ SimpleStore.adapters.push((() => {
 
 
 	/*******************************************************************************************************************
-	 * Module Exports.
-	 ******************************************************************************************************************/
+		Module Exports.
+	*******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
 		init   : { value : adapterInit },
 		create : { value : adapterCreate }

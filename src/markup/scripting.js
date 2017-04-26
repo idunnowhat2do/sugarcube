@@ -1,11 +1,11 @@
 /***********************************************************************************************************************
- *
- * markup/scripting.js
- *
- * Copyright © 2013–2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
- * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
- *
- **********************************************************************************************************************/
+
+	markup/scripting.js
+
+	Copyright © 2013–2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
+	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
+
+***********************************************************************************************************************/
 /* global Engine, Patterns, State, Story, Util */
 
 var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
@@ -14,8 +14,8 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 	/* eslint-disable no-unused-vars */
 
 	/*******************************************************************************************************************
-	 * Deprecated Legacy Functions.
-	 ******************************************************************************************************************/
+		Deprecated Legacy Functions.
+	*******************************************************************************************************************/
 	/*
 		[DEPRECATED] Returns the jQuery-wrapped target element(s) after making them accessible
 		clickables (ARIA compatibility).
@@ -227,8 +227,8 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * User Functions.
-	 ******************************************************************************************************************/
+		User Functions.
+	*******************************************************************************************************************/
 	/**
 		Returns a random value from its given arguments.
 	**/
@@ -506,8 +506,8 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Import Functions.
-	 ******************************************************************************************************************/
+		Import Functions.
+	*******************************************************************************************************************/
 	var { // eslint-disable-line no-var
 		/* eslint-disable no-unused-vars */
 		importScripts,
@@ -614,8 +614,8 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Parsing Functions.
-	 ******************************************************************************************************************/
+		Parsing Functions.
+	*******************************************************************************************************************/
 	/*
 		Returns the given string after converting all TwineScript syntactical sugars to
 		their native JavaScript counterparts.
@@ -734,8 +734,8 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Eval Functions.
-	 ******************************************************************************************************************/
+		Eval Functions.
+	*******************************************************************************************************************/
 	/* eslint-disable no-eval, no-extra-parens, no-unused-vars */
 	/*
 		Evaluates the given JavaScript code and returns the result, throwing if there were errors.
@@ -758,8 +758,8 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Module Exports.
-	 ******************************************************************************************************************/
+		Module Exports.
+	*******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
 		parse           : { value : parse },
 		evalJavaScript  : { value : evalJavaScript },

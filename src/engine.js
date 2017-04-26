@@ -1,14 +1,14 @@
 /***********************************************************************************************************************
- *
- * engine.js
- *
- * Copyright © 2015–2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
- * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
- *
- **********************************************************************************************************************/
+
+	engine.js
+
+	Copyright © 2013–2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
+	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
+
+***********************************************************************************************************************/
 /*
-	global Alert, Config, DebugView, LoadScreen, Save, State, Story, StyleWrapper, UI, Util, Wikifier, postdisplay,
-	       predisplay, prehistory
+	global Alert, Config, DebugView, LoadScreen, Save, State, Story, StyleWrapper, UI, UIBar, Util, Wikifier,
+	       postdisplay, predisplay, prehistory
 */
 
 var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
@@ -38,8 +38,8 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Engine Functions.
-	 ******************************************************************************************************************/
+		Engine Functions.
+	*******************************************************************************************************************/
 	function engineInit() {
 		if (DEBUG) { console.log('[Engine/engineInit()]'); }
 
@@ -47,6 +47,33 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 			Remove #init-no-js & #init-lacking from #init-screen.
 		*/
 		jQuery('#init-no-js,#init-lacking').remove();
+
+		/*
+			Generate the core story elements and insert them into the page before the store area.
+		*/
+		(() => {
+			const $elems = jQuery(document.createDocumentFragment());
+			const markup = Story.has('StoryInterface') && Story.get('StoryInterface').text.trim();
+
+			if (markup) {
+				// Remove the UI bar and its styles.
+				UIBar.destroy();
+
+				// Remove the core display area styles.
+				jQuery(document.head).find('#style-core-display').remove();
+
+				$elems.append(markup);
+
+				if ($elems.find('#passages').length === 0) {
+					throw new Error('no element with ID "passages" found within "StoryInterface" special passage');
+				}
+			}
+			else {
+				$elems.append('<div id="story" role="main"><div id="passages"></div></div>');
+			}
+
+			$elems.insertBefore('#store-area');
+		})();
 
 		/*
 			Generate and cache the ARIA outlines <style> element (`StyleWrapper`-wrapped)
@@ -63,12 +90,12 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 				.appendTo(document.head)
 				.get(0) // return the <style> element itself
 		)());
-		jQuery(document).on('mousedown.aria-outlines keydown.aria-outlines', ev => {
-			switch (ev.type) {
-			case 'mousedown': _hideOutlines(); break;
-			case 'keydown':   _showOutlines(); break;
-			}
-		});
+		jQuery(document).on(
+			'mousedown.aria-outlines keydown.aria-outlines',
+			ev => ev.type === 'keydown'
+				? _showOutlines()
+				: _hideOutlines()
+		);
 	}
 
 	function engineStart() {
@@ -471,7 +498,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		}, passage);
 
 		if (Config.ui.updateStoryElements) {
-			UI.setStoryElements();
+			UIBar.setStoryElements();
 		}
 
 		/*
@@ -567,8 +594,8 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Legacy Functions.
-	 ******************************************************************************************************************/
+		Legacy Functions.
+	*******************************************************************************************************************/
 	/**
 		[DEPRECATED] Play the given passage, optionally without altering the history.
 	**/
@@ -597,8 +624,8 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Utility Functions.
-	 ******************************************************************************************************************/
+		Utility Functions.
+	*******************************************************************************************************************/
 	function _hideOutlines() {
 		_outlinePatch.set('*:focus{outline:none}');
 	}
@@ -609,8 +636,8 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Module Exports.
-	 ******************************************************************************************************************/
+		Module Exports.
+	*******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
 		/*
 			Constants.
