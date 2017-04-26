@@ -61,7 +61,7 @@ const CONFIG = {
 	},
 	css : [
 		// The ordering herein is significant.
-		'src/css/normalize.css',
+		'src/vendor/normalize.css',
 		'src/css/init-screen.css',
 		'src/css/font.css',
 		'src/css/core.css',
