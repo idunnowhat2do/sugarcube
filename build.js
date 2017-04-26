@@ -1,18 +1,20 @@
 #!/usr/bin/env node
-/*
-	build.js
-	  - Description : Node.js-hosted build script for SugarCube
-	  - Author      : Thomas Michael Edwards <tmedwards@motoslave.net>
-	  - Copyright   : Copyright © 2014–2017 Thomas Michael Edwards. All rights reserved.
-	  - Version     : 1.4.2, 2017-04-23
-*/
+/***********************************************************************************************************************
+
+	build.js (v1.4.3, 2017-04-26)
+		A Node.js-hosted build script for SugarCube.
+
+	Copyright © 2013–2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
+	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
+
+***********************************************************************************************************************/
 /* eslint-env node, es6 */
 /* eslint-disable strict */
 'use strict';
 
 /*******************************************************************************
- * Configuration
- ******************************************************************************/
+	Configuration
+*******************************************************************************/
 const CONFIG = {
 	js : {
 		main : [
@@ -123,8 +125,8 @@ const CONFIG = {
 
 
 /*******************************************************************************
- * Main Script
- ******************************************************************************/
+	Main Script
+*******************************************************************************/
 /*
 	NOTICE!
 
@@ -266,8 +268,8 @@ console.log('\nBuilds complete!  (check the "dist" directory)');
 
 
 /*******************************************************************************
- * Utility Functions
- ******************************************************************************/
+	Utility Functions
+*******************************************************************************/
 function log(message, indent) {
 	console.log('%s%s', indent ? indent : _indent, message);
 }

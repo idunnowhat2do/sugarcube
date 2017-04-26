@@ -1,18 +1,18 @@
 /***********************************************************************************************************************
- *
- * lib/prngwrapper.js
- *
- * Copyright © 2013–2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
- * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
- *
- **********************************************************************************************************************/
+
+	lib/prngwrapper.js
+
+	Copyright © 2013–2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
+	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
+
+***********************************************************************************************************************/
 
 var PRNGWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
 	/*******************************************************************************************************************
-	 * PRNGWrapper Class.
-	 ******************************************************************************************************************/
+		PRNGWrapper Class.
+	*******************************************************************************************************************/
 	class PRNGWrapper {
 		constructor(seed, useEntropy) {
 			/* eslint-disable new-cap */
@@ -78,7 +78,7 @@ var PRNGWrapper = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Module Exports.
-	 ******************************************************************************************************************/
+		Module Exports.
+	*******************************************************************************************************************/
 	return PRNGWrapper;
 })();

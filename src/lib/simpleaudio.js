@@ -1,11 +1,11 @@
 /***********************************************************************************************************************
- *
- * lib/simpleaudio.js
- *
- * Copyright © 2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
- * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
- *
- **********************************************************************************************************************/
+
+	lib/simpleaudio.js
+
+	Copyright © 2013–2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
+	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
+
+***********************************************************************************************************************/
 /* global Browser, Has, Util, clone */
 
 var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
@@ -25,8 +25,8 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * AudioWrapper Class.
-	 ******************************************************************************************************************/
+		AudioWrapper Class.
+	*******************************************************************************************************************/
 	class AudioWrapper {
 		constructor(obj) {
 			// Process the given array of sources or AudioWrapper object.
@@ -821,8 +821,8 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * AudioList Class.
-	 ******************************************************************************************************************/
+		AudioList Class.
+	*******************************************************************************************************************/
 	class AudioList {
 		constructor(obj) {
 			// Setup our own properties.
@@ -1175,8 +1175,8 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Master Audio Functions.
-	 ******************************************************************************************************************/
+		Master Audio Functions.
+	*******************************************************************************************************************/
 	function masterMuteGet() {
 		return _masterMute;
 	}
@@ -1207,8 +1207,8 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Subscription Functions.
-	 ******************************************************************************************************************/
+		Subscription Functions.
+	*******************************************************************************************************************/
 	function subscribe(id, callback) {
 		if (typeof callback !== 'function') {
 			throw new Error('callback parameter must be a function');
@@ -1227,8 +1227,8 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Factory Functions.
-	 ******************************************************************************************************************/
+		Factory Functions.
+	*******************************************************************************************************************/
 	function createAudio(...args) {
 		return new AudioWrapper(...args);
 	}
@@ -1239,8 +1239,8 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Module Exports.
-	 ******************************************************************************************************************/
+		Module Exports.
+	*******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
 		/*
 			Master Audio Functions.

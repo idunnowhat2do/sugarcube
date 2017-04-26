@@ -1,11 +1,11 @@
 /***********************************************************************************************************************
- *
- * passage.js
- *
- * Copyright © 2013–2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
- * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
- *
- **********************************************************************************************************************/
+
+	passage.js
+
+	Copyright © 2013–2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
+	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
+
+***********************************************************************************************************************/
 /* global Config, L10n, Story, Util, Wikifier, postrender, prerender */
 
 var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
@@ -62,8 +62,8 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Passage Class.
-	 ******************************************************************************************************************/
+		Passage Class.
+	*******************************************************************************************************************/
 	class Passage {
 		constructor(title, el) {
 			Object.defineProperties(this, {
@@ -311,7 +311,7 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Module Exports.
-	 ******************************************************************************************************************/
+		Module Exports.
+	*******************************************************************************************************************/
 	return Passage;
 })();

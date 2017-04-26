@@ -1,11 +1,11 @@
 /***********************************************************************************************************************
- *
- * dialog.js
- *
- * Copyright © 2013–2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
- * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
- *
- **********************************************************************************************************************/
+
+	dialog.js
+
+	Copyright © 2013–2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
+	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
+
+***********************************************************************************************************************/
 /* global Engine, L10n, safeActiveElement */
 
 var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
@@ -20,8 +20,8 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Core Functions.
-	 ******************************************************************************************************************/
+		Core Functions.
+	*******************************************************************************************************************/
 	function dialogInit() {
 		if (DEBUG) { console.log('[Dialog/dialogInit()]'); }
 
@@ -107,8 +107,8 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Dialog Functions.
-	 ******************************************************************************************************************/
+		Dialog Functions.
+	*******************************************************************************************************************/
 	function dialogIsOpen(classNames) {
 		return _$dialog.hasClass('open')
 			&& (classNames ? classNames.splitOrEmpty(/\s+/).every(cn => _$dialogBody.hasClass(cn)) : true);
@@ -338,8 +338,8 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Module Exports.
-	 ******************************************************************************************************************/
+		Module Exports.
+	*******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
 		init            : { value : dialogInit },
 		isOpen          : { value : dialogIsOpen },

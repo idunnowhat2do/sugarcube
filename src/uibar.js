@@ -1,11 +1,11 @@
 /***********************************************************************************************************************
- *
- * uibar.js
- *
- * Copyright © 2013–2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
- * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
- *
- **********************************************************************************************************************/
+
+	uibar.js
+
+	Copyright © 2013–2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
+	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
+
+***********************************************************************************************************************/
 /*
 	global Dialog, Engine, L10n, Setting, State, Story, UI, Config, setPageElement
 */
@@ -18,8 +18,8 @@ var UIBar = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * UI Bar Functions.
-	 ******************************************************************************************************************/
+		UI Bar Functions.
+	*******************************************************************************************************************/
 	function uiBarInit() {
 		if (DEBUG) { console.log('[UIBar/uiBarInit()]'); }
 
@@ -256,8 +256,8 @@ var UIBar = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Module Exports.
-	 ******************************************************************************************************************/
+		Module Exports.
+	*******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
 		init             : { value : uiBarInit },
 		start            : { value : uiBarStart },

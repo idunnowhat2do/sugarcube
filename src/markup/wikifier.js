@@ -1,11 +1,11 @@
 /***********************************************************************************************************************
- *
- * markup/wikifier.js
- *
- * Copyright © 2013–2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
- * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
- *
- **********************************************************************************************************************/
+
+	markup/wikifier.js
+
+	Copyright © 2013–2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
+	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
+
+***********************************************************************************************************************/
 /*
 	global Config, Engine, Patterns, Scripting, State, Story, TempState, Util, convertBreaks
 */
@@ -22,8 +22,8 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Wikifier Class.
-	 ******************************************************************************************************************/
+		Wikifier Class.
+	*******************************************************************************************************************/
 	class Wikifier {
 		constructor(destination, source, options) {
 			if (Wikifier.Parser.Profile.isEmpty()) {
@@ -430,8 +430,8 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Parser Static Object.
-	 ******************************************************************************************************************/
+		Parser Static Object.
+	*******************************************************************************************************************/
 	Object.defineProperty(Wikifier, 'Parser', {
 		value : (() => {
 			// Parser definition array.  Ordering matters, so this must be an ordered list.
@@ -596,8 +596,8 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Additional Static Properties.
-	 ******************************************************************************************************************/
+		Additional Static Properties.
+	*******************************************************************************************************************/
 	Object.defineProperties(Wikifier, {
 		_parseVarRegExp : {
 			value : new RegExp(`^(?:${Patterns.variableSigil}(${Patterns.identifier})|\\.(${Patterns.identifier})|\\[(?:(?:"((?:\\\\.|[^"\\\\])+)")|(?:'((?:\\\\.|[^'\\\\])+)')|(${Patterns.variableSigil}${Patterns.identifierFirstChar}.*)|(\\d+))\\])`)
@@ -615,8 +615,8 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Helper Static Methods.
-	 ******************************************************************************************************************/
+		Helper Static Methods.
+	*******************************************************************************************************************/
 	Object.defineProperties(Wikifier.helpers, {
 		inlineCss : {
 			value : (function () {
@@ -1135,8 +1135,8 @@ var Wikifier = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Module Exports.
-	 ******************************************************************************************************************/
+		Module Exports.
+	*******************************************************************************************************************/
 	return Wikifier;
 })();
 /* eslint-enable max-len */

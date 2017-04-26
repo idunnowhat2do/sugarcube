@@ -1,11 +1,11 @@
 /***********************************************************************************************************************
- *
- * markup/parserlib.js
- *
- * Copyright © 2013–2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
- * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
- *
- **********************************************************************************************************************/
+
+	markup/parserlib.js
+
+	Copyright © 2013–2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
+	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
+
+***********************************************************************************************************************/
 /*
 	global Config, DebugView, Engine, Macro, MacroContext, Patterns, Scripting, State, Story, Wikifier,
 	       toStringOrDefault, throwError
@@ -16,8 +16,8 @@
 	'use strict';
 
 	/*******************************************************************************************************************
-	 * Parsers.
-	 ******************************************************************************************************************/
+		Parsers.
+	*******************************************************************************************************************/
 	Wikifier.Parser.add({
 		name        : 'macro',
 		profiles    : ['core'],

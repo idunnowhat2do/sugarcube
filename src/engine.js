@@ -1,11 +1,11 @@
 /***********************************************************************************************************************
- *
- * engine.js
- *
- * Copyright © 2015–2017 Thomas Michael Edwards <tmedwards@motoslave.net>. All rights reserved.
- * Use of this source code is governed by a Simplified BSD License which can be found in the LICENSE file.
- *
- **********************************************************************************************************************/
+
+	engine.js
+
+	Copyright © 2013–2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
+	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
+
+***********************************************************************************************************************/
 /*
 	global Alert, Config, DebugView, LoadScreen, Save, State, Story, StyleWrapper, UI, UIBar, Util, Wikifier,
 	       postdisplay, predisplay, prehistory
@@ -38,8 +38,8 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Engine Functions.
-	 ******************************************************************************************************************/
+		Engine Functions.
+	*******************************************************************************************************************/
 	function engineInit() {
 		if (DEBUG) { console.log('[Engine/engineInit()]'); }
 
@@ -594,8 +594,8 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Legacy Functions.
-	 ******************************************************************************************************************/
+		Legacy Functions.
+	*******************************************************************************************************************/
 	/**
 		[DEPRECATED] Play the given passage, optionally without altering the history.
 	**/
@@ -624,8 +624,8 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Utility Functions.
-	 ******************************************************************************************************************/
+		Utility Functions.
+	*******************************************************************************************************************/
 	function _hideOutlines() {
 		_outlinePatch.set('*:focus{outline:none}');
 	}
@@ -636,8 +636,8 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-	 * Module Exports.
-	 ******************************************************************************************************************/
+		Module Exports.
+	*******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
 		/*
 			Constants.
