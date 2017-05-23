@@ -123,15 +123,15 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 		return true;
 	}
 
-	function savesOK() {
-		return autosaveOK() || slotsOK();
+	function savesOk() {
+		return autosaveOk() || slotsOk();
 	}
 
 
 	/*******************************************************************************************************************
 		Autosave Functions.
 	*******************************************************************************************************************/
-	function autosaveOK() {
+	function autosaveOk() {
 		return storage.name !== 'cookie' && typeof Config.saves.autosave !== 'undefined';
 	}
 
@@ -190,7 +190,7 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 	/*******************************************************************************************************************
 		Slots Functions.
 	*******************************************************************************************************************/
-	function slotsOK() {
+	function slotsOk() {
 		return storage.name !== 'cookie' && _slotsUBound !== -1;
 	}
 
@@ -199,7 +199,7 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 	}
 
 	function slotsCount() {
-		if (!slotsOK()) {
+		if (!slotsOk()) {
 			return 0;
 		}
 
@@ -560,14 +560,14 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 		init  : { value : savesInit },
 		get   : { value : savesObjGet },
 		clear : { value : savesObjClear },
-		ok    : { value : savesOK },
+		ok    : { value : savesOk },
 
 		/*
 			Autosave  Functions.
 		*/
 		autosave : {
 			value : Object.freeze(Object.defineProperties({}, {
-				ok     : { value : autosaveOK },
+				ok     : { value : autosaveOk },
 				has    : { value : autosaveHas },
 				get    : { value : autosaveGet },
 				load   : { value : autosaveLoad },
@@ -581,7 +581,7 @@ var Save = (() => { // eslint-disable-line no-unused-vars, no-var
 		*/
 		slots : {
 			value : Object.freeze(Object.defineProperties({}, {
-				ok      : { value : slotsOK },
+				ok      : { value : slotsOk },
 				length  : { get : slotsLength },
 				isEmpty : { value : slotsIsEmpty },
 				count   : { value : slotsCount },

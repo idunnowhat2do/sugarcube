@@ -11,7 +11,7 @@
 var Has = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
-	function webStorageIsOK(store) {
+	function webStorageIsOk(store) {
 		try {
 			if (store != null && store.length >= 0) { // lazy equality for null
 				const tkey = 'SugarCube.WebStorage.Test';
@@ -45,7 +45,7 @@ var Has = (() => { // eslint-disable-line no-unused-vars, no-var
 			&& typeof navigator.geolocation.watchPosition === 'function',
 
 		/*
-			The extended Web Storage testing (`webStorageIsOK()`) is required by implementation
+			The extended Web Storage testing (`webStorageIsOk()`) is required by implementation
 			bugs in various browsers.
 
 			Caveats by browser:
@@ -54,7 +54,7 @@ var Has = (() => { // eslint-disable-line no-unused-vars, no-var
 				The iOS browser core will throw an exception on `setItem()` calls when in
 				private browsing mode.
 		*/
-		localStorage   : 'localStorage' in window && webStorageIsOK(window.localStorage),
-		sessionStorage : 'sessionStorage' in window && webStorageIsOK(window.sessionStorage)
+		localStorage   : 'localStorage' in window && webStorageIsOk(window.localStorage),
+		sessionStorage : 'sessionStorage' in window && webStorageIsOk(window.sessionStorage)
 	});
 })();
