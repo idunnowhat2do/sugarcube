@@ -121,6 +121,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 				}
 			}
 			catch (ex) {
+				console.error(ex);
 				Alert.error('StoryInit', ex.message);
 			}
 		}
@@ -395,6 +396,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 				passageReadyOutput = Wikifier.wikifyEval(Story.get('PassageReady').text);
 			}
 			catch (ex) {
+				console.error(ex);
 				Alert.error('PassageReady', ex.message);
 			}
 		}
@@ -487,6 +489,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 				passageDoneOutput = Wikifier.wikifyEval(Story.get('PassageDone').text);
 			}
 			catch (ex) {
+				console.error(ex);
 				Alert.error('PassageDone', ex.message);
 			}
 		}

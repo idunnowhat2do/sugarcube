@@ -206,6 +206,7 @@ jQuery(() => {
 		if (DEBUG) { console.log('[SugarCube/main()] Startup complete; story ready.'); }
 	}
 	catch (ex) {
+		console.error(ex);
 		LoadScreen.clear();
 		return Alert.fatal(null, ex.message, ex);
 	}
