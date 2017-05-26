@@ -476,7 +476,7 @@ var Story = (() => { // eslint-disable-line no-unused-vars, no-var
 		*/
 		load  : { value : storyLoad },
 		init  : { value : storyInit },
-		title : { get : storyTitle }, // a setter is probably not required here
+		title : { get : storyTitle },
 		domId : { get : storyDomId },
 		ifId  : { get : storyIfId },
 
