@@ -462,11 +462,11 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		setTimeout(() => $incoming.removeClass('passage-in'), minDomActionDelay);
 
 		/*
-			Set the document title.
+			Set the document title, if necessary.
 		*/
-		document.title = Config.passages.displayTitles && passage.title !== Config.passages.start
-			? `${passage.title} | ${Story.title}`
-			: Story.title;
+		if (Config.passages.displayTitles && passage.title !== Config.passages.start) {
+			document.title = `${passage.title} | ${Story.title}`;
+		}
 
 		/*
 			Scroll the window to the top.
