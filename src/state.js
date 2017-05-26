@@ -6,7 +6,7 @@
 	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
 
 ***********************************************************************************************************************/
-/* global Config, Engine, PRNGWrapper, Util, clone, session */
+/* global Config, Diff, Engine, PRNGWrapper, clone, session */
 
 var State = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
@@ -514,7 +514,7 @@ var State = (() => { // eslint-disable-line no-unused-vars, no-var
 		const delta = [clone(historyArr[0])];
 
 		for (let i = 1, iend = historyArr.length; i < iend; ++i) {
-			delta.push(Util.diff(historyArr[i - 1], historyArr[i]));
+			delta.push(Diff.diff(historyArr[i - 1], historyArr[i]));
 		}
 
 		return delta;
@@ -535,7 +535,7 @@ var State = (() => { // eslint-disable-line no-unused-vars, no-var
 		const historyArr = [clone(delta[0])];
 
 		for (let i = 1, iend = delta.length; i < iend; ++i) {
-			historyArr.push(Util.patch(historyArr[i - 1], delta[i]));
+			historyArr.push(Diff.patch(historyArr[i - 1], delta[i]));
 		}
 
 		return historyArr;

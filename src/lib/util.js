@@ -6,7 +6,7 @@
 	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
 
 ***********************************************************************************************************************/
-/* global Scripting, clone */
+/* global Scripting */
 
 var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
@@ -283,183 +283,6 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 
 
 	/*******************************************************************************************************************
-		Diff Functions.
-	*******************************************************************************************************************/
-	/*
-		Diff operations object (pseudo-enumeration).
-	*/
-	const DiffOp = utilToEnum({
-		Delete      : 0,
-		SpliceArray : 1,
-		Copy        : 2,
-		CopyDate    : 3
-	});
-
-	/**
-		Returns a patch object containing the differences between the orig and the dest objects.
-	**/
-	function utilDiff(orig, dest) /* diff object */ {
-		/* eslint-disable id-length, max-depth */
-		const objToString = Object.prototype.toString;
-		const origIsArray = Array.isArray(orig);
-		const keys        = []
-			.concat(Object.keys(orig), Object.keys(dest))
-			.sort()
-			.filter((v, i, a) => i === 0 || a[i - 1] !== v);
-		const diff        = {};
-		let aOpRef;
-
-		const keyIsAOpRef = key => key === aOpRef;
-
-		for (let i = 0, klen = keys.length; i < klen; ++i) {
-			const key   = keys[i];
-			const origP = orig[key];
-			const destP = dest[key];
-
-			if (orig.hasOwnProperty(key)) {
-				// Key exists in both.
-				if (dest.hasOwnProperty(key)) {
-					// Values are exactly the same, so do nothing.
-					if (origP === destP) {
-						continue;
-					}
-
-					// Values are of the same basic type.
-					if (typeof origP === typeof destP) { // eslint-disable-line valid-typeof
-						// Values are functions.
-						if (typeof origP === 'function') {
-							/* diff[key] = [DiffOp.Copy, destP]; */
-							if (origP.toString() !== destP.toString()) {
-								diff[key] = [DiffOp.Copy, destP];
-							}
-						}
-						// Values are scalars or null.
-						else if (typeof origP !== 'object' || origP === null) {
-							diff[key] = [DiffOp.Copy, destP];
-						}
-						// Values are objects.
-						else {
-							const origPType = objToString.call(origP);
-							const destPType = objToString.call(destP);
-
-							// Values are objects of the same prototype.
-							if (origPType === destPType) {
-								// Special case: `Date` object.
-								if (origPType === '[object Date]') {
-									const nDestP = Number(destP);
-
-									if (Number(origP) !== nDestP) {
-										diff[key] = [DiffOp.CopyDate, nDestP];
-									}
-								}
-								// Special case: `RegExp` object.
-								else if (origPType === '[object RegExp]') {
-									if (origP.toString() !== destP.toString()) {
-										diff[key] = [DiffOp.Copy, clone(destP)];
-									}
-								}
-								else {
-									const recurse = Util.diff(origP, destP);
-
-									if (recurse !== null) {
-										diff[key] = recurse;
-									}
-								}
-							}
-							// Values are objects of different prototypes.
-							else {
-								diff[key] = [DiffOp.Copy, clone(destP)];
-							}
-						}
-					}
-					// Values are of different types.
-					else {
-						diff[key] = [
-							DiffOp.Copy,
-							typeof destP !== 'object' || destP === null ? destP : clone(destP)
-						];
-					}
-				}
-				// Key only exists in orig.
-				else {
-					if (origIsArray && Util.isNumeric(key)) {
-						const nKey = Number(key);
-
-						if (!aOpRef) {
-							aOpRef = '';
-
-							do {
-								aOpRef += '~';
-							} while (keys.some(keyIsAOpRef));
-
-							diff[aOpRef] = [DiffOp.SpliceArray, nKey, nKey];
-						}
-
-						if (nKey < diff[aOpRef][1]) {
-							diff[aOpRef][1] = nKey;
-						}
-
-						if (nKey > diff[aOpRef][2]) {
-							diff[aOpRef][2] = nKey;
-						}
-					}
-					else {
-						diff[key] = DiffOp.Delete;
-					}
-				}
-			}
-			// Key only exists in dest.
-			else {
-				diff[key] = [
-					DiffOp.Copy,
-					typeof destP !== 'object' || destP === null ? destP : clone(destP)
-				];
-			}
-		}
-
-		return Object.keys(diff).length > 0 ? diff : null;
-		/* eslint-enable id-length, max-depth */
-	}
-
-	/**
-		Returns an object resulting from updating the orig object with the diff object.
-	**/
-	function utilPatch(orig, diff) /* patched object */ {
-		const keys    = Object.keys(diff || {});
-		const patched = clone(orig);
-
-		for (let i = 0, klen = keys.length; i < klen; ++i) {
-			const key   = keys[i];
-			const diffP = diff[key];
-
-			if (diffP === DiffOp.Delete) {
-				delete patched[key];
-			}
-			else if (Array.isArray(diffP)) {
-				switch (diffP[0]) {
-				case DiffOp.SpliceArray:
-					patched.splice(diffP[1], 1 + (diffP[2] - diffP[1]));
-					break;
-
-				case DiffOp.Copy:
-					patched[key] = clone(diffP[1]);
-					break;
-
-				case DiffOp.CopyDate:
-					patched[key] = new Date(diffP[1]);
-					break;
-				}
-			}
-			else {
-				patched[key] = Util.patch(patched[key], diffP);
-			}
-		}
-
-		return patched;
-	}
-
-
-	/*******************************************************************************************************************
 		Module Exports.
 	*******************************************************************************************************************/
 	return Object.freeze(Object.defineProperties({}, {
@@ -484,13 +307,6 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 		toCssTime       : { value : utilToCssTime },
 		fromCssProperty : { value : utilFromCssProperty },
 		parseUrl        : { value : utilParseUrl },
-
-		/*
-			Diff Functions.
-		*/
-		DiffOp : { value : DiffOp },
-		diff   : { value : utilDiff },
-		patch  : { value : utilPatch },
 
 		/*
 			Legacy Aliases.
