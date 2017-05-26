@@ -13,45 +13,45 @@ var Alert = (() => { // eslint-disable-line no-unused-vars, no-var
 	/*******************************************************************************************************************
 		Error Functions.
 	*******************************************************************************************************************/
-	function _alertMesg(type, where, mesg, error) {
+	function _alertMesg(type, where, what, error) {
 		const isFatal = type === 'fatal';
-		let	errMesg = `Apologies! ${isFatal ? 'A fatal' : 'An'} error has occurred.`;
+		let mesg = `Apologies! ${isFatal ? 'A fatal' : 'An'} error has occurred.`;
 
 		if (isFatal) {
-			errMesg += ' Aborting.';
+			mesg += ' Aborting.';
 		}
 		else {
-			errMesg += ' You may be able to continue, but some parts may not work properly.';
+			mesg += ' You may be able to continue, but some parts may not work properly.';
 		}
 
-		if (where != null || mesg != null) { // lazy equality for null
-			errMesg += '\n\nError';
+		if (where != null || what != null) { // lazy equality for null
+			mesg += '\n\nError';
 
 			if (where != null) { // lazy equality for null
-				errMesg += ` [${where}]`;
+				mesg += ` [${where}]`;
 			}
 
-			if (mesg != null) { // lazy equality for null
-				errMesg += `: ${mesg.replace(/^(?:(?:uncaught\s+(?:exception:\s+)?)?error:\s+)+/i, '')}.`;
+			if (what != null) { // lazy equality for null
+				mesg += `: ${what.replace(/^(?:(?:uncaught\s+(?:exception:\s+)?)?error:\s+)+/i, '')}.`;
 			}
 			else {
-				errMesg += ': unknown error.';
+				mesg += ': unknown error.';
 			}
 		}
 
-		if (error && error.stack) {
-			errMesg += `\n\nStack Trace:\n${error.stack}`;
+		if (typeof error === 'object' && error.stack) {
+			mesg += `\n\nStack Trace:\n${error.stack}`;
 		}
 
-		window.alert(errMesg); // eslint-disable-line no-alert
+		window.alert(mesg); // eslint-disable-line no-alert
 	}
 
-	function alertError(where, mesg, error) {
-		_alertMesg(null, where, mesg, error);
+	function alertError(where, what, error) {
+		_alertMesg(null, where, what, error);
 	}
 
-	function alertFatal(where, mesg, error) {
-		_alertMesg('fatal', where, mesg, error);
+	function alertFatal(where, what, error) {
+		_alertMesg('fatal', where, what, error);
 	}
 
 
@@ -62,15 +62,15 @@ var Alert = (() => { // eslint-disable-line no-unused-vars, no-var
 		Setup a global error handler for uncaught exceptions.
 	*/
 	(origOnError => {
-		window.onerror = function (mesg, url, lineNum, colNum, error) {
+		window.onerror = function (what, source, lineNum, colNum, error) {
 			// Uncaught exceptions during play may be recoverable/ignorable.
 			if (document.readyState === 'complete') {
-				alertError(null, mesg, error);
+				alertError(null, what, error);
 			}
 
 			// Uncaught exceptions during startup should be fatal.
 			else {
-				alertFatal(null, mesg, error);
+				alertFatal(null, what, error);
 				window.onerror = origOnError;
 
 				if (typeof window.onerror === 'function') {
