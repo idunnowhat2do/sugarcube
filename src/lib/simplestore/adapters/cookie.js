@@ -232,7 +232,7 @@ SimpleStore.adapters.push((() => {
 			}
 
 			if (expiry != null) { // lazy equality for null
-				payload += `; ${expiry}`;
+				payload += `; expires=${expiry}`;
 			}
 
 			payload += '; path=/';
