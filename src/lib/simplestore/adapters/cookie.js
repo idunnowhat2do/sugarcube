@@ -260,8 +260,18 @@ SimpleStore.adapters.push((() => {
 		// Only used for stores updates.
 		storageId
 	) {
-		// FIXME: We probably should try to test functionality here.
-		_ok = 'cookie' in document;
+		// Cookie feature test.
+		try {
+			const tid = `_sc_${String(Date.now())}`;
+
+			// We only test a session cookie as that should suffice.
+			_CookieAdapter._setCookie(tid, _CookieAdapter._serialize(tid), undefined);
+			_ok = _CookieAdapter._deserialize(_CookieAdapter._getCookie(tid)) === tid;
+			_CookieAdapter._setCookie(tid, undefined, _MIN_EXPIRY);
+		}
+		catch (ex) {
+			_ok = false;
+		}
 
 		/* legacy */
 		// Attempt to update the cookie stores, if necessary.  This should happen only during initialization.
