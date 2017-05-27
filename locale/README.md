@@ -8,4 +8,4 @@ For more information about the guidelines used to create these localizations, se
 
 * `fr.js` – Français, by: Pierre Kessler.
 * `pt.js` – Português, by: Magma.
-* `ru.js` – Ру́сский, by: Konstantin Kitmanov.
+* `ru.js` – Ру́сский, by: Konstantin Kitmanov; with contributions by: cheshiren.

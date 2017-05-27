@@ -2,7 +2,7 @@
 
 	ru.js – Ру́сский
 
-	Localization by: Konstantin Kitmanov.
+	Localization by: Konstantin Kitmanov.  Contributions by: cheshiren.
 
 	Copyright © 2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
 	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
@@ -52,7 +52,7 @@
 	l10nStrings.savesEmptySlot   = '— пустой слот —';
 	l10nStrings.savesIncapable   = '{_warningIntroLacking}, так что сохранения невозможны в текущей сессии';
 	l10nStrings.savesLabelAuto   = 'Автосохранение';
-	l10nStrings.savesLabelDelete = 'Автосохранение';
+	l10nStrings.savesLabelDelete = 'Удалить';
 	l10nStrings.savesLabelExport = 'Сохранить на диск\u2026';
 	l10nStrings.savesLabelImport = 'Загрузить с диска\u2026';
 	l10nStrings.savesLabelLoad   = 'Загрузить';
