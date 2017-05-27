@@ -6,7 +6,7 @@
 	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
 
 ***********************************************************************************************************************/
-/* global Has, SimpleStore */
+/* global SimpleStore */
 
 SimpleStore.adapters.push((() => {
 	'use strict';
@@ -203,8 +203,26 @@ SimpleStore.adapters.push((() => {
 		Adapter Utility Functions.
 	*******************************************************************************************************************/
 	function adapterInit() {
-		// FIXME: We probably could move the functionality tests here—from `lib/has.js`.
-		_ok = Has.localStorage && Has.sessionStorage;
+		// Web Storage feature test.
+		function hasWebStorage(storeId) {
+			try {
+				const store = window[storeId];
+				const tid   = `_sc_${String(Date.now())}`;
+				store.setItem(tid, tid);
+				const result = store.getItem(tid) === tid;
+				store.removeItem(tid);
+				return result;
+			}
+			catch (ex) { /* no-op */ }
+
+			return false;
+		}
+
+		/*
+			Just to be safe, we feature test for both `localStorage` and `sessionStorage`,
+			as you never know what browser implementation bugs you're going to run into.
+		*/
+		_ok = hasWebStorage('localStorage') && hasWebStorage('sessionStorage');
 
 		return _ok;
 	}
