@@ -1656,21 +1656,7 @@
 					return this.error(`no ${errors.join(' or ')} specified`);
 				}
 
-				/*
-					Process the space-separated-list of track IDs.
-
-					→ Target all playing tracks, except for those in the ":ui" and ":bgm" groups.
-					":playing:not(:ui :bgm)"
-
-					→ Target all playing tracks, except for "swamped" and "closer".
-					":playing:not(swamped closer)"
-
-					→ Target all playing tracks and "swamped" and "closer", regardless of their playback state.
-					":playing swamped closer"
-
-					→ Target only "swamped" and "closer", regardless of their playback state.
-					"swamped closer"
-				*/
+				// Process the track ID(s).
 				const tracks   = Macro.get('cacheaudio').tracks;
 				const selected = [];
 

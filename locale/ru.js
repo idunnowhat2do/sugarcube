@@ -2,7 +2,7 @@
 
 	ru.js – Ру́сский
 
-	Localization by: Konstantin Kitmanov.  Contributions by: cheshiren.
+	Localization by: Konstantin Kitmanov.
 
 	Copyright © 2017 Thomas Michael Edwards <thomasmedwards@gmail.com>. All rights reserved.
 	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
