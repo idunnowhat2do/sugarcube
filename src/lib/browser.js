@@ -11,40 +11,50 @@ var Browser = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
 
 	/* eslint-disable max-len */
-	const ua = {
-		userAgent : navigator.userAgent.toLowerCase()
-	};
+	const userAgent = navigator.userAgent.toLowerCase();
 
-	ua.isGecko = navigator && navigator.product === 'Gecko' && !/webkit|trident/.test(ua.userAgent);
-
-	ua.isIE      = /msie|trident/.test(ua.userAgent) && !ua.userAgent.includes('opera');
-	ua.ieVersion = (() => {
-		const ver = /(?:msie\s+|rv:)(\d{1,2}\.\d)/.exec(ua.userAgent);
-		return ver ? Number([1]) : 0;
-	})();
-
-	// opera <= 12: "opera/9.80 (windows nt 6.1; wow64) presto/2.12.388 version/12.16"
-	// opera >= 15: "mozilla/5.0 (windows nt 6.1; wow64) applewebkit/537.36 (khtml, like gecko) chrome/28.0.1500.52 safari/537.36 opr/15.0.1147.130"
-	ua.isOpera      = ua.userAgent.includes('opera') || ua.userAgent.includes(' opr/');
-	ua.operaVersion = (() => {
-		const re  = new RegExp(`${/applewebkit|chrome/.test(ua.userAgent) ? 'opr' : 'version'}\\/(\\d{1,2}\\.\\d+)`);
-		const ver = re.exec(ua.userAgent);
-		return ver ? Number(ver[1]) : 0;
-	})();
-
-	ua.isMobile = Object.freeze({
-		Android    : /android/.test(ua.userAgent),
-		BlackBerry : /blackberry/.test(ua.userAgent),
-		iOS        : /ip(?:hone|ad|od)/.test(ua.userAgent),
-		Windows    : /iemobile/.test(ua.userAgent),
+	const winPhone = userAgent.includes('windows phone');
+	const isMobile = Object.freeze({
+		Android    : !winPhone && userAgent.includes('android'),
+		BlackBerry : /blackberry|bb10/.test(userAgent),
+		iOS        : !winPhone && /ip(?:hone|ad|od)/.test(userAgent),
+		Windows    : winPhone || userAgent.includes('iemobile'),
 
 		any() {
-			const is = ua.isMobile;
-			return is.Android || is.BlackBerry || is.iOS || is.Windows;
+			return isMobile.Android || isMobile.BlackBerry || isMobile.iOS || isMobile.Windows;
 		}
 	});
 
-	// Module Exports.
-	return Object.freeze(ua);
+	const isGecko = !isMobile.Windows && !/khtml|trident|edge/.test(userAgent) && userAgent.includes('gecko');
+
+	const isIE      = !userAgent.includes('opera') && /msie|trident/.test(userAgent);
+	const ieVersion = isIE
+		? (() => {
+			const ver = /(?:msie\s+|rv:)(\d+\.\d)/.exec(userAgent);
+			return ver ? Number(ver[1]) : 0;
+		})()
+		: null;
+
+	// opera <= 12: "opera/9.80 (windows nt 6.1; wow64) presto/2.12.388 version/12.16"
+	// opera >= 15: "mozilla/5.0 (windows nt 6.1; wow64) applewebkit/537.36 (khtml, like gecko) chrome/28.0.1500.52 safari/537.36 opr/15.0.1147.130"
+	const isOpera      = userAgent.includes('opera') || userAgent.includes(' opr/');
+	const operaVersion = isOpera
+		? (() => {
+			const re  = new RegExp(`${/khtml|chrome/.test(userAgent) ? 'opr' : 'version'}\\/(\\d+\\.\\d+)`);
+			const ver = re.exec(userAgent);
+			return ver ? Number(ver[1]) : 0;
+		})()
+		: null;
 	/* eslint-enable max-len */
+
+	// Module Exports.
+	return Object.freeze({
+		userAgent,
+		isMobile,
+		isGecko,
+		isIE,
+		ieVersion,
+		isOpera,
+		operaVersion
+	});
 })();
