@@ -1642,6 +1642,8 @@
 		Audio Macros.
 	*******************************************************************************************************************/
 	if (Has.audio) {
+		const specialIds = Object.freeze([':not', ':all', ':looped', ':muted', ':paused', ':playing']);
+
 		/*
 			<<audio>>
 		*/
@@ -1649,17 +1651,67 @@
 			handler() {
 				if (this.args.length < 2) {
 					const errors = [];
-					if (this.args.length < 1) { errors.push('track ID'); }
+					if (this.args.length < 1) { errors.push('track or group IDs'); }
 					if (this.args.length < 2) { errors.push('actions'); }
 					return this.error(`no ${errors.join(' or ')} specified`);
 				}
 
-				const tracks   = Macro.get('cacheaudio').tracks;
-				const groupIds = [':all', ':looped', ':muted', ':paused', ':playing'];
-				const id       = String(this.args[0]).trim();
+				/*
+					Process the space-separated-list of track IDs.
 
-				if (!groupIds.includes(id) && !tracks.hasOwnProperty(id)) {
-					return this.error(`track "${id}" does not exist`);
+					→ Target all playing tracks, except for those in the ":ui" and ":bgm" groups.
+					":playing:not(:ui :bgm)"
+
+					→ Target all playing tracks, except for "swamped" and "closer".
+					":playing:not(swamped closer)"
+
+					→ Target all playing tracks and "swamped" and "closer", regardless of their playback state.
+					":playing swamped closer"
+
+					→ Target only "swamped" and "closer", regardless of their playback state.
+					"swamped closer"
+				*/
+				const tracks   = Macro.get('cacheaudio').tracks;
+				const selected = [];
+
+				try {
+					const allIds = Object.freeze(Object.keys(tracks));
+					const groups = Macro.get('cacheaudio').groups;
+
+					function renderIds(idObj) {
+						const id = idObj.id;
+						let ids;
+
+						switch (id) {
+						case ':all':     ids = allIds; break;
+						case ':looped':  ids = allIds.filter(id => tracks[id].isLooped()); break;
+						case ':muted':   ids = allIds.filter(id => tracks[id].isMuted()); break;
+						case ':paused':  ids = allIds.filter(id => tracks[id].isPaused()); break;
+						case ':playing': ids = allIds.filter(id => tracks[id].isPlaying()); break;
+						default:         ids = id[0] === ':' ? groups[id] : [id]; break;
+						}
+
+						if (idObj.hasOwnProperty('not')) {
+							const negated = idObj.not.map(idObj => renderIds(idObj)).flatten();
+							ids = ids.filter(id => !negated.includes(id));
+						}
+
+						return ids;
+					}
+
+					this.self.parseIds(String(this.args[0]).trim()).forEach(idObj => {
+						selected.push(...renderIds(idObj));
+					});
+
+					// Ensure all tracks exist.
+					selected.forEach(id => {
+						if (!tracks.hasOwnProperty(id)) {
+							throw new Error(`track "${id}" does not exist`);
+						}
+					});
+				}
+				catch (ex) {
+					return this.error(ex.message);
 				}
 
 				const args  = this.args.slice(1);
@@ -1794,17 +1846,6 @@
 					}
 				}
 
-				let selected;
-
-				switch (id) {
-				case ':all':     selected = Object.keys(tracks); break;
-				case ':looped':  selected = Object.keys(tracks).filter(id => tracks[id].isLooped()); break;
-				case ':muted':   selected = Object.keys(tracks).filter(id => tracks[id].isMuted()); break;
-				case ':paused':  selected = Object.keys(tracks).filter(id => tracks[id].isPaused()); break;
-				case ':playing': selected = Object.keys(tracks).filter(id => tracks[id].isPlaying()); break;
-				default:         selected = [id]; break;
-				}
-
 				try {
 					selected.forEach(id => {
 						const audio = tracks[id];
@@ -1856,6 +1897,80 @@
 				catch (ex) {
 					return this.error(`error executing audio action: ${ex.message}`);
 				}
+			},
+
+			parseIds(idArg) {
+				function processList(str, startPos) {
+					const notWsRe = /\S/g;
+					const parenRe = /[()]/g;
+					let match;
+
+					notWsRe.lastIndex = startPos;
+					match = notWsRe.exec(str);
+
+					if (match === null || match[0] !== '(') {
+						throw new Error('invalid ":not()" syntax: missing parentheticals');
+					}
+
+					parenRe.lastIndex = notWsRe.lastIndex;
+					const start = notWsRe.lastIndex;
+					const list  = { str : '', nextMatch : -1 };
+					let depth = 1;
+
+					while ((match = parenRe.exec(str)) !== null) {
+						if (match[0] === '(') {
+							++depth;
+						}
+						else {
+							--depth;
+						}
+
+						if (depth < 1) {
+							list.nextMatch = parenRe.lastIndex;
+							list.str = str.slice(start, list.nextMatch - 1);
+							break;
+						}
+					}
+
+					return list;
+				}
+
+				const ids  = [];
+				const idRe = /:?[^\s:()]+/g;
+				let match;
+
+				while ((match = idRe.exec(idArg)) !== null) {
+					const id = match[0];
+
+					// Group negation.
+					if (id === ':not') {
+						if (ids.length === 0) {
+							throw new Error('invalid negation: no group ID preceded ":not()"');
+						}
+
+						const parent = ids[ids.length - 1];
+
+						if (parent.id[0] !== ':') {
+							throw new Error(`invalid negation of track "${parent.id}": only groups may be negated with ":not()"`);
+						}
+
+						const negation = processList(idArg, idRe.lastIndex);
+
+						if (negation.nextMatch === -1) {
+							throw new Error('unknown error parsing ":not()"');
+						}
+
+						idRe.lastIndex = negation.nextMatch;
+						parent.not = this.parseIds(negation.str);
+					}
+
+					// Group or track ID.
+					else {
+						ids.push({ id });
+					}
+				}
+
+				return ids;
 			}
 		});
 
@@ -1864,6 +1979,7 @@
 		*/
 		Macro.add('cacheaudio', {
 			tracks : {},
+			groups : {},
 
 			handler() {
 				if (this.args.length < 2) {
@@ -1919,6 +2035,91 @@
 				if (Config.debug) {
 					this.createDebugView();
 				}
+			}
+		});
+
+		/*
+			<<createaudiogroup group_id>>
+				<<track track_id>>
+				…
+			<</createaudiogroup>>
+		*/
+		Macro.add('createaudiogroup', {
+			tags : ['track'],
+
+			handler() {
+				if (this.args.length === 0) {
+					return this.error('no group ID specified');
+				}
+
+				const groupId = String(this.args[0]).trim();
+				const badIdRe = /^[^:]|\s/; // must start with a colon and cannot contain whitespace
+
+				if (badIdRe.test(groupId)) {
+					return this.error(`invalid group ID "${groupId}": group IDs must start with a colon and may not contain whitespace`);
+				}
+
+				if (specialIds.includes(groupId)) {
+					return this.error(`cannot clobber special group ID "${groupId}"`);
+				}
+
+				if (this.payload.length === 1) {
+					return this.error('no tracks defined via <<track>>');
+				}
+
+				// Initial debug view setup for `<<createaudiogroup>>`.
+				if (Config.debug) {
+					this.debugView
+						.modes({
+							nonvoid : false,
+							hidden  : true
+						});
+				}
+
+				const tracks = Macro.get('cacheaudio').tracks;
+				const group  = [];
+
+				for (let i = 1, len = this.payload.length; i < len; ++i) {
+					if (this.payload[i].args.length < 1) {
+						return this.error('no track ID specified');
+					}
+
+					const id = String(this.payload[i].args[0]).trim();
+
+					if (!tracks.hasOwnProperty(id)) {
+						return this.error(`track "${id}" does not exist`);
+					}
+
+					group.push(id);
+
+					// Custom debug view setup for the current `<<track>>`.
+					if (Config.debug) {
+						this
+							.createDebugView(this.payload[i].name, this.payload[i].source)
+							.modes({
+								nonvoid : false,
+								hidden  : true
+							});
+					}
+				}
+
+				const groups = Macro.get('cacheaudio').groups;
+
+				// If a group by the given ID already exists, delete it.
+				if (groups.hasOwnProperty(groupId)) {
+					delete groups[groupId];
+				}
+
+				// Add the new group to the cache.
+				groups[groupId] = group;
+
+				// Custom fake debug view setup for `<</createaudiogroup>>`.
+				this
+					.createDebugView(`/${this.name}`, `<</${this.name}>>`)
+					.modes({
+						nonvoid : false,
+						hidden  : true
+					});
 			}
 		});
 
