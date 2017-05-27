@@ -2701,6 +2701,7 @@
 		Macro.add([
 			'audio',
 			'cacheaudio',
+			'createaudiogroup',
 			'createplaylist',
 			'masteraudio',
 			'playlist',
