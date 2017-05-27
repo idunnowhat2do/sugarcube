@@ -11,6 +11,10 @@
 SimpleStore.adapters.push((() => {
 	'use strict';
 
+	// Expiry constants.
+	const _MAX_EXPIRY = 'Tue, 19 Jan 2038 03:14:07 GMT'; // (new Date((Math.pow(2, 31) - 1) * 1000)).toUTCString()
+	const _MIN_EXPIRY = 'Thu, 01 Jan 1970 00:00:00 GMT'; // (new Date(0)).toUTCString()
+
 	// Adapter readiness state.
 	let _ok = false;
 
@@ -125,7 +129,7 @@ SimpleStore.adapters.push((() => {
 					_CookieAdapter._serialize(value),
 
 					// An undefined expiry denotes a session cookie.
-					this.persistent ? 'Tue, 19 Jan 2038 03:14:07 GMT' : undefined
+					this.persistent ? _MAX_EXPIRY : undefined
 				);
 
 				if (!this.has(key)) {
@@ -159,7 +163,7 @@ SimpleStore.adapters.push((() => {
 					undefined,
 
 					// Use the epoch as the expiry.
-					'Thu, 01 Jan 1970 00:00:00 GMT'
+					_MIN_EXPIRY
 				);
 
 				if (this.has(key)) {
@@ -310,14 +314,14 @@ SimpleStore.adapters.push((() => {
 					_CookieAdapter._setCookie(
 						key,
 						undefined,
-						'Thu, 01 Jan 1970 00:00:00 GMT'
+						_MIN_EXPIRY
 					);
 
 					// Set the new k/v pair.
 					_CookieAdapter._setCookie(
 						key.replace(oldPrefixRe, () => persist ? persistPrefix : sessionPrefix),
 						value,
-						persist ? 'Tue, 19 Jan 2038 03:14:07 GMT' : undefined
+						persist ? _MAX_EXPIRY : undefined
 					);
 				}
 			}
