@@ -147,7 +147,7 @@ SimpleStore.adapters.push((() => {
 					matching the damn name.  I hate the parties responsible for this snafu
 					so much.
 				*/
-				if (/quota_?(?:exceeded|reached)/i.test(ex.name)) {
+				if (/quota[_\s]?(?:exceeded|reached)/i.test(ex.name)) {
 					ex.message = `${this.name} quota exceeded`;
 				}
 
