@@ -229,9 +229,9 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 	/*******************************************************************************************************************
 		User Functions.
 	*******************************************************************************************************************/
-	/**
+	/*
 		Returns a random value from its given arguments.
-	**/
+	*/
 	function either(/* variadic */) {
 		if (arguments.length === 0) {
 			return;
@@ -240,11 +240,11 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 		return Array.prototype.concat.apply([], arguments).random();
 	}
 
-	/**
+	/*
 		Returns whether a passage with the given title exists within the story
 		history.  If multiple passage titles are given, returns the logical-AND
 		aggregate of the set.
-	**/
+	*/
 	function hasVisited(/* variadic */) {
 		if (arguments.length === 0) {
 			throw new Error('hasVisited called with insufficient parameters');
@@ -266,11 +266,11 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 		return true;
 	}
 
-	/**
+	/*
 		Returns the number of turns that have passed since the last instance of the given passage
 		occurred within the story history or `-1` if it does not exist.  If multiple passages are
 		given, returns the lowest count (which can be `-1`).
-	**/
+	*/
 	function lastVisited(/* variadic */) {
 		if (arguments.length === 0) {
 			throw new Error('lastVisited called with insufficient parameters');
@@ -293,18 +293,18 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 		return turns;
 	}
 
-	/**
+	/*
 		Returns the title of the current passage.
-	**/
+	*/
 	function passage() {
 		return State.passage;
 	}
 
-	/**
+	/*
 		Returns the title of a previous passage, either the most recent one whose title does not
 		match that of the active passage or the one at the optional offset, or an empty string,
 		if there is no such passage.
-	**/
+	*/
 	function previous(/* legacy: offset */) {
 		const passages = State.passages;
 
@@ -329,9 +329,9 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 		return '';
 	}
 
-	/**
+	/*
 		Returns a pseudo-random whole number (integer) within the range of the given bounds.
-	**/
+	*/
 	function random(/* variadic(min:inclusive, max:inclusive) */) {
 		if (arguments.length === 0) {
 			throw new Error('random called with insufficient parameters');
@@ -356,12 +356,12 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 		return Math.floor(State.random() * (max - min + 1)) + min;
 	}
 
-	/**
+	/*
 		Returns a pseudo-random real number (floating-point) within the range of the given bounds.
 
 		NOTE: Unlike with its sibling function `random()`, the `max` parameter is exclusive,
 		      not inclusive (i.e. the range goes to, but does not include, the given value).
-	**/
+	*/
 	function randomFloat(/* variadic(min:inclusive, max:exclusive) */) {
 		if (arguments.length === 0) {
 			throw new Error('randomFloat called with insufficient parameters');
@@ -386,9 +386,9 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 		return State.random() * (max - min) + min;
 	}
 
-	/**
+	/*
 		Returns a new array consisting of all of the tags of the given passages.
-	**/
+	*/
 	function tags(/* variadic */) {
 		if (arguments.length === 0) {
 			return Story.get(State.passage).tags.slice(0);
@@ -404,43 +404,43 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 		return tags;
 	}
 
-	/**
+	/*
 		Returns a reference to the current temporary _variables store.
-	**/
+	*/
 	function temporary() {
 		return State.temporary;
 	}
 
-	/**
+	/*
 		Returns the number of milliseconds which have passed since the current passage was rendered.
-	**/
+	*/
 	function time() {
 		return Engine.lastPlay === null ? 0 : Date.now() - Engine.lastPlay;
 	}
 
-	/**
+	/*
 		Returns the number of passages that the player has visited.
 
 		NOTE: Passages which were visited but have been undone (e.g. via the Backward button
 		      or the `<<back>>` macro) are no longer part of the in-play story history and
 		      thus are not tallied.  Passages which were visited but have expired from the
 		      story history, on the other hand, are tallied.
-	**/
+	*/
 	function turns() {
 		return State.turns;
 	}
 
-	/**
+	/*
 		Returns a reference to the current story $variables store.
-	**/
+	*/
 	function variables() {
 		return State.variables;
 	}
 
-	/**
+	/*
 		Returns the number of times that the passage with the given title exists within the story
 		history.  If multiple passage titles are given, returns the lowest count.
-	**/
+	*/
 	function visited(/* variadic */) {
 		if (State.isEmpty()) {
 			return 0;
@@ -457,9 +457,9 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 		return count;
 	}
 
-	/**
+	/*
 		Returns the number of passages within the story history which are tagged with all of the given tags.
-	**/
+	*/
 	function visitedTags(/* variadic */) {
 		if (arguments.length === 0) {
 			throw new Error('visitedTags called with insufficient parameters');
@@ -534,9 +534,9 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 				.toLocaleLowerCase();
 		}
 
-		/**
+		/*
 			Import scripts over the network.
-		**/
+		*/
 		function importScripts(...urls) {
 			function addScript(url) {
 				return new Promise((resolve, reject) => {
@@ -573,9 +573,9 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 			}));
 		}
 
-		/**
+		/*
 			Import stylesheets over the network.
-		**/
+		*/
 		function importStyles(...urls) {
 			function addStyle(url) {
 				return new Promise((resolve, reject) => {
