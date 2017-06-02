@@ -405,6 +405,13 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 	}
 
 	/**
+		Returns a reference to the current temporary _variables store.
+	**/
+	function temporary() {
+		return State.temporary;
+	}
+
+	/**
 		Returns the number of milliseconds which have passed since the current passage was rendered.
 	**/
 	function time() {
@@ -424,7 +431,7 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 	}
 
 	/**
-		Returns a reference to the current $variables store.
+		Returns a reference to the current story $variables store.
 	**/
 	function variables() {
 		return State.variables;
