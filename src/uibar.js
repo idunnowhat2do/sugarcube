@@ -7,7 +7,7 @@
 
 ***********************************************************************************************************************/
 /*
-	global Dialog, Engine, L10n, Setting, State, Story, UI, Config, setPageElement
+	global Alert, Dialog, Engine, L10n, Setting, State, Story, UI, Config, setPageElement
 */
 
 var UIBar = (() => { // eslint-disable-line no-unused-vars, no-var
@@ -249,7 +249,13 @@ var UIBar = (() => { // eslint-disable-line no-unused-vars, no-var
 			jQuery(menuStory).empty();
 
 			if (Story.has('StoryMenu')) {
-				UI.assembleLinkList('StoryMenu', menuStory);
+				try {
+					UI.assembleLinkList('StoryMenu', menuStory);
+				}
+				catch (ex) {
+					console.error(ex);
+					Alert.error('StoryMenu', ex.message);
+				}
 			}
 		}
 	}

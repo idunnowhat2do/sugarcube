@@ -7,7 +7,7 @@
 
 ***********************************************************************************************************************/
 /*
-	global Dialog, Engine, Has, L10n, Save, Setting, State, Story, Util, Wikifier, Config, settings
+	global Alert, Dialog, Engine, Has, L10n, Save, Setting, State, Story, Util, Wikifier, Config, settings
 */
 
 var UI = (() => { // eslint-disable-line no-unused-vars, no-var
@@ -625,8 +625,15 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 	function uiBuildShare() {
 		if (DEBUG) { console.log('[UI/uiBuildShare()]'); }
 
-		jQuery(Dialog.setup(L10n.get('shareTitle'), 'share list'))
-			.append(uiAssembleLinkList('StoryShare'));
+		try {
+			jQuery(Dialog.setup(L10n.get('shareTitle'), 'share list'))
+				.append(uiAssembleLinkList('StoryShare'));
+		}
+		catch (ex) {
+			console.error(ex);
+			Alert.error('StoryShare', ex.message);
+			return false;
+		}
 
 		return true;
 	}
