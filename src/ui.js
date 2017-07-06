@@ -28,34 +28,32 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 				list = document.createElement('ul');
 			}
 
-			const temp = document.createDocumentFragment();
-			new Wikifier(temp, Story.get(passage).processText().trim());
+			// Wikify the content of the given source passage into a fragment.
+			const frag = document.createDocumentFragment();
+			new Wikifier(frag, Story.get(passage).processText().trim());
 
-			if (temp.hasChildNodes()) {
-				let li = null;
+			// Gather the text of any error elements within the fragment…
+			const errors = [...frag.querySelectorAll('.error')]
+				.map(errEl => errEl.textContent.replace(/^(?:(?:Uncaught\s+)?Error:\s+)+/, ''));
 
-				while (temp.hasChildNodes()) {
-					const node = temp.firstChild;
+			// …and throw an exception, if there were any errors.
+			if (errors.length > 0) {
+				throw new Error(errors.join('; '));
+			}
 
-					// Non-<a>-element nodes.
-					if (node.nodeType !== Node.ELEMENT_NODE || node.nodeName.toUpperCase() !== 'A') {
-						temp.removeChild(node);
+			while (frag.hasChildNodes()) {
+				const node = frag.firstChild;
 
-						if (li !== null) {
-							// Forget the current list item.
-							li = null;
-						}
-					}
+				// Create list items for <a>-element nodes.
+				if (node.nodeType === Node.ELEMENT_NODE && node.nodeName.toUpperCase() === 'A') {
+					const li = document.createElement('li');
+					list.appendChild(li);
+					li.appendChild(node);
+				}
 
-					// <a>-element nodes.
-					else {
-						if (li === null) {
-							// Create a new list item.
-							li = document.createElement('li');
-							list.appendChild(li);
-						}
-						li.appendChild(node);
-					}
+				// Discard non-<a>-element nodes.
+				else {
+					frag.removeChild(node);
 				}
 			}
 		}
