@@ -126,7 +126,21 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 				if (srcObj !== null) {
 					const source = document.createElement('source');
 					source.src  = srcObj.src;
-					source.type = srcObj.type;
+					/*
+						Opera (Blink; ca. 2017-07) fails to play audio from some sources
+						with MIME-types containing a `codecs` parameter, despite the fact
+						that `canPlayType()` blessed the full MIME-type including `codecs`.
+
+						Bizarrely, this only affects some MIME-types—e.g. MP3s are affected,
+						while WAVEs are not.
+							Fails: 'audio/mpeg; codecs="mp3"'
+							Plays: 'audio/mpeg'
+							Plays: 'audio/wav; codecs="1"'
+
+						To workaround this we remove all parameters from the MIME-type in
+						Opera.
+					*/
+					source.type = Browser.isOpera ? srcObj.type.replace(/;.*$/, '') : srcObj.type;
 					audio.appendChild(source);
 					// sourceElems.appendChild(source);
 					usedSources.push(srcObj);
