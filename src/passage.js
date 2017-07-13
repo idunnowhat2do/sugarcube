@@ -186,8 +186,8 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 		processText() {
 			let processed = this.text;
 
-			// Handle the `nobr` tag.
-			if (this.tags.includes('nobr')) {
+			// Handle `Config.passages.nobr` and the `nobr` tag.
+			if (Config.passages.nobr || this.tags.includes('nobr')) {
 				// Remove all leading & trailing newlines and compact all internal sequences
 				// of newlines into single spaces.
 				processed = processed.replace(/^\n+|\n+$/g, '').replace(/\n+/g, ' ');

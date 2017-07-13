@@ -54,6 +54,7 @@ var Config = (() => { // eslint-disable-line no-unused-vars, no-var
 		passages : Object.seal({
 			descriptions  : undefined,
 			displayTitles : false,
+			nobr          : false,
 			start         : undefined, // set by `Story.load()`
 			transitionOut : undefined
 		}),
