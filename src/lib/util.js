@@ -68,6 +68,8 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 
 	/**
 		Returns an entity encoded version of the passed string.
+
+		NOTE: Only escapes the five primary special characters and the backtick.
 	**/
 	const _htmlCharsRe    = /[&<>"'`]/g;
 	const _hasHtmlCharsRe = new RegExp(_htmlCharsRe.source); // to drop the global flag
@@ -93,19 +95,30 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 
 	/**
 		Returns a decoded version of the passed entity encoded string.
+
+		NOTE: The extended replacement set here, in contrast to `utilEscape()`,
+		      is required due to observed stupidity from various sources.
 	**/
-	const _escapedHtmlRe    = /&(?:amp|lt|gt|quot|apos|#39|#x27|#96|#x60);/g;
-	const _hasEscapedHtmlRe = new RegExp(_escapedHtmlRe.source); // to drop the global flag
+	const _escapedHtmlRe    = /&(?:amp|#38|#x26|lt|#60|#x3c|gt|#62|#x3e|quot|#34|#x22|apos|#39|#x27|#96|#x60);/gi;
+	const _hasEscapedHtmlRe = new RegExp(_escapedHtmlRe.source, 'i'); // to drop the global flag
 	const _escapedHtmlMap   = Object.freeze({
-		'&amp;'  : '&',
-		'&lt;'   : '<',
-		'&gt;'   : '>',
-		'&quot;' : '"',
-		'&apos;' : "'", // apostrophe from XML shenanigans
-		'&#39;'  : "'", // apostrophe from decimal NCR
-		'&#x27;' : "'", // apostrophe from hexadecimal NCR (fuck you, Underscorejs)
-		'&#96;'  : '`', // backtick from decimal NCR
-		'&#x60;' : '`'  // backtick from hexadecimal NCR (fuck you, Underscorejs)
+		'&amp;'  : '&', // ampersand (HTML character entity, XML predefined entity)
+		'&#38;'  : '&', // ampersand (decimal numeric character reference)
+		'&#x26;' : '&', // ampersand (hexadecimal numeric character reference)
+		'&lt;'   : '<', // less-than (HTML character entity, XML predefined entity)
+		'&#60;'  : '<', // less-than (decimal numeric character reference)
+		'&#x3c;' : '<', // less-than (hexadecimal numeric character reference)
+		'&gt;'   : '>', // greater-than (HTML character entity, XML predefined entity)
+		'&#62;'  : '>', // greater-than (decimal numeric character reference)
+		'&#x3e;' : '>', // greater-than (hexadecimal numeric character reference)
+		'&quot;' : '"', // double quote (HTML character entity, XML predefined entity)
+		'&#34;'  : '"', // double quote (decimal numeric character reference)
+		'&#x22;' : '"', // double quote (hexadecimal numeric character reference)
+		'&apos;' : "'", // apostrophe (XML predefined entity)
+		'&#39;'  : "'", // apostrophe (decimal numeric character reference)
+		'&#x27;' : "'", // apostrophe (hexadecimal numeric character reference)
+		'&#96;'  : '`', // backtick (decimal numeric character reference)
+		'&#x60;' : '`'  // backtick (hexadecimal numeric character reference)
 	});
 
 	function utilUnescape(str) {
@@ -115,7 +128,7 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		const val = String(str);
 		return val && _hasEscapedHtmlRe.test(val)
-			? val.replace(_escapedHtmlRe, entity => _escapedHtmlMap[entity])
+			? val.replace(_escapedHtmlRe, entity => _escapedHtmlMap[entity.toLowerCase()])
 			: val;
 	}
 
