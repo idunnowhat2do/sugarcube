@@ -1,7 +1,5 @@
 syntax: glob
 .build
-.eslint*
-.hgignore
 .tern-project
 _*
 add-ons
