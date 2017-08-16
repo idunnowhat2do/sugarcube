@@ -6,15 +6,8 @@ For more information about the guidelines used to create these localizations, se
 
 ## Contributors ##
 
-<dl>
-<dt><code>chs.js</code> – 简体中文</dt>
-<dd>Liyro Pen.</dd>
-<dt><code>de.js</code> – Deutsch</dt>
-<dd>Phil Strahl.</dd>
-<dt><code>fr.js</code> – Français</dt>
-<dd>Pierre Kessler.</dd>
-<dt><code>pt.js</code> – Português</dt>
-<dd>Magma.</dd>
-<dt><code>ru.js</code> – Ру́сский</dt>
-<dd>Konstantin Kitmanov, with contributions by: cheshiren.</dd>
-</dl>
+* `chs.js` – 简体中文, by: Liyro Pen.
+* `de.js` – Deutsch, by: Phil Strahl.
+* `fr.js` – Français, by: Pierre Kessler.
+* `pt.js` – Português, by: Magma.
+* `ru.js` – Ру́сский, by: Konstantin Kitmanov; with contributions by: cheshiren.
