@@ -516,7 +516,7 @@ var SimpleAudio = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		stop() {
-			this.audio.pause();
+			this.pause();
 			this.time = 0;
 			this._trigger(':stop');
 		}
