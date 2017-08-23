@@ -718,7 +718,7 @@
 	});
 
 	/*
-		Randomly shuffles the array.
+		Randomly shuffles the array and returns it.
 	*/
 	Object.defineProperty(Array.prototype, 'shuffle', {
 		configurable : true,
@@ -732,15 +732,20 @@
 			const length = this.length >>> 0;
 
 			if (length === 0) {
-				return;
+				return this;
 			}
 
 			for (let i = length - 1; i > 0; --i) {
-				const j    = Math.floor(_nativeMathRandom() * (i + 1));
-				// const swap = this[i];
-				// this[i] = this[j];
-				// this[j] = swap;
-				[this[i], this[j]] = [this[j], this[i]];
+				const j = Math.floor(_nativeMathRandom() * (i + 1));
+
+				if (i === j) {
+					continue;
+				}
+
+				// [this[i], this[j]] = [this[j], this[i]];
+				const s = this[i];
+				this[i] = this[j];
+				this[j] = s;
 			}
 
 			return this;
