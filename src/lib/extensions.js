@@ -830,9 +830,9 @@
 				}
 
 				// [this[i], this[j]] = [this[j], this[i]];
-				const s = this[i];
+				const swap = this[i];
 				this[i] = this[j];
-				this[j] = s;
+				this[j] = swap;
 			}
 
 			return this;
