@@ -659,6 +659,47 @@
 	});
 
 	/*
+		Randomly removes a given number of unique elements from the base array
+		and returns the removed elements as a new array.
+	*/
+	Object.defineProperty(Array.prototype, 'pluckSize', {
+		configurable : true,
+		writable     : true,
+
+		value(wantSize) {
+			if (this == null) { // lazy equality for null
+				throw new TypeError('Array.prototype.pluckSize called on null or undefined');
+			}
+
+			const length = this.length >>> 0;
+
+			if (length === 0) {
+				return [];
+			}
+
+			let want = Number.isInteger(wantSize) ? wantSize : 1;
+
+			if (want < 1) {
+				return [];
+			}
+
+			if (want > length) {
+				want = length;
+			}
+
+			const splice = Array.prototype.splice;
+			const result = [];
+			let upper = length - 1;
+
+			do {
+				result.push(splice.call(this, _random(0, upper--), 1)[0]);
+			} while (result.length < want);
+
+			return result;
+		}
+	});
+
+	/*
 		Returns a random element from the array, within the range of the lower and upper bounds,
 		if they are specified.
 	*/
@@ -714,6 +755,52 @@
 			}
 
 			return this[_random(lower, upper)];
+		}
+	});
+
+	/*
+		Randomly selects a given number of unique elements from the base array
+		and returns the selected elements as a new array.
+	*/
+	Object.defineProperty(Array.prototype, 'randomSize', {
+		configurable : true,
+		writable     : true,
+
+		value(wantSize) {
+			if (this == null) { // lazy equality for null
+				throw new TypeError('Array.prototype.randomSize called on null or undefined');
+			}
+
+			const length = this.length >>> 0;
+
+			if (length === 0) {
+				return [];
+			}
+
+			let want = Number.isInteger(wantSize) ? wantSize : 1;
+
+			if (want < 1) {
+				return [];
+			}
+
+			if (want > length) {
+				want = length;
+			}
+
+			const picked = new Map();
+			const result = [];
+			const upper  = length - 1;
+
+			do {
+				let i;
+				do {
+					i = _random(0, upper);
+				} while (picked.has(i));
+				picked.set(i, true);
+				result.push(this[i]);
+			} while (result.length < want);
+
+			return result;
 		}
 	});
 
