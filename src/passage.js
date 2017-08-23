@@ -224,7 +224,12 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 			// Add the passage's tags to <html>.
 			jQuery(document.documentElement).attr('data-tags', dataTags);
 
-			// Execute pre-render tasks.
+			// Execute pre-render events and tasks.
+			jQuery.event.trigger({
+				type    : ':passagestart',
+				output  : passageEl,
+				passage : this
+			});
 			Object.keys(prerender).forEach(task => {
 				if (typeof prerender[task] === 'function') {
 					prerender[task].call(this, passageEl, task);
@@ -244,7 +249,12 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 				new Wikifier(passageEl, Story.get('PassageFooter').processText());
 			}
 
-			// Execute post-render tasks.
+			// Execute post-render events and tasks.
+			jQuery.event.trigger({
+				type    : ':passagerender',
+				output  : passageEl,
+				passage : this
+			});
 			Object.keys(postrender).forEach(task => {
 				if (typeof postrender[task] === 'function') {
 					postrender[task].call(this, passageEl, task);

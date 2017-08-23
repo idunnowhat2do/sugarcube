@@ -363,8 +363,12 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		const passage = Story.get(passageTitle);
 
 		/*
-			Execute the pre-history tasks.
+			Execute the pre-history events and tasks.
 		*/
+		jQuery.event.trigger({
+			type : ':passageinit',
+			passage
+		});
 		Object.keys(prehistory).forEach(function (task) {
 			if (typeof prehistory[task] === 'function') {
 				prehistory[task].call(this, task);
@@ -379,12 +383,15 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		}
 
 		/*
-			Clear `<body>` classes, then execute the `PassageReady` passage and `predisplay` tasks.
+			Clear `<body>` classes.
 		*/
 		if (document.body.className) {
 			document.body.className = '';
 		}
 
+		/*
+			Execute pre-display tasks and the `PassageReady` special passage.
+		*/
 		Object.keys(predisplay).forEach(function (task) {
 			if (typeof predisplay[task] === 'function') {
 				predisplay[task].call(this, task);
@@ -458,6 +465,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 				jQuery(passages).empty();
 			}
 		}
+
 		$incoming
 			.addClass('passage-in')
 			.appendTo(passages);
@@ -481,8 +489,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		_state = States.Playing;
 
 		/*
-			Execute the `PassageDone` passage and `postdisplay` tasks, then update the non-passage
-			page elements, if enabled.
+			Execute post-display events, tasks, and the `PassageDone` special passage.
 		*/
 		if (Story.has('PassageDone')) {
 			try {
@@ -494,12 +501,19 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 		}
 
+		jQuery.event.trigger({
+			type : ':passagedisplay',
+			passage
+		});
 		Object.keys(postdisplay).forEach(function (task) {
 			if (typeof postdisplay[task] === 'function') {
 				postdisplay[task].call(this, task);
 			}
 		}, passage);
 
+		/*
+			Update the non-passage page elements, if enabled.
+		*/
 		if (Config.ui.updateStoryElements) {
 			UIBar.setStoryElements();
 		}
@@ -561,6 +575,14 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 			.find('a,link,button,input,select,textarea')
 				.not('[tabindex]')
 					.attr('tabindex', 0);
+
+		/*
+			Execute post-play events.
+		*/
+		jQuery.event.trigger({
+			type : ':passageend',
+			passage
+		});
 
 		/*
 			Handle autosaves.
