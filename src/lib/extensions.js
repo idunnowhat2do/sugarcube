@@ -600,14 +600,14 @@
 	});
 
 	/*
-		Removes and returns a random element from the array, within the range of the lower and
-		upper bounds, if they are specified.
+		Randomly removes an element from the base array and returns it.
+		[DEPRECATED] Optionally, from within the lower and upper bounds.
 	*/
 	Object.defineProperty(Array.prototype, 'pluck', {
 		configurable : true,
 		writable     : true,
 
-		value(lowerBound, upperBound) {
+		value(/* all parameters are deprecated */ lowerBound, upperBound) {
 			if (this == null) { // lazy equality for null
 				throw new TypeError('Array.prototype.pluck called on null or undefined');
 			}
@@ -700,14 +700,14 @@
 	});
 
 	/*
-		Returns a random element from the array, within the range of the lower and upper bounds,
-		if they are specified.
+		Randomly selects an element from the base array and returns it.
+		[DEPRECATED] Optionally, from within the lower and upper bounds.
 	*/
 	Object.defineProperty(Array.prototype, 'random', {
 		configurable : true,
 		writable     : true,
 
-		value(lowerBound, upperBound) {
+		value(/* all parameters are deprecated */ lowerBound, upperBound) {
 			if (this == null) { // lazy equality for null
 				throw new TypeError('Array.prototype.random called on null or undefined');
 			}
