@@ -382,9 +382,7 @@
 	});
 
 	/*
-		NOTE: This macro is deprecated.
-
-		<<display>>
+		[DEPRECATED] <<display>>
 	*/
 	Macro.add('display', 'include'); // add <<display>> as an alias of <<include>>
 
@@ -1191,9 +1189,7 @@
 	});
 
 	/*
-		NOTE: This macro is deprecated.
-
-		<<click>>
+		[DEPRECATED] <<click>>
 	*/
 	Macro.add('click', 'link'); // add <<click>> as an alias of <<link>>
 
@@ -2626,9 +2622,7 @@
 		});
 
 		/*
-			NOTE: This macro is deprecated.
-
-			<<setplaylist track_id_list>>
+			[DEPRECATED] <<setplaylist track_id_list>>
 		*/
 		Macro.add('setplaylist', {
 			list : null,
@@ -2678,9 +2672,7 @@
 		});
 
 		/*
-			NOTE: This macro is deprecated.
-
-			<<stopallaudio>>
+			[DEPRECATED] <<stopallaudio>>
 		*/
 		Macro.add('stopallaudio', {
 			skipArgs : true,
