@@ -265,23 +265,23 @@
 		Utility Functions.
 	*******************************************************************************************************************/
 	/*
-		Returns a pseudo-random whole number (integer) within the range of the given bounds.
+		Returns a pseudo-random whole number (integer) within the given bounds.
 	*/
-	function _random(/* variadic(min:inclusive, max:inclusive) */) {
-		if (arguments.length === 0) {
-			throw new Error('_random called with insufficient parameters');
-		}
-
+	function _random(/* [min ,] max */) {
 		let min;
 		let max;
 
-		if (arguments.length === 1) {
+		switch (arguments.length) {
+		case 0:
+			throw new Error('_random called with insufficient parameters');
+		case 1:
 			min = 0;
 			max = arguments[0];
-		}
-		else {
+			break;
+		default:
 			min = arguments[0];
 			max = arguments[1];
+			break;
 		}
 
 		if (min > max) {
@@ -289,6 +289,60 @@
 		}
 
 		return Math.floor(_nativeMathRandom() * (max - min + 1)) + min;
+	}
+
+	/*
+		Returns a randomly selected index within the given length and bounds.
+		Bounds may be negative.
+	*/
+	function _randomIndex(length, boundsArgs) {
+		let min;
+		let max;
+
+		switch (boundsArgs.length) {
+		case 1:
+			min = 0;
+			max = length - 1;
+			break;
+		case 2:
+			min = 0;
+			max = Math.trunc(boundsArgs[1]);
+			break;
+		default:
+			min = Math.trunc(boundsArgs[1]);
+			max = Math.trunc(boundsArgs[2]);
+			break;
+		}
+
+		if (Number.isNaN(min)) {
+			min = 0;
+		}
+		else if (!Number.isFinite(min) || min >= length) {
+			min = length - 1;
+		}
+		else if (min < 0) {
+			min = length + min;
+
+			if (min < 0) {
+				min = 0;
+			}
+		}
+
+		if (Number.isNaN(max)) {
+			max = 0;
+		}
+		else if (!Number.isFinite(max) || max >= length) {
+			max = length - 1;
+		}
+		else if (max < 0) {
+			max = length + max;
+
+			if (max < 0) {
+				max = length - 1;
+			}
+		}
+
+		return _random(min, max);
 	}
 
 	/*
@@ -371,28 +425,33 @@
 		Extensions, General.
 	*******************************************************************************************************************/
 	/*
-		Returns a random element from the given array, within the range of the lower and upper
-		bounds, if they are specified.
+		Randomly selects an element from the given array, or array-like object, and returns it.
+		[DEPRECATED] Optionally, from within the given bounds.
 	*/
 	Object.defineProperty(Array, 'random', {
 		configurable : true,
 		writable     : true,
 
-		value(array, lowerBound, upperBound) {
-			let lower = lowerBound;
-			let upper = upperBound;
-
-			if (arguments.length === 2) {
-				upper = lower;
-				lower = 0;
+		value(array /* DEPRECATED: [, [min ,] max] */) {
+			if (
+				   array == null // lazy equality for null
+				|| typeof array !== 'object'
+				|| !Object.prototype.hasOwnProperty.call(array, 'length')
+			) {
+				throw new TypeError('Array.random array parameter must be an array or array-lke object');
 			}
 
-			if (Array.isArray(array)) {
-				return array.random(lower, upper);
+			const length = array.length >>> 0;
+
+			if (length === 0) {
+				return;
 			}
-			else if (array.hasOwnProperty('length')) {
-				return [...array].random(lower, upper);
-			}
+
+			const index = arguments.length === 0
+				? _random(0, length - 1)
+				: _randomIndex(length, Array.prototype.slice.call(arguments, 1));
+
+			return array[index];
 		}
 	});
 
@@ -601,13 +660,13 @@
 
 	/*
 		Randomly removes an element from the base array and returns it.
-		[DEPRECATED] Optionally, from within the lower and upper bounds.
+		[DEPRECATED] Optionally, from within the given bounds.
 	*/
 	Object.defineProperty(Array.prototype, 'pluck', {
 		configurable : true,
 		writable     : true,
 
-		value(/* all parameters are deprecated */ lowerBound, upperBound) {
+		value(/* DEPRECATED: [min ,] max */) {
 			if (this == null) { // lazy equality for null
 				throw new TypeError('Array.prototype.pluck called on null or undefined');
 			}
@@ -618,57 +677,25 @@
 				return;
 			}
 
-			let lower = lowerBound;
-			let upper = upperBound;
+			const index = arguments.length === 0
+				? _random(0, length - 1)
+				: _randomIndex(length, [...arguments]);
 
-			if (arguments.length === 1) {
-				upper = lower;
-				lower = 0;
-			}
-
-			if (lower == null) { // lazy equality for null
-				lower = 0;
-			}
-			else if (lower < 0) {
-				lower = length + lower;
-
-				if (lower < 0) {
-					lower = 0;
-				}
-			}
-			else if (lower >= length) {
-				lower = length - 1;
-			}
-
-			if (upper == null) { // lazy equality for null
-				upper = length - 1;
-			}
-			else if (upper < 0) {
-				upper = length + upper;
-
-				if (upper < 0) {
-					upper = length - 1;
-				}
-			}
-			else if (upper >= length) {
-				upper = length - 1;
-			}
-
-			return Array.prototype.splice.call(this, _random(lower, upper), 1)[0];
+			return Array.prototype.splice.call(this, index, 1)[0];
 		}
 	});
 
 	/*
-		Randomly removes a given number of unique elements from the base array
+		Randomly removes the given number of unique elements from the base array
 		and returns the removed elements as a new array.
 	*/
-	Object.defineProperty(Array.prototype, 'pluckSize', {
+	Object.defineProperty(Array.prototype, 'pluckMany', {
 		configurable : true,
 		writable     : true,
 
 		value(wantSize) {
 			if (this == null) { // lazy equality for null
-				throw new TypeError('Array.prototype.pluckSize called on null or undefined');
+				throw new TypeError('Array.prototype.pluckMany called on null or undefined');
 			}
 
 			const length = this.length >>> 0;
@@ -677,7 +704,11 @@
 				return [];
 			}
 
-			let want = Number.isInteger(wantSize) ? wantSize : 1;
+			let want = Math.trunc(wantSize);
+
+			if (!Number.isInteger(want)) {
+				throw new Error('Array.prototype.pluckMany want parameter must be an integer');
+			}
 
 			if (want < 1) {
 				return [];
@@ -689,10 +720,10 @@
 
 			const splice = Array.prototype.splice;
 			const result = [];
-			let upper = length - 1;
+			let max = length - 1;
 
 			do {
-				result.push(splice.call(this, _random(0, upper--), 1)[0]);
+				result.push(splice.call(this, _random(0, max--), 1)[0]);
 			} while (result.length < want);
 
 			return result;
@@ -701,13 +732,13 @@
 
 	/*
 		Randomly selects an element from the base array and returns it.
-		[DEPRECATED] Optionally, from within the lower and upper bounds.
+		[DEPRECATED] Optionally, from within the given bounds.
 	*/
 	Object.defineProperty(Array.prototype, 'random', {
 		configurable : true,
 		writable     : true,
 
-		value(/* all parameters are deprecated */ lowerBound, upperBound) {
+		value(/* DEPRECATED: [min ,] max */) {
 			if (this == null) { // lazy equality for null
 				throw new TypeError('Array.prototype.random called on null or undefined');
 			}
@@ -718,57 +749,25 @@
 				return;
 			}
 
-			let lower = lowerBound;
-			let upper = upperBound;
+			const index = arguments.length === 0
+				? _random(0, length - 1)
+				: _randomIndex(length, [...arguments]);
 
-			if (arguments.length === 1) {
-				upper = lower;
-				lower = 0;
-			}
-
-			if (lower == null) { // lazy equality for null
-				lower = 0;
-			}
-			else if (lower < 0) {
-				lower = length + lower;
-
-				if (lower < 0) {
-					lower = 0;
-				}
-			}
-			else if (lower >= length) {
-				lower = length - 1;
-			}
-
-			if (upper == null) { // lazy equality for null
-				upper = length - 1;
-			}
-			else if (upper < 0) {
-				upper = length + upper;
-
-				if (upper < 0) {
-					upper = length - 1;
-				}
-			}
-			else if (upper >= length) {
-				upper = length - 1;
-			}
-
-			return this[_random(lower, upper)];
+			return this[index];
 		}
 	});
 
 	/*
-		Randomly selects a given number of unique elements from the base array
+		Randomly selects the given number of unique elements from the base array
 		and returns the selected elements as a new array.
 	*/
-	Object.defineProperty(Array.prototype, 'randomSize', {
+	Object.defineProperty(Array.prototype, 'randomMany', {
 		configurable : true,
 		writable     : true,
 
 		value(wantSize) {
 			if (this == null) { // lazy equality for null
-				throw new TypeError('Array.prototype.randomSize called on null or undefined');
+				throw new TypeError('Array.prototype.randomMany called on null or undefined');
 			}
 
 			const length = this.length >>> 0;
@@ -777,7 +776,11 @@
 				return [];
 			}
 
-			let want = Number.isInteger(wantSize) ? wantSize : 1;
+			let want = Math.trunc(wantSize);
+
+			if (!Number.isInteger(want)) {
+				throw new Error('Array.prototype.randomMany want parameter must be an integer');
+			}
 
 			if (want < 1) {
 				return [];
@@ -789,12 +792,12 @@
 
 			const picked = new Map();
 			const result = [];
-			const upper  = length - 1;
+			const max    = length - 1;
 
 			do {
 				let i;
 				do {
-					i = _random(0, upper);
+					i = _random(0, max);
 				} while (picked.has(i));
 				picked.set(i, true);
 				result.push(this[i]);
