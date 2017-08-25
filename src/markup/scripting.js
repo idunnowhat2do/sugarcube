@@ -332,21 +332,28 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 	/*
 		Returns a pseudo-random whole number (integer) within the range of the given bounds.
 	*/
-	function random(/* variadic(min:inclusive, max:inclusive) */) {
-		if (arguments.length === 0) {
-			throw new Error('random called with insufficient parameters');
-		}
-
+	function random(/* [min ,] max */) {
 		let min;
 		let max;
 
-		if (arguments.length === 1) {
+		switch (arguments.length) {
+		case 0:
+			throw new Error('random called with insufficient parameters');
+		case 1:
 			min = 0;
-			max = arguments[0];
+			max = Math.trunc(arguments[0]);
+			break;
+		default:
+			min = Math.trunc(arguments[0]);
+			max = Math.trunc(arguments[1]);
+			break;
 		}
-		else {
-			min = arguments[0];
-			max = arguments[1];
+
+		if (!Number.isInteger(min)) {
+			throw new Error('random min parameter must be an integer');
+		}
+		if (!Number.isInteger(max)) {
+			throw new Error('random max parameter must be an integer');
 		}
 
 		if (min > max) {
@@ -362,21 +369,28 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 		NOTE: Unlike with its sibling function `random()`, the `max` parameter is exclusive,
 		      not inclusive (i.e. the range goes to, but does not include, the given value).
 	*/
-	function randomFloat(/* variadic(min:inclusive, max:exclusive) */) {
-		if (arguments.length === 0) {
-			throw new Error('randomFloat called with insufficient parameters');
-		}
-
+	function randomFloat(/* [min ,] max */) {
 		let min;
 		let max;
 
-		if (arguments.length === 1) {
+		switch (arguments.length) {
+		case 0:
+			throw new Error('randomFloat called with insufficient parameters');
+		case 1:
 			min = 0.0;
-			max = arguments[0];
+			max = Number(arguments[0]);
+			break;
+		default:
+			min = Number(arguments[0]);
+			max = Number(arguments[1]);
+			break;
 		}
-		else {
-			min = arguments[0];
-			max = arguments[1];
+
+		if (Number.isNaN(min) || !Number.isFinite(min)) {
+			throw new Error('randomFloat min parameter must be a number');
+		}
+		if (Number.isNaN(max) || !Number.isFinite(max)) {
+			throw new Error('randomFloat max parameter must be a number');
 		}
 
 		if (min > max) {
