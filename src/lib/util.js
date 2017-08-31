@@ -6,7 +6,7 @@
 	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
 
 ***********************************************************************************************************************/
-/* global Scripting */
+/* global Has, Scripting */
 
 var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
@@ -14,17 +14,26 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 	/*******************************************************************************************************************
 		Type Functions.
 	*******************************************************************************************************************/
-	/**
+	/*
  		Returns a pseudo-enumeration created from the given object.
- 	**/
+ 	*/
  	function utilToEnum(obj) {
  		return Object.freeze(Object.assign(Object.create(null), obj));
  	}
 
-	/**
-		Returns whether the passed value is a finite number or a numeric string which yields
-		a finite number when parsed.
-	**/
+	/*
+		Returns the value of the `@@toStringTag` property of the given object.
+
+		NOTE: In ≤ES5, returns the value of the `[[Class]]` internal slot.
+	*/
+	function utilToStringTag(obj) {
+		return Object.prototype.toString.call(obj).slice(8, -1);
+	}
+
+	/*
+		Returns whether the passed value is a finite number or a numeric string which
+		yields a finite number when parsed.
+	*/
 	function utilIsNumeric(obj) {
 		let num;
 
@@ -44,9 +53,10 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 		return !Number.isNaN(num) && Number.isFinite(num);
 	}
 
-	/**
-		Returns whether the passed value is a boolean or one of the strings "true" or "false".
-	**/
+	/*
+		Returns whether the passed value is a boolean or one of the strings "true"
+		or "false".
+	*/
 	function utilIsBoolean(obj) {
 		return typeof obj === 'boolean' || typeof obj === 'string' && (obj === 'true' || obj === 'false');
 	}
@@ -55,9 +65,9 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 	/*******************************************************************************************************************
 		String Encoding Functions.
 	*******************************************************************************************************************/
-	/**
+	/*
 		Returns a lowercased and hyphen encoded version of the passed string.
-	**/
+	*/
 	function utilSlugify(str) {
 		return String(str)
 			.trim()
@@ -66,11 +76,11 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 			.toLocaleLowerCase();
 	}
 
-	/**
+	/*
 		Returns an entity encoded version of the passed string.
 
 		NOTE: Only escapes the five primary special characters and the backtick.
-	**/
+	*/
 	const _htmlCharsRe    = /[&<>"'`]/g;
 	const _hasHtmlCharsRe = new RegExp(_htmlCharsRe.source); // to drop the global flag
 	const _htmlCharsMap   = Object.freeze({
@@ -93,12 +103,12 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 			: val;
 	}
 
-	/**
+	/*
 		Returns a decoded version of the passed entity encoded string.
 
 		NOTE: The extended replacement set here, in contrast to `utilEscape()`,
 		      is required due to observed stupidity from various sources.
-	**/
+	*/
 	const _escapedHtmlRe    = /&(?:amp|#38|#x26|lt|#60|#x3c|gt|#62|#x3e|quot|#34|#x22|apos|#39|#x27|#96|#x60);/gi;
 	const _hasEscapedHtmlRe = new RegExp(_escapedHtmlRe.source, 'i'); // to drop the global flag
 	const _escapedHtmlMap   = Object.freeze({
@@ -132,13 +142,104 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 			: val;
 	}
 
+	/*
+		Returns an object (`{ char, start, end }`) containing the Unicode character at
+		position `pos`, its starting position, and its ending position—surrogate pairs
+		are properly handled.  If `pos` is out-of-bounds, returns an object containing
+		the empty string and start/end positions of `-1`.
+
+		This function is necessary because JavaScript strings are sequences of UTF-16
+		code units, so surrogate pairs are exposed and thus must be handled.  While the
+		ES6/2015 standard does improve the situation somewhat, it does not alleviate
+		the need for this function.
+
+		NOTE: Returns the individual code units of invalid surrogate pairs as-is.
+
+		IDEA: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/charAt
+	*/
+	function utilCharAndPosAt(text, position) {
+		const str  = String(text);
+		const pos  = Math.trunc(position);
+		const code = str.charCodeAt(pos);
+
+		// Given position was out-of-bounds.
+		if (Number.isNaN(code)) {
+			return { char : '', start : -1, end : -1 };
+		}
+
+		const retval = {
+			char  : str.charAt(pos),
+			start : pos,
+			end   : pos
+		};
+
+		// Code unit is not a UTF-16 surrogate.
+		if (code < 0xD800 || code > 0xDFFF) {
+			return retval;
+		}
+
+		// Code unit is a high surrogate (D800–DBFF).
+		if (code >= 0xD800 && code <= 0xDBFF) {
+			const nextPos = pos + 1;
+
+			// End of string.
+			if (nextPos >= str.length) {
+				return retval;
+			}
+
+			const nextCode = str.charCodeAt(nextPos);
+
+			// Next code unit is not a low surrogate (DC00–DFFF).
+			if (nextCode < 0xDC00 || nextCode > 0xDFFF) {
+				return retval;
+			}
+
+			retval.char = retval.char + str.charAt(nextPos);
+			retval.end = nextPos;
+			return retval;
+		}
+
+		// Code unit is a low surrogate (DC00–DFFF) in the first position.
+		if (pos === 0) {
+			return retval;
+		}
+
+		const prevPos  = pos - 1;
+		const prevCode = str.charCodeAt(prevPos);
+
+		// Previous code unit is not a high surrogate (D800–DBFF).
+		if (prevCode < 0xD800 || prevCode > 0xDBFF) {
+			return retval;
+		}
+
+		retval.char = str.charAt(prevPos) + retval.char;
+		retval.start = prevPos;
+		return retval;
+	}
+
+
+	/*******************************************************************************************************************
+		Time Functions.
+	*******************************************************************************************************************/
+	/*
+		Returns the number of milliseconds elapsed since a reference instant.
+
+		NOTE: Use the Performance API, if available, elsewise use Date as a
+		      failover.  The Performance API is preferred for its monotonic
+		      clock—meaning, it's not subject to the vagaries of timezone
+		      changes and time leaps, as is Date.
+	*/
+	function utilNow() {
+		return (Has.performance ? performance : Date).now();
+	}
+
 
 	/*******************************************************************************************************************
 		Conversion Functions.
 	*******************************************************************************************************************/
-	/**
+	/*
 		Returns the number of miliseconds represented by the passed CSS time string.
-	**/
+	*/
 	function utilFromCssTime(cssTime) {
 		const re    = /^([+-]?(?:\d*\.)?\d+)([Mm]?[Ss])$/;
 		const match = re.exec(String(cssTime));
@@ -160,9 +261,9 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 		return msec;
 	}
 
-	/**
+	/*
 		Returns the CSS time string represented by the passed number of milliseconds.
-	**/
+	*/
 	function utilToCssTime(msec) {
 		if (typeof msec !== 'number' || Number.isNaN(msec) || !Number.isFinite(msec)) {
 			let what;
@@ -187,9 +288,9 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 		return `${msec}ms`;
 	}
 
-	/**
+	/*
 		Returns the DOM property name represented by the passed CSS property name.
-	**/
+	*/
 	function utilFromCssProperty(cssName) {
 		if (!cssName.includes('-')) {
 			switch (cssName) {
@@ -208,9 +309,9 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 			.join('');
 	}
 
-	/**
+	/*
 		Returns an object containing the component properties parsed from the passed URL.
-	**/
+	*/
 	function utilParseUrl(url) {
 		const el       = document.createElement('a');
 		const queryObj = Object.create(null);
@@ -302,16 +403,18 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Type Functions.
 		*/
-		toEnum    : { value : utilToEnum },
-		isNumeric : { value : utilIsNumeric },
-		isBoolean : { value : utilIsBoolean },
+		toEnum      : { value : utilToEnum },
+		toStringTag : { value : utilToStringTag },
+		isNumeric   : { value : utilIsNumeric },
+		isBoolean   : { value : utilIsBoolean },
 
 		/*
 			String Encoding Functions.
 		*/
-		slugify  : { value : utilSlugify },
-		escape   : { value : utilEscape },
-		unescape : { value : utilUnescape },
+		slugify      : { value : utilSlugify },
+		escape       : { value : utilEscape },
+		unescape     : { value : utilUnescape },
+		charAndPosAt : { value : utilCharAndPosAt },
 
 		/*
 			Conversion Functions.
@@ -320,6 +423,11 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 		toCssTime       : { value : utilToCssTime },
 		fromCssProperty : { value : utilFromCssProperty },
 		parseUrl        : { value : utilParseUrl },
+
+		/*
+			Time Functions.
+		*/
+		now : { value : utilNow },
 
 		/*
 			Legacy Aliases.
