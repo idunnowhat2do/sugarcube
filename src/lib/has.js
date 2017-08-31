@@ -53,11 +53,23 @@ var Has = (() => { // eslint-disable-line no-unused-vars, no-var
 		return false;
 	})();
 
+	// Performance API Test
+	const hasPerformance = (() => {
+		try {
+			return 'performance' in window &&
+				typeof window.performance.now === 'function';
+		}
+		catch (ex) { /* no-op */ }
+
+		return false;
+	})();
+
 
 	// Module Exports.
 	return Object.freeze({
 		audio       : hasAudioElement,
 		fileAPI     : hasFile,
-		geolocation : hasGeolocation
+		geolocation : hasGeolocation,
+		performance : hasPerformance
 	});
 })();
