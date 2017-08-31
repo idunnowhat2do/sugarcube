@@ -429,7 +429,7 @@ var Scripting = (() => { // eslint-disable-line no-unused-vars, no-var
 		Returns the number of milliseconds which have passed since the current passage was rendered.
 	*/
 	function time() {
-		return Engine.lastPlay === null ? 0 : Date.now() - Engine.lastPlay;
+		return Engine.lastPlay === null ? 0 : Util.now() - Engine.lastPlay;
 	}
 
 	/*

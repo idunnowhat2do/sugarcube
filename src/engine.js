@@ -560,7 +560,7 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 		/*
 			Update the last display time.
 		*/
-		_lastPlay = Date.now();
+		_lastPlay = Util.now();
 
 		/*
 			Last second post-processing for accessibility and other things.
