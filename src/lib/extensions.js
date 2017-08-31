@@ -346,7 +346,7 @@
 	}
 
 	/*
-		Returns an object (`{ char, start, end }`) containing the Unicode code point at
+		Returns an object (`{ char, start, end }`) containing the Unicode character at
 		position `pos`, its starting position, and its ending position—surrogate pairs
 		are properly handled.  If `pos` is out-of-bounds, returns an object containing
 		the empty string and start/end positions of `-1`.
@@ -356,7 +356,7 @@
 		ES6/2015 standard does improve the situation somewhat, it does not alleviate
 		the need for this function.
 
-		NOTE: Will throw exceptions on invalid surrogate-pair sequences.
+		NOTE: Will throw exceptions on invalid surrogate pairs.
 
 		IDEA: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/charAt
 	*/
