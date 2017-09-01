@@ -250,6 +250,8 @@ var { // eslint-disable-line no-var
 		the passed default value.
 	*/
 	function toStringOrDefault(value, defValue) {
+		const tSOD = toStringOrDefault;
+
 		switch (typeof value) {
 		case 'number':
 			if (Number.isNaN(value)) {
@@ -261,12 +263,14 @@ var { // eslint-disable-line no-var
 			if (value === null) {
 				return defValue;
 			}
-			else if (Array.isArray(value) || value instanceof Set) {
-				return [...value].map(val => toStringOrDefault(val, defValue)).join(', ');
+			else if (Array.isArray(value)) {
+				return value.map(val => tSOD(val, defValue)).join(', ');
+			}
+			else if (value instanceof Set) {
+				return [...value].map(val => tSOD(val, defValue)).join(', ');
 			}
 			else if (value instanceof Map) {
-				const tSOD = toStringOrDefault;
-				const str  = [...value]
+				const str = [...value]
 					.map(kv => `${tSOD(kv[0], defValue)} \u21D2 ${tSOD(kv[1], defValue)}`)
 					.join('; ');
 				return `(\u202F${str}\u202F)`;
@@ -277,7 +281,6 @@ var { // eslint-disable-line no-var
 			else if (typeof value.toString === 'function') {
 				return value.toString();
 			}
-
 			return Object.prototype.toString.call(value);
 
 		case 'function':
