@@ -664,8 +664,12 @@
 					}
 
 					init      = parts[1];
-					condition = parts[2];
+					condition = parts[2].trim();
 					post      = parts[3];
+
+					if (condition.length === 0) {
+						condition = true;
+					}
 				}
 
 				this.self._handleFor.call(this, payload, init, condition, post);
