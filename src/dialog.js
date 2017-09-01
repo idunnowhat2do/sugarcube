@@ -346,7 +346,7 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 			dialogPos.left = dialogPos.right = 16;
 		}
 		else {
-			dialogPos.left = dialogPos.right = ~~(horzSpace / 2);
+			dialogPos.left = dialogPos.right = horzSpace / 2 >> 0;
 		}
 
 		if (vertSpace <= 32) {
@@ -357,7 +357,7 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 				dialogPos.top = top;
 			}
 			else {
-				dialogPos.top = dialogPos.bottom = ~~(vertSpace / 2);
+				dialogPos.top = dialogPos.bottom = vertSpace / 2 >> 0;
 			}
 		}
 
@@ -384,6 +384,6 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 		addClickHandler : { value : dialogAddClickHandler },
 		open            : { value : dialogOpen },
 		close           : { value : dialogClose },
-		resize          : { value : () => dialogResizeHandler() } // Forbid params on the exported method.
+		resize          : { value : opt => dialogResizeHandler(typeof opt === 'object' ? { data : opt } : undefined) }
 	}));
 })();
