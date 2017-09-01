@@ -629,7 +629,7 @@
 				const parts = argsStr.match(this.self._rangeRe);
 
 				if (parts === null) {
-					return this.error('invalid range syntax, format: [indexVar ,] valueVar range collectionExp');
+					return this.error('invalid range form syntax, format: [index ,] value range collection');
 				}
 
 				this.self._handleForRange.call(
@@ -660,7 +660,7 @@
 					const parts = argsStr.match(this.self._3PartRe);
 
 					if (parts === null) {
-						return this.error('invalid 3-part syntax, format: init ; condition ; post');
+						return this.error('invalid 3-part conditional form syntax, format: [init] ; [condition] ; [post]');
 					}
 
 					init      = parts[1];
