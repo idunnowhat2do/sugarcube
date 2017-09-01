@@ -291,7 +291,6 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 						createButton('delete', null, L10n.get('savesLabelDelete'), 'auto', () => {
 							Save.autosave.delete();
 							uiBuildSaves();
-							Dialog.resize();
 						})
 					);
 				}
@@ -356,7 +355,6 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 						createButton('delete', null, L10n.get('savesLabelDelete'), i, slot => {
 							Save.slots.delete(slot);
 							uiBuildSaves();
-							Dialog.resize();
 						})
 					);
 				}
@@ -454,7 +452,6 @@ var UI = (() => { // eslint-disable-line no-unused-vars, no-var
 							? () => {
 								Save.clear();
 								uiBuildSaves();
-								Dialog.resize();
 							}
 							: null
 				));
