@@ -6,7 +6,7 @@
 	Use of this source code is governed by a BSD 2-clause "Simplified" License, which may be found in the LICENSE file.
 
 ***********************************************************************************************************************/
-/* global Engine, L10n, safeActiveElement */
+/* global Engine, Has, L10n, safeActiveElement */
 
 var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 	'use strict';
@@ -17,6 +17,7 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 	let _$dialogBody    = null;
 	let _lastActive     = null;
 	let _scrollbarWidth = 0;
+	let _dialogObserver = null;
 
 
 	/*******************************************************************************************************************
@@ -216,6 +217,31 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 		jQuery(window)
 			.on('resize.ui-resize', null, { top }, jQuery.throttle(40, dialogResizeHandler));
 
+		// Add the dialog mutation resize handler.
+		if (Has.mutationObserver) {
+			_dialogObserver = new MutationObserver(mutations => {
+				for (let i = 0; i < mutations.length; ++i) {
+					if (mutations[i].type === 'childList') {
+						dialogResizeHandler({ data : { top } });
+						break;
+					}
+				}
+			});
+			_dialogObserver.observe(_$dialogBody[0], {
+				childList : true,
+				subtree   : true
+			});
+		}
+		else {
+			_$dialogBody
+				.on(
+					'DOMNodeInserted.ui-resize DOMNodeRemoved.ui-resize',
+					null,
+					{ top },
+					jQuery.throttle(40, dialogResizeHandler)
+				);
+		}
+
 		// Setup the delegated UI close handler.
 		jQuery(document)
 			.on('click.ui-close', '.ui-close', { closeFn }, dialogClose) // yes, namespace and class have the same name
@@ -236,6 +262,14 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 		// Largely reverse the actions taken in `dialogOpen()`.
 		jQuery(document)
 			.off('.ui-close'); // namespace, not to be confused with the class by the same name
+		if (_dialogObserver) {
+			_dialogObserver.disconnect();
+			_dialogObserver = null;
+		}
+		else {
+			_$dialogBody
+				.off('DOMNodeInserted.ui-resize DOMNodeRemoved.ui-resize');
+		}
 		jQuery(window)
 			.off('resize.ui-resize');
 		_$dialog
