@@ -53,6 +53,17 @@ var Has = (() => { // eslint-disable-line no-unused-vars, no-var
 		return false;
 	})();
 
+	// MutationObserver API Test
+	const hasMutationObserver = (() => {
+		try {
+			return 'MutationObserver' in window &&
+				typeof window.MutationObserver === 'function';
+		}
+		catch (ex) { /* no-op */ }
+
+		return false;
+	})();
+
 	// Performance API Test
 	const hasPerformance = (() => {
 		try {
@@ -67,9 +78,10 @@ var Has = (() => { // eslint-disable-line no-unused-vars, no-var
 
 	// Module Exports.
 	return Object.freeze({
-		audio       : hasAudioElement,
-		fileAPI     : hasFile,
-		geolocation : hasGeolocation,
-		performance : hasPerformance
+		audio            : hasAudioElement,
+		fileAPI          : hasFile,
+		geolocation      : hasGeolocation,
+		mutationObserver : hasMutationObserver,
+		performance      : hasPerformance
 	});
 })();
