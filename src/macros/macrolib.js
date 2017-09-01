@@ -610,43 +610,72 @@
 		<<for>>, <<break>>, & <<continue>>
 	*/
 	Macro.add('for', {
-		skipArgs : true,
-		tags     : null,
+		/* eslint-disable max-len */
+		skipArgs    : true,
+		tags        : null,
+		_hasRangeRe : new RegExp('^\\S.*?\\s+range\\s+\\S.*?$'),
+		_rangeRe    : new RegExp(`^(?:State\\.(variables|temporary)\\.(${Patterns.identifier})\\s*,\\s*)?State\\.(variables|temporary)\\.(${Patterns.identifier})\\s+range\\s+(\\S.*?)$`),
+		_3PartRe    : /^([^;]*?)\s*;\s*([^;]*?)\s*;\s*([^;]*?)$/,
+		/* eslint-enable max-len */
 
 		handler() {
-			const evalJavaScript = Scripting.evalJavaScript;
-			const payload        = this.payload[0].contents.replace(/\n$/, '');
-			let init;
-			let condition = this.args.full.trim();
-			let post;
-			let first  = true;
-			let safety = Config.macros.maxLoopIterations;
+			const argsStr = this.args.full.trim();
+			const payload = this.payload[0].contents.replace(/\n$/, '');
 
-			if (condition.length === 0) {
-				condition = true;
+			if (argsStr.length === 0) {
+				this.self._handleFor.call(this, payload, null, true, null);
 			}
-			else if (condition.indexOf(';') !== -1) {
-				const parts = condition.match(/^([^;]*?)\s*;\s*([^;]*?)\s*;\s*([^;]*?)$/);
+			else if (this.self._hasRangeRe.test(argsStr)) {
+				const parts = argsStr.match(this.self._rangeRe);
 
-				if (parts !== null) {
+				if (parts === null) {
+					return this.error('invalid range syntax, format: [indexVar ,] valueVar range collectionExp');
+				}
+
+				this.self._handleForRange.call(
+					this,
+					payload,
+					{ type : parts[1], name : parts[2] },
+					{ type : parts[3], name : parts[4] },
+					parts[5]
+				);
+			}
+			else {
+				let init;
+				let condition;
+				let post;
+
+				if (argsStr.indexOf(';') === -1) {
+					// Sanity checks for the 1-part form.
+					if (/^\S+\s+in\s+\S+/i.test(argsStr)) {
+						return this.error('invalid syntax, for…in is not supported; see: for…range');
+					}
+					else if (/^\S+\s+of\s+\S+/i.test(argsStr)) {
+						return this.error('invalid syntax, for…of is not supported; see: for…range');
+					}
+
+					condition = argsStr;
+				}
+				else {
+					const parts = argsStr.match(this.self._3PartRe);
+
+					if (parts === null) {
+						return this.error('invalid 3-part syntax, format: init ; condition ; post');
+					}
+
 					init      = parts[1];
 					condition = parts[2];
 					post      = parts[3];
 				}
-				else {
-					return this.error('invalid 3-part syntax, format: init ; condition ; post');
-				}
-			}
 
-			// Sanity checks.
-			if (typeof condition === 'string') {
-				if (/^\S+\s+in\s+\S+/i.test(condition)) {
-					return this.error('invalid syntax, for…in is not supported');
-				}
-				else if (/^\S+\s+of\s+\S+/i.test(condition)) {
-					return this.error('invalid syntax, for…of is not supported');
-				}
+				this.self._handleFor.call(this, payload, init, condition, post);
 			}
+		},
+
+		_handleFor(payload, init, condition, post) {
+			const evalJavaScript = Scripting.evalJavaScript;
+			let first  = true;
+			let safety = Config.macros.maxLoopIterations;
 
 			// Custom debug view setup.
 			if (Config.debug) {
@@ -702,6 +731,116 @@
 			finally {
 				TempState.break = null;
 			}
+		},
+
+		_handleForRange(payload, indexVar, valueVar, rangeExp) {
+			let first     = true;
+			let rangeList;
+
+			try {
+				rangeList = this.self._toRangeList(rangeExp);
+			}
+			catch (ex) {
+				return this.error(ex.message);
+			}
+
+			// Custom debug view setup.
+			if (Config.debug) {
+				this.debugView.modes({ block : true });
+			}
+
+			try {
+				TempState.break = null;
+
+				for (let i = 0; i < rangeList.length; ++i) {
+					if (indexVar.name) {
+						State[indexVar.type][indexVar.name] = rangeList[i][0];
+					}
+
+					State[valueVar.type][valueVar.name] = rangeList[i][1];
+
+					new Wikifier(this.output, first ? payload.replace(/^\n/, '') : payload);
+
+					if (first) {
+						first = false;
+					}
+
+					if (TempState.break != null) { // lazy equality for null
+						if (TempState.break === 1) {
+							TempState.break = null;
+						}
+						else if (TempState.break === 2) {
+							TempState.break = null;
+							break;
+						}
+					}
+				}
+			}
+			catch (ex) {
+				return this.error(typeof ex === 'object' ? ex.message : ex);
+			}
+			finally {
+				TempState.break = null;
+			}
+		},
+
+		_toRangeList(rangeExp) {
+			const evalJavaScript = Scripting.evalJavaScript;
+			let value;
+
+			try {
+				/*
+					NOTE: If the first character is the left curly brace we
+					assume that it's part of a object literal, thus we wrap
+					it within parenthesis to ensure that it is not mistaken
+					for a block during evaluation—which would cause an error.
+				*/
+				value = evalJavaScript(rangeExp[0] === '{' ? `(${rangeExp})` : rangeExp);
+			}
+			catch (ex) {
+				if (typeof ex !== 'object') {
+					throw new Error(`bad range expression: ${ex}`);
+				}
+
+				ex.message = `bad range expression: ${ex.message}`;
+				throw ex;
+			}
+
+			let list;
+
+			switch (typeof value) {
+			case 'string':
+				list = [];
+				for (let i = 0; i < value.length; /* empty */) {
+					const obj = Util.charAndPosAt(value, i);
+					list.push([i, obj.char]);
+					i = 1 + obj.end;
+				}
+				break;
+
+			case 'object':
+				if (Array.isArray(value)) {
+					list = value.map((val, i) => [i, val]);
+				}
+				else if (value instanceof Set) {
+					list = [...value].map((val, i) => [i, val]);
+				}
+				else if (value instanceof Map) {
+					list = [...value.entries()];
+				}
+				else if (Util.toStringTag(value) === 'Object') {
+					list = Object.keys(value).map(key => [key, value[key]]);
+				}
+				else {
+					throw new Error(`unsupported range expression type: ${Util.toStringTag(value)}`);
+				}
+				break;
+
+			default:
+				throw new Error(`unsupported range expression type: ${typeof value}`);
+			}
+
+			return list;
 		}
 	});
 	Macro.add(['break', 'continue'], {
