@@ -1212,9 +1212,41 @@
 	});
 
 	Wikifier.Parser.add({
+		name     : 'xmlProlog',
+		profiles : ['core'],
+		match    : '<\\?[Xx][Mm][Ll][^>]*\\?>',
+
+		handler(w) {
+			w.nextMatch = w.matchStart + w.matchLength;
+		}
+	});
+
+	Wikifier.Parser.add({
+		name      : 'svg',
+		profiles  : ['core'],
+		match     : '<[Ss][Vv][Gg][^>]*>',
+		lookahead : /(<[Ss][Vv][Gg][^>]*>(?:.|\n)*?<\/[Ss][Vv][Gg]>)/gm,
+
+		handler(w) {
+			this.lookahead.lastIndex = w.matchStart;
+
+			const match = this.lookahead.exec(w.source);
+
+			if (match && match.index === w.matchStart) {
+				w.nextMatch = this.lookahead.lastIndex;
+
+				jQuery(document.createDocumentFragment())
+					.append(match[1])
+					.appendTo(w.output);
+			}
+		}
+	});
+
+	Wikifier.Parser.add({
 		/*
-			NOTE: This formatter MUST come after any formatter which handles HTML tag-like
-			      constructs (e.g. 'verbatimText', 'horizontalRule', 'html', and 'lineBreak').
+			NOTE: This formatter MUST come after any formatter which handles HTML
+			tag-like constructs—e.g. 'verbatimText', 'horizontalRule', 'html',
+			'lineBreak', 'xmlProlog', and 'svg'.
 		*/
 		name         : 'htmlTag',
 		profiles     : ['core'],
