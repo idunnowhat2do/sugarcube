@@ -79,7 +79,7 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 	/*
 		Returns an entity encoded version of the passed string.
 
-		NOTE: Only escapes the five primary special characters and the backtick.
+		NOTE: Only escapes the five primary special characters and the backquote.
 	*/
 	const _htmlCharsRe    = /[&<>"'`]/g;
 	const _hasHtmlCharsRe = new RegExp(_htmlCharsRe.source); // to drop the global flag
@@ -127,8 +127,8 @@ var Util = (() => { // eslint-disable-line no-unused-vars, no-var
 		'&apos;' : "'", // apostrophe (XML predefined entity)
 		'&#39;'  : "'", // apostrophe (decimal numeric character reference)
 		'&#x27;' : "'", // apostrophe (hexadecimal numeric character reference)
-		'&#96;'  : '`', // backtick (decimal numeric character reference)
-		'&#x60;' : '`'  // backtick (hexadecimal numeric character reference)
+		'&#96;'  : '`', // backquote (decimal numeric character reference)
+		'&#x60;' : '`'  // backquote (hexadecimal numeric character reference)
 	});
 
 	function utilUnescape(str) {

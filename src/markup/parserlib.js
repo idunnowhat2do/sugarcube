@@ -98,14 +98,14 @@
 		match       : '<<',
 		lookahead   : new RegExp(`<<(/?${Patterns.macroName})(?:\\s*)((?:(?:"(?:\\\\.|[^"\\\\])*")|(?:'(?:\\\\.|[^'\\\\])*')|(?:\\[(?:[<>]?[Ii][Mm][Gg])?\\[[^\\r\\n]*?\\]\\]+)|[^>]|(?:>(?!>)))*)>>`, 'gm'),
 		argsPattern : [
-			'(``)',                                             // 1=Empty backticks
-			'`((?:\\\\.|[^`\\\\])+)`',                          // 2=Backticked, non-empty
-			'(""|\'\')',                                        // 3=Empty quotes
+			'(``)',                                             // 1=Empty backquotes
+			'`((?:\\\\.|[^`\\\\])+)`',                          // 2=Backquoted, non-empty
+			'(""|\'\')',                                        // 3=Empty quotes (double, single)
 			'("(?:\\\\.|[^"\\\\])+")',                          // 4=Double quoted, non-empty
 			"('(?:\\\\.|[^'\\\\])+')",                          // 5=Single quoted, non-empty
 			'(\\[(?:[<>]?[Ii][Mm][Gg])?\\[[^\\r\\n]*?\\]\\]+)', // 6=Double square-bracketed
 			'([^`"\'\\s]+)',                                    // 7=Barewords
-			'(`|"|\')'                                          // 8=Unterminated backticks and quotes
+			'(`|"|\')'                                          // 8=Unterminated quotes (back, double, single)
 		].join('|'),
 		working : { source : '', name : '', arguments : '', index : 0 }, // the working parse object
 		context : null, // last execution context object (top-level macros, hierarchically, have a null context)
@@ -354,14 +354,14 @@
 		parseArgs(rawArgsString) {
 			/*
 				`this.argsPattern` capture groups:
-					1=Empty backticks
-					2=Backticked, non-empty
-					3=Empty quotes
+					1=Empty backquotes
+					2=Backquoted, non-empty
+					3=Empty quotes (double, single)
 					4=Double quoted, non-empty
 					5=Single quoted, non-empty
 					6=Double square-bracketed
 					7=Barewords
-					8=Unterminated backticks and quotes
+					8=Unterminated quotes (back, double, single)
 			*/
 			const argsRe  = new RegExp(this.argsPattern, 'gm');
 			const args    = [];
@@ -371,14 +371,14 @@
 			while ((match = argsRe.exec(rawArgsString)) !== null) {
 				let arg;
 
-				// Empty backticks.
+				// Empty backquotes.
 				if (match[1]) {
 					arg = undefined;
 				}
 
-				// Backticked, non-empty.
+				// Backquoted, non-empty.
 				else if (match[2]) {
-					arg = match[2]; // the pattern excludes the backticks, so this is just the expression
+					arg = match[2]; // the pattern excludes the backquotes, so this is just the expression
 
 					// Evaluate the expression.
 					try {
@@ -389,7 +389,7 @@
 					}
 				}
 
-				// Empty quotes.
+				// Empty quotes (double, single).
 				else if (match[3]) {
 					arg = '';
 				}
@@ -538,13 +538,13 @@
 					}
 				}
 
-				// Unterminated backticks and quotes.
+				// Unterminated quotes (back, double, single).
 				else if (match[8]) {
 					let what;
 
 					switch (match[8]) {
 					case '`':
-						what = 'backtick expression';
+						what = 'backquote expression';
 						break;
 
 					case '"':
