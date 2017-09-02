@@ -19,10 +19,84 @@
 		Parsers.
 	*******************************************************************************************************************/
 	Wikifier.Parser.add({
+		name       : 'quoteByBlock',
+		profiles   : ['block'],
+		match      : '^<<<\\n',
+		terminator : '^<<<\\n',
+
+		handler(w) {
+			if (!Wikifier.helpers.hasBlockContext(w.output.childNodes)) {
+				jQuery(w.output).append(document.createTextNode(w.matchText));
+				return;
+			}
+
+			w.subWikify(
+				jQuery(document.createElement('blockquote'))
+					.appendTo(w.output)
+					.get(0),
+				this.terminator
+			);
+		}
+	});
+
+	Wikifier.Parser.add({
+		name       : 'quoteByLine',
+		profiles   : ['block'],
+		match      : '^>+',
+		lookahead  : /^>+/gm,
+		terminator : '\\n',
+
+		handler(w) {
+			if (!Wikifier.helpers.hasBlockContext(w.output.childNodes)) {
+				jQuery(w.output).append(document.createTextNode(w.matchText));
+				return;
+			}
+
+			const destStack = [w.output];
+			let curLevel = 0;
+			let newLevel = w.matchLength;
+			let matched;
+			let i;
+
+			do {
+				if (newLevel > curLevel) {
+					for (i = curLevel; i < newLevel; ++i) {
+						destStack.push(
+							jQuery(document.createElement('blockquote'))
+								.appendTo(destStack[destStack.length - 1])
+								.get(0)
+						);
+					}
+				}
+				else if (newLevel < curLevel) {
+					for (i = curLevel; i > newLevel; --i) {
+						destStack.pop();
+					}
+				}
+
+				curLevel = newLevel;
+				w.subWikify(destStack[destStack.length - 1], this.terminator);
+				jQuery(document.createElement('br')).appendTo(destStack[destStack.length - 1]);
+
+				this.lookahead.lastIndex = w.nextMatch;
+
+				const match = this.lookahead.exec(w.source);
+
+				matched = match && match.index === w.nextMatch;
+
+				if (matched) {
+					newLevel = match[0].length;
+					w.nextMatch += match[0].length;
+				}
+			} while (matched);
+		}
+	});
+
+	Wikifier.Parser.add({
 		name        : 'macro',
 		profiles    : ['core'],
 		match       : '<<',
-		lookahead   : new RegExp(`<<(\\/?${Patterns.macroName})(?:\\s*)((?:(?:"(?:\\\\.|[^"\\\\])*")|(?:'(?:\\\\.|[^'\\\\])*')|(?:\\[(?:[<>]?[Ii][Mm][Gg])?\\[[^\\r\\n]*?\\]\\]+)|[^>]|(?:>(?!>)))*)>>`, 'gm'),
+		lookahead   : new RegExp(`<<(/?${Patterns.macroName})(?:\\s*)((?:(?:"(?:\\\\.|[^"\\\\])*")|(?:'(?:\\\\.|[^'\\\\])*')|(?:\\[(?:[<>]?[Ii][Mm][Gg])?\\[[^\\r\\n]*?\\]\\]+)|[^>]|(?:>(?!>)))*)>>`, 'gm'),
 		argsPattern : [
 			'(``)',                                             // 1=Empty backticks
 			'`((?:\\\\.|[^`\\\\])+)`',                          // 2=Backticked, non-empty
@@ -1058,80 +1132,6 @@
 							.get(0),
 						this.terminator
 					);
-				}
-			} while (matched);
-		}
-	});
-
-	Wikifier.Parser.add({
-		name       : 'quoteByBlock',
-		profiles   : ['block'],
-		match      : '^<<<\\n',
-		terminator : '^<<<\\n',
-
-		handler(w) {
-			if (!Wikifier.helpers.hasBlockContext(w.output.childNodes)) {
-				jQuery(w.output).append(document.createTextNode(w.matchText));
-				return;
-			}
-
-			w.subWikify(
-				jQuery(document.createElement('blockquote'))
-					.appendTo(w.output)
-					.get(0),
-				this.terminator
-			);
-		}
-	});
-
-	Wikifier.Parser.add({
-		name       : 'quoteByLine',
-		profiles   : ['block'],
-		match      : '^>+',
-		lookahead  : /^>+/gm,
-		terminator : '\\n',
-
-		handler(w) {
-			if (!Wikifier.helpers.hasBlockContext(w.output.childNodes)) {
-				jQuery(w.output).append(document.createTextNode(w.matchText));
-				return;
-			}
-
-			const destStack = [w.output];
-			let curLevel = 0;
-			let newLevel = w.matchLength;
-			let matched;
-			let i;
-
-			do {
-				if (newLevel > curLevel) {
-					for (i = curLevel; i < newLevel; ++i) {
-						destStack.push(
-							jQuery(document.createElement('blockquote'))
-								.appendTo(destStack[destStack.length - 1])
-								.get(0)
-						);
-					}
-				}
-				else if (newLevel < curLevel) {
-					for (i = curLevel; i > newLevel; --i) {
-						destStack.pop();
-					}
-				}
-
-				curLevel = newLevel;
-				w.subWikify(destStack[destStack.length - 1], this.terminator);
-				jQuery(document.createElement('br')).appendTo(destStack[destStack.length - 1]);
-
-				this.lookahead.lastIndex = w.nextMatch;
-
-				const match = this.lookahead.exec(w.source);
-
-				matched = match && match.index === w.nextMatch;
-
-				if (matched) {
-					newLevel = match[0].length;
-					w.nextMatch += match[0].length;
 				}
 			} while (matched);
 		}
