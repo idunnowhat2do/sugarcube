@@ -700,9 +700,11 @@
 			const match = this.lookahead.exec(w.source);
 
 			if (match && match.index === w.matchStart) {
-				jQuery(document.createElement('pre'))
+				const pre = jQuery(document.createElement('pre'));
+				jQuery(document.createElement('code'))
 					.text(match[1])
-					.appendTo(w.output);
+					.appendTo(pre);
+				pre.appendTo(w.output);
 				w.nextMatch = this.lookahead.lastIndex;
 			}
 		}
