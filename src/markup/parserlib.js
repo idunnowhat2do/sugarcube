@@ -1229,7 +1229,7 @@
 			const tagName  = tag && tag.toLowerCase();
 
 			if (tagName) {
-				const isVoid = this.voidElements.includes(tagName);
+				const isVoid = this.voidElements.includes(tagName) || w.matchText.endsWith('/>');
 				const isNobr = this.nobrElements.includes(tagName);
 				let terminator;
 				let terminatorMatch;
