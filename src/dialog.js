@@ -215,7 +215,7 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		// Add the UI resize handler.
 		jQuery(window)
-			.on('resize.ui-resize', null, { top }, jQuery.throttle(40, dialogResizeHandler));
+			.on('resize.dialog-resize', null, { top }, jQuery.throttle(40, dialogResizeHandler));
 
 		// Add the dialog mutation resize handler.
 		if (Has.mutationObserver) {
@@ -235,7 +235,7 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 		else {
 			_$dialogBody
 				.on(
-					'DOMNodeInserted.ui-resize DOMNodeRemoved.ui-resize',
+					'DOMNodeInserted.dialog-resize DOMNodeRemoved.dialog-resize',
 					null,
 					{ top },
 					jQuery.throttle(40, dialogResizeHandler)
@@ -244,8 +244,8 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 
 		// Setup the delegated UI close handler.
 		jQuery(document)
-			.on('click.ui-close', '.ui-close', { closeFn }, dialogClose) // yes, namespace and class have the same name
-			.on('keypress.ui-close', '.ui-close', function (ev) {
+			.on('click.dialog-close', '.ui-close', { closeFn }, dialogClose)
+			.on('keypress.dialog-close', '.ui-close', function (ev) {
 				// 13 is Enter/Return, 32 is Space.
 				if (ev.which === 13 || ev.which === 32) {
 					jQuery(this).trigger('click');
@@ -261,17 +261,17 @@ var Dialog = (() => { // eslint-disable-line no-unused-vars, no-var
 	function dialogClose(ev) {
 		// Largely reverse the actions taken in `dialogOpen()`.
 		jQuery(document)
-			.off('.ui-close'); // namespace, not to be confused with the class by the same name
+			.off('.dialog-close');
 		if (_dialogObserver) {
 			_dialogObserver.disconnect();
 			_dialogObserver = null;
 		}
 		else {
 			_$dialogBody
-				.off('DOMNodeInserted.ui-resize DOMNodeRemoved.ui-resize');
+				.off('.dialog-resize');
 		}
 		jQuery(window)
-			.off('resize.ui-resize');
+			.off('.dialog-resize');
 		_$dialog
 			.removeClass('open')
 			.css({ left : '', right : '', top : '', bottom : '' });
