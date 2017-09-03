@@ -577,14 +577,6 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 					.attr('tabindex', 0);
 
 		/*
-			Execute post-play events.
-		*/
-		jQuery.event.trigger({
-			type : ':passageend',
-			passage
-		});
-
-		/*
 			Handle autosaves.
 		*/
 		switch (typeof Config.saves.autosave) {
@@ -607,6 +599,14 @@ var Engine = (() => { // eslint-disable-line no-unused-vars, no-var
 			}
 			break;
 		}
+
+		/*
+			Execute post-play events.
+		*/
+		jQuery.event.trigger({
+			type : ':passageend',
+			passage
+		});
 
 		/*
 			Reset the engine state.
