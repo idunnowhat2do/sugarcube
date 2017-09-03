@@ -227,7 +227,7 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 			// Execute pre-render events and tasks.
 			jQuery.event.trigger({
 				type    : ':passagestart',
-				output  : passageEl,
+				content : passageEl,
 				passage : this
 			});
 			Object.keys(prerender).forEach(task => {
@@ -252,7 +252,7 @@ var Passage = (() => { // eslint-disable-line no-unused-vars, no-var
 			// Execute post-render events and tasks.
 			jQuery.event.trigger({
 				type    : ':passagerender',
-				output  : passageEl,
+				content : passageEl,
 				passage : this
 			});
 			Object.keys(postrender).forEach(task => {
